@@ -18,9 +18,9 @@
       "**/*.ts",
       "**/*.json",
       "**/*.yml",
-      "!!**/dist/",
-      "!!**/node_modules/",
-      "!!**/_generated_*"
+      "!**/dist",
+      "!**/node_modules",
+      "!**/_generated_*"
     ]
   }
 }
