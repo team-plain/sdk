@@ -1,5 +1,5 @@
 {
-  "name": "@team-plain/typescript-sdk-beta",
+  "name": "@team-plain/graphql-sdk",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",

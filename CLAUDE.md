@@ -8,15 +8,14 @@ A TypeScript SDK generator for Plain's GraphQL API. It uses a custom `@graphql-c
 
 ```bash
 pnpm install          # Install dependencies
-pnpm build            # Build everything (codegen plugin → SDK)
-pnpm codegen          # Regenerate from schema (requires codegen plugin to be built first)
-pnpm typecheck        # Type-check without emitting
+pnpm build            # Build everything (codegen plugin → codegen → SDK)
+pnpm typecheck        # Type-check all packages
 pnpm format           # Format with biome
 pnpm lint             # Lint with biome
 pnpm check            # Format + lint with biome (auto-fix)
 ```
 
-Build order matters: `codegen-plugin` must be built before `codegen` can run.
+Per-package scripts (codegen, test, etc.) are run via `pnpm --filter <pkg> <script>`.
 
 ## Architecture
 
