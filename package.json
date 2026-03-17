@@ -1,0 +1,24 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:codegen-plugin": "pnpm --filter @plain/codegen-plugin build",
+    "build:sdk": "pnpm --filter @team-plain/typescript-sdk-beta build",
+    "build": "pnpm build:codegen-plugin && pnpm codegen && pnpm build:sdk",
+    "codegen": "pnpm --filter @team-plain/typescript-sdk-beta codegen",
+    "download-schema": "pnpm --filter @team-plain/typescript-sdk-beta download-schema",
+    "test": "pnpm --filter @team-plain/typescript-sdk-beta test",
+    "typecheck": "pnpm --filter @team-plain/typescript-sdk-beta tsc --noEmit",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "check": "biome check --write ."
+  },
+  "engines": {
+    "node": ">=25.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
+    "vitest": "^4.1.0"
+  }
+}
