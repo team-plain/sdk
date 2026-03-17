@@ -1,0 +1,16 @@
+schema: ./src/schema.graphql
+documents: ./src/_generated_documents.graphql
+generates:
+  ./src/_generated_documents.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typed-document-node
+    config:
+      avoidOptionals: false
+      enumsAsTypes: true
+      nonOptionalTypename: false
+      skipTypename: true
+  ./src/_generated_sdk.ts:
+    plugins:
+      - "@plain/codegen-plugin"
