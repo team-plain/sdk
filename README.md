@@ -1,6 +1,6 @@
-# Plain TypeScript SDK (Beta)
+# Plain GraphQL SDK
 
-A typed TypeScript SDK for [Plain's](https://plain.com) GraphQL API, auto-generated from the schema using a custom codegen pipeline adapted from Linear's approach.
+A typed TypeScript GraphQL SDK for [Plain.com](https://plain.com), auto-generated from the schema using a custom codegen pipeline.
 
 **Key design choice**: mutation errors are returned as typed data, not thrown as exceptions. This matches Plain's API where all mutations return `*Output` types with an optional `error` field.
 
@@ -103,3 +103,11 @@ pnpm typecheck
 
 - **Queries**: network, auth (401), forbidden (403), and rate limit (429) errors throw typed exceptions (`AuthenticationError`, `ForbiddenError`, `RateLimitError`, `NetworkError`, `PlainGraphQLError`).
 - **Mutations**: return the full `*Output` type. Check `result.error` for a typed `MutationError` with `message`, `type`, `code`, and `fields[]`. This is intentional — Plain's API treats mutation errors as data.
+
+## Acknowledgements
+
+This SDK's code generation approach was inspired by the [Linear SDK](https://github.com/linear/linear). Their pattern of using `@graphql-codegen` with a custom plugin to generate typed model classes and an SDK client served as the foundation for this project.
+
+## License
+
+[MIT](./LICENSE)
