@@ -3,6 +3,11 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildSchema,
+  type GraphQLArgument,
+  type GraphQLField,
+  type GraphQLNamedType,
+  type GraphQLObjectType,
+  type GraphQLOutputType,
   getNamedType,
   isEnumType,
   isInterfaceType,
@@ -11,11 +16,6 @@ import {
   isObjectType,
   isScalarType,
   isUnionType,
-  type GraphQLField,
-  type GraphQLNamedType,
-  type GraphQLOutputType,
-  type GraphQLArgument,
-  type GraphQLObjectType,
 } from "graphql";
 
 const __filename = fileURLToPath(import.meta.url);

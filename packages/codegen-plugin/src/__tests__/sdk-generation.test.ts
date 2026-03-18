@@ -301,7 +301,10 @@ describe("SDK generation", () => {
     // Document imports should be sorted alphabetically
     const docImportMatch = code.match(/import \{([^}]+)\}/);
     if (docImportMatch) {
-      const imports = docImportMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
+      const imports = docImportMatch[1]
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       const sorted = [...imports].sort();
       expect(imports).toEqual(sorted);
     }
@@ -309,7 +312,10 @@ describe("SDK generation", () => {
     // Type imports should be sorted alphabetically
     const typeImportMatch = code.match(/import type \{([^}]+)\} from "\.\/_generated/);
     if (typeImportMatch) {
-      const imports = typeImportMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
+      const imports = typeImportMatch[1]
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       const sorted = [...imports].sort();
       expect(imports).toEqual(sorted);
     }
