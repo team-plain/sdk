@@ -1,17 +1,17 @@
 import type { PluginFunction, Types } from "@graphql-codegen/plugin-helpers";
 import {
-  isNonNullType,
-  isListType,
-  isObjectType,
-  isEnumType,
-  isScalarType,
-  getNamedType,
-  Kind,
-  type GraphQLSchema,
-  type GraphQLOutputType,
-  type GraphQLObjectType,
-  type GraphQLNamedType,
   type GraphQLField,
+  type GraphQLNamedType,
+  type GraphQLObjectType,
+  type GraphQLOutputType,
+  type GraphQLSchema,
+  getNamedType,
+  isEnumType,
+  isListType,
+  isNonNullType,
+  isObjectType,
+  isScalarType,
+  Kind,
 } from "graphql";
 
 // ─── Naming ────────────────────────────────────────────────────────────────────

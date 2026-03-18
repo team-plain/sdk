@@ -45,10 +45,7 @@ declare class PlainConnection<N> {
  * Compile generated TypeScript code in-memory and return diagnostics.
  * `extraDeclarations` lets tests declare fragment/document types that the generated code references.
  */
-export function compileTypeScript(
-  code: string,
-  extraDeclarations?: string,
-): ts.Diagnostic[] {
+export function compileTypeScript(code: string, extraDeclarations?: string): ts.Diagnostic[] {
   // Strip the real imports — we replace them with stubs
   const strippedCode = code
     .replace(/import type \{[^}]*\} from "\.\/graphql-client\.js";?\n?/g, "")
@@ -68,15 +65,19 @@ export function compileTypeScript(
     return originalGetSourceFile(name, languageVersion);
   };
 
-  const program = ts.createProgram([fileName], {
-    target: ts.ScriptTarget.ESNext,
-    module: ts.ModuleKind.ESNext,
-    moduleResolution: ts.ModuleResolutionKind.Bundler,
-    strict: true,
-    noEmit: true,
-    skipLibCheck: true,
-    types: [],
-  }, host);
+  const program = ts.createProgram(
+    [fileName],
+    {
+      target: ts.ScriptTarget.ESNext,
+      module: ts.ModuleKind.ESNext,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+      strict: true,
+      noEmit: true,
+      skipLibCheck: true,
+      types: [],
+    },
+    host,
+  );
 
   return [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()];
 }
