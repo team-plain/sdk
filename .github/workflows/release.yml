@@ -1,0 +1,40 @@
+name: Publish Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && github.head_ref == 'changeset-release/main'
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: Publish to npm
+        run: pnpm --filter @team-plain/graphql-sdk publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create and push git tag
+        run: |
+          VERSION=$(node -p "require('./packages/sdk/package.json').version")
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
