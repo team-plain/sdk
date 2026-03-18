@@ -18,7 +18,6 @@
     "download-schema": "tsx scripts/download-schema.ts",
     "codegen": "pnpm download-schema && tsx src/generate-documents.ts && graphql-codegen --config codegen.yml",
     "build": "tsc",
-    "test": "vitest run",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {

@@ -7,7 +7,7 @@ const client = new PlainClient({
 
 // Query — returns typed model with lazy-loading relations
 async function queryExample() {
-  const customer = await client.customer({ customerId: "c_01EXAMPLE" });
+  const customer = await client.customer({ customerId: "c_01KAKJEKNAYY879ZYBMZ614DYT" });
   // customer is a CustomerModel with typed scalar properties
   console.log(customer.fullName, customer.shortName);
 
@@ -31,7 +31,7 @@ async function queryExample() {
 queryExample();
 
 // Mutation — returns Output type directly, error is typed data
-async function mutationExample() {
+async function _mutationExample() {
   const result = await client.upsertCustomer({
     input: {
       identifier: { emailAddress: "alice@example.com" },
@@ -60,4 +60,4 @@ async function mutationExample() {
   }
 }
 
-mutationExample();
+// mutationExample();
