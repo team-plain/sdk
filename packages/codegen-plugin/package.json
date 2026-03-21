@@ -1,5 +1,5 @@
 {
-  "name": "@plain/codegen-plugin",
+  "name": "@team-plain/codegen-plugin",
   "version": "0.1.0",
   "private": true,
   "type": "module",
