@@ -2,4 +2,6 @@
 "@team-plain/sdk": patch
 ---
 
-initial release
+Test the release process.
+
+No changes in this release.
