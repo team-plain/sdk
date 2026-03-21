@@ -50,7 +50,7 @@ pnpm typecheck
 **Modify how SDK classes are generated:**
 Edit `packages/codegen-plugin/src/index.ts`, then:
 ```bash
-pnpm build:codegen-plugin
+pnpm --filter @team-plain/codegen-plugin build
 pnpm codegen
 pnpm typecheck
 ```
