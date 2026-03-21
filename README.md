@@ -4,10 +4,22 @@ A typed TypeScript SDK for [Plain's](https://plain.com) GraphQL API, auto-genera
 
 Inspired by [Linear's SDK](https://github.com/linear/linear/tree/master/packages/codegen-sdk) and their approach to lazy-loading GraphQL connections and relation fields.
 
+## Packages
+
+| Package | Description |
+|---------|-------------|
+| [`@team-plain/sdk`](./packages/sdk) | Core SDK — typed GraphQL client with auto-generated model classes |
+| [`@team-plain/ui-components`](./packages/ui-components) | UI component builder helpers (`uiComponent.text()`, `.badge()`, etc.) |
+| [`@team-plain/webhooks`](./packages/webhooks) | Webhook parsing and signature verification |
+
 ## Installation
 
 ```bash
 npm install @team-plain/sdk
+
+# Optional — install only what you need:
+npm install @team-plain/ui-components  # requires @team-plain/sdk as peer
+npm install @team-plain/webhooks       # standalone, no SDK dependency
 ```
 
 Requires **Node 25+**.
