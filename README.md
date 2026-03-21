@@ -1,105 +1,85 @@
 # Plain TypeScript SDK (Beta)
 
-A typed TypeScript SDK for [Plain's](https://plain.com) GraphQL API, auto-generated from the schema using a custom codegen pipeline adapted from Linear's approach.
+A typed TypeScript SDK for [Plain's](https://plain.com) GraphQL API, auto-generated from the schema using a custom codegen pipeline.
 
-**Key design choice**: mutation errors are returned as typed data, not thrown as exceptions. This matches Plain's API where all mutations return `*Output` types with an optional `error` field.
+Inspired by [Linear's SDK](https://github.com/linear/linear/tree/master/packages/codegen-sdk) and their approach to lazy-loading GraphQL connections and relation fields.
 
-## Setup
-
-Requires **Node 25+** and **pnpm**.
+## Installation
 
 ```bash
-pnpm install
-pnpm build
+npm install @team-plain/sdk
 ```
+
+Requires **Node 25+**.
 
 ## Usage
 
 ```ts
-import { PlainClient } from "@team-plain/typescript-sdk-beta";
+import { PlainClient } from "@team-plain/sdk";
 
 const client = new PlainClient({ apiKey: "plainApiKey_xxx" });
+```
 
-// Queries — returns typed models, throws on network/auth errors
+### Query
+
+```ts
 const customer = await client.customer({ customerId: "c_123" });
 console.log(customer.fullName);
 
-// Lazy-load relations (separate API call)
+// Relations are lazy-loaded — accessing them makes a separate API call
 const company = await customer.company;
+console.log(company.name);
+```
 
-// Pagination
-const customers = await client.customers({ first: 10 });
-const nextPage = await customers.fetchNext();
+### Mutation
 
-// Mutations — errors are typed data, not exceptions
+Mutation errors are returned as typed data, not thrown as exceptions. This matches Plain's API where all mutations return `*Output` types with an optional `error` field.
+
+```ts
 const result = await client.upsertCustomer({
   input: {
     identifier: { emailAddress: "alice@example.com" },
-    onCreate: { fullName: "Alice", email: { email: "alice@example.com", isVerified: false } },
+    onCreate: {
+      fullName: "Alice",
+      email: { email: "alice@example.com", isVerified: false },
+    },
     onUpdate: {},
   },
 });
 
 if (result.error) {
-  console.log(result.error.message); // typed MutationError
-  result.error.fields?.forEach((f) => console.log(`${f.field}: ${f.message}`));
+  // Typed MutationError with message, type, code, and field-level errors
+  console.error(result.error.message);
+  result.error.fields?.forEach((f) => {
+    console.error(`  ${f.field}: ${f.message}`);
+  });
 } else {
   console.log(result.customer?.id);
 }
 ```
 
-## Project Structure
+### Pagination
 
-```
-packages/
-  codegen-plugin/     # Custom @graphql-codegen plugin that generates model classes + SDK
-    src/index.ts      # Single-file plugin: schema analysis → model classes → SDK class
-  sdk/                # The publishable SDK package (@team-plain/typescript-sdk-beta)
-    src/
-      schema.graphql              # Plain's GraphQL schema (fetched from API)
-      generate-documents.ts       # Script: schema → fragments + query/mutation operations
-      _generated_documents.graphql  # Auto-generated GraphQL operations
-      _generated_documents.ts       # Auto-generated typed document nodes
-      _generated_sdk.ts             # Auto-generated model classes + PlainSdk class
-      client.ts                   # PlainClient — the main entry point
-      graphql-client.ts           # HTTP transport (fetch-based)
-      connection.ts               # PlainConnection — Relay cursor pagination
-      error.ts                    # Error class hierarchy
-      types.ts                    # PlainClientOptions
-      index.ts                    # Barrel exports
-```
+```ts
+const customers = await client.customers({ first: 10 });
 
-## Scripts
+for (const customer of customers.nodes) {
+  console.log(customer.fullName);
+}
 
-| Command | Description |
-|---------|-------------|
-| `pnpm build` | Build everything (codegen plugin first, then SDK) |
-| `pnpm codegen` | Regenerate documents + SDK from schema |
-| `pnpm typecheck` | Type-check the SDK without emitting |
-| `pnpm build:codegen-plugin` | Build just the codegen plugin |
-| `pnpm build:sdk` | Build just the SDK |
-
-## How Codegen Works
-
-The pipeline has two stages:
-
-1. **Document generation** (`generate-documents.ts`): reads `schema.graphql` and produces `_generated_documents.graphql` with fragments for every object type (scalars + 1 level of relations via `{ id }`) and query/mutation operations.
-
-2. **Code generation** (`graphql-codegen` with `codegen.yml`): runs standard plugins (`typescript`, `typescript-operations`, `typed-document-node`) to produce typed document nodes, then runs our custom `@team-plain/codegen-plugin` to produce model classes and the `PlainSdk` class.
-
-To regenerate after schema changes:
-
-```bash
-# Update the schema
-curl -o packages/sdk/src/schema.graphql https://core-api.uk.plain.com/graphql/v1/schema.graphql
-
-# Rebuild the codegen plugin (if changed), then regenerate
-pnpm build:codegen-plugin
-pnpm codegen
-pnpm typecheck
+// Fetch the next page
+const nextPage = await customers.fetchNext();
 ```
 
 ## Error Handling
 
 - **Queries**: network, auth (401), forbidden (403), and rate limit (429) errors throw typed exceptions (`AuthenticationError`, `ForbiddenError`, `RateLimitError`, `NetworkError`, `PlainGraphQLError`).
 - **Mutations**: return the full `*Output` type. Check `result.error` for a typed `MutationError` with `message`, `type`, `code`, and `fields[]`. This is intentional — Plain's API treats mutation errors as data.
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup, project structure, and how the codegen pipeline works.
+
+## License
+
+[MIT](./LICENSE)
