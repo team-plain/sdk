@@ -79,16 +79,6 @@ const nextPage = await customers.fetchNext();
 - [Plain API docs](https://plain.com/docs) — guides, authentication, and API reference
 - [GraphQL schema](https://core-api.uk.plain.com/graphql/v1/schema.graphql) — the full schema this SDK is generated from (also vendored at [`src/schema.graphql`](./src/schema.graphql))
 
-## Low-level GraphQL Client
-
-If you need to run custom queries or mutations not covered by the generated SDK, use `PlainGraphQLClient` directly:
-
-```ts
-import { PlainGraphQLClient } from "@team-plain/sdk";
-
-const graphqlClient = new PlainGraphQLClient({ apiKey: "plainApiKey_xxx" });
-```
-
 ## License
 
 [MIT](../../LICENSE)
