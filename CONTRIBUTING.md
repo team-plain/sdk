@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in contributing to the Plain TypeScript SDK! This guide covers setup, project structure, available scripts, and how the codegen pipeline works.
+Thanks for your interest in contributing! This is a monorepo containing Plain's TypeScript packages. This guide covers setup, project structure, available scripts, and how the codegen pipeline works.
 
 ## Prerequisites
 
@@ -12,14 +12,35 @@ pnpm install
 pnpm build
 ```
 
+## Packages
+
+| Package | Path | Description |
+|---------|------|-------------|
+| `@team-plain/sdk` | `packages/sdk` | Typed GraphQL client with auto-generated model classes |
+| `@team-plain/ui-components` | `packages/ui-components` | UI component builder helpers (peer-depends on `@team-plain/sdk`) |
+| `@team-plain/webhooks` | `packages/webhooks` | Webhook parsing and signature verification (standalone) |
+| `@team-plain/sdk-codegen-plugin` | `packages/sdk-codegen-plugin` | Internal codegen plugin (not published to npm) |
+
 ## Design Decisions
 
 These are important to understand before contributing:
 
+- **ESM-only, Node 25+.** No CommonJS, no polyfills. Applies to all packages.
+- **Generated files are committed.** The `_generated_*` files are checked in so consumers don't need to run codegen. Re-run `pnpm codegen` after schema changes.
+
+### SDK-specific
+
 - **Mutation errors are data, not exceptions.** Plain's API returns `*Output` types with an `error: MutationError` field. The SDK preserves this — mutation methods return the full output type. Only network/auth errors throw.
 - **Lazy-loading relations.** Model classes expose object relations as `Promise<T>` getters that make separate API calls using the entity's `id`. Fragments only select `{ id }` for relations.
-- **ESM-only, Node 25+.** No CommonJS, no polyfills.
-- **Generated files are committed.** The `_generated_*` files are checked in so consumers don't need to run codegen. Re-run `pnpm codegen` after schema changes.
+
+### Webhooks-specific
+
+- **Standalone.** The webhooks package has no dependency on `@team-plain/sdk`. Keep it that way.
+- **Result type, not exceptions.** `parsePlainWebhook` and `verifyPlainWebhook` return `Result<T, Error>` instead of throwing.
+
+### UI components-specific
+
+- **Peer dependency on `@team-plain/sdk`.** Types like `ComponentInput` come from the SDK. The package itself is pure functions with no runtime dependencies beyond that.
 
 ## Project Structure
 
@@ -126,6 +147,8 @@ When your change should ship to npm, run:
 pnpm changeset
 ```
 
-Pick the relevant package(s) when prompted (`@team-plain/sdk`, `@team-plain/ui-components`, or `@team-plain/webhooks`) and write a short summary of the change. The codegen plugin (`@team-plain/sdk-codegen-plugin`) is internal and won't appear in the wizard.
+Pick the relevant package(s) when prompted and write a short summary of the change. The codegen plugin (`@team-plain/sdk-codegen-plugin`) is internal and won't appear in the wizard.
+
+Each package is versioned and released independently.
 
 After merging to `main`, the release workflow automatically opens a "Version Packages" PR that bumps versions and updates changelogs.
