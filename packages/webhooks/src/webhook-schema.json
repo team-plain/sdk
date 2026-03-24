@@ -1,0 +1,3495 @@
+{
+  "title": "Webhooks schema definition",
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "$ref": "#/definitions/datetime"
+    },
+    "workspaceId": {
+      "$ref": "#/definitions/id"
+    },
+    "payload": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/customerChangedPayload"
+        },
+        {
+          "$ref": "#/definitions/customerGroupMembershipsChangedPayload"
+        },
+        {
+          "$ref": "#/definitions/timelineEntryChangedPayload"
+        },
+        {
+          "$ref": "#/definitions/customerGroupChangedPayload"
+        },
+        {
+          "$ref": "#/definitions/threadCreatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadStatusTransitionedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadAssignmentTransitionedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadEmailReceivedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadEmailSentPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadSlackMessageReceivedEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadSlackMessageSentEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadMSTeamsMessageReceivedEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadMSTeamsMessageSentEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadLabelsChangedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadPriorityChangedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadFieldCreatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadFieldUpdatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadFieldDeletedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadChatSentPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadServiceLevelAgreementStatusTransitionedPayload"
+        },
+        {
+          "$ref": "#/definitions/customerCreatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/customerUpdatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/customerDeletedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadNoteCreatedEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadChatReceivedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadSlackMessageUpdatedEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadDiscordMessageReceivedEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadDiscordMessageSentEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadDiscordMessageUpdatedEventPayload"
+        }
+      ]
+    },
+    "id": {
+      "$ref": "#/definitions/id"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "thread.thread_created",
+        "thread.thread_status_transitioned",
+        "thread.thread_assignment_transitioned",
+        "thread.email_received",
+        "thread.email_sent",
+        "thread.slack_message_received",
+        "thread.slack_message_sent",
+        "thread.slack_message_updated",
+        "thread.discord_message_received",
+        "thread.discord_message_sent",
+        "thread.discord_message_updated",
+        "thread.ms_teams_message_sent",
+        "thread.ms_teams_message_received",
+        "thread.chat_sent",
+        "thread.chat_received",
+        "thread.note_created",
+        "thread.thread_labels_changed",
+        "thread.thread_priority_changed",
+        "thread.thread_field_created",
+        "thread.thread_field_updated",
+        "thread.thread_field_deleted",
+        "thread.service_level_agreement_status_transitioned",
+        "thread.thread_tenant_updated",
+        "customer.customer_created",
+        "customer.customer_updated",
+        "customer.customer_deleted",
+        "customer.customer_changed",
+        "customer.customer_group_changed",
+        "customer.customer_group_memberships_changed",
+        "timeline.timeline_entry_changed"
+      ]
+    },
+    "webhookMetadata": {
+      "$ref": "#/definitions/webhookMetadata"
+    }
+  },
+  "required": ["timestamp", "workspaceId", "payload", "id", "type", "webhookMetadata"],
+  "additionalProperties": true,
+  "description": "Webhook request",
+  "definitions": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z]+_[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$",
+      "maxLength": 50
+    },
+    "emailAddress": {
+      "allOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "pattern": "^(([^<>()[\\]\\\\.,;:\\s@\"]+(\\.[^<>()[\\]\\\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|([^-]([a-zA-Z0-9-]*\\.)+[a-zA-Z]{2,}))$"
+        }
+      ]
+    },
+    "datetime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nullableString": {
+      "type": ["string", "null"]
+    },
+    "nullableDatetime": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableActor": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/actor"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableInternalActor": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/internalActor"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "userActor": {
+      "type": "object",
+      "properties": {
+        "actorType": {
+          "type": "string",
+          "const": "user"
+        },
+        "userId": {
+          "$ref": "#/definitions/id"
+        }
+      },
+      "required": ["actorType", "userId"],
+      "additionalProperties": true
+    },
+    "customerActor": {
+      "type": "object",
+      "properties": {
+        "actorType": {
+          "type": "string",
+          "const": "customer"
+        },
+        "customerId": {
+          "$ref": "#/definitions/id"
+        }
+      },
+      "required": ["actorType", "customerId"],
+      "additionalProperties": true
+    },
+    "systemActor": {
+      "type": "object",
+      "properties": {
+        "actorType": {
+          "type": "string",
+          "const": "system"
+        },
+        "system": {
+          "type": "string"
+        }
+      },
+      "required": ["actorType", "system"],
+      "additionalProperties": true
+    },
+    "machineUserActor": {
+      "type": "object",
+      "properties": {
+        "actorType": {
+          "type": "string",
+          "const": "machineUser"
+        },
+        "machineUserId": {
+          "$ref": "#/definitions/id"
+        }
+      },
+      "required": ["actorType", "machineUserId"],
+      "additionalProperties": true
+    },
+    "internalActor": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "actorType": {
+              "type": "string",
+              "const": "UNKNOWN"
+            }
+          },
+          "required": ["actorType"],
+          "additionalProperties": true
+        },
+        {
+          "$ref": "#/definitions/userActor"
+        },
+        {
+          "$ref": "#/definitions/machineUserActor"
+        },
+        {
+          "$ref": "#/definitions/systemActor"
+        }
+      ]
+    },
+    "actor": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/internalActor/anyOf/0"
+        },
+        {
+          "$ref": "#/definitions/userActor"
+        },
+        {
+          "$ref": "#/definitions/machineUserActor"
+        },
+        {
+          "$ref": "#/definitions/systemActor"
+        },
+        {
+          "$ref": "#/definitions/customerActor"
+        }
+      ]
+    },
+    "user": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "email": {
+          "$ref": "#/definitions/emailAddress"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "publicName": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ONLINE", "OFFLINE", "BREAK", "AWAY", "UNKNOWN_USER_STATUS"]
+        },
+        "statusChangedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "deletedAt": {
+          "$ref": "#/definitions/nullableDatetime"
+        },
+        "deletedBy": {
+          "$ref": "#/definitions/nullableInternalActor"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "fullName",
+        "publicName",
+        "status",
+        "statusChangedAt",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy",
+        "deletedAt",
+        "deletedBy"
+      ],
+      "additionalProperties": true
+    },
+    "machineUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "publicName": {
+          "type": "string"
+        },
+        "description": {
+          "type": ["string", "null"]
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "deletedAt": {
+          "$ref": "#/definitions/nullableDatetime"
+        },
+        "deletedBy": {
+          "$ref": "#/definitions/nullableInternalActor"
+        }
+      },
+      "required": [
+        "id",
+        "fullName",
+        "publicName",
+        "description",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy",
+        "deletedAt",
+        "deletedBy"
+      ],
+      "additionalProperties": true
+    },
+    "customerGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "workspaceId": {
+          "$ref": "#/definitions/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#([a-fA-F0-9]{3,4}|[a-fA-F0-9]{4}(?:[a-fA-F0-9]{2}){1,2})$"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/internalActor"
+        }
+      },
+      "required": [
+        "id",
+        "workspaceId",
+        "name",
+        "key",
+        "color",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "customerGroupMembership": {
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "$ref": "#/definitions/id"
+        },
+        "customerGroupId": {
+          "$ref": "#/definitions/id"
+        },
+        "workspaceId": {
+          "$ref": "#/definitions/id"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "customerGroup": {
+          "$ref": "#/definitions/customerGroup"
+        }
+      },
+      "required": [
+        "customerId",
+        "customerGroupId",
+        "workspaceId",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy",
+        "customerGroup"
+      ],
+      "additionalProperties": true
+    },
+    "customer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "email": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "$ref": "#/definitions/emailAddress"
+            },
+            "isVerified": {
+              "type": "boolean"
+            },
+            "verifiedAt": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/datetime"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": ["email", "isVerified", "verifiedAt"],
+          "additionalProperties": true
+        },
+        "externalId": {
+          "type": ["string", "null"]
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "shortName": {
+          "type": ["string", "null"]
+        },
+        "markedAsSpamAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "markedAsSpamBy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/internalActor"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "customerGroupMemberships": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/customerGroupMembership"
+          }
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "externalId",
+        "fullName",
+        "shortName",
+        "customerGroupMemberships",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "attachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fileSizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fileMimeType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fileExtension": {
+          "$ref": "#/definitions/nullableString"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": [
+        "id",
+        "fileName",
+        "fileSizeBytes",
+        "fileMimeType",
+        "fileExtension",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "emailAuthenticity": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "UNKNOWN", "UNKNOWN_EMAIL_AUTHENTICITY"]
+    },
+    "emailActor": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/internalActor/anyOf/0"
+        },
+        {
+          "$ref": "#/definitions/userActor"
+        },
+        {
+          "$ref": "#/definitions/customerActor"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "actorType": {
+              "type": "string",
+              "const": "supportEmailAddress"
+            },
+            "supportEmailAddress": {
+              "type": "string"
+            }
+          },
+          "required": ["actorType", "supportEmailAddress"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "actorType": {
+              "type": "string",
+              "const": "deletedCustomer"
+            },
+            "customerId": {
+              "$ref": "#/definitions/id"
+            }
+          },
+          "required": ["actorType", "customerId"],
+          "additionalProperties": true
+        }
+      ]
+    },
+    "emailParticipant": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "name": {
+          "type": ["string", "null"]
+        },
+        "emailActor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/emailActor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["email", "name", "emailActor"],
+      "additionalProperties": true
+    },
+    "email": {
+      "type": "object",
+      "properties": {
+        "timelineEntryId": {
+          "$ref": "#/definitions/id"
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "to": {
+          "$ref": "#/definitions/emailParticipant"
+        },
+        "from": {
+          "$ref": "#/definitions/emailParticipant"
+        },
+        "replyTo": {
+          "type": ["string", "null"]
+        },
+        "additionalRecipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/emailParticipant"
+          }
+        },
+        "hiddenRecipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/emailParticipant"
+          }
+        },
+        "subject": {
+          "type": ["string", "null"]
+        },
+        "textContent": {
+          "type": ["string", "null"]
+        },
+        "markdownContent": {
+          "type": ["string", "null"]
+        },
+        "authenticity": {
+          "$ref": "#/definitions/emailAuthenticity"
+        },
+        "sentAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receivedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/attachment"
+          }
+        },
+        "inReplyToEmailId": {
+          "type": ["string", "null"]
+        },
+        "isStartOfThread": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": [
+        "timelineEntryId",
+        "id",
+        "to",
+        "from",
+        "replyTo",
+        "additionalRecipients",
+        "hiddenRecipients",
+        "subject",
+        "textContent",
+        "markdownContent",
+        "authenticity",
+        "sentAt",
+        "receivedAt",
+        "attachments",
+        "inReplyToEmailId",
+        "isStartOfThread",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "chat": {
+      "type": "object",
+      "properties": {
+        "timelineEntryId": {
+          "$ref": "#/definitions/id"
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "customerReadAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 5000
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/attachment"
+          }
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": [
+        "timelineEntryId",
+        "id",
+        "customerReadAt",
+        "attachments",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "customEntryAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "fileName": {
+          "$ref": "#/definitions/attachment/properties/fileName"
+        },
+        "fileSizeBytes": {
+          "$ref": "#/definitions/attachment/properties/fileSizeBytes"
+        },
+        "fileMimeType": {
+          "$ref": "#/definitions/attachment/properties/fileMimeType"
+        },
+        "fileExtension": {
+          "$ref": "#/definitions/nullableString"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "type": {
+          "type": "string",
+          "const": "CUSTOM_TIMELINE_ENTRY"
+        }
+      },
+      "required": [
+        "id",
+        "fileName",
+        "fileSizeBytes",
+        "fileMimeType",
+        "fileExtension",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "chatEntryAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "fileName": {
+          "$ref": "#/definitions/attachment/properties/fileName"
+        },
+        "fileSizeBytes": {
+          "$ref": "#/definitions/attachment/properties/fileSizeBytes"
+        },
+        "fileMimeType": {
+          "$ref": "#/definitions/attachment/properties/fileMimeType"
+        },
+        "fileExtension": {
+          "$ref": "#/definitions/nullableString"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "type": {
+          "type": "string",
+          "const": "CHAT"
+        }
+      },
+      "required": [
+        "id",
+        "fileName",
+        "fileSizeBytes",
+        "fileMimeType",
+        "fileExtension",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "emailEntryAttachment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "fileName": {
+          "$ref": "#/definitions/attachment/properties/fileName"
+        },
+        "fileSizeBytes": {
+          "$ref": "#/definitions/attachment/properties/fileSizeBytes"
+        },
+        "fileMimeType": {
+          "$ref": "#/definitions/attachment/properties/fileMimeType"
+        },
+        "fileExtension": {
+          "$ref": "#/definitions/nullableString"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "type": {
+          "type": "string",
+          "const": "EMAIL"
+        },
+        "emailContentId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "fileName",
+        "fileSizeBytes",
+        "fileMimeType",
+        "fileExtension",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy",
+        "type",
+        "emailContentId"
+      ],
+      "additionalProperties": true
+    },
+    "componentTextSize": {
+      "type": "string",
+      "enum": ["S", "M", "L", "UNKNOWN_COMPONENT_TEXT_SIZE"]
+    },
+    "componentTextColor": {
+      "type": "string",
+      "enum": ["NORMAL", "MUTED", "SUCCESS", "WARNING", "ERROR", "UNKNOWN_COMPONENT_TEXT_COLOR"]
+    },
+    "componentPlainTextSize": {
+      "type": "string",
+      "enum": ["S", "M", "L", "UNKNOWN_COMPONENT_PLAIN_TEXT_SIZE"]
+    },
+    "componentPlainTextColor": {
+      "type": "string",
+      "enum": [
+        "NORMAL",
+        "MUTED",
+        "SUCCESS",
+        "WARNING",
+        "ERROR",
+        "UNKNOWN_COMPONENT_PLAIN_TEXT_COLOR"
+      ]
+    },
+    "componentSpacerSize": {
+      "type": "string",
+      "enum": ["XS", "S", "M", "L", "XL", "UNKNOWN_COMPONENT_SPACER_SIZE"]
+    },
+    "componentDividerSpacingSize": {
+      "type": "string",
+      "enum": ["XS", "S", "M", "L", "XL", "UNKNOWN_COMPONENT_DIVIDER_SPACING_SIZE"]
+    },
+    "componentBadgeColor": {
+      "type": "string",
+      "enum": ["GREY", "GREEN", "YELLOW", "RED", "BLUE", "UNKNOWN_COMPONENT_BADGE_COLOR"]
+    },
+    "componentText": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text"
+        },
+        "textSize": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/componentTextSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "textColor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/componentTextColor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 5000
+        }
+      },
+      "required": ["type", "textSize", "textColor", "text"],
+      "additionalProperties": true
+    },
+    "componentPlainText": {
+      "type": "object",
+      "properties": {
+        "plainTextSize": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/componentPlainTextSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "plainTextColor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/componentPlainTextColor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "plainText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 5000
+        },
+        "type": {
+          "type": "string",
+          "const": "plainText"
+        }
+      },
+      "required": ["plainTextSize", "plainTextColor", "plainText", "type"],
+      "additionalProperties": true
+    },
+    "componentSpacer": {
+      "type": "object",
+      "properties": {
+        "spacerSize": {
+          "$ref": "#/definitions/componentSpacerSize"
+        },
+        "type": {
+          "type": "string",
+          "const": "spacer"
+        }
+      },
+      "required": ["spacerSize", "type"],
+      "additionalProperties": true
+    },
+    "componentDivider": {
+      "type": "object",
+      "properties": {
+        "dividerSpacingSize": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/componentDividerSpacingSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "type": "string",
+          "const": "divider"
+        }
+      },
+      "required": ["dividerSpacingSize", "type"],
+      "additionalProperties": true
+    },
+    "componentLinkButton": {
+      "type": "object",
+      "properties": {
+        "linkButtonUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "linkButtonLabel": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "type": {
+          "type": "string",
+          "const": "linkButton"
+        }
+      },
+      "required": ["linkButtonUrl", "linkButtonLabel", "type"],
+      "additionalProperties": true
+    },
+    "componentWorkflowButton": {
+      "type": "object",
+      "properties": {
+        "workflowButtonLabel": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "workflowButtonWorkflowIdentifier": {
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string"
+            }
+          },
+          "required": ["workflowId"],
+          "additionalProperties": true
+        },
+        "type": {
+          "type": "string",
+          "const": "workflowButton"
+        }
+      },
+      "required": ["workflowButtonLabel", "workflowButtonWorkflowIdentifier", "type"],
+      "additionalProperties": true
+    },
+    "componentBadge": {
+      "type": "object",
+      "properties": {
+        "badgeLabel": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "badgeColor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/componentBadgeColor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "type": "string",
+          "const": "badge"
+        }
+      },
+      "required": ["badgeLabel", "badgeColor", "type"],
+      "additionalProperties": true
+    },
+    "componentCopyButton": {
+      "type": "object",
+      "properties": {
+        "copyButtonValue": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "copyButtonTooltipLabel": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "type": "string",
+          "const": "copyButton"
+        }
+      },
+      "required": ["copyButtonValue", "copyButtonTooltipLabel", "type"],
+      "additionalProperties": true
+    },
+    "componentRowContent": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "UNKNOWN"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "$ref": "#/definitions/componentText"
+        },
+        {
+          "$ref": "#/definitions/componentPlainText"
+        },
+        {
+          "$ref": "#/definitions/componentSpacer"
+        },
+        {
+          "$ref": "#/definitions/componentDivider"
+        },
+        {
+          "$ref": "#/definitions/componentLinkButton"
+        },
+        {
+          "$ref": "#/definitions/componentBadge"
+        },
+        {
+          "$ref": "#/definitions/componentCopyButton"
+        },
+        {
+          "$ref": "#/definitions/componentWorkflowButton"
+        }
+      ]
+    },
+    "componentRow": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "row"
+        },
+        "rowMainContent": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/componentRowContent"
+          }
+        },
+        "rowAsideContent": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/componentRowContent"
+          }
+        }
+      },
+      "required": ["type", "rowMainContent", "rowAsideContent"],
+      "additionalProperties": true
+    },
+    "componentContainerContent": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/componentRowContent/anyOf/0"
+        },
+        {
+          "$ref": "#/definitions/componentText"
+        },
+        {
+          "$ref": "#/definitions/componentPlainText"
+        },
+        {
+          "$ref": "#/definitions/componentSpacer"
+        },
+        {
+          "$ref": "#/definitions/componentDivider"
+        },
+        {
+          "$ref": "#/definitions/componentLinkButton"
+        },
+        {
+          "$ref": "#/definitions/componentBadge"
+        },
+        {
+          "$ref": "#/definitions/componentCopyButton"
+        },
+        {
+          "$ref": "#/definitions/componentRow"
+        },
+        {
+          "$ref": "#/definitions/componentWorkflowButton"
+        }
+      ]
+    },
+    "componentContainer": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "container"
+        },
+        "containerContent": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/componentContainerContent"
+          }
+        }
+      },
+      "required": ["type", "containerContent"],
+      "additionalProperties": true
+    },
+    "component": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/componentRowContent/anyOf/0"
+        },
+        {
+          "$ref": "#/definitions/componentText"
+        },
+        {
+          "$ref": "#/definitions/componentPlainText"
+        },
+        {
+          "$ref": "#/definitions/componentSpacer"
+        },
+        {
+          "$ref": "#/definitions/componentDivider"
+        },
+        {
+          "$ref": "#/definitions/componentLinkButton"
+        },
+        {
+          "$ref": "#/definitions/componentBadge"
+        },
+        {
+          "$ref": "#/definitions/componentCopyButton"
+        },
+        {
+          "$ref": "#/definitions/componentRow"
+        },
+        {
+          "$ref": "#/definitions/componentContainer"
+        },
+        {
+          "$ref": "#/definitions/componentWorkflowButton"
+        }
+      ]
+    },
+    "labelType": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "icon": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "isArchived": {
+          "type": "boolean",
+          "default": false
+        },
+        "archivedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "archivedBy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/internalActor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "externalId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "isExcludedFromAi": {
+          "type": "boolean",
+          "default": false
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/internalActor"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "archivedAt",
+        "archivedBy",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "label": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "labelType": {
+          "$ref": "#/definitions/labelType"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": ["id", "labelType", "createdAt", "createdBy", "updatedAt", "updatedBy"],
+      "additionalProperties": true
+    },
+    "tier": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "externalId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "color": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "defaultThreadPriority": {
+          "$ref": "#/definitions/threadPriority",
+          "default": 2
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/internalActor"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "externalId",
+        "color",
+        "isDefault",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "threadPriority": {
+      "type": "number"
+    },
+    "threadPriorityFilter": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/threadPriority"
+      },
+      "minItems": 1
+    },
+    "threadAssignee": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "UNKNOWN"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "$ref": "#/definitions/user"
+        },
+        {
+          "$ref": "#/definitions/machineUser"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": ["id"],
+          "additionalProperties": true
+        }
+      ]
+    },
+    "threadStatus": {
+      "type": "string",
+      "enum": ["TODO", "DONE", "SNOOZED", "UNKNOWN_THREAD_STATUS"]
+    },
+    "threadMessageInfo": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "$ref": "#/definitions/datetime"
+        },
+        "messageSource": {
+          "type": "string",
+          "enum": [
+            "CHAT",
+            "EMAIL",
+            "API",
+            "SLACK",
+            "MS_TEAMS",
+            "UNKNOWN_THREAD_MESSAGE_INFO_MESSAGE_SOURCE"
+          ]
+        },
+        "actorId": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "actorType": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": ["user", "machineUser", "customer", "system"]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": ["timestamp", "messageSource"],
+      "additionalProperties": true
+    },
+    "threadStatusDetail": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "UNKNOWN"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "CREATED"
+            },
+            "createdAt": {
+              "$ref": "#/definitions/datetime"
+            }
+          },
+          "required": ["type", "createdAt"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "NEW_REPLY"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "IN_PROGRESS"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "WAITING_FOR_CUSTOMER"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "WAITING_FOR_DURATION"
+            },
+            "waitingUntil": {
+              "$ref": "#/definitions/datetime"
+            },
+            "durationSeconds": {
+              "type": "number"
+            }
+          },
+          "required": ["type", "waitingUntil", "durationSeconds"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "THREAD_LINK_UPDATED"
+            },
+            "linear": {
+              "type": "object",
+              "properties": {
+                "issueId": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "required": ["issueId"],
+              "additionalProperties": true
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DONE_MANUALLY_SET"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "IGNORED"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "DONE_AUTOMATICALLY_SET"
+            },
+            "afterSeconds": {
+              "type": "number"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "THREAD_DISCUSSION_RESOLVED"
+            },
+            "threadDiscussionId": {
+              "$ref": "#/definitions/id"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        }
+      ]
+    },
+    "threadField": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "threadId": {
+          "$ref": "#/definitions/id"
+        },
+        "key": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "STRING",
+            "BOOL",
+            "ENUM",
+            "NUMBER",
+            "CURRENCY",
+            "DATE",
+            "UNKNOWN_THREAD_FIELD_SCHEMA_TYPE"
+          ]
+        },
+        "stringValue": {
+          "type": ["string", "null"]
+        },
+        "booleanValue": {
+          "type": ["boolean", "null"]
+        },
+        "numberValue": {
+          "type": ["number", "null"],
+          "default": null
+        },
+        "dateValue": {
+          "type": ["string", "null"],
+          "default": null
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": [
+        "id",
+        "threadId",
+        "key",
+        "type",
+        "stringValue",
+        "booleanValue",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "thread": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "customer": {
+          "$ref": "#/definitions/customer"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "previewText": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "priority": {
+          "$ref": "#/definitions/threadPriority"
+        },
+        "externalId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "$ref": "#/definitions/threadStatus"
+        },
+        "statusChangedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "statusChangedBy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/actor"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "statusDetail": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/threadStatusDetail"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "assignee": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/threadAssignee"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "assignedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "additionalAssignees": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/threadAssignee"
+          },
+          "default": []
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/label"
+          }
+        },
+        "firstInboundMessageInfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/threadMessageInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "firstOutboundMessageInfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/threadMessageInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastInboundMessageInfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/threadMessageInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastOutboundMessageInfo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/threadMessageInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "supportEmailAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": [
+        "id",
+        "customer",
+        "title",
+        "priority",
+        "externalId",
+        "status",
+        "statusChangedAt",
+        "statusDetail",
+        "assignee",
+        "assignedAt",
+        "labels",
+        "firstInboundMessageInfo",
+        "firstOutboundMessageInfo",
+        "lastInboundMessageInfo",
+        "lastOutboundMessageInfo",
+        "supportEmailAddresses",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "noteEntry": {
+      "type": "object",
+      "properties": {
+        "entryType": {
+          "type": "string",
+          "const": "note"
+        },
+        "noteId": {
+          "$ref": "#/definitions/id"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000
+        },
+        "markdown": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["entryType", "noteId", "text", "markdown"],
+      "additionalProperties": true
+    },
+    "chatEntry": {
+      "type": "object",
+      "properties": {
+        "entryType": {
+          "type": "string",
+          "const": "chat"
+        },
+        "chatId": {
+          "$ref": "#/definitions/id"
+        },
+        "text": {
+          "type": ["string", "null"]
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/chatEntryAttachment"
+          }
+        },
+        "customerReadAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["entryType", "chatId", "text", "attachments", "customerReadAt"],
+      "additionalProperties": true
+    },
+    "emailEntry": {
+      "type": "object",
+      "properties": {
+        "entryType": {
+          "type": "string",
+          "const": "email"
+        },
+        "emailId": {
+          "$ref": "#/definitions/id"
+        },
+        "to": {
+          "$ref": "#/definitions/emailParticipant"
+        },
+        "from": {
+          "$ref": "#/definitions/emailParticipant"
+        },
+        "additionalRecipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/emailParticipant"
+          }
+        },
+        "hiddenRecipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/emailParticipant"
+          }
+        },
+        "subject": {
+          "type": ["string", "null"]
+        },
+        "textContent": {
+          "type": ["string", "null"]
+        },
+        "hasMoreTextContent": {
+          "type": "boolean"
+        },
+        "markdownContent": {
+          "type": ["string", "null"]
+        },
+        "hasMoreMarkdownContent": {
+          "type": "boolean"
+        },
+        "authenticity": {
+          "$ref": "#/definitions/emailAuthenticity"
+        },
+        "sentAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receivedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/emailEntryAttachment"
+          }
+        },
+        "inReplyToEmailId": {
+          "type": ["string", "null"]
+        },
+        "isStartOfThread": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "entryType",
+        "emailId",
+        "to",
+        "from",
+        "additionalRecipients",
+        "hiddenRecipients",
+        "subject",
+        "textContent",
+        "hasMoreTextContent",
+        "markdownContent",
+        "hasMoreMarkdownContent",
+        "authenticity",
+        "sentAt",
+        "receivedAt",
+        "attachments",
+        "inReplyToEmailId",
+        "isStartOfThread"
+      ],
+      "additionalProperties": true
+    },
+    "customEntry": {
+      "type": "object",
+      "properties": {
+        "entryType": {
+          "type": "string",
+          "const": "custom"
+        },
+        "externalId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "type": {
+          "type": ["string", "null"]
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/component"
+          }
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/customEntryAttachment"
+          }
+        }
+      },
+      "required": ["entryType", "externalId", "title", "type", "components", "attachments"],
+      "additionalProperties": true
+    },
+    "timelineEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "customerId": {
+          "$ref": "#/definitions/id"
+        },
+        "threadId": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "timestamp": {
+          "$ref": "#/definitions/datetime"
+        },
+        "actor": {
+          "$ref": "#/definitions/actor"
+        },
+        "entry": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "entryType": {
+                  "type": "string",
+                  "const": "UNKNOWN"
+                }
+              },
+              "required": ["entryType"],
+              "additionalProperties": true
+            },
+            {
+              "$ref": "#/definitions/noteEntry"
+            },
+            {
+              "$ref": "#/definitions/chatEntry"
+            },
+            {
+              "$ref": "#/definitions/emailEntry"
+            },
+            {
+              "$ref": "#/definitions/customEntry"
+            }
+          ]
+        }
+      },
+      "required": ["id", "customerId", "timestamp", "actor", "entry"],
+      "additionalProperties": true
+    },
+    "serviceLevelAgreementStatusDetail": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "UNKNOWN"
+            }
+          },
+          "required": ["status"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "breachTime": {
+              "$ref": "#/definitions/datetime"
+            },
+            "status": {
+              "type": "string",
+              "const": "PENDING"
+            }
+          },
+          "required": ["breachTime", "status"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "achievedAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "status": {
+              "type": "string",
+              "const": "ACHIEVED"
+            }
+          },
+          "required": ["achievedAt", "status"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "breachTime": {
+              "$ref": "#/definitions/datetime"
+            },
+            "status": {
+              "type": "string",
+              "const": "IMMINENT_BREACH"
+            }
+          },
+          "required": ["breachTime", "status"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "breachedAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "status": {
+              "type": "string",
+              "const": "BREACHING"
+            }
+          },
+          "required": ["breachedAt", "status"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "breachedAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "completedAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "status": {
+              "type": "string",
+              "const": "BREACHED"
+            }
+          },
+          "required": ["breachedAt", "completedAt", "status"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "cancelledAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "status": {
+              "type": "string",
+              "const": "CANCELLED"
+            }
+          },
+          "required": ["cancelledAt", "status"],
+          "additionalProperties": true
+        }
+      ]
+    },
+    "serviceLevelAgreement": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "UNKNOWN"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/id"
+            },
+            "tier": {
+              "$ref": "#/definitions/tier"
+            },
+            "useBusinessHoursOnly": {
+              "type": "boolean"
+            },
+            "threadPriorityFilter": {
+              "$ref": "#/definitions/threadPriorityFilter"
+            },
+            "createdAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "createdBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "updatedAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updatedBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "type": {
+              "type": "string",
+              "const": "FIRST_RESPONSE_TIME"
+            },
+            "firstResponseTimeMinutes": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "tier",
+            "useBusinessHoursOnly",
+            "threadPriorityFilter",
+            "createdAt",
+            "createdBy",
+            "updatedAt",
+            "updatedBy",
+            "type",
+            "firstResponseTimeMinutes"
+          ],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/id"
+            },
+            "tier": {
+              "$ref": "#/definitions/tier"
+            },
+            "useBusinessHoursOnly": {
+              "$ref": "#/definitions/serviceLevelAgreement/anyOf/1/properties/useBusinessHoursOnly"
+            },
+            "threadPriorityFilter": {
+              "$ref": "#/definitions/threadPriorityFilter"
+            },
+            "createdAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "createdBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "updatedAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updatedBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "type": {
+              "type": "string",
+              "const": "NEXT_RESPONSE_TIME"
+            },
+            "nextResponseTimeMinutes": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "tier",
+            "useBusinessHoursOnly",
+            "threadPriorityFilter",
+            "createdAt",
+            "createdBy",
+            "updatedAt",
+            "updatedBy",
+            "type",
+            "nextResponseTimeMinutes"
+          ],
+          "additionalProperties": true
+        }
+      ]
+    },
+    "slackMessage": {
+      "type": "object",
+      "properties": {
+        "timelineEntryId": {
+          "$ref": "#/definitions/id"
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "text": {
+          "type": "string"
+        },
+        "resolvedText": {
+          "type": "string",
+          "default": ""
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/attachment"
+          }
+        },
+        "slackChannelId": {
+          "type": "string"
+        },
+        "slackChannelName": {
+          "type": "string"
+        },
+        "slackMessageLink": {
+          "type": "string"
+        },
+        "slackReactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "actors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "actorId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "actorType": {
+                      "$ref": "#/definitions/threadMessageInfo/properties/actorType/anyOf/0"
+                    },
+                    "slackUserId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["actorId", "actorType", "slackUserId"],
+                  "additionalProperties": true
+                }
+              },
+              "imageUrl": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              }
+            },
+            "required": ["name", "actors"],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": [
+        "timelineEntryId",
+        "id",
+        "text",
+        "attachments",
+        "slackChannelId",
+        "slackChannelName",
+        "slackMessageLink",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "discordMessage": {
+      "type": "object",
+      "properties": {
+        "timelineEntryId": {
+          "$ref": "#/definitions/id"
+        },
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "discordGuildId": {
+          "type": "string"
+        },
+        "discordChannelId": {
+          "type": "string"
+        },
+        "discordThreadId": {
+          "type": "string"
+        },
+        "discordId": {
+          "type": "string"
+        },
+        "discordTimestamp": {
+          "$ref": "#/definitions/datetime"
+        },
+        "textContent": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/attachment"
+          },
+          "default": []
+        },
+        "lastEditedOnDiscordAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "deletedOnDiscordAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": [
+        "timelineEntryId",
+        "id",
+        "discordGuildId",
+        "discordChannelId",
+        "discordThreadId",
+        "discordId",
+        "discordTimestamp",
+        "textContent",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "msTeamsMessage": {
+      "type": "object",
+      "properties": {
+        "timelineEntryId": {
+          "$ref": "#/definitions/id"
+        },
+        "threadId": {
+          "$ref": "#/definitions/id"
+        },
+        "msTeamsMessageId": {
+          "type": "string"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": ["INBOUND", "OUTBOUND", "UNKNOWN_MS_TEAMS_MESSAGE_TYPE"]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/attachment"
+          }
+        },
+        "lastEditedOnMsTeamsAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deletedOnMsTeamsAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/actor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/actor"
+        }
+      },
+      "required": [
+        "timelineEntryId",
+        "threadId",
+        "msTeamsMessageId",
+        "type",
+        "text",
+        "attachments",
+        "lastEditedOnMsTeamsAt",
+        "deletedOnMsTeamsAt",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "customerChangedPayload": {
+      "type": "object",
+      "properties": {
+        "changeType": {
+          "type": "string",
+          "enum": ["ADDED", "UPDATED"]
+        },
+        "eventType": {
+          "type": "string",
+          "const": "customer.customer_changed"
+        },
+        "customer": {
+          "$ref": "#/definitions/customer"
+        },
+        "previousCustomer": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/customer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["changeType", "eventType", "customer", "previousCustomer"],
+      "additionalProperties": true,
+      "description": "A customer has been created or updated"
+    },
+    "timelineEntryChangedPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "timeline.timeline_entry_changed"
+        },
+        "previousTimelineEntry": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/timelineEntry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null if changeType=ADDED"
+        },
+        "timelineEntry": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/timelineEntry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null if changeType=REMOVED"
+        },
+        "changeType": {
+          "type": "string",
+          "enum": ["ADDED", "UPDATED", "REMOVED"]
+        }
+      },
+      "required": ["eventType", "previousTimelineEntry", "timelineEntry", "changeType"],
+      "additionalProperties": true,
+      "description": "A timeline entry has been added, updated or removed"
+    },
+    "webhookMetadata": {
+      "type": "object",
+      "properties": {
+        "webhookTargetId": {
+          "$ref": "#/definitions/id"
+        },
+        "webhookTargetVersion": {
+          "type": "string",
+          "const": "2026-02-27"
+        },
+        "webhookDeliveryAttemptId": {
+          "$ref": "#/definitions/id"
+        },
+        "webhookDeliveryAttemptNumber": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "webhookDeliveryAttemptTimestamp": {
+          "$ref": "#/definitions/datetime"
+        }
+      },
+      "required": [
+        "webhookTargetId",
+        "webhookTargetVersion",
+        "webhookDeliveryAttemptId",
+        "webhookDeliveryAttemptNumber",
+        "webhookDeliveryAttemptTimestamp"
+      ],
+      "additionalProperties": true
+    },
+    "customerGroupMembershipsChangedPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "customer.customer_group_memberships_changed"
+        },
+        "changeType": {
+          "type": "string",
+          "enum": ["ADDED", "REMOVED"]
+        },
+        "customer": {
+          "$ref": "#/definitions/customer"
+        },
+        "previousCustomer": {
+          "$ref": "#/definitions/customer"
+        }
+      },
+      "required": ["eventType", "changeType", "customer", "previousCustomer"],
+      "additionalProperties": true
+    },
+    "customerGroupChangedPayload": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "changeType": {
+              "type": "string",
+              "const": "ADDED"
+            },
+            "eventType": {
+              "type": "string",
+              "const": "customer.customer_group_changed"
+            },
+            "customerGroup": {
+              "$ref": "#/definitions/customerGroup"
+            }
+          },
+          "required": ["changeType", "eventType", "customerGroup"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "changeType": {
+              "type": "string",
+              "const": "UPDATED"
+            },
+            "eventType": {
+              "type": "string",
+              "const": "customer.customer_group_changed"
+            },
+            "customerGroup": {
+              "$ref": "#/definitions/customerGroup"
+            },
+            "previousCustomerGroup": {
+              "$ref": "#/definitions/customerGroup"
+            }
+          },
+          "required": ["changeType", "eventType", "customerGroup", "previousCustomerGroup"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "changeType": {
+              "type": "string",
+              "const": "REMOVED"
+            },
+            "eventType": {
+              "type": "string",
+              "const": "customer.customer_group_changed"
+            },
+            "previousCustomerGroup": {
+              "$ref": "#/definitions/customerGroup"
+            }
+          },
+          "required": ["changeType", "eventType", "previousCustomerGroup"],
+          "additionalProperties": true
+        }
+      ]
+    },
+    "threadCreatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_created"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        }
+      },
+      "required": ["eventType", "thread"],
+      "additionalProperties": true
+    },
+    "threadStatusTransitionedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_status_transitioned"
+        },
+        "previousThread": {
+          "$ref": "#/definitions/thread"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        }
+      },
+      "required": ["eventType", "previousThread", "thread"],
+      "additionalProperties": true
+    },
+    "threadAssignmentTransitionedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_assignment_transitioned"
+        },
+        "previousThread": {
+          "$ref": "#/definitions/thread"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        }
+      },
+      "required": ["eventType", "previousThread", "thread"],
+      "additionalProperties": true
+    },
+    "threadEmailReceivedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.email_received"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "email": {
+          "$ref": "#/definitions/email"
+        }
+      },
+      "required": ["eventType", "thread", "email"],
+      "additionalProperties": true
+    },
+    "threadEmailSentPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.email_sent"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "email": {
+          "$ref": "#/definitions/email"
+        }
+      },
+      "required": ["eventType", "thread", "email"],
+      "additionalProperties": true
+    },
+    "threadLabelsChangedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_labels_changed"
+        },
+        "changeType": {
+          "type": "string",
+          "enum": ["ADDED", "REMOVED"]
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "previousThread": {
+          "$ref": "#/definitions/thread"
+        }
+      },
+      "required": ["eventType", "changeType", "thread", "previousThread"],
+      "additionalProperties": true
+    },
+    "threadPriorityChangedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_priority_changed"
+        },
+        "previousThread": {
+          "$ref": "#/definitions/thread"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        }
+      },
+      "required": ["eventType", "previousThread", "thread"],
+      "additionalProperties": true
+    },
+    "threadFieldCreatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_field_created"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "threadField": {
+          "$ref": "#/definitions/threadField"
+        }
+      },
+      "required": ["eventType", "thread", "threadField"],
+      "additionalProperties": true
+    },
+    "threadFieldUpdatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_field_updated"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "previousThreadField": {
+          "$ref": "#/definitions/threadField"
+        },
+        "threadField": {
+          "$ref": "#/definitions/threadField"
+        }
+      },
+      "required": ["eventType", "thread", "previousThreadField", "threadField"],
+      "additionalProperties": true
+    },
+    "threadFieldDeletedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_field_deleted"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "previousThreadField": {
+          "$ref": "#/definitions/threadField"
+        }
+      },
+      "required": ["eventType", "thread", "previousThreadField"],
+      "additionalProperties": true
+    },
+    "threadChatSentPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.chat_sent"
+        },
+        "chat": {
+          "$ref": "#/definitions/chat"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        }
+      },
+      "required": ["eventType", "chat", "thread"],
+      "additionalProperties": true
+    },
+    "threadChatReceivedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.chat_received"
+        },
+        "chat": {
+          "$ref": "#/definitions/chat"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        }
+      },
+      "required": ["eventType", "chat", "thread"],
+      "additionalProperties": true
+    },
+    "threadNoteCreatedEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.note_created"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "note": {
+          "type": "object",
+          "properties": {
+            "timelineEntryId": {
+              "$ref": "#/definitions/id"
+            },
+            "id": {
+              "$ref": "#/definitions/id"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "markdown": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 10000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "createdAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "createdBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "updatedAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updatedBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "deletedAt": {
+              "$ref": "#/definitions/nullableDatetime"
+            },
+            "deletedBy": {
+              "$ref": "#/definitions/nullableInternalActor"
+            }
+          },
+          "required": [
+            "timelineEntryId",
+            "id",
+            "text",
+            "markdown",
+            "createdAt",
+            "createdBy",
+            "updatedAt",
+            "updatedBy",
+            "deletedAt",
+            "deletedBy"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": ["eventType", "thread", "note"],
+      "additionalProperties": true
+    },
+    "threadServiceLevelAgreementStatusTransitionedPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.service_level_agreement_status_transitioned"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "serviceLevelAgreement": {
+          "$ref": "#/definitions/serviceLevelAgreement"
+        },
+        "previousServiceLevelAgreementStatusDetail": {
+          "$ref": "#/definitions/serviceLevelAgreementStatusDetail"
+        },
+        "serviceLevelAgreementStatusDetail": {
+          "$ref": "#/definitions/serviceLevelAgreementStatusDetail"
+        }
+      },
+      "required": [
+        "eventType",
+        "thread",
+        "serviceLevelAgreement",
+        "previousServiceLevelAgreementStatusDetail",
+        "serviceLevelAgreementStatusDetail"
+      ],
+      "additionalProperties": true
+    },
+    "threadSlackMessageReceivedEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.slack_message_received"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "slackMessage": {
+          "$ref": "#/definitions/slackMessage"
+        }
+      },
+      "required": ["eventType", "thread", "slackMessage"],
+      "additionalProperties": true
+    },
+    "threadSlackMessageSentEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.slack_message_sent"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "slackMessage": {
+          "$ref": "#/definitions/slackMessage"
+        }
+      },
+      "required": ["eventType", "thread", "slackMessage"],
+      "additionalProperties": true
+    },
+    "threadSlackMessageUpdatedEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.slack_message_updated"
+        },
+        "changeType": {
+          "type": "string",
+          "enum": [
+            "MESSAGE_EDITED",
+            "MESSAGE_DELETED",
+            "REACTIONS_CHANGED",
+            "UNKNOWN_SLACK_MESSAGE_CHANGE_TYPE"
+          ]
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "slackMessage": {
+          "$ref": "#/definitions/slackMessage"
+        }
+      },
+      "required": ["eventType", "changeType", "thread", "slackMessage"],
+      "additionalProperties": true
+    },
+    "threadDiscordMessageReceivedEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.discord_message_received"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "discordMessage": {
+          "$ref": "#/definitions/discordMessage"
+        }
+      },
+      "required": ["eventType", "thread", "discordMessage"],
+      "additionalProperties": true
+    },
+    "threadDiscordMessageSentEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.discord_message_sent"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "discordMessage": {
+          "$ref": "#/definitions/discordMessage"
+        }
+      },
+      "required": ["eventType", "thread", "discordMessage"],
+      "additionalProperties": true
+    },
+    "threadDiscordMessageUpdatedEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.discord_message_updated"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "discordMessage": {
+          "$ref": "#/definitions/discordMessage"
+        }
+      },
+      "required": ["eventType", "thread", "discordMessage"],
+      "additionalProperties": true
+    },
+    "threadMSTeamsMessageReceivedEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.ms_teams_message_received"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "msTeamsMessage": {
+          "$ref": "#/definitions/msTeamsMessage"
+        }
+      },
+      "required": ["eventType", "thread", "msTeamsMessage"],
+      "additionalProperties": true
+    },
+    "threadMSTeamsMessageSentEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.ms_teams_message_sent"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "msTeamsMessage": {
+          "$ref": "#/definitions/msTeamsMessage"
+        }
+      },
+      "required": ["eventType", "thread", "msTeamsMessage"],
+      "additionalProperties": true
+    },
+    "customerCreatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "customer.customer_created"
+        },
+        "customer": {
+          "$ref": "#/definitions/customer"
+        }
+      },
+      "required": ["eventType", "customer"],
+      "additionalProperties": true,
+      "description": "A customer has been created"
+    },
+    "customerUpdatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "customer.customer_updated"
+        },
+        "customer": {
+          "$ref": "#/definitions/customer"
+        },
+        "previousCustomer": {
+          "$ref": "#/definitions/customer"
+        }
+      },
+      "required": ["eventType", "customer", "previousCustomer"],
+      "additionalProperties": true,
+      "description": "A customer has been updated"
+    },
+    "customerDeletedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "customer.customer_deleted"
+        },
+        "previousCustomer": {
+          "$ref": "#/definitions/customer"
+        }
+      },
+      "required": ["eventType", "previousCustomer"],
+      "additionalProperties": true,
+      "description": "A customer has been deleted"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

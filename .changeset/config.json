@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@team-plain/codegen-plugin"]
+  "ignore": ["@team-plain/sdk-codegen-plugin"]
 }

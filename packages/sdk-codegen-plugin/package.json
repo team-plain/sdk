@@ -1,0 +1,26 @@
+{
+  "name": "@team-plain/sdk-codegen-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@graphql-codegen/plugin-helpers": "^5.1.0",
+    "graphql": "^16.9.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
