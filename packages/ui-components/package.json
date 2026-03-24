@@ -1,0 +1,30 @@
+{
+  "name": "@team-plain/ui-components",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@team-plain/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@team-plain/sdk": "workspace:*",
+    "typescript": "^5.7.0"
+  }
+}

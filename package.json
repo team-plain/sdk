@@ -2,9 +2,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm --filter @team-plain/codegen-plugin build && pnpm --filter @team-plain/sdk codegen && pnpm --filter @team-plain/sdk build",
-    "typecheck": "tsc --noEmit --project packages/codegen-plugin/tsconfig.json && tsc --noEmit --project packages/sdk/tsconfig.json",
-    "test": "pnpm --filter @team-plain/codegen-plugin test",
+    "build": "pnpm --filter @team-plain/sdk-codegen-plugin build && pnpm --filter @team-plain/sdk codegen && pnpm --filter @team-plain/sdk build && pnpm --filter @team-plain/ui-components build && pnpm --filter @team-plain/webhooks build",
+    "typecheck": "pnpm --filter @team-plain/sdk-codegen-plugin exec tsc --noEmit && pnpm --filter @team-plain/sdk exec tsc --noEmit && pnpm --filter @team-plain/ui-components exec tsc --noEmit && pnpm --filter @team-plain/webhooks exec tsc --noEmit",
+    "test": "pnpm --filter @team-plain/sdk-codegen-plugin test && pnpm --filter @team-plain/ui-components test && pnpm --filter @team-plain/webhooks test",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",

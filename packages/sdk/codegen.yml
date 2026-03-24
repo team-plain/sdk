@@ -13,4 +13,4 @@ generates:
       skipTypename: true
   ./src/_generated_sdk.ts:
     plugins:
-      - "@team-plain/codegen-plugin"
+      - "@team-plain/sdk-codegen-plugin"
