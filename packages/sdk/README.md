@@ -76,7 +76,7 @@ const nextPage = await customers.fetchNext();
 
 ## Migrating from `@team-plain/typescript-sdk`
 
-If you're migrating from the old `@team-plain/typescript-sdk` package, see the [Migration Guide](../../MIGRATION.md) for a full breakdown of breaking changes including error handling, method renames, enum changes, and before/after examples.
+If you're migrating from the old `@team-plain/typescript-sdk` package, see the [Migration Guide](./MIGRATION.md) for a full breakdown of breaking changes including error handling, method renames, enum changes, and before/after examples.
 
 ## Resources
 
