@@ -90,6 +90,7 @@ Files prefixed with `_generated_` are auto-generated — don't edit them manuall
 | `pnpm --filter @team-plain/sdk build` | Build just the SDK |
 | `pnpm --filter @team-plain/ui-components build` | Build just ui-components |
 | `pnpm --filter @team-plain/ui-components test` | Test ui-components |
+| `pnpm --filter @team-plain/webhooks codegen` | Fetch + regenerate webhook schema types |
 | `pnpm --filter @team-plain/webhooks build` | Build just webhooks |
 | `pnpm --filter @team-plain/webhooks test` | Test webhooks |
 | `pnpm format` | Format with biome |
@@ -131,8 +132,7 @@ Edit files in `packages/sdk/src/`, export from `index.ts`, then `pnpm build`.
 ### Update the webhook schema
 
 ```bash
-curl -o packages/webhooks/src/webhook-schema.json https://core-api.uk.plain.com/webhooks/schema/latest.json
-npx json-schema-to-typescript --input packages/webhooks/src/webhook-schema.json --output packages/webhooks/src/webhook-schema.ts
+pnpm --filter @team-plain/webhooks codegen
 pnpm --filter @team-plain/webhooks build
 pnpm --filter @team-plain/webhooks test
 ```

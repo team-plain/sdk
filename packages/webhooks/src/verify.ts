@@ -1,12 +1,11 @@
 import * as crypto from "node:crypto";
-
-import { type Result, isErr } from "./result.js";
 import {
   type PlainWebhookError,
   PlainWebhookPayloadError,
   PlainWebhookSignatureVerificationError,
 } from "./errors.js";
 import { parsePlainWebhook } from "./parse.js";
+import { isErr, type Result } from "./result.js";
 import type { WebhooksSchemaDefinition } from "./webhook-schema.js";
 
 /**

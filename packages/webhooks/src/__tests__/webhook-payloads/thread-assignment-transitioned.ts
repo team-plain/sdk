@@ -39,7 +39,7 @@ export default {
       statusDetail: null,
       assignee: null,
       assignedAt: null,
-      additionalAsignees: [],
+      additionalAssignees: [],
       labels: [],
       firstInboundMessageInfo: {
         timestamp: "2024-03-06T12:32:05.710Z",
@@ -112,7 +112,7 @@ export default {
         deletedBy: null,
       },
       assignedAt: "2024-03-06T12:34:44.535Z",
-      additionalAsignees: [],
+      additionalAssignees: [],
       labels: [],
       firstInboundMessageInfo: {
         timestamp: "2024-03-06T12:32:05.710Z",
@@ -134,7 +134,7 @@ export default {
   id: "pEv_01HR9W4K5QEVAFQSYCKN2D8198",
   webhookMetadata: {
     webhookTargetId: "whTarget_01HR9VYX2GYKX1XCTFXRG1K3MX",
-    webhookTargetVersion: "2026-02-27",
+    webhookTargetVersion: "2026-03-13",
     webhookDeliveryAttemptId: "whAttempt_01HR9W4KV3RHX435FPZJ46P5WY",
     webhookDeliveryAttemptNumber: 1,
     webhookDeliveryAttemptTimestamp: "2024-03-06T12:34:45.219Z",

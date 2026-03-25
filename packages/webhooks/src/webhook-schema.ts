@@ -54,11 +54,11 @@ export type Component =
   | ComponentSpacer
   | ComponentDivider
   | ComponentLinkButton
+  | ComponentWorkflowButton
   | ComponentBadge
   | ComponentCopyButton
   | ComponentRow
-  | ComponentContainer
-  | ComponentWorkflowButton;
+  | ComponentContainer;
 export type ComponentTextSize = "S" | "M" | "L" | "UNKNOWN_COMPONENT_TEXT_SIZE";
 export type ComponentTextColor =
   | "NORMAL"
@@ -100,9 +100,9 @@ export type ComponentRowContent =
   | ComponentSpacer
   | ComponentDivider
   | ComponentLinkButton
+  | ComponentWorkflowButton
   | ComponentBadge
-  | ComponentCopyButton
-  | ComponentWorkflowButton;
+  | ComponentCopyButton;
 export type ComponentContainerContent =
   | {
       type: "UNKNOWN";
@@ -113,10 +113,10 @@ export type ComponentContainerContent =
   | ComponentSpacer
   | ComponentDivider
   | ComponentLinkButton
+  | ComponentWorkflowButton
   | ComponentBadge
   | ComponentCopyButton
-  | ComponentRow
-  | ComponentWorkflowButton;
+  | ComponentRow;
 export type CustomerGroupChangedPayload =
   | {
       changeType: "ADDED";
@@ -570,11 +570,12 @@ export interface ComponentLinkButton {
   [k: string]: unknown;
 }
 export interface ComponentWorkflowButton {
-  workflowButtonLabel: string;
   workflowButtonWorkflowIdentifier: {
-    workflowId: string;
+    workflowId?: string;
+    workflowKey?: string;
     [k: string]: unknown;
   };
+  workflowButtonLabel: string;
   type: "workflowButton";
   [k: string]: unknown;
 }
@@ -978,7 +979,7 @@ export interface ThreadChatReceivedPublicEventPayload {
 }
 export interface ThreadSlackMessageUpdatedEventPayload {
   eventType: "thread.slack_message_updated";
-  changeType:
+  changeType?:
     | "MESSAGE_EDITED"
     | "MESSAGE_DELETED"
     | "REACTIONS_CHANGED"
@@ -1025,7 +1026,7 @@ export interface ThreadDiscordMessageUpdatedEventPayload {
 }
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-02-27";
+  webhookTargetVersion: "2026-03-13";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

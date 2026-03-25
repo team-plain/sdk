@@ -17,6 +17,8 @@ pnpm check            # Format + lint with biome (auto-fix)
 
 Per-package scripts (codegen, test, etc.) are run via `pnpm --filter <pkg> <script>`.
 
+**Always run `pnpm check` after making any changes.** This auto-fixes formatting and linting issues. CI enforces both via `pnpm format:check` and `pnpm lint`, so unformatted or unlinted code will fail the build.
+
 ## Architecture
 
 Four packages in a pnpm monorepo:
@@ -72,9 +74,7 @@ Edit files in `packages/sdk/src/`, export from `index.ts`, then `pnpm build`.
 
 **Update the webhook schema:**
 ```bash
-curl -o packages/webhooks/src/webhook-schema.json https://core-api.uk.plain.com/webhooks/schema/latest.json
-# Regenerate TypeScript types from the JSON schema (requires json-schema-to-typescript)
-npx json-schema-to-typescript --input packages/webhooks/src/webhook-schema.json --output packages/webhooks/src/webhook-schema.ts
+pnpm --filter @team-plain/webhooks codegen
 pnpm --filter @team-plain/webhooks build
 pnpm --filter @team-plain/webhooks test
 ```
