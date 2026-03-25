@@ -1,5 +1,15 @@
 # @team-plain/sdk
 
+## 1.0.0
+
+### Major Changes
+
+- 5a6cf0b: Initial release
+
+### Minor Changes
+
+- fa8a952: Update GraphQL schema
+
 ## 0.3.0
 
 ### Minor Changes
