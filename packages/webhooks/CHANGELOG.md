@@ -1,5 +1,11 @@
 # @team-plain/webhooks
 
+## 1.0.0
+
+### Major Changes
+
+- 5a6cf0b: Initial release
+
 ## 0.2.0
 
 ### Minor Changes
