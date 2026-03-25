@@ -4,12 +4,12 @@ import _addFormats from "ajv-formats";
 // ajv-formats is CJS — under nodenext the default import resolves to the module namespace
 const addFormats = _addFormats as unknown as typeof _addFormats.default;
 
-import { type Result, isErr } from "./result.js";
 import {
   type PlainWebhookError,
   PlainWebhookPayloadError,
   PlainWebhookVersionMismatchError,
 } from "./errors.js";
+import { isErr, type Result } from "./result.js";
 import type { WebhooksSchemaDefinition } from "./webhook-schema.js";
 import webhookSchema from "./webhook-schema.json" with { type: "json" };
 

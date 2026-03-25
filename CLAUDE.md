@@ -72,9 +72,7 @@ Edit files in `packages/sdk/src/`, export from `index.ts`, then `pnpm build`.
 
 **Update the webhook schema:**
 ```bash
-curl -o packages/webhooks/src/webhook-schema.json https://core-api.uk.plain.com/webhooks/schema/latest.json
-# Regenerate TypeScript types from the JSON schema (requires json-schema-to-typescript)
-npx json-schema-to-typescript --input packages/webhooks/src/webhook-schema.json --output packages/webhooks/src/webhook-schema.ts
+pnpm --filter @team-plain/webhooks codegen
 pnpm --filter @team-plain/webhooks build
 pnpm --filter @team-plain/webhooks test
 ```
