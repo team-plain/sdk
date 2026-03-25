@@ -2816,6 +2816,7 @@ type Query {
   threadDiscussion(threadDiscussionId: ID!): ThreadDiscussion
   serviceAuthorization(serviceAuthorizationId: ID!): ServiceAuthorization
   serviceAuthorizations(first: Int, after: String, last: Int, before: String, filters: ServiceAuthorizationsFilter): ServiceAuthorizationConnection!
+  importerTenantLists(serviceAuthorizationId: ID!, first: Int, after: String, last: Int, before: String): ImporterTenantListConnection!
   tiers(first: Int, after: String, last: Int, before: String): TierConnection!
   tier(tierId: ID!): Tier
   businessHours: BusinessHours @deprecated(reason: "Use businessHoursSlots instead.")
@@ -2866,6 +2867,12 @@ type Query {
 
   """Get notifications for the current user."""
   myInternalNotifications(filters: InternalNotificationsFilter, first: Int, after: String, last: Int, before: String): InternalNotificationConnection!
+
+  """Get a single knowledge gap by ID. Returns null if not found."""
+  knowledgeGap(knowledgeGapId: ID!): KnowledgeGap
+
+  """Paginated list of knowledge gaps for the workspace."""
+  knowledgeGaps(filters: KnowledgeGapsFilter, sortBy: KnowledgeGapsSort, first: Int, after: String, last: Int, before: String): KnowledgeGapConnection!
 }
 
 type EscalationPath {
@@ -5052,6 +5059,11 @@ input SendNewEmailInput {
   If provided this will add the new email to an existing thread. If not provided, a new thread will be created.
   """
   threadId: ID
+
+  """
+  If true, the email will be categorized as USER_HIDDEN, meaning it will not be visible to the user in the UI.
+  """
+  isHiddenFromUser: Boolean
 }
 
 input SendBulkEmailInput {
@@ -5075,6 +5087,11 @@ input ReplyToEmailInput {
   It must match one of the workspace support email addresses (default or alternate).
   """
   fromAlternateSupportEmail: EmailParticipantInput
+
+  """
+  If true, the email will be categorized as USER_HIDDEN, meaning it will not be visible to the user in the UI.
+  """
+  isHiddenFromUser: Boolean
 }
 
 enum EmailCategory {
@@ -5082,6 +5099,7 @@ enum EmailCategory {
   CUSTOMER_SURVEY
   UNREAD_CHAT_MESSAGES
   THREAD_DISCUSSION
+  USER_HIDDEN
 }
 
 type Email {
@@ -6049,6 +6067,7 @@ type Mutation {
   createBillingPortalSession: CreateBillingPortalSessionOutput!
   createHyperlineBillingPortalSession: CreateHyperlineBillingPortalSessionOutput!
   createHyperlineComponentsAuthToken: CreateHyperlineComponentsAuthTokenOutput!
+  cancelHyperlineSubscription: CancelHyperlineSubscriptionOutput!
   calculateRoleChangeCost(input: CalculateRoleChangeCostInput!): CalculateRoleChangeCostOutput!
   addUserToActiveBillingRota(input: AddUserToActiveBillingRotaInput!): AddUserToActiveBillingRotaOutput!
   removeUserFromActiveBillingRota(input: RemoveUserFromActiveBillingRotaInput!): RemoveUserFromActiveBillingRotaOutput!
@@ -6102,6 +6121,14 @@ type Mutation {
   updateAiToneRules(input: UpdateAiToneRulesInput!): UpdateAiToneRulesOutput!
   deleteAiToneRules(input: DeleteAiToneRulesInput!): DeleteAiToneRulesOutput!
   updateInternalNotifications(input: UpdateInternalNotificationsInput!): UpdateInternalNotificationsOutput!
+  importTenantFieldSchemas(input: ImportTenantFieldSchemasInput!): ImportTenantFieldSchemasOutput!
+  importTenants(input: ImportTenantsInput!): ImportTenantsOutput!
+  importCustomers(input: ImportCustomersInput!): ImportCustomersOutput!
+
+  """
+  Change the status of a knowledge gap. If the target status matches the current status, returns the gap unchanged.
+  """
+  changeKnowledgeGapStatus(input: ChangeKnowledgeGapStatusInput!): ChangeKnowledgeGapStatusOutput!
 }
 
 input CreateAiFeatureFeedbackInput {
@@ -8806,21 +8833,21 @@ type TenantSearchResultConnection {
 
 input StartServiceAuthorizationInput {
   """
-  One of: zendesk, salesforce, freshdesk, helpscout-mailbox, hubspot, jira, shortcut, rootly, incidentio, github-app-oauth.
+  One of: zendesk, salesforce, freshdesk, helpscout-mailbox, hubspot, jira, shortcut, rootly, incidentio, github-app-oauth, attio.
   """
   serviceIntegrationKey: String!
 }
 
 input ServiceAuthorizationsFilter {
   """
-  One of: zendesk, salesforce, freshdesk, helpscout-mailbox, hubspot, jira, shortcut, rootly, incidentio, github-app-oauth.
+  One of: zendesk, salesforce, freshdesk, helpscout-mailbox, hubspot, jira, shortcut, rootly, incidentio, github-app-oauth, attio.
   """
   serviceIntegrationKey: String
 }
 
 type ServiceAuthorizationConnectionDetails {
   """
-  One of: zendesk, salesforce, freshdesk, helpscout-mailbox, hubspot, jira, shortcut, rootly, incidentio, github-app-oauth.
+  One of: zendesk, salesforce, freshdesk, helpscout-mailbox, hubspot, jira, shortcut, rootly, incidentio, github-app-oauth, attio.
   """
   serviceIntegrationKey: String!
   serviceAuthorizationId: ID!
@@ -8940,6 +8967,21 @@ type ServiceAuthorizationEdge {
 
 type ServiceAuthorizationConnection {
   edges: [ServiceAuthorizationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ImporterTenantList {
+  id: ID!
+  name: String!
+}
+
+type ImporterTenantListEdge {
+  node: ImporterTenantList!
+  cursor: String!
+}
+
+type ImporterTenantListConnection {
+  edges: [ImporterTenantListEdge!]!
   pageInfo: PageInfo!
 }
 
@@ -9358,6 +9400,10 @@ type CreateHyperlineComponentsAuthTokenOutput {
   error: MutationError
 }
 
+type CancelHyperlineSubscriptionOutput {
+  error: MutationError
+}
+
 enum FeatureKey {
   BUSINESS_HOURS
   SLACK_DISCUSSIONS
@@ -9411,6 +9457,20 @@ type BillingSubscription {
   trialEndsAt: DateTime
   entitlements: [BillingFeatureEntitlement!]!
   endedAt: DateTime
+  checkoutSession: HyperlineCheckoutSession
+}
+
+type HyperlineCheckoutSession {
+  id: ID!
+  status: HyperlineCheckoutSessionStatus!
+  url: String!
+}
+
+enum HyperlineCheckoutSessionStatus {
+  OPENED
+  COMPLETED
+  CANCELLED
+  ERRORED
 }
 
 input CalculateRoleChangeCostInput {
@@ -10137,4 +10197,160 @@ type CustomerSurveyEdge {
 type CustomerSurveyConnection {
   edges: [CustomerSurveyEdge!]!
   pageInfo: PageInfo!
+}
+
+type ImportResult {
+  added: Int!
+  updated: Int!
+  skipped: Int!
+}
+
+input ImportTenantFieldSchemaInput {
+  externalFieldId: String!
+  type: TenantFieldType!
+  label: String!
+  options: [String!]
+  isDeleted: Boolean!
+}
+
+input ImportTenantFieldSchemasInput {
+  tenantFieldSchemas: [ImportTenantFieldSchemaInput!]!
+}
+
+type ImportTenantFieldSchemasOutput {
+  result: ImportResult
+  error: MutationError
+}
+
+input ImportTenantFieldValueInput {
+  fieldId: String!
+  type: TenantFieldType!
+  value: String!
+}
+
+input ImportTenantInput {
+  externalId: String!
+  name: String!
+  url: String
+  tenantFields: [ImportTenantFieldValueInput!]
+}
+
+input ImportTenantsInput {
+  tenants: [ImportTenantInput!]!
+}
+
+type ImportTenantsOutput {
+  result: ImportResult
+  error: MutationError
+}
+
+input ImportCustomerTenantInput {
+  externalId: String!
+  name: String!
+  url: String
+}
+
+input ImportCustomerInput {
+  externalId: String!
+  fullName: String!
+  shortName: String
+  email: String
+  createdAt: String
+  tenants: [ImportCustomerTenantInput!]!
+}
+
+input ImportCustomersInput {
+  customers: [ImportCustomerInput!]!
+}
+
+type ImportCustomersOutput {
+  result: ImportResult
+  error: MutationError
+}
+
+enum KnowledgeGapStatus {
+  OPEN
+  RESOLVED
+  IGNORED
+}
+
+enum KnowledgeGapSignalType {
+  ARI
+}
+
+type KnowledgeGap {
+  id: ID!
+  title: String!
+  description: String!
+  status: KnowledgeGapStatus!
+  statusChangedAt: DateTime!
+  firstSeenAt: DateTime!
+  lastSeenAt: DateTime!
+  createdAt: DateTime!
+  createdBy: Actor!
+  updatedAt: DateTime!
+  updatedBy: Actor!
+
+  """Paginated list of signals linked to this knowledge gap."""
+  signals(first: Int, after: String, last: Int, before: String): KnowledgeGapSignalConnection!
+}
+
+type KnowledgeGapSignal {
+  id: ID!
+  type: KnowledgeGapSignalType!
+  threadId: ID!
+  knowledgeGapId: ID
+  createdAt: DateTime!
+  createdBy: Actor!
+  updatedAt: DateTime!
+  updatedBy: Actor!
+}
+
+type KnowledgeGapEdge {
+  cursor: String!
+  node: KnowledgeGap!
+}
+
+type KnowledgeGapConnection {
+  edges: [KnowledgeGapEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type KnowledgeGapSignalEdge {
+  cursor: String!
+  node: KnowledgeGapSignal!
+}
+
+type KnowledgeGapSignalConnection {
+  edges: [KnowledgeGapSignalEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input KnowledgeGapsFilter {
+  statuses: [KnowledgeGapStatus!]
+}
+
+input KnowledgeGapsSort {
+  field: KnowledgeGapsSortField!
+  direction: SortDirection!
+}
+
+enum KnowledgeGapsSortField {
+  """Sort by number of linked signals (uses correlated subquery COUNT)."""
+  SIGNAL_COUNT
+
+  """Sort by when the most recent signal was linked."""
+  LAST_SEEN_AT
+}
+
+input ChangeKnowledgeGapStatusInput {
+  knowledgeGapId: ID!
+  status: KnowledgeGapStatus!
+}
+
+type ChangeKnowledgeGapStatusOutput {
+  knowledgeGap: KnowledgeGap
+  error: MutationError
 }

@@ -131,6 +131,11 @@ fragment BillingSubscriptionFields on BillingSubscription {
     unixTimestamp
     iso8601
   }
+  checkoutSession {
+    id
+    status
+    url
+  }
 }
 
 fragment BulkUpsertThreadFieldResultFields on BulkUpsertThreadFieldResult {
@@ -748,6 +753,33 @@ fragment IssueTrackerFieldFields on IssueTrackerField {
 fragment JiraIntegrationTokenFields on JiraIntegrationToken {
   token
   createdAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
+fragment KnowledgeGapFields on KnowledgeGap {
+  id
+  title
+  description
+  status
+  statusChangedAt {
+    unixTimestamp
+    iso8601
+  }
+  firstSeenAt {
+    unixTimestamp
+    iso8601
+  }
+  lastSeenAt {
+    unixTimestamp
+    iso8601
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedAt {
     unixTimestamp
     iso8601
   }
@@ -3141,6 +3173,24 @@ query ServiceAuthorizations($first: Int, $after: String, $last: Int, $before: St
   }
 }
 
+query ImporterTenantLists($serviceAuthorizationId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
+  importerTenantLists(serviceAuthorizationId: $serviceAuthorizationId, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        id
+        name
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
 query Tiers($first: Int, $after: String, $last: Int, $before: String) {
   tiers(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -3521,6 +3571,30 @@ query MyInternalNotifications($filters: InternalNotificationsFilter, $first: Int
     edges {
       node {
         ...InternalNotificationFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query KnowledgeGap($knowledgeGapId: ID!) {
+  knowledgeGap(knowledgeGapId: $knowledgeGapId) {
+    ...KnowledgeGapFields
+  }
+}
+
+query KnowledgeGaps($filters: KnowledgeGapsFilter, $sortBy: KnowledgeGapsSort, $first: Int, $after: String, $last: Int, $before: String) {
+  knowledgeGaps(filters: $filters, sortBy: $sortBy, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...KnowledgeGapFields
       }
       cursor
     }
@@ -7540,6 +7614,21 @@ mutation CreateHyperlineComponentsAuthToken {
   }
 }
 
+mutation CancelHyperlineSubscription {
+  cancelHyperlineSubscription {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation CalculateRoleChangeCost($input: CalculateRoleChangeCostInput!) {
   calculateRoleChangeCost(input: $input) {
     roleChangeCost {
@@ -8356,6 +8445,84 @@ mutation UpdateInternalNotifications($input: UpdateInternalNotificationsInput!) 
   updateInternalNotifications(input: $input) {
     internalNotifications {
       ...InternalNotificationFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ImportTenantFieldSchemas($input: ImportTenantFieldSchemasInput!) {
+  importTenantFieldSchemas(input: $input) {
+    result {
+      added
+      updated
+      skipped
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ImportTenants($input: ImportTenantsInput!) {
+  importTenants(input: $input) {
+    result {
+      added
+      updated
+      skipped
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ImportCustomers($input: ImportCustomersInput!) {
+  importCustomers(input: $input) {
+    result {
+      added
+      updated
+      skipped
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ChangeKnowledgeGapStatus($input: ChangeKnowledgeGapStatusInput!) {
+  changeKnowledgeGapStatus(input: $input) {
+    knowledgeGap {
+      ...KnowledgeGapFields
     }
     error {
       message

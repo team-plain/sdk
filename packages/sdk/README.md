@@ -74,6 +74,10 @@ const nextPage = await customers.fetchNext();
 - **Queries**: network, auth (401), forbidden (403), and rate limit (429) errors throw typed exceptions (`AuthenticationError`, `ForbiddenError`, `RateLimitError`, `NetworkError`, `PlainGraphQLError`).
 - **Mutations**: return the full `*Output` type. Check `result.error` for a typed `MutationError` with `message`, `type`, `code`, and `fields[]`. This is intentional — Plain's API treats mutation errors as data.
 
+## Migrating from `@team-plain/typescript-sdk`
+
+If you're migrating from the old `@team-plain/typescript-sdk` package, see the [Migration Guide](./MIGRATION.md) for a full breakdown of breaking changes including error handling, method renames, enum changes, and before/after examples.
+
 ## Resources
 
 - [Plain API docs](https://plain.com/docs) — guides, authentication, and API reference
