@@ -63,7 +63,7 @@ describe("Parse webhook", () => {
 
     expect(result.error).instanceOf(PlainWebhookVersionMismatchError);
     expect(result.error?.message).toBe(
-      'The webhook payload (version=NEW_VERSION) is incompatible with the current version of the SDK. Please upgrade both the SDK and the webhook target to the latest version. Refer to https://www.plain.com/docs/api-reference/webhooks/versions for more information. Original error: data/webhookMetadata/webhookTargetVersion must be equal to constant',
+      "The webhook payload (version=NEW_VERSION) is incompatible with the current version of the SDK. Please upgrade both the SDK and the webhook target to the latest version. Refer to https://www.plain.com/docs/api-reference/webhooks/versions for more information. Original error: data/webhookMetadata/webhookTargetVersion must be equal to constant",
     );
   });
 

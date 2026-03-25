@@ -17,6 +17,8 @@ pnpm check            # Format + lint with biome (auto-fix)
 
 Per-package scripts (codegen, test, etc.) are run via `pnpm --filter <pkg> <script>`.
 
+**Always run `pnpm check` after making any changes.** This auto-fixes formatting and linting issues. CI enforces both via `pnpm format:check` and `pnpm lint`, so unformatted or unlinted code will fail the build.
+
 ## Architecture
 
 Four packages in a pnpm monorepo:
