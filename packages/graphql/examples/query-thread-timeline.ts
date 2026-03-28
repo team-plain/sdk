@@ -15,36 +15,18 @@ async function main() {
 
   // Fetch timeline entries directly from the thread model — no need for the
   // top-level timelineEntries query or to pass a customerId.
-  const entries = await thread.timelineEntries({ first: 25 });
+  const timelineEntries = await thread.timelineEntries({ first: 25 });
 
-  for (const entry of entries.nodes) {
-    console.log(`[${entry.timestamp}]`, entry.entry.__typename);
+  for (const timelineEntry of timelineEntries.nodes) {
+    console.log(`[${timelineEntry.timestamp}]`, timelineEntry.entry.__typename);
+    console.log(timelineEntry.llmText);
 
-    // The actor is a discriminated union — narrow by __typename to access
-    // lazy-loading relations that fetch the full actor details.
-    const { actor } = entry;
-    switch (actor.__typename) {
-      case "UserActor": {
-        const user = await actor.user;
-        console.log("  By user:", user?.fullName, user?.email);
-        break;
-      }
-      case "CustomerActor": {
-        const customer = await actor.customer;
-        console.log("  By customer:", customer?.fullName, customer?.email?.email);
-        break;
-      }
-      case "MachineUserActor": {
-        const machineUser = await actor.machineUser;
-        console.log("  By machine user:", machineUser?.fullName);
-        break;
-      }
-      case "SystemActor":
-        console.log("  By system:", actor.systemId);
-        break;
-      case "DeletedCustomerActor":
-        console.log("  By deleted customer:", actor.customerId);
-        break;
+    const entry = timelineEntry.entry;
+
+    // When handling unions you can use `__typename` to discriminate
+    if (entry.__typename === "SlackReplyEntry") {
+      // Handle Slack specific fields here:
+      // console.log(entry.lastEditedOnSlackAt)
     }
   }
 }
