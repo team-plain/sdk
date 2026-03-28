@@ -5,12 +5,15 @@ import {
   type GraphQLObjectType,
   type GraphQLOutputType,
   type GraphQLSchema,
+  type GraphQLUnionType,
   getNamedType,
   isEnumType,
+  isInterfaceType,
   isListType,
   isNonNullType,
   isObjectType,
   isScalarType,
+  isUnionType,
   Kind,
 } from "graphql";
 
@@ -163,34 +166,64 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       if (def.kind === Kind.OPERATION_DEFINITION && def.name) {
         const firstSelection = def.selectionSet.selections[0];
         if (firstSelection?.kind === Kind.FIELD) {
-          documentOperations.set(firstSelection.name.value, {
-            operationName: def.name.value,
-            kind: def.operation === "mutation" ? "mutation" : "query",
-          });
+          // First mapping wins — sub-connection queries (e.g. ThreadTimelineEntries)
+          // share the same root field as regular queries (e.g. Thread), so don't overwrite.
+          if (!documentOperations.has(firstSelection.name.value)) {
+            documentOperations.set(firstSelection.name.value, {
+              operationName: def.name.value,
+              kind: def.operation === "mutation" ? "mutation" : "query",
+            });
+          }
         }
       }
     }
   }
 
   // ── Determine which types get model classes ───────────────────────────────
-  // Types with fragments, excluding Output types and utility types
+  // Types with fragments, excluding Output types and utility types.
+  // Note: we don't skip value-object-like types here because union member types
+  // (e.g. DeletedCustomerActor) may be all-scalar but still need model classes.
+  // The fragment generator controls which types get fragments.
   const modelTypes = new Map<string, GraphQLObjectType>();
   for (const [typeName] of fragmentsByTypeName) {
     if (SKIP_MODEL_TYPES.has(typeName)) continue;
     if (isOutputType(typeName)) continue;
     const gqlType = schema.getType(typeName);
     if (!gqlType || !isObjectType(gqlType)) continue;
-    if (isValueObjectType(gqlType, schema)) continue;
     modelTypes.set(typeName, gqlType);
   }
 
   // ── Analyze fields for each model type ────────────────────────────────────
   interface FieldInfo {
     name: string;
-    kind: "scalar" | "enum" | "valueObject" | "objectRelation" | "connection" | "list" | "skip";
+    kind:
+      | "scalar"
+      | "enum"
+      | "valueObject"
+      | "objectRelation"
+      | "connection"
+      | "list"
+      | "union"
+      | "inlinedObject"
+      | "skip";
     relatedTypeName?: string;
     queryMapping?: TypeQueryMapping;
     hasRequiredArgs: boolean;
+    unionMemberTypeNames?: string[];
+    isList?: boolean;
+  }
+
+  /**
+   * Get the member type names of a union or interface type.
+   */
+  function getUnionMemberNames(namedType: GraphQLNamedType): string[] {
+    if (isUnionType(namedType)) {
+      return (namedType as GraphQLUnionType).getTypes().map((t) => t.name);
+    }
+    if (isInterfaceType(namedType)) {
+      return schema.getPossibleTypes(namedType).map((t) => t.name);
+    }
+    return [];
   }
 
   function analyzeField(field: GraphQLField<unknown, unknown>): FieldInfo {
@@ -198,19 +231,45 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
     const name = field.name;
 
+    if (field.deprecationReason != null) {
+      return { name, kind: "skip", hasRequiredArgs };
+    }
+
+    if (hasRequiredArgs) {
+      return { name, kind: "skip", hasRequiredArgs };
+    }
+
     if (isValueObjectType(namedType, schema)) {
       return { name, kind: "valueObject", hasRequiredArgs };
     }
     if (isScalarType(namedType) || isEnumType(namedType)) {
       return { name, kind: isEnumType(namedType) ? "enum" : "scalar", hasRequiredArgs };
     }
+
+    // Union/interface fields (single or list)
+    if (isUnionType(namedType) || isInterfaceType(namedType)) {
+      const memberNames = getUnionMemberNames(namedType).filter((memberName) => {
+        const memberType = schema.getType(memberName);
+        if (!memberType || !isObjectType(memberType)) return true;
+        return Object.values(memberType.getFields()).some((f) => f.deprecationReason == null);
+      });
+      return {
+        name,
+        kind: "union",
+        relatedTypeName: namedType.name,
+        hasRequiredArgs,
+        unionMemberTypeNames: memberNames,
+        isList,
+      };
+    }
+
     if (isList) {
       return { name, kind: "list", relatedTypeName: namedType.name, hasRequiredArgs };
     }
     if (isObjectType(namedType) && isConnectionType(namedType.name)) {
       return { name, kind: "connection", relatedTypeName: namedType.name, hasRequiredArgs };
     }
-    if (isObjectType(namedType) && !hasRequiredArgs) {
+    if (isObjectType(namedType)) {
       // Object relation — check if we can lazy-load it
       const hasId = "id" in namedType.getFields();
       const mapping = typeQueryMap.get(namedType.name);
@@ -222,6 +281,10 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
           queryMapping: mapping,
           hasRequiredArgs,
         };
+      }
+      // Non-queryable object relation — expose as inlined property if it has a fragment or is a model
+      if (modelTypes.has(namedType.name) || fragmentsByTypeName.has(namedType.name)) {
+        return { name, kind: "inlinedObject", relatedTypeName: namedType.name, hasRequiredArgs };
       }
     }
     return { name, kind: "skip", hasRequiredArgs };
@@ -248,6 +311,89 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
   const allImportedTypes = new Set<string>();
   const modelClassCode: string[] = [];
 
+  /**
+   * Find fields that have the same name but different type signatures across
+   * union/interface members. Mirrors the same logic in generate-documents.ts.
+   */
+  function findConflictingUnionFields(memberTypeNames: string[]): Set<string> {
+    const fieldTypeSigs = new Map<string, string>();
+    const conflicting = new Set<string>();
+    for (const memberName of memberTypeNames) {
+      const memberType = schema.getType(memberName);
+      if (!memberType || !isObjectType(memberType)) continue;
+      for (const [fieldName, field] of Object.entries(memberType.getFields())) {
+        if (field.deprecationReason != null) continue;
+        const sig = field.type.toString();
+        const existing = fieldTypeSigs.get(fieldName);
+        if (existing === undefined) {
+          fieldTypeSigs.set(fieldName, sig);
+        } else if (existing !== sig) {
+          conflicting.add(fieldName);
+        }
+      }
+    }
+    return conflicting;
+  }
+
+  /**
+   * Generate a __typename switch expression that constructs the right model class
+   * for a union field. Returns the switch expression as a string.
+   *
+   * When `conflictingFields` is provided, generates remapping code to convert
+   * aliased field names (e.g. `TypeName_field`) back to original names (`field`)
+   * so that model constructors receive the expected data shape.
+   */
+  function generateUnionSwitch(
+    memberTypeNames: string[],
+    dataExpr: string,
+    clientExpr: string,
+    conflictingFields?: Set<string>,
+  ): string {
+    const cases: string[] = [];
+    for (const memberName of memberTypeNames) {
+      if (modelTypes.has(memberName)) {
+        const memberModelClass = modelClassName(memberName);
+        // Check if this member has any conflicting fields that need remapping
+        const remaps: string[] = [];
+        if (conflictingFields && conflictingFields.size > 0) {
+          const memberType = schema.getType(memberName);
+          if (memberType && isObjectType(memberType)) {
+            const memberFields = memberType.getFields();
+            for (const fieldName of conflictingFields) {
+              if (fieldName in memberFields) {
+                const alias = `${memberName.charAt(0).toLowerCase()}${memberName.slice(1)}${fieldName.charAt(0).toUpperCase()}${fieldName.slice(1)}`;
+                remaps.push(`${fieldName}: (${dataExpr} as any).${alias}`);
+              }
+            }
+          }
+        }
+        if (remaps.length > 0) {
+          cases.push(
+            `      case "${memberName}": return new ${memberModelClass}(${clientExpr}, { ...${dataExpr} as any, ${remaps.join(", ")} } as any);`,
+          );
+        } else {
+          cases.push(
+            `      case "${memberName}": return new ${memberModelClass}(${clientExpr}, ${dataExpr} as any);`,
+          );
+        }
+      } else {
+        cases.push(`      case "${memberName}": return ${dataExpr} as any;`);
+      }
+    }
+    cases.push(`      default: return ${dataExpr} as any;`);
+    return `(() => {\n    switch ((${dataExpr} as any).__typename) {\n${cases.join("\n")}\n    }\n  })()`;
+  }
+
+  /**
+   * Generate the TypeScript union type for a union field's model types.
+   */
+  function generateUnionModelType(memberTypeNames: string[]): string {
+    const types = memberTypeNames.map((name) =>
+      modelTypes.has(name) ? modelClassName(name) : `{ __typename: "${name}" }`,
+    );
+    return types.join(" | ");
+  }
+
   for (const [typeName, gqlType] of modelTypes) {
     const fragTsName = fragmentTsName(typeName);
     allImportedTypes.add(fragTsName);
@@ -255,18 +401,26 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     const fields = Object.values(gqlType.getFields());
     const fieldInfos = fields.map(analyzeField);
 
-    // Scalar/enum/valueObject properties (all exposed directly on the model)
+    // Scalar/enum/valueObject/inlinedObject properties (all exposed directly on the model)
     const scalarFields = fieldInfos.filter(
-      (f) => f.kind === "scalar" || f.kind === "enum" || f.kind === "valueObject",
+      (f) =>
+        f.kind === "scalar" ||
+        f.kind === "enum" ||
+        f.kind === "valueObject" ||
+        f.kind === "inlinedObject",
     );
 
     // Object relations with lazy loading
     const relationFields = fieldInfos.filter((f) => f.kind === "objectRelation" && f.queryMapping);
 
+    // Union/interface fields
+    const unionFields = fieldInfos.filter((f) => f.kind === "union" && f.unionMemberTypeNames);
+
     const lines: string[] = [];
     lines.push(`export class ${modelClassName(typeName)} {`);
     lines.push(`  protected _client: PlainGraphQLClient;`);
     lines.push(`  protected _data: ${fragTsName};`);
+    lines.push(`  public readonly __typename = "${typeName}" as const;`);
     lines.push(``);
 
     // Property declarations using indexed access types
@@ -274,17 +428,71 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       lines.push(`  public readonly ${f.name}: ${fragTsName}["${f.name}"];`);
     }
 
-    if (scalarFields.length > 0 && relationFields.length > 0) {
-      lines.push(``);
+    // Union field property declarations
+    for (const f of unionFields) {
+      if (!f.unionMemberTypeNames) continue;
+      const unionType = generateUnionModelType(f.unionMemberTypeNames);
+      if (f.isList) {
+        lines.push(`  public readonly ${f.name}: (${unionType})[];`);
+      } else {
+        // Check if the GraphQL field is nullable
+        const gqlField = gqlType.getFields()[f.name];
+        const isNonNull = gqlField ? isNonNullType(gqlField.type) : false;
+        if (isNonNull) {
+          lines.push(`  public readonly ${f.name}: ${unionType};`);
+        } else {
+          lines.push(`  public readonly ${f.name}: (${unionType}) | null;`);
+        }
+      }
     }
 
     // Constructor
+    lines.push(``);
     lines.push(`  constructor(client: PlainGraphQLClient, data: ${fragTsName}) {`);
     lines.push(`    this._client = client;`);
     lines.push(`    this._data = data;`);
     for (const f of scalarFields) {
       lines.push(`    this.${f.name} = data.${f.name};`);
     }
+
+    // Construct union field models
+    for (const f of unionFields) {
+      if (!f.unionMemberTypeNames) continue;
+      const gqlField = gqlType.getFields()[f.name];
+      const fieldIsNonNull = gqlField ? isNonNullType(gqlField.type) : false;
+
+      // Detect conflicting fields for alias remapping
+      const conflicting = findConflictingUnionFields(f.unionMemberTypeNames);
+
+      if (f.isList) {
+        const switchExpr = generateUnionSwitch(
+          f.unionMemberTypeNames,
+          "item",
+          "client",
+          conflicting,
+        );
+        lines.push(
+          `    this.${f.name} = ((data.${f.name} as any[]) ?? []).map((item: any) => ${switchExpr});`,
+        );
+      } else if (fieldIsNonNull) {
+        const switchExpr = generateUnionSwitch(
+          f.unionMemberTypeNames,
+          `data.${f.name}`,
+          "client",
+          conflicting,
+        );
+        lines.push(`    this.${f.name} = ${switchExpr};`);
+      } else {
+        const switchExpr = generateUnionSwitch(
+          f.unionMemberTypeNames,
+          `data.${f.name}`,
+          "client",
+          conflicting,
+        );
+        lines.push(`    this.${f.name} = data.${f.name} ? ${switchExpr} : null;`);
+      }
+    }
+
     lines.push(`  }`);
 
     // Lazy-loading getters for object relations
@@ -313,6 +521,71 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
         `    ).then(r => r.${mapping.queryFieldName} ? new ${relatedModelClass}(this._client, r.${mapping.queryFieldName}) : undefined);`,
       );
       lines.push(`  }`);
+    }
+
+    // Connection methods — sub-queries for connection fields on this model type.
+    // E.g., ThreadModel.timelineEntries() fetches Thread.timelineEntries via a nested query.
+    const connectionFields = fieldInfos.filter((f) => f.kind === "connection" && f.relatedTypeName);
+    const parentQueryMapping = typeQueryMap.get(typeName);
+    const hasIdField = "id" in gqlType.getFields();
+
+    if (parentQueryMapping && hasIdField && connectionFields.length > 0) {
+      for (const f of connectionFields) {
+        if (!f.relatedTypeName) continue;
+
+        const connGqlType = schema.getType(f.relatedTypeName);
+        if (!connGqlType || !isObjectType(connGqlType)) continue;
+
+        const edgesField = connGqlType.getFields().edges;
+        if (!edgesField) continue;
+        const edgeType = getNamedType(edgesField.type);
+        if (!edgeType || !isObjectType(edgeType)) continue;
+        const nodeField = edgeType.getFields().node;
+        if (!nodeField) continue;
+        const nodeTypeName = getNamedType(nodeField.type)?.name;
+        if (!nodeTypeName || !modelTypes.has(nodeTypeName)) continue;
+
+        const nodeModelClass = modelClassName(nodeTypeName);
+        const connHasTotalCount = "totalCount" in connGqlType.getFields();
+
+        // Compute operation names matching generate-documents.ts convention
+        const subOpName = `${typeName}${toPascalCase(f.name)}`;
+        const cgSubOpName = opCgName(subOpName);
+        const docName = `${cgSubOpName}Document`;
+        const queryTsName = `${cgSubOpName}Query`;
+        const varsTsName = `${cgSubOpName}QueryVariables`;
+
+        allImportedDocuments.add(docName);
+        allImportedTypes.add(queryTsName);
+        allImportedTypes.add(varsTsName);
+
+        const parentFieldName = parentQueryMapping.queryFieldName;
+        const idArgName = parentQueryMapping.idArgName;
+
+        lines.push(``);
+        lines.push(
+          `  async ${f.name}(variables?: Omit<${varsTsName}, "${idArgName}">): Promise<PlainConnection<${nodeModelClass}>> {`,
+        );
+        lines.push(`    const allVars = { ...variables, ${idArgName}: this.id } as ${varsTsName};`);
+        lines.push(
+          `    const response = await this._client.request<${queryTsName}, ${varsTsName}>(`,
+        );
+        lines.push(`      ${docName}, allVars`);
+        lines.push(`    );`);
+        lines.push(`    const parent = response.${parentFieldName};`);
+        lines.push(`    if (!parent) throw new Error("${parentFieldName} not found");`);
+        lines.push(`    const conn = parent.${f.name};`);
+        lines.push(`    return new PlainConnection<${nodeModelClass}>({`);
+        lines.push(
+          `      nodes: conn.edges.map(e => new ${nodeModelClass}(this._client, e.node)),`,
+        );
+        lines.push(
+          `      pageInfo: conn.pageInfo,${connHasTotalCount ? "\n      totalCount: conn.totalCount," : ""}`,
+        );
+        lines.push(`      fetch: (cursor) => this.${f.name}({ ...variables, ...cursor }),`);
+        lines.push(`    });`);
+        lines.push(`  }`);
+      }
     }
 
     lines.push(`}`);

@@ -25,7 +25,9 @@ import {
   BusinessHoursDocument,
   BusinessHoursSlotsDocument,
   CalculateRoleChangeCostDocument,
+  CancelHyperlineSubscriptionDocument,
   ChangeBillingPlanDocument,
+  ChangeKnowledgeGapStatusDocument,
   ChangeThreadCustomerDocument,
   ChangeThreadPriorityDocument,
   ChangeUserStatusDocument,
@@ -63,6 +65,7 @@ import {
   CreateHyperlineBillingPortalSessionDocument,
   CreateHyperlineCheckoutSessionDocument,
   CreateHyperlineComponentsAuthTokenDocument,
+  CreateImportSyncDocument,
   CreateIndexedDocumentDocument,
   CreateIssueTrackerIssueDocument,
   CreateKnowledgeSourceDocument,
@@ -108,6 +111,7 @@ import {
   CustomerCardConfigDocument,
   CustomerCardConfigsDocument,
   CustomerCardInstancesDocument,
+  CustomerCustomerGroupMembershipsDocument,
   CustomerDocument,
   CustomerGroupDocument,
   CustomerGroupsDocument,
@@ -183,20 +187,32 @@ import {
   HeatmapMetricDocument,
   HelpCenterArticleBySlugDocument,
   HelpCenterArticleDocument,
+  HelpCenterArticleGroupArticlesDocument,
   HelpCenterArticleGroupBySlugDocument,
+  HelpCenterArticleGroupChildArticleGroupsDocument,
   HelpCenterArticleGroupDocument,
+  HelpCenterArticleGroupsDocument,
+  HelpCenterArticlesDocument,
   HelpCenterDocument,
   HelpCenterIndexDocument,
   HelpCentersDocument,
+  ImportCustomersDocument,
+  ImportRunsDocument,
+  ImportTenantFieldSchemasDocument,
+  ImportTenantsDocument,
+  ImporterTenantListsDocument,
   IndexedDocumentsDocument,
   InviteUserToWorkspaceDocument,
   IssueTrackerFieldsDocument,
+  KnowledgeGapDocument,
+  KnowledgeGapsDocument,
   KnowledgeSourceDocument,
   KnowledgeSourcesDocument,
   LabelTypeByExternalIdDocument,
   LabelTypeDocument,
   LabelTypesDocument,
   LockThreadDocument,
+  MachineUserApiKeysDocument,
   MachineUserDocument,
   MachineUsersDocument,
   MarkCustomerAsSpamDocument,
@@ -293,15 +309,18 @@ import {
   TenantsDocument,
   ThreadByExternalIdDocument,
   ThreadByRefDocument,
+  ThreadBySlackPermalinkDocument,
   ThreadClusterDocument,
   ThreadClustersDocument,
   ThreadClustersPaginatedDocument,
   ThreadDiscussionDocument,
+  ThreadDiscussionMessagesDocument,
   ThreadDocument,
   ThreadFieldSchemaDocument,
   ThreadFieldSchemasDocument,
   ThreadLinkGroupsDocument,
   ThreadSlackUserDocument,
+  ThreadTimelineEntriesDocument,
   ThreadsDocument,
   TierDocument,
   TiersDocument,
@@ -439,6 +458,10 @@ import type {
   AddUserToActiveBillingRotaMutationVariables,
   AddWorkspaceAlternateSupportEmailAddressMutation,
   AddWorkspaceAlternateSupportEmailAddressMutationVariables,
+  AgentStatusDetailHandedOffFieldsFragment,
+  AgentStatusDetailHandledFieldsFragment,
+  AgentStatusDetailInProgressFieldsFragment,
+  AiAgentFeedbackDetailsFieldsFragment,
   AiToneRuleFieldsFragment,
   AiToneRulesQuery,
   AiToneRulesQueryVariables,
@@ -451,11 +474,17 @@ import type {
   AssignThreadMutationVariables,
   AttachmentDownloadUrlFieldsFragment,
   AttachmentUploadUrlFieldsFragment,
+  AutoresponderBusinessHoursConditionFieldsFragment,
   AutoresponderFieldsFragment,
+  AutoresponderLabelConditionFieldsFragment,
+  AutoresponderPrioritiesConditionFieldsFragment,
   AutoresponderQuery,
   AutoresponderQueryVariables,
+  AutoresponderSupportEmailsConditionFieldsFragment,
+  AutoresponderTierConditionFieldsFragment,
   AutorespondersQuery,
   AutorespondersQueryVariables,
+  BeforeBreachActionFieldsFragment,
   BillingPlanChangePreviewFieldsFragment,
   BillingPlanFieldsFragment,
   BillingPlansQuery,
@@ -475,8 +504,11 @@ import type {
   BusinessHoursSlotsQuery,
   CalculateRoleChangeCostMutation,
   CalculateRoleChangeCostMutationVariables,
+  CancelHyperlineSubscriptionMutation,
   ChangeBillingPlanMutation,
   ChangeBillingPlanMutationVariables,
+  ChangeKnowledgeGapStatusMutation,
+  ChangeKnowledgeGapStatusMutationVariables,
   ChangeThreadCustomerMutation,
   ChangeThreadCustomerMutationVariables,
   ChangeThreadPriorityMutation,
@@ -492,7 +524,9 @@ import type {
   ChatAppSecretQueryVariables,
   ChatAppsQuery,
   ChatAppsQueryVariables,
+  ChatEntryFieldsFragment,
   ChatFieldsFragment,
+  ChatThreadChannelDetailsFieldsFragment,
   CompaniesQuery,
   CompaniesQueryVariables,
   CompanyFieldsFragment,
@@ -501,6 +535,14 @@ import type {
   CompanyTierMembershipFieldsFragment,
   CompleteServiceAuthorizationMutation,
   CompleteServiceAuthorizationMutationVariables,
+  ComponentBadgeFieldsFragment,
+  ComponentCopyButtonFieldsFragment,
+  ComponentDividerFieldsFragment,
+  ComponentLinkButtonFieldsFragment,
+  ComponentPlainTextFieldsFragment,
+  ComponentSpacerFieldsFragment,
+  ComponentTextFieldsFragment,
+  ComponentWorkflowButtonFieldsFragment,
   ConnectedDiscordChannelFieldsFragment,
   ConnectedDiscordChannelsQuery,
   ConnectedDiscordChannelsQueryVariables,
@@ -557,6 +599,8 @@ import type {
   CreateHyperlineCheckoutSessionMutation,
   CreateHyperlineCheckoutSessionMutationVariables,
   CreateHyperlineComponentsAuthTokenMutation,
+  CreateImportSyncMutation,
+  CreateImportSyncMutationVariables,
   CreateIndexedDocumentMutation,
   CreateIndexedDocumentMutationVariables,
   CreateIssueTrackerIssueMutation,
@@ -631,13 +675,16 @@ import type {
   CreateWorkspaceSlackChannelIntegrationMutationVariables,
   CreateWorkspaceSlackIntegrationMutation,
   CreateWorkspaceSlackIntegrationMutationVariables,
+  CsatCustomerSurveyTemplateFieldsFragment,
   CursorRepositoriesQuery,
   CursorRepositoriesQueryVariables,
+  CustomEntryFieldsFragment,
   CustomRoleFieldsFragment,
   CustomRoleQuery,
   CustomRoleQueryVariables,
   CustomRolesQuery,
   CustomRolesQueryVariables,
+  CustomerActorFieldsFragment,
   CustomerByEmailQuery,
   CustomerByEmailQueryVariables,
   CustomerByExternalIdQuery,
@@ -648,6 +695,9 @@ import type {
   CustomerCardConfigsQuery,
   CustomerCardInstancesQuery,
   CustomerCardInstancesQueryVariables,
+  CustomerCustomerGroupMembershipsQuery,
+  CustomerCustomerGroupMembershipsQueryVariables,
+  CustomerEventEntryFieldsFragment,
   CustomerEventFieldsFragment,
   CustomerFieldsFragment,
   CustomerGroupFieldsFragment,
@@ -659,12 +709,19 @@ import type {
   CustomerQuery,
   CustomerQueryVariables,
   CustomerSurveyFieldsFragment,
+  CustomerSurveyLabelConditionFieldsFragment,
+  CustomerSurveyMessageSourceConditionFieldsFragment,
+  CustomerSurveyPrioritiesConditionFieldsFragment,
   CustomerSurveyQuery,
   CustomerSurveyQueryVariables,
+  CustomerSurveyRequestedEntryFieldsFragment,
+  CustomerSurveySupportEmailsConditionFieldsFragment,
+  CustomerSurveyTiersConditionFieldsFragment,
   CustomerSurveysQuery,
   CustomerSurveysQueryVariables,
   CustomersQuery,
   CustomersQueryVariables,
+  DefaultServiceIntegrationFieldsFragment,
   DeleteAiToneRulesMutation,
   DeleteAiToneRulesMutationVariables,
   DeleteApiKeyMutation,
@@ -769,10 +826,18 @@ import type {
   DeleteWorkspaceSlackChannelIntegrationMutationVariables,
   DeleteWorkspaceSlackIntegrationMutation,
   DeleteWorkspaceSlackIntegrationMutationVariables,
+  DeletedCustomerActorFieldsFragment,
   DeletedThreadFieldsFragment,
   DeletedThreadsQuery,
   DeletedThreadsQueryVariables,
+  DiscordCustomerIdentityFieldsFragment,
+  DiscordMessageEntryFieldsFragment,
   DiscordMessageFieldsFragment,
+  DiscordThreadChannelDetailsFieldsFragment,
+  DiscussionResolvedNotificationDetailFieldsFragment,
+  EmailBounceNotificationDetailFieldsFragment,
+  EmailCustomerIdentityFieldsFragment,
+  EmailEntryFieldsFragment,
   EmailFieldsFragment,
   EmailPreviewUrlFieldsFragment,
   EmailSignatureFieldsFragment,
@@ -782,9 +847,12 @@ import type {
   EscalationPathFieldsFragment,
   EscalationPathQuery,
   EscalationPathQueryVariables,
+  EscalationPathStepLabelTypeFieldsFragment,
+  EscalationPathStepUserFieldsFragment,
   EscalationPathsQuery,
   EscalationPathsQueryVariables,
   FavoritePageFieldsFragment,
+  FirstResponseTimeServiceLevelAgreementFieldsFragment,
   ForkThreadMutation,
   ForkThreadMutationVariables,
   GenerateAiToneRulesFromDescriptionMutation,
@@ -794,6 +862,7 @@ import type {
   GeneratedRepliesQuery,
   GeneratedRepliesQueryVariables,
   GeneratedReplyFieldsFragment,
+  GenericThreadLinkFieldsFragment,
   GetMsTeamsMembersForChannelQuery,
   GetMsTeamsMembersForChannelQueryVariables,
   GithubUserAuthIntegrationFieldsFragment,
@@ -801,16 +870,27 @@ import type {
   HeatmapMetricFieldsFragment,
   HeatmapMetricQuery,
   HeatmapMetricQueryVariables,
+  HelpCenterAiConversationMessageEntryFieldsFragment,
   HelpCenterArticleBySlugQuery,
   HelpCenterArticleBySlugQueryVariables,
   HelpCenterArticleFieldsFragment,
+  HelpCenterArticleGroupArticlesQuery,
+  HelpCenterArticleGroupArticlesQueryVariables,
   HelpCenterArticleGroupBySlugQuery,
   HelpCenterArticleGroupBySlugQueryVariables,
+  HelpCenterArticleGroupChildArticleGroupsQuery,
+  HelpCenterArticleGroupChildArticleGroupsQueryVariables,
   HelpCenterArticleGroupFieldsFragment,
   HelpCenterArticleGroupQuery,
   HelpCenterArticleGroupQueryVariables,
+  HelpCenterArticleGroupsQuery,
+  HelpCenterArticleGroupsQueryVariables,
   HelpCenterArticleQuery,
   HelpCenterArticleQueryVariables,
+  HelpCenterArticlesQuery,
+  HelpCenterArticlesQueryVariables,
+  HelpCenterAuthMechanismWorkosAuthkitFieldsFragment,
+  HelpCenterAuthMechanismWorkosConnectFieldsFragment,
   HelpCenterFieldsFragment,
   HelpCenterIndexFieldsFragment,
   HelpCenterIndexQuery,
@@ -819,7 +899,23 @@ import type {
   HelpCenterQueryVariables,
   HelpCentersQuery,
   HelpCentersQueryVariables,
+  ImportCustomersMutation,
+  ImportCustomersMutationVariables,
+  ImportJobDefinitionFieldsFragment,
+  ImportRunFieldsFragment,
+  ImportRunsQuery,
+  ImportRunsQueryVariables,
+  ImportTenantFieldSchemasMutation,
+  ImportTenantFieldSchemasMutationVariables,
+  ImportTenantsMutation,
+  ImportTenantsMutationVariables,
+  ImportThreadChannelDetailsFieldsFragment,
+  ImporterTenantListsQuery,
+  ImporterTenantListsQueryVariables,
   IndexedDocumentFieldsFragment,
+  IndexedDocumentStatusFailedFieldsFragment,
+  IndexedDocumentStatusIndexedFieldsFragment,
+  IndexedDocumentStatusPendingFieldsFragment,
   IndexedDocumentsQuery,
   IndexedDocumentsQueryVariables,
   InternalNotificationFieldsFragment,
@@ -829,6 +925,13 @@ import type {
   IssueTrackerFieldsQuery,
   IssueTrackerFieldsQueryVariables,
   JiraIntegrationTokenFieldsFragment,
+  JiraIssueThreadLinkFieldsFragment,
+  JiraSiteIntegrationFieldsFragment,
+  KnowledgeGapFieldsFragment,
+  KnowledgeGapQuery,
+  KnowledgeGapQueryVariables,
+  KnowledgeGapsQuery,
+  KnowledgeGapsQueryVariables,
   KnowledgeSourceQuery,
   KnowledgeSourceQueryVariables,
   KnowledgeSourcesQuery,
@@ -841,8 +944,13 @@ import type {
   LabelTypeQueryVariables,
   LabelTypesQuery,
   LabelTypesQueryVariables,
+  LinearIssueThreadLinkFieldsFragment,
+  LinearIssueThreadLinkStateTransitionedEntryFieldsFragment,
   LockThreadMutation,
   LockThreadMutationVariables,
+  MachineUserActorFieldsFragment,
+  MachineUserApiKeysQuery,
+  MachineUserApiKeysQueryVariables,
   MachineUserFieldsFragment,
   MachineUserQuery,
   MachineUserQueryVariables,
@@ -856,10 +964,14 @@ import type {
   MarkThreadAsTodoMutationVariables,
   MarkThreadDiscussionAsResolvedMutation,
   MarkThreadDiscussionAsResolvedMutationVariables,
+  MergedThreadMessageEntryFieldsFragment,
+  MeteredFeatureEntitlementFieldsFragment,
   MoveLabelTypeMutation,
   MoveLabelTypeMutationVariables,
   MsTeamsChannelMembersFieldsFragment,
+  MsTeamsMessageEntryFieldsFragment,
   MsTeamsMessageFieldsFragment,
+  MsTeamsThreadChannelDetailsFieldsFragment,
   MyBillingRotaQuery,
   MyBillingSubscriptionQuery,
   MyEmailSignatureQuery,
@@ -888,8 +1000,14 @@ import type {
   MyWorkspaceQuery,
   MyWorkspacesQuery,
   MyWorkspacesQueryVariables,
+  NextResponseTimeServiceLevelAgreementFieldsFragment,
+  NoteEntryFieldsFragment,
   NoteFieldsFragment,
+  NoteMentionNotificationDetailFieldsFragment,
+  PerSeatRecurringPriceFieldsFragment,
   PermissionsQuery,
+  PlainTaskThreadLinkFieldsFragment,
+  PlainThreadThreadLinkFieldsFragment,
   PreviewBillingPlanChangeMutation,
   PreviewBillingPlanChangeMutationVariables,
   RefreshConnectedDiscordChannelsMutation,
@@ -983,6 +1101,7 @@ import type {
   ServiceAuthorizationQueryVariables,
   ServiceAuthorizationsQuery,
   ServiceAuthorizationsQueryVariables,
+  ServiceLevelAgreementStatusTransitionedEntryFieldsFragment,
   SetCustomerTenantsMutation,
   SetCustomerTenantsMutationVariables,
   SettingQuery,
@@ -993,6 +1112,11 @@ import type {
   ShareThreadToUserInSlackMutationVariables,
   SingleValueMetricQuery,
   SingleValueMetricQueryVariables,
+  SlackCustomerIdentityFieldsFragment,
+  SlackMessageEntryFieldsFragment,
+  SlackReplyEntryFieldsFragment,
+  SlackThreadChannelAssociationFieldsFragment,
+  SlackThreadChannelDetailsFieldsFragment,
   SlackUserFieldsFragment,
   SlackUserQuery,
   SlackUserQueryVariables,
@@ -1010,6 +1134,8 @@ import type {
   SyncBusinessHoursSlotsMutationVariables,
   SyncUserWorkingHoursMutation,
   SyncUserWorkingHoursMutationVariables,
+  SystemActorFieldsFragment,
+  SystemFieldsFragment,
   TaskByRefQuery,
   TaskByRefQueryVariables,
   TaskFieldsFragment,
@@ -1020,31 +1146,50 @@ import type {
   TeamSettingsFieldsFragment,
   TeamSettingsQuery,
   TeamSettingsQueryVariables,
+  TenantFieldBooleanValueFieldsFragment,
+  TenantFieldDateTimeValueFieldsFragment,
   TenantFieldFieldsFragment,
+  TenantFieldNumberValueFieldsFragment,
   TenantFieldSchemaFieldsFragment,
   TenantFieldSchemasQuery,
   TenantFieldSchemasQueryVariables,
+  TenantFieldStringArrayValueFieldsFragment,
+  TenantFieldStringValueFieldsFragment,
   TenantFieldsFragment,
   TenantQuery,
   TenantQueryVariables,
   TenantTierMembershipFieldsFragment,
   TenantsQuery,
   TenantsQueryVariables,
+  ThreadAssignmentNotificationDetailFieldsFragment,
   ThreadByExternalIdQuery,
   ThreadByExternalIdQueryVariables,
   ThreadByRefQuery,
   ThreadByRefQueryVariables,
+  ThreadBySlackPermalinkQuery,
+  ThreadBySlackPermalinkQueryVariables,
+  ThreadCatchupFeedbackDetailsFieldsFragment,
   ThreadClusterFieldsFragment,
   ThreadClusterQuery,
   ThreadClusterQueryVariables,
+  ThreadClustersFeedbackDetailsFieldsFragment,
   ThreadClustersPaginatedQuery,
   ThreadClustersPaginatedQueryVariables,
   ThreadClustersQuery,
   ThreadClustersQueryVariables,
+  ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment,
+  ThreadDiscussionEmailChannelDetailsFieldsFragment,
+  ThreadDiscussionEntryFieldsFragment,
   ThreadDiscussionFieldsFragment,
+  ThreadDiscussionMessageEntryFieldsFragment,
   ThreadDiscussionMessageFieldsFragment,
+  ThreadDiscussionMessagesQuery,
+  ThreadDiscussionMessagesQueryVariables,
   ThreadDiscussionQuery,
   ThreadDiscussionQueryVariables,
+  ThreadDiscussionResolvedEntryFieldsFragment,
+  ThreadDiscussionSlackChannelDetailsFieldsFragment,
+  ThreadEventEntryFieldsFragment,
   ThreadEventFieldsFragment,
   ThreadFieldFieldsFragment,
   ThreadFieldSchemaFieldsFragment,
@@ -1057,16 +1202,33 @@ import type {
   ThreadLinkGroupFieldsFragment,
   ThreadLinkGroupsQuery,
   ThreadLinkGroupsQueryVariables,
+  ThreadLinkTargetCreatedEntryFieldsFragment,
+  ThreadLinkTargetDeletedEntryFieldsFragment,
+  ThreadPriorityChangedEntryFieldsFragment,
   ThreadQuery,
   ThreadQueryVariables,
   ThreadSlackUserQuery,
   ThreadSlackUserQueryVariables,
+  ThreadStatusDetailCreatedFieldsFragment,
+  ThreadStatusDetailDoneAutomaticallySetFieldsFragment,
+  ThreadStatusDetailDoneManuallySetFieldsFragment,
+  ThreadStatusDetailIgnoredFieldsFragment,
+  ThreadStatusDetailInProgressFieldsFragment,
+  ThreadStatusDetailNewReplyFieldsFragment,
+  ThreadStatusDetailThreadDiscussionResolvedFieldsFragment,
+  ThreadStatusDetailThreadLinkUpdatedFieldsFragment,
+  ThreadStatusDetailWaitingForCustomerFieldsFragment,
+  ThreadStatusDetailWaitingForDurationFieldsFragment,
+  ThreadStatusTransitionedEntryFieldsFragment,
+  ThreadTimelineEntriesQuery,
+  ThreadTimelineEntriesQueryVariables,
   ThreadWithDistanceFieldsFragment,
   ThreadsQuery,
   ThreadsQueryVariables,
   TierFieldsFragment,
   TierQuery,
   TierQueryVariables,
+  TieredRecurringPriceFieldsFragment,
   TiersQuery,
   TiersQueryVariables,
   TimeSeriesMetricFieldsFragment,
@@ -1077,10 +1239,12 @@ import type {
   TimelineEntryFieldsFragment,
   TimelineEntryQuery,
   TimelineEntryQueryVariables,
+  ToggleFeatureEntitlementFieldsFragment,
   ToggleSlackMessageReactionMutation,
   ToggleSlackMessageReactionMutationVariables,
   ToggleWorkflowRulePublishedMutation,
   ToggleWorkflowRulePublishedMutationVariables,
+  ToneRuleFeedbackDetailsFieldsFragment,
   TriggerWorkflowMutation,
   TriggerWorkflowMutationVariables,
   TriggerWorkflowRuleMutation,
@@ -1205,6 +1369,7 @@ import type {
   UpsertTenantMutationVariables,
   UpsertThreadFieldMutation,
   UpsertThreadFieldMutationVariables,
+  UserActorFieldsFragment,
   UserAuthDiscordChannelInstallationInfoQuery,
   UserAuthDiscordChannelInstallationInfoQueryVariables,
   UserAuthDiscordChannelIntegrationFieldsFragment,
@@ -1310,9 +1475,76 @@ import type {
   WorkspaceSlackIntegrationsQueryVariables,
 } from "./_generated_documents.js";
 
+export class AgentStatusDetailHandedOffModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AgentStatusDetailHandedOffFieldsFragment;
+  public readonly __typename = "AgentStatusDetailHandedOff" as const;
+
+  public readonly reason: AgentStatusDetailHandedOffFieldsFragment["reason"];
+  public readonly type: AgentStatusDetailHandedOffFieldsFragment["type"];
+
+  constructor(client: PlainGraphQLClient, data: AgentStatusDetailHandedOffFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.reason = data.reason;
+    this.type = data.type;
+  }
+}
+
+export class AgentStatusDetailHandledModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AgentStatusDetailHandledFieldsFragment;
+  public readonly __typename = "AgentStatusDetailHandled" as const;
+
+  public readonly type: AgentStatusDetailHandledFieldsFragment["type"];
+
+  constructor(client: PlainGraphQLClient, data: AgentStatusDetailHandledFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.type = data.type;
+  }
+}
+
+export class AgentStatusDetailInProgressModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AgentStatusDetailInProgressFieldsFragment;
+  public readonly __typename = "AgentStatusDetailInProgress" as const;
+
+  public readonly type: AgentStatusDetailInProgressFieldsFragment["type"];
+
+  constructor(client: PlainGraphQLClient, data: AgentStatusDetailInProgressFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.type = data.type;
+  }
+}
+
+export class AiAgentFeedbackDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AiAgentFeedbackDetailsFieldsFragment;
+  public readonly __typename = "AiAgentFeedbackDetails" as const;
+
+  public readonly comment: AiAgentFeedbackDetailsFieldsFragment["comment"];
+  public readonly reason: AiAgentFeedbackDetailsFieldsFragment["reason"];
+  public readonly sentiment: AiAgentFeedbackDetailsFieldsFragment["sentiment"];
+  public readonly threadId: AiAgentFeedbackDetailsFieldsFragment["threadId"];
+  public readonly timelineEntryId: AiAgentFeedbackDetailsFieldsFragment["timelineEntryId"];
+
+  constructor(client: PlainGraphQLClient, data: AiAgentFeedbackDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.comment = data.comment;
+    this.reason = data.reason;
+    this.sentiment = data.sentiment;
+    this.threadId = data.threadId;
+    this.timelineEntryId = data.timelineEntryId;
+  }
+}
+
 export class AiToneRuleModel {
   protected _client: PlainGraphQLClient;
   protected _data: AiToneRuleFieldsFragment;
+  public readonly __typename = "AiToneRule" as const;
 
   public readonly category: AiToneRuleFieldsFragment["category"];
   public readonly createdAt: AiToneRuleFieldsFragment["createdAt"];
@@ -1320,6 +1552,9 @@ export class AiToneRuleModel {
   public readonly id: AiToneRuleFieldsFragment["id"];
   public readonly isEnabled: AiToneRuleFieldsFragment["isEnabled"];
   public readonly updatedAt: AiToneRuleFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: AiToneRuleFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1329,12 +1564,29 @@ export class AiToneRuleModel {
     this.id = data.id;
     this.isEnabled = data.isEnabled;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ApiKeyModel {
   protected _client: PlainGraphQLClient;
   protected _data: ApiKeyFieldsFragment;
+  public readonly __typename = "ApiKey" as const;
 
   public readonly createdAt: ApiKeyFieldsFragment["createdAt"];
   public readonly deletedAt: ApiKeyFieldsFragment["deletedAt"];
@@ -1343,6 +1595,10 @@ export class ApiKeyModel {
   public readonly isDeleted: ApiKeyFieldsFragment["isDeleted"];
   public readonly permissions: ApiKeyFieldsFragment["permissions"];
   public readonly updatedAt: ApiKeyFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ApiKeyFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1353,15 +1609,43 @@ export class ApiKeyModel {
     this.isDeleted = data.isDeleted;
     this.permissions = data.permissions;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.deletedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.deletedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class AttachmentDownloadUrlModel {
   protected _client: PlainGraphQLClient;
   protected _data: AttachmentDownloadUrlFieldsFragment;
+  public readonly __typename = "AttachmentDownloadUrl" as const;
 
   public readonly downloadUrl: AttachmentDownloadUrlFieldsFragment["downloadUrl"];
   public readonly expiresAt: AttachmentDownloadUrlFieldsFragment["expiresAt"];
+
   constructor(client: PlainGraphQLClient, data: AttachmentDownloadUrlFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1373,10 +1657,12 @@ export class AttachmentDownloadUrlModel {
 export class AttachmentUploadUrlModel {
   protected _client: PlainGraphQLClient;
   protected _data: AttachmentUploadUrlFieldsFragment;
+  public readonly __typename = "AttachmentUploadUrl" as const;
 
   public readonly expiresAt: AttachmentUploadUrlFieldsFragment["expiresAt"];
   public readonly uploadFormData: AttachmentUploadUrlFieldsFragment["uploadFormData"];
   public readonly uploadFormUrl: AttachmentUploadUrlFieldsFragment["uploadFormUrl"];
+
   constructor(client: PlainGraphQLClient, data: AttachmentUploadUrlFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1389,6 +1675,7 @@ export class AttachmentUploadUrlModel {
 export class AutoresponderModel {
   protected _client: PlainGraphQLClient;
   protected _data: AutoresponderFieldsFragment;
+  public readonly __typename = "Autoresponder" as const;
 
   public readonly createdAt: AutoresponderFieldsFragment["createdAt"];
   public readonly id: AutoresponderFieldsFragment["id"];
@@ -1400,6 +1687,10 @@ export class AutoresponderModel {
   public readonly responseDelaySeconds: AutoresponderFieldsFragment["responseDelaySeconds"];
   public readonly textContent: AutoresponderFieldsFragment["textContent"];
   public readonly updatedAt: AutoresponderFieldsFragment["updatedAt"];
+  public readonly conditions: (AutoresponderBusinessHoursConditionModel | AutoresponderLabelConditionModel | AutoresponderPrioritiesConditionModel | AutoresponderSupportEmailsConditionModel | AutoresponderTierConditionModel)[];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: AutoresponderFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1413,21 +1704,154 @@ export class AutoresponderModel {
     this.responseDelaySeconds = data.responseDelaySeconds;
     this.textContent = data.textContent;
     this.updatedAt = data.updatedAt;
+    this.conditions = ((data.conditions as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "AutoresponderBusinessHoursCondition": return new AutoresponderBusinessHoursConditionModel(client, item as any);
+      case "AutoresponderLabelCondition": return new AutoresponderLabelConditionModel(client, item as any);
+      case "AutoresponderPrioritiesCondition": return new AutoresponderPrioritiesConditionModel(client, item as any);
+      case "AutoresponderSupportEmailsCondition": return new AutoresponderSupportEmailsConditionModel(client, item as any);
+      case "AutoresponderTierCondition": return new AutoresponderTierConditionModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class AutoresponderBusinessHoursConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AutoresponderBusinessHoursConditionFieldsFragment;
+  public readonly __typename = "AutoresponderBusinessHoursCondition" as const;
+
+  public readonly isOutsideBusinessHours: AutoresponderBusinessHoursConditionFieldsFragment["isOutsideBusinessHours"];
+
+  constructor(client: PlainGraphQLClient, data: AutoresponderBusinessHoursConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.isOutsideBusinessHours = data.isOutsideBusinessHours;
+  }
+}
+
+export class AutoresponderLabelConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AutoresponderLabelConditionFieldsFragment;
+  public readonly __typename = "AutoresponderLabelCondition" as const;
+
+  public readonly labelTypeIds: AutoresponderLabelConditionFieldsFragment["labelTypeIds"];
+
+  constructor(client: PlainGraphQLClient, data: AutoresponderLabelConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.labelTypeIds = data.labelTypeIds;
+  }
+}
+
+export class AutoresponderPrioritiesConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AutoresponderPrioritiesConditionFieldsFragment;
+  public readonly __typename = "AutoresponderPrioritiesCondition" as const;
+
+  public readonly priorities: AutoresponderPrioritiesConditionFieldsFragment["priorities"];
+
+  constructor(client: PlainGraphQLClient, data: AutoresponderPrioritiesConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.priorities = data.priorities;
+  }
+}
+
+export class AutoresponderSupportEmailsConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AutoresponderSupportEmailsConditionFieldsFragment;
+  public readonly __typename = "AutoresponderSupportEmailsCondition" as const;
+
+  public readonly supportEmailAddresses: AutoresponderSupportEmailsConditionFieldsFragment["supportEmailAddresses"];
+
+  constructor(client: PlainGraphQLClient, data: AutoresponderSupportEmailsConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.supportEmailAddresses = data.supportEmailAddresses;
+  }
+}
+
+export class AutoresponderTierConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AutoresponderTierConditionFieldsFragment;
+  public readonly __typename = "AutoresponderTierCondition" as const;
+
+  public readonly tierId: AutoresponderTierConditionFieldsFragment["tierId"];
+
+  constructor(client: PlainGraphQLClient, data: AutoresponderTierConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.tierId = data.tierId;
+  }
+}
+
+export class BeforeBreachActionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BeforeBreachActionFieldsFragment;
+  public readonly __typename = "BeforeBreachAction" as const;
+
+  public readonly beforeBreachMinutes: BeforeBreachActionFieldsFragment["beforeBreachMinutes"];
+  public readonly createdAt: BeforeBreachActionFieldsFragment["createdAt"];
+  public readonly updatedAt: BeforeBreachActionFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: BeforeBreachActionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.beforeBreachMinutes = data.beforeBreachMinutes;
+    this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class BillingPlanModel {
   protected _client: PlainGraphQLClient;
   protected _data: BillingPlanFieldsFragment;
+  public readonly __typename = "BillingPlan" as const;
 
   public readonly description: BillingPlanFieldsFragment["description"];
   public readonly features: BillingPlanFieldsFragment["features"];
   public readonly highlightedLabel: BillingPlanFieldsFragment["highlightedLabel"];
   public readonly isSelfCheckoutEligible: BillingPlanFieldsFragment["isSelfCheckoutEligible"];
   public readonly key: BillingPlanFieldsFragment["key"];
-  public readonly monthlyPrice: BillingPlanFieldsFragment["monthlyPrice"];
   public readonly name: BillingPlanFieldsFragment["name"];
-  public readonly yearlyPrice: BillingPlanFieldsFragment["yearlyPrice"];
+  public readonly prices: (PerSeatRecurringPriceModel | TieredRecurringPriceModel)[];
+
   constructor(client: PlainGraphQLClient, data: BillingPlanFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1436,18 +1860,25 @@ export class BillingPlanModel {
     this.highlightedLabel = data.highlightedLabel;
     this.isSelfCheckoutEligible = data.isSelfCheckoutEligible;
     this.key = data.key;
-    this.monthlyPrice = data.monthlyPrice;
     this.name = data.name;
-    this.yearlyPrice = data.yearlyPrice;
+    this.prices = ((data.prices as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "PerSeatRecurringPrice": return new PerSeatRecurringPriceModel(client, item as any);
+      case "TieredRecurringPrice": return new TieredRecurringPriceModel(client, item as any);
+      default: return item as any;
+    }
+  })());
   }
 }
 
 export class BillingPlanChangePreviewModel {
   protected _client: PlainGraphQLClient;
   protected _data: BillingPlanChangePreviewFieldsFragment;
+  public readonly __typename = "BillingPlanChangePreview" as const;
 
   public readonly earliestEffectiveAt: BillingPlanChangePreviewFieldsFragment["earliestEffectiveAt"];
   public readonly immediateCost: BillingPlanChangePreviewFieldsFragment["immediateCost"];
+
   constructor(client: PlainGraphQLClient, data: BillingPlanChangePreviewFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1459,8 +1890,10 @@ export class BillingPlanChangePreviewModel {
 export class BillingSubscriptionModel {
   protected _client: PlainGraphQLClient;
   protected _data: BillingSubscriptionFieldsFragment;
+  public readonly __typename = "BillingSubscription" as const;
 
   public readonly cancelsAt: BillingSubscriptionFieldsFragment["cancelsAt"];
+  public readonly checkoutSession: BillingSubscriptionFieldsFragment["checkoutSession"];
   public readonly endedAt: BillingSubscriptionFieldsFragment["endedAt"];
   public readonly interval: BillingSubscriptionFieldsFragment["interval"];
   public readonly planCode: BillingSubscriptionFieldsFragment["planCode"];
@@ -1468,10 +1901,13 @@ export class BillingSubscriptionModel {
   public readonly planName: BillingSubscriptionFieldsFragment["planName"];
   public readonly status: BillingSubscriptionFieldsFragment["status"];
   public readonly trialEndsAt: BillingSubscriptionFieldsFragment["trialEndsAt"];
+  public readonly entitlements: (MeteredFeatureEntitlementModel | ToggleFeatureEntitlementModel)[];
+
   constructor(client: PlainGraphQLClient, data: BillingSubscriptionFieldsFragment) {
     this._client = client;
     this._data = data;
     this.cancelsAt = data.cancelsAt;
+    this.checkoutSession = data.checkoutSession;
     this.endedAt = data.endedAt;
     this.interval = data.interval;
     this.planCode = data.planCode;
@@ -1479,55 +1915,92 @@ export class BillingSubscriptionModel {
     this.planName = data.planName;
     this.status = data.status;
     this.trialEndsAt = data.trialEndsAt;
+    this.entitlements = ((data.entitlements as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "MeteredFeatureEntitlement": return new MeteredFeatureEntitlementModel(client, item as any);
+      case "ToggleFeatureEntitlement": return new ToggleFeatureEntitlementModel(client, item as any);
+      default: return item as any;
+    }
+  })());
   }
 }
 
 export class BulkUpsertThreadFieldResultModel {
   protected _client: PlainGraphQLClient;
   protected _data: BulkUpsertThreadFieldResultFieldsFragment;
+  public readonly __typename = "BulkUpsertThreadFieldResult" as const;
 
   public readonly result: BulkUpsertThreadFieldResultFieldsFragment["result"];
+  public readonly threadField: BulkUpsertThreadFieldResultFieldsFragment["threadField"];
+
   constructor(client: PlainGraphQLClient, data: BulkUpsertThreadFieldResultFieldsFragment) {
     this._client = client;
     this._data = data;
     this.result = data.result;
+    this.threadField = data.threadField;
   }
 }
 
 export class BulkUpsertWorkflowStepResultItemModel {
   protected _client: PlainGraphQLClient;
   protected _data: BulkUpsertWorkflowStepResultItemFieldsFragment;
+  public readonly __typename = "BulkUpsertWorkflowStepResultItem" as const;
 
   public readonly result: BulkUpsertWorkflowStepResultItemFieldsFragment["result"];
+  public readonly workflowStep: BulkUpsertWorkflowStepResultItemFieldsFragment["workflowStep"];
+
   constructor(client: PlainGraphQLClient, data: BulkUpsertWorkflowStepResultItemFieldsFragment) {
     this._client = client;
     this._data = data;
     this.result = data.result;
+    this.workflowStep = data.workflowStep;
   }
 }
 
 export class BusinessHoursModel {
   protected _client: PlainGraphQLClient;
   protected _data: BusinessHoursFieldsFragment;
+  public readonly __typename = "BusinessHours" as const;
 
   public readonly createdAt: BusinessHoursFieldsFragment["createdAt"];
   public readonly updatedAt: BusinessHoursFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: BusinessHoursFieldsFragment) {
     this._client = client;
     this._data = data;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class BusinessHoursSlotModel {
   protected _client: PlainGraphQLClient;
   protected _data: BusinessHoursSlotFieldsFragment;
+  public readonly __typename = "BusinessHoursSlot" as const;
 
   public readonly closesAt: BusinessHoursSlotFieldsFragment["closesAt"];
   public readonly opensAt: BusinessHoursSlotFieldsFragment["opensAt"];
   public readonly timezone: BusinessHoursSlotFieldsFragment["timezone"];
   public readonly weekday: BusinessHoursSlotFieldsFragment["weekday"];
+
   constructor(client: PlainGraphQLClient, data: BusinessHoursSlotFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1541,12 +2014,16 @@ export class BusinessHoursSlotModel {
 export class ChatModel {
   protected _client: PlainGraphQLClient;
   protected _data: ChatFieldsFragment;
+  public readonly __typename = "Chat" as const;
 
   public readonly createdAt: ChatFieldsFragment["createdAt"];
   public readonly customerReadAt: ChatFieldsFragment["customerReadAt"];
   public readonly id: ChatFieldsFragment["id"];
   public readonly text: ChatFieldsFragment["text"];
   public readonly updatedAt: ChatFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ChatFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1555,17 +2032,41 @@ export class ChatModel {
     this.id = data.id;
     this.text = data.text;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ChatAppModel {
   protected _client: PlainGraphQLClient;
   protected _data: ChatAppFieldsFragment;
+  public readonly __typename = "ChatApp" as const;
 
   public readonly createdAt: ChatAppFieldsFragment["createdAt"];
   public readonly id: ChatAppFieldsFragment["id"];
   public readonly name: ChatAppFieldsFragment["name"];
   public readonly updatedAt: ChatAppFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ChatAppFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1573,33 +2074,73 @@ export class ChatAppModel {
     this.id = data.id;
     this.name = data.name;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ChatAppHiddenSecretModel {
   protected _client: PlainGraphQLClient;
   protected _data: ChatAppHiddenSecretFieldsFragment;
+  public readonly __typename = "ChatAppHiddenSecret" as const;
 
   public readonly chatAppId: ChatAppHiddenSecretFieldsFragment["chatAppId"];
   public readonly createdAt: ChatAppHiddenSecretFieldsFragment["createdAt"];
   public readonly updatedAt: ChatAppHiddenSecretFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ChatAppHiddenSecretFieldsFragment) {
     this._client = client;
     this._data = data;
     this.chatAppId = data.chatAppId;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ChatAppSecretModel {
   protected _client: PlainGraphQLClient;
   protected _data: ChatAppSecretFieldsFragment;
+  public readonly __typename = "ChatAppSecret" as const;
 
   public readonly chatAppId: ChatAppSecretFieldsFragment["chatAppId"];
   public readonly createdAt: ChatAppSecretFieldsFragment["createdAt"];
   public readonly secret: ChatAppSecretFieldsFragment["secret"];
   public readonly updatedAt: ChatAppSecretFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ChatAppSecretFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1607,12 +2148,61 @@ export class ChatAppSecretModel {
     this.createdAt = data.createdAt;
     this.secret = data.secret;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class ChatEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ChatEntryFieldsFragment;
+  public readonly __typename = "ChatEntry" as const;
+
+  public readonly chatId: ChatEntryFieldsFragment["chatId"];
+  public readonly customerReadAt: ChatEntryFieldsFragment["customerReadAt"];
+  public readonly text: ChatEntryFieldsFragment["text"];
+
+  constructor(client: PlainGraphQLClient, data: ChatEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.chatId = data.chatId;
+    this.customerReadAt = data.customerReadAt;
+    this.text = data.text;
+  }
+}
+
+export class ChatThreadChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ChatThreadChannelDetailsFieldsFragment;
+  public readonly __typename = "ChatThreadChannelDetails" as const;
+
+  public readonly customerReadAt: ChatThreadChannelDetailsFieldsFragment["customerReadAt"];
+
+  constructor(client: PlainGraphQLClient, data: ChatThreadChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerReadAt = data.customerReadAt;
   }
 }
 
 export class CompanyModel {
   protected _client: PlainGraphQLClient;
   protected _data: CompanyFieldsFragment;
+  public readonly __typename = "Company" as const;
 
   public readonly contractValue: CompanyFieldsFragment["contractValue"];
   public readonly createdAt: CompanyFieldsFragment["createdAt"];
@@ -1623,6 +2213,10 @@ export class CompanyModel {
   public readonly logoUrl: CompanyFieldsFragment["logoUrl"];
   public readonly name: CompanyFieldsFragment["name"];
   public readonly updatedAt: CompanyFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly threadChannelAssociations: (SlackThreadChannelAssociationModel)[];
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: CompanyFieldsFragment) {
     this._client = client;
@@ -1636,6 +2230,36 @@ export class CompanyModel {
     this.logoUrl = data.logoUrl;
     this.name = data.name;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.threadChannelAssociations = ((data.threadChannelAssociations as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "SlackThreadChannelAssociation": return new SlackThreadChannelAssociationModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get accountOwner(): Promise<UserModel | undefined> {
@@ -1660,12 +2284,16 @@ export class CompanyModel {
 export class CompanyTierMembershipModel {
   protected _client: PlainGraphQLClient;
   protected _data: CompanyTierMembershipFieldsFragment;
+  public readonly __typename = "CompanyTierMembership" as const;
 
   public readonly companyId: CompanyTierMembershipFieldsFragment["companyId"];
   public readonly createdAt: CompanyTierMembershipFieldsFragment["createdAt"];
   public readonly id: CompanyTierMembershipFieldsFragment["id"];
   public readonly tierId: CompanyTierMembershipFieldsFragment["tierId"];
   public readonly updatedAt: CompanyTierMembershipFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: CompanyTierMembershipFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1674,12 +2302,157 @@ export class CompanyTierMembershipModel {
     this.id = data.id;
     this.tierId = data.tierId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class ComponentBadgeModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ComponentBadgeFieldsFragment;
+  public readonly __typename = "ComponentBadge" as const;
+
+  public readonly badgeColor: ComponentBadgeFieldsFragment["badgeColor"];
+  public readonly badgeLabel: ComponentBadgeFieldsFragment["badgeLabel"];
+
+  constructor(client: PlainGraphQLClient, data: ComponentBadgeFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.badgeColor = data.badgeColor;
+    this.badgeLabel = data.badgeLabel;
+  }
+}
+
+export class ComponentCopyButtonModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ComponentCopyButtonFieldsFragment;
+  public readonly __typename = "ComponentCopyButton" as const;
+
+  public readonly copyButtonTooltipLabel: ComponentCopyButtonFieldsFragment["copyButtonTooltipLabel"];
+  public readonly copyButtonValue: ComponentCopyButtonFieldsFragment["copyButtonValue"];
+
+  constructor(client: PlainGraphQLClient, data: ComponentCopyButtonFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.copyButtonTooltipLabel = data.copyButtonTooltipLabel;
+    this.copyButtonValue = data.copyButtonValue;
+  }
+}
+
+export class ComponentDividerModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ComponentDividerFieldsFragment;
+  public readonly __typename = "ComponentDivider" as const;
+
+  public readonly dividerSpacingSize: ComponentDividerFieldsFragment["dividerSpacingSize"];
+
+  constructor(client: PlainGraphQLClient, data: ComponentDividerFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.dividerSpacingSize = data.dividerSpacingSize;
+  }
+}
+
+export class ComponentLinkButtonModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ComponentLinkButtonFieldsFragment;
+  public readonly __typename = "ComponentLinkButton" as const;
+
+  public readonly linkButtonLabel: ComponentLinkButtonFieldsFragment["linkButtonLabel"];
+  public readonly linkButtonUrl: ComponentLinkButtonFieldsFragment["linkButtonUrl"];
+
+  constructor(client: PlainGraphQLClient, data: ComponentLinkButtonFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.linkButtonLabel = data.linkButtonLabel;
+    this.linkButtonUrl = data.linkButtonUrl;
+  }
+}
+
+export class ComponentPlainTextModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ComponentPlainTextFieldsFragment;
+  public readonly __typename = "ComponentPlainText" as const;
+
+  public readonly plainText: ComponentPlainTextFieldsFragment["plainText"];
+  public readonly plainTextColor: ComponentPlainTextFieldsFragment["plainTextColor"];
+  public readonly plainTextSize: ComponentPlainTextFieldsFragment["plainTextSize"];
+
+  constructor(client: PlainGraphQLClient, data: ComponentPlainTextFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.plainText = data.plainText;
+    this.plainTextColor = data.plainTextColor;
+    this.plainTextSize = data.plainTextSize;
+  }
+}
+
+export class ComponentSpacerModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ComponentSpacerFieldsFragment;
+  public readonly __typename = "ComponentSpacer" as const;
+
+  public readonly spacerSize: ComponentSpacerFieldsFragment["spacerSize"];
+
+  constructor(client: PlainGraphQLClient, data: ComponentSpacerFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.spacerSize = data.spacerSize;
+  }
+}
+
+export class ComponentTextModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ComponentTextFieldsFragment;
+  public readonly __typename = "ComponentText" as const;
+
+  public readonly text: ComponentTextFieldsFragment["text"];
+  public readonly textColor: ComponentTextFieldsFragment["textColor"];
+  public readonly textSize: ComponentTextFieldsFragment["textSize"];
+
+  constructor(client: PlainGraphQLClient, data: ComponentTextFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.text = data.text;
+    this.textColor = data.textColor;
+    this.textSize = data.textSize;
+  }
+}
+
+export class ComponentWorkflowButtonModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ComponentWorkflowButtonFieldsFragment;
+  public readonly __typename = "ComponentWorkflowButton" as const;
+
+  public readonly workflowButtonLabel: ComponentWorkflowButtonFieldsFragment["workflowButtonLabel"];
+  public readonly workflowButtonWorkflowIdentifier: ComponentWorkflowButtonFieldsFragment["workflowButtonWorkflowIdentifier"];
+
+  constructor(client: PlainGraphQLClient, data: ComponentWorkflowButtonFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.workflowButtonLabel = data.workflowButtonLabel;
+    this.workflowButtonWorkflowIdentifier = data.workflowButtonWorkflowIdentifier;
   }
 }
 
 export class ConnectedDiscordChannelModel {
   protected _client: PlainGraphQLClient;
   protected _data: ConnectedDiscordChannelFieldsFragment;
+  public readonly __typename = "ConnectedDiscordChannel" as const;
 
   public readonly createdAt: ConnectedDiscordChannelFieldsFragment["createdAt"];
   public readonly discordChannelId: ConnectedDiscordChannelFieldsFragment["discordChannelId"];
@@ -1688,6 +2461,9 @@ export class ConnectedDiscordChannelModel {
   public readonly isEnabled: ConnectedDiscordChannelFieldsFragment["isEnabled"];
   public readonly name: ConnectedDiscordChannelFieldsFragment["name"];
   public readonly updatedAt: ConnectedDiscordChannelFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ConnectedDiscordChannelFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1698,12 +2474,29 @@ export class ConnectedDiscordChannelModel {
     this.isEnabled = data.isEnabled;
     this.name = data.name;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ConnectedMSTeamsChannelModel {
   protected _client: PlainGraphQLClient;
   protected _data: ConnectedMsTeamsChannelFieldsFragment;
+  public readonly __typename = "ConnectedMSTeamsChannel" as const;
 
   public readonly createdAt: ConnectedMsTeamsChannelFieldsFragment["createdAt"];
   public readonly id: ConnectedMsTeamsChannelFieldsFragment["id"];
@@ -1714,6 +2507,9 @@ export class ConnectedMSTeamsChannelModel {
   public readonly teamName: ConnectedMsTeamsChannelFieldsFragment["teamName"];
   public readonly updatedAt: ConnectedMsTeamsChannelFieldsFragment["updatedAt"];
   public readonly workspaceId: ConnectedMsTeamsChannelFieldsFragment["workspaceId"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ConnectedMsTeamsChannelFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1726,12 +2522,29 @@ export class ConnectedMSTeamsChannelModel {
     this.teamName = data.teamName;
     this.updatedAt = data.updatedAt;
     this.workspaceId = data.workspaceId;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ConnectedSlackChannelModel {
   protected _client: PlainGraphQLClient;
   protected _data: ConnectedSlackChannelFieldsFragment;
+  public readonly __typename = "ConnectedSlackChannel" as const;
 
   public readonly channelType: ConnectedSlackChannelFieldsFragment["channelType"];
   public readonly createdAt: ConnectedSlackChannelFieldsFragment["createdAt"];
@@ -1742,6 +2555,9 @@ export class ConnectedSlackChannelModel {
   public readonly slackChannelId: ConnectedSlackChannelFieldsFragment["slackChannelId"];
   public readonly slackTeamId: ConnectedSlackChannelFieldsFragment["slackTeamId"];
   public readonly updatedAt: ConnectedSlackChannelFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ConnectedSlackChannelFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1754,43 +2570,146 @@ export class ConnectedSlackChannelModel {
     this.slackChannelId = data.slackChannelId;
     this.slackTeamId = data.slackTeamId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class CsatCustomerSurveyTemplateModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CsatCustomerSurveyTemplateFieldsFragment;
+  public readonly __typename = "CsatCustomerSurveyTemplate" as const;
+
+  public readonly questionText: CsatCustomerSurveyTemplateFieldsFragment["questionText"];
+  public readonly type: CsatCustomerSurveyTemplateFieldsFragment["type"];
+
+  constructor(client: PlainGraphQLClient, data: CsatCustomerSurveyTemplateFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.questionText = data.questionText;
+    this.type = data.type;
+  }
+}
+
+export class CustomEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomEntryFieldsFragment;
+  public readonly __typename = "CustomEntry" as const;
+
+  public readonly externalId: CustomEntryFieldsFragment["externalId"];
+  public readonly title: CustomEntryFieldsFragment["title"];
+  public readonly type: CustomEntryFieldsFragment["type"];
+  public readonly components: (ComponentBadgeModel | { __typename: "ComponentContainer" } | ComponentCopyButtonModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | ComponentWorkflowButtonModel)[];
+
+  constructor(client: PlainGraphQLClient, data: CustomEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.externalId = data.externalId;
+    this.title = data.title;
+    this.type = data.type;
+    this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentContainer": return item as any;
+      case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
+      case "ComponentDivider": return new ComponentDividerModel(client, item as any);
+      case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
+      case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
+      case "ComponentRow": return item as any;
+      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
+      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
+      default: return item as any;
+    }
+  })());
   }
 }
 
 export class CustomerModel {
   protected _client: PlainGraphQLClient;
   protected _data: CustomerFieldsFragment;
+  public readonly __typename = "Customer" as const;
 
   public readonly assignedAt: CustomerFieldsFragment["assignedAt"];
+  public readonly assignedToUser: CustomerFieldsFragment["assignedToUser"];
   public readonly avatarUrl: CustomerFieldsFragment["avatarUrl"];
   public readonly createdAt: CustomerFieldsFragment["createdAt"];
   public readonly externalId: CustomerFieldsFragment["externalId"];
   public readonly fullName: CustomerFieldsFragment["fullName"];
   public readonly id: CustomerFieldsFragment["id"];
   public readonly isAnonymous: CustomerFieldsFragment["isAnonymous"];
-  public readonly lastIdleAt: CustomerFieldsFragment["lastIdleAt"];
   public readonly markedAsSpamAt: CustomerFieldsFragment["markedAsSpamAt"];
   public readonly shortName: CustomerFieldsFragment["shortName"];
-  public readonly status: CustomerFieldsFragment["status"];
-  public readonly statusChangedAt: CustomerFieldsFragment["statusChangedAt"];
   public readonly updatedAt: CustomerFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly identities: (DiscordCustomerIdentityModel | EmailCustomerIdentityModel | SlackCustomerIdentityModel)[];
+  public readonly markedAsSpamBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: CustomerFieldsFragment) {
     this._client = client;
     this._data = data;
     this.assignedAt = data.assignedAt;
+    this.assignedToUser = data.assignedToUser;
     this.avatarUrl = data.avatarUrl;
     this.createdAt = data.createdAt;
     this.externalId = data.externalId;
     this.fullName = data.fullName;
     this.id = data.id;
     this.isAnonymous = data.isAnonymous;
-    this.lastIdleAt = data.lastIdleAt;
     this.markedAsSpamAt = data.markedAsSpamAt;
     this.shortName = data.shortName;
-    this.status = data.status;
-    this.statusChangedAt = data.statusChangedAt;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.identities = ((data.identities as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "DiscordCustomerIdentity": return new DiscordCustomerIdentityModel(client, item as any);
+      case "EmailCustomerIdentity": return new EmailCustomerIdentityModel(client, item as any);
+      case "SlackCustomerIdentity": return new SlackCustomerIdentityModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.markedAsSpamBy = data.markedAsSpamBy ? (() => {
+    switch ((data.markedAsSpamBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.markedAsSpamBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.markedAsSpamBy as any);
+      case "UserActor": return new UserActorModel(client, data.markedAsSpamBy as any);
+      default: return data.markedAsSpamBy as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get company(): Promise<CompanyModel | undefined> {
@@ -1801,11 +2720,50 @@ export class CustomerModel {
       { companyId: id } as CompanyQueryVariables
     ).then(r => r.company ? new CompanyModel(this._client, r.company) : undefined);
   }
+
+  async customerGroupMemberships(variables?: Omit<CustomerCustomerGroupMembershipsQueryVariables, "customerId">): Promise<PlainConnection<CustomerGroupMembershipModel>> {
+    const allVars = { ...variables, customerId: this.id } as CustomerCustomerGroupMembershipsQueryVariables;
+    const response = await this._client.request<CustomerCustomerGroupMembershipsQuery, CustomerCustomerGroupMembershipsQueryVariables>(
+      CustomerCustomerGroupMembershipsDocument, allVars
+    );
+    const parent = response.customer;
+    if (!parent) throw new Error("customer not found");
+    const conn = parent.customerGroupMemberships;
+    return new PlainConnection<CustomerGroupMembershipModel>({
+      nodes: conn.edges.map(e => new CustomerGroupMembershipModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.customerGroupMemberships({ ...variables, ...cursor }),
+    });
+  }
+}
+
+export class CustomerActorModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerActorFieldsFragment;
+  public readonly __typename = "CustomerActor" as const;
+
+  public readonly customerId: CustomerActorFieldsFragment["customerId"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerActorFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+  }
+
+  public get customer(): Promise<CustomerModel | undefined> {
+    const id = this._data.customer?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CustomerQuery, CustomerQueryVariables>(
+      CustomerDocument,
+      { customerId: id } as CustomerQueryVariables
+    ).then(r => r.customer ? new CustomerModel(this._client, r.customer) : undefined);
+  }
 }
 
 export class CustomerCardConfigModel {
   protected _client: PlainGraphQLClient;
   protected _data: CustomerCardConfigFieldsFragment;
+  public readonly __typename = "CustomerCardConfig" as const;
 
   public readonly apiHeaders: CustomerCardConfigFieldsFragment["apiHeaders"];
   public readonly apiUrl: CustomerCardConfigFieldsFragment["apiUrl"];
@@ -1817,6 +2775,9 @@ export class CustomerCardConfigModel {
   public readonly order: CustomerCardConfigFieldsFragment["order"];
   public readonly title: CustomerCardConfigFieldsFragment["title"];
   public readonly updatedAt: CustomerCardConfigFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: CustomerCardConfigFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1830,18 +2791,39 @@ export class CustomerCardConfigModel {
     this.order = data.order;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class CustomerEventModel {
   protected _client: PlainGraphQLClient;
   protected _data: CustomerEventFieldsFragment;
+  public readonly __typename = "CustomerEvent" as const;
 
   public readonly createdAt: CustomerEventFieldsFragment["createdAt"];
   public readonly customerId: CustomerEventFieldsFragment["customerId"];
   public readonly id: CustomerEventFieldsFragment["id"];
   public readonly title: CustomerEventFieldsFragment["title"];
   public readonly updatedAt: CustomerEventFieldsFragment["updatedAt"];
+  public readonly components: (ComponentBadgeModel | ComponentCopyButtonModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | ComponentWorkflowButtonModel)[];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: CustomerEventFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1850,12 +2832,82 @@ export class CustomerEventModel {
     this.id = data.id;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
+    this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
+      case "ComponentDivider": return new ComponentDividerModel(client, item as any);
+      case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
+      case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
+      case "ComponentRow": return item as any;
+      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
+      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class CustomerEventEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerEventEntryFieldsFragment;
+  public readonly __typename = "CustomerEventEntry" as const;
+
+  public readonly customerId: CustomerEventEntryFieldsFragment["customerId"];
+  public readonly externalId: CustomerEventEntryFieldsFragment["externalId"];
+  public readonly timelineEventId: CustomerEventEntryFieldsFragment["timelineEventId"];
+  public readonly title: CustomerEventEntryFieldsFragment["title"];
+  public readonly components: (ComponentBadgeModel | ComponentCopyButtonModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | ComponentWorkflowButtonModel)[];
+
+  constructor(client: PlainGraphQLClient, data: CustomerEventEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.externalId = data.externalId;
+    this.timelineEventId = data.timelineEventId;
+    this.title = data.title;
+    this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
+      case "ComponentDivider": return new ComponentDividerModel(client, item as any);
+      case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
+      case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
+      case "ComponentRow": return item as any;
+      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
+      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
+      default: return item as any;
+    }
+  })());
   }
 }
 
 export class CustomerGroupModel {
   protected _client: PlainGraphQLClient;
   protected _data: CustomerGroupFieldsFragment;
+  public readonly __typename = "CustomerGroup" as const;
 
   public readonly color: CustomerGroupFieldsFragment["color"];
   public readonly createdAt: CustomerGroupFieldsFragment["createdAt"];
@@ -1864,6 +2916,9 @@ export class CustomerGroupModel {
   public readonly key: CustomerGroupFieldsFragment["key"];
   public readonly name: CustomerGroupFieldsFragment["name"];
   public readonly updatedAt: CustomerGroupFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: CustomerGroupFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1874,16 +2929,35 @@ export class CustomerGroupModel {
     this.key = data.key;
     this.name = data.name;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class CustomerGroupMembershipModel {
   protected _client: PlainGraphQLClient;
   protected _data: CustomerGroupMembershipFieldsFragment;
+  public readonly __typename = "CustomerGroupMembership" as const;
 
   public readonly createdAt: CustomerGroupMembershipFieldsFragment["createdAt"];
   public readonly customerId: CustomerGroupMembershipFieldsFragment["customerId"];
   public readonly updatedAt: CustomerGroupMembershipFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: CustomerGroupMembershipFieldsFragment) {
     this._client = client;
@@ -1891,6 +2965,22 @@ export class CustomerGroupMembershipModel {
     this.createdAt = data.createdAt;
     this.customerId = data.customerId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get customerGroup(): Promise<CustomerGroupModel | undefined> {
@@ -1906,6 +2996,7 @@ export class CustomerGroupMembershipModel {
 export class CustomerSurveyModel {
   protected _client: PlainGraphQLClient;
   protected _data: CustomerSurveyFieldsFragment;
+  public readonly __typename = "CustomerSurvey" as const;
 
   public readonly createdAt: CustomerSurveyFieldsFragment["createdAt"];
   public readonly customerIntervalDays: CustomerSurveyFieldsFragment["customerIntervalDays"];
@@ -1915,6 +3006,11 @@ export class CustomerSurveyModel {
   public readonly order: CustomerSurveyFieldsFragment["order"];
   public readonly responseDelayMinutes: CustomerSurveyFieldsFragment["responseDelayMinutes"];
   public readonly updatedAt: CustomerSurveyFieldsFragment["updatedAt"];
+  public readonly conditions: (CustomerSurveyLabelConditionModel | CustomerSurveyMessageSourceConditionModel | CustomerSurveyPrioritiesConditionModel | CustomerSurveySupportEmailsConditionModel | CustomerSurveyTiersConditionModel)[];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly template: CsatCustomerSurveyTemplateModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: CustomerSurveyFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1926,12 +3022,137 @@ export class CustomerSurveyModel {
     this.order = data.order;
     this.responseDelayMinutes = data.responseDelayMinutes;
     this.updatedAt = data.updatedAt;
+    this.conditions = ((data.conditions as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "CustomerSurveyLabelCondition": return new CustomerSurveyLabelConditionModel(client, item as any);
+      case "CustomerSurveyMessageSourceCondition": return new CustomerSurveyMessageSourceConditionModel(client, item as any);
+      case "CustomerSurveyPrioritiesCondition": return new CustomerSurveyPrioritiesConditionModel(client, item as any);
+      case "CustomerSurveySupportEmailsCondition": return new CustomerSurveySupportEmailsConditionModel(client, item as any);
+      case "CustomerSurveyTiersCondition": return new CustomerSurveyTiersConditionModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.template = (() => {
+    switch ((data.template as any).__typename) {
+      case "CsatCustomerSurveyTemplate": return new CsatCustomerSurveyTemplateModel(client, data.template as any);
+      default: return data.template as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class CustomerSurveyLabelConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerSurveyLabelConditionFieldsFragment;
+  public readonly __typename = "CustomerSurveyLabelCondition" as const;
+
+  public readonly labelTypeIds: CustomerSurveyLabelConditionFieldsFragment["labelTypeIds"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerSurveyLabelConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.labelTypeIds = data.labelTypeIds;
+  }
+}
+
+export class CustomerSurveyMessageSourceConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerSurveyMessageSourceConditionFieldsFragment;
+  public readonly __typename = "CustomerSurveyMessageSourceCondition" as const;
+
+  public readonly messageSource: CustomerSurveyMessageSourceConditionFieldsFragment["messageSource"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerSurveyMessageSourceConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.messageSource = data.messageSource;
+  }
+}
+
+export class CustomerSurveyPrioritiesConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerSurveyPrioritiesConditionFieldsFragment;
+  public readonly __typename = "CustomerSurveyPrioritiesCondition" as const;
+
+  public readonly priorities: CustomerSurveyPrioritiesConditionFieldsFragment["priorities"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerSurveyPrioritiesConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.priorities = data.priorities;
+  }
+}
+
+export class CustomerSurveyRequestedEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerSurveyRequestedEntryFieldsFragment;
+  public readonly __typename = "CustomerSurveyRequestedEntry" as const;
+
+  public readonly customerId: CustomerSurveyRequestedEntryFieldsFragment["customerId"];
+  public readonly customerSurveyId: CustomerSurveyRequestedEntryFieldsFragment["customerSurveyId"];
+  public readonly surveyResponseId: CustomerSurveyRequestedEntryFieldsFragment["surveyResponseId"];
+  public readonly surveyResponsePublicId: CustomerSurveyRequestedEntryFieldsFragment["surveyResponsePublicId"];
+  public readonly threadId: CustomerSurveyRequestedEntryFieldsFragment["threadId"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerSurveyRequestedEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.customerSurveyId = data.customerSurveyId;
+    this.surveyResponseId = data.surveyResponseId;
+    this.surveyResponsePublicId = data.surveyResponsePublicId;
+    this.threadId = data.threadId;
+  }
+}
+
+export class CustomerSurveySupportEmailsConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerSurveySupportEmailsConditionFieldsFragment;
+  public readonly __typename = "CustomerSurveySupportEmailsCondition" as const;
+
+  public readonly supportEmailAddresses: CustomerSurveySupportEmailsConditionFieldsFragment["supportEmailAddresses"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerSurveySupportEmailsConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.supportEmailAddresses = data.supportEmailAddresses;
+  }
+}
+
+export class CustomerSurveyTiersConditionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerSurveyTiersConditionFieldsFragment;
+  public readonly __typename = "CustomerSurveyTiersCondition" as const;
+
+  public readonly tierIds: CustomerSurveyTiersConditionFieldsFragment["tierIds"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerSurveyTiersConditionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.tierIds = data.tierIds;
   }
 }
 
 export class CustomRoleModel {
   protected _client: PlainGraphQLClient;
   protected _data: CustomRoleFieldsFragment;
+  public readonly __typename = "CustomRole" as const;
 
   public readonly createdAt: CustomRoleFieldsFragment["createdAt"];
   public readonly description: CustomRoleFieldsFragment["description"];
@@ -1939,6 +3160,9 @@ export class CustomRoleModel {
   public readonly name: CustomRoleFieldsFragment["name"];
   public readonly permissionsPreset: CustomRoleFieldsFragment["permissionsPreset"];
   public readonly updatedAt: CustomRoleFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: CustomRoleFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1948,15 +3172,63 @@ export class CustomRoleModel {
     this.name = data.name;
     this.permissionsPreset = data.permissionsPreset;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class DefaultServiceIntegrationModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: DefaultServiceIntegrationFieldsFragment;
+  public readonly __typename = "DefaultServiceIntegration" as const;
+
+  public readonly key: DefaultServiceIntegrationFieldsFragment["key"];
+  public readonly name: DefaultServiceIntegrationFieldsFragment["name"];
+
+  constructor(client: PlainGraphQLClient, data: DefaultServiceIntegrationFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.key = data.key;
+    this.name = data.name;
+  }
+}
+
+export class DeletedCustomerActorModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: DeletedCustomerActorFieldsFragment;
+  public readonly __typename = "DeletedCustomerActor" as const;
+
+  public readonly customerId: DeletedCustomerActorFieldsFragment["customerId"];
+
+  constructor(client: PlainGraphQLClient, data: DeletedCustomerActorFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
   }
 }
 
 export class DeletedThreadModel {
   protected _client: PlainGraphQLClient;
   protected _data: DeletedThreadFieldsFragment;
+  public readonly __typename = "DeletedThread" as const;
 
   public readonly deletedAt: DeletedThreadFieldsFragment["deletedAt"];
   public readonly threadId: DeletedThreadFieldsFragment["threadId"];
+
   constructor(client: PlainGraphQLClient, data: DeletedThreadFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1965,9 +3237,24 @@ export class DeletedThreadModel {
   }
 }
 
+export class DiscordCustomerIdentityModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: DiscordCustomerIdentityFieldsFragment;
+  public readonly __typename = "DiscordCustomerIdentity" as const;
+
+  public readonly discordUserId: DiscordCustomerIdentityFieldsFragment["discordUserId"];
+
+  constructor(client: PlainGraphQLClient, data: DiscordCustomerIdentityFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.discordUserId = data.discordUserId;
+  }
+}
+
 export class DiscordMessageModel {
   protected _client: PlainGraphQLClient;
   protected _data: DiscordMessageFieldsFragment;
+  public readonly __typename = "DiscordMessage" as const;
 
   public readonly createdAt: DiscordMessageFieldsFragment["createdAt"];
   public readonly deletedOnDiscordAt: DiscordMessageFieldsFragment["deletedOnDiscordAt"];
@@ -1976,6 +3263,9 @@ export class DiscordMessageModel {
   public readonly lastEditedOnDiscordAt: DiscordMessageFieldsFragment["lastEditedOnDiscordAt"];
   public readonly markdownContent: DiscordMessageFieldsFragment["markdownContent"];
   public readonly updatedAt: DiscordMessageFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: DiscordMessageFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -1986,12 +3276,91 @@ export class DiscordMessageModel {
     this.lastEditedOnDiscordAt = data.lastEditedOnDiscordAt;
     this.markdownContent = data.markdownContent;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class DiscordMessageEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: DiscordMessageEntryFieldsFragment;
+  public readonly __typename = "DiscordMessageEntry" as const;
+
+  public readonly customerId: DiscordMessageEntryFieldsFragment["customerId"];
+  public readonly deletedOnDiscordAt: DiscordMessageEntryFieldsFragment["deletedOnDiscordAt"];
+  public readonly discordMessageId: DiscordMessageEntryFieldsFragment["discordMessageId"];
+  public readonly discordMessageLink: DiscordMessageEntryFieldsFragment["discordMessageLink"];
+  public readonly lastEditedOnDiscordAt: DiscordMessageEntryFieldsFragment["lastEditedOnDiscordAt"];
+  public readonly markdownContent: DiscordMessageEntryFieldsFragment["markdownContent"];
+
+  constructor(client: PlainGraphQLClient, data: DiscordMessageEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.deletedOnDiscordAt = data.deletedOnDiscordAt;
+    this.discordMessageId = data.discordMessageId;
+    this.discordMessageLink = data.discordMessageLink;
+    this.lastEditedOnDiscordAt = data.lastEditedOnDiscordAt;
+    this.markdownContent = data.markdownContent;
+  }
+}
+
+export class DiscordThreadChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: DiscordThreadChannelDetailsFieldsFragment;
+  public readonly __typename = "DiscordThreadChannelDetails" as const;
+
+  public readonly discordChannelId: DiscordThreadChannelDetailsFieldsFragment["discordChannelId"];
+  public readonly discordChannelName: DiscordThreadChannelDetailsFieldsFragment["discordChannelName"];
+  public readonly discordGuildId: DiscordThreadChannelDetailsFieldsFragment["discordGuildId"];
+
+  constructor(client: PlainGraphQLClient, data: DiscordThreadChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.discordChannelId = data.discordChannelId;
+    this.discordChannelName = data.discordChannelName;
+    this.discordGuildId = data.discordGuildId;
+  }
+}
+
+export class DiscussionResolvedNotificationDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: DiscussionResolvedNotificationDetailFieldsFragment;
+  public readonly __typename = "DiscussionResolvedNotificationDetail" as const;
+
+  public readonly threadDiscussionId: DiscussionResolvedNotificationDetailFieldsFragment["threadDiscussionId"];
+  public readonly threadId: DiscussionResolvedNotificationDetailFieldsFragment["threadId"];
+
+  constructor(client: PlainGraphQLClient, data: DiscussionResolvedNotificationDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.threadDiscussionId = data.threadDiscussionId;
+    this.threadId = data.threadId;
   }
 }
 
 export class EmailModel {
   protected _client: PlainGraphQLClient;
   protected _data: EmailFieldsFragment;
+  public readonly __typename = "Email" as const;
 
   public readonly category: EmailFieldsFragment["category"];
   public readonly createdAt: EmailFieldsFragment["createdAt"];
@@ -2002,6 +3371,8 @@ export class EmailModel {
   public readonly textContent: EmailFieldsFragment["textContent"];
   public readonly threadDiscussionId: EmailFieldsFragment["threadDiscussionId"];
   public readonly updatedAt: EmailFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: EmailFieldsFragment) {
     this._client = client;
@@ -2015,6 +3386,26 @@ export class EmailModel {
     this.textContent = data.textContent;
     this.threadDiscussionId = data.threadDiscussionId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get customer(): Promise<CustomerModel | undefined> {
@@ -2036,12 +3427,82 @@ export class EmailModel {
   }
 }
 
+export class EmailBounceNotificationDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: EmailBounceNotificationDetailFieldsFragment;
+  public readonly __typename = "EmailBounceNotificationDetail" as const;
+
+  public readonly threadId: EmailBounceNotificationDetailFieldsFragment["threadId"];
+
+  constructor(client: PlainGraphQLClient, data: EmailBounceNotificationDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.threadId = data.threadId;
+  }
+}
+
+export class EmailCustomerIdentityModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: EmailCustomerIdentityFieldsFragment;
+  public readonly __typename = "EmailCustomerIdentity" as const;
+
+  public readonly email: EmailCustomerIdentityFieldsFragment["email"];
+
+  constructor(client: PlainGraphQLClient, data: EmailCustomerIdentityFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.email = data.email;
+  }
+}
+
+export class EmailEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: EmailEntryFieldsFragment;
+  public readonly __typename = "EmailEntry" as const;
+
+  public readonly authenticity: EmailEntryFieldsFragment["authenticity"];
+  public readonly category: EmailEntryFieldsFragment["category"];
+  public readonly emailId: EmailEntryFieldsFragment["emailId"];
+  public readonly fullMarkdownContent: EmailEntryFieldsFragment["fullMarkdownContent"];
+  public readonly fullTextContent: EmailEntryFieldsFragment["fullTextContent"];
+  public readonly hasMoreMarkdownContent: EmailEntryFieldsFragment["hasMoreMarkdownContent"];
+  public readonly hasMoreTextContent: EmailEntryFieldsFragment["hasMoreTextContent"];
+  public readonly isStartOfThread: EmailEntryFieldsFragment["isStartOfThread"];
+  public readonly markdownContent: EmailEntryFieldsFragment["markdownContent"];
+  public readonly receivedAt: EmailEntryFieldsFragment["receivedAt"];
+  public readonly sendStatus: EmailEntryFieldsFragment["sendStatus"];
+  public readonly sentAt: EmailEntryFieldsFragment["sentAt"];
+  public readonly subject: EmailEntryFieldsFragment["subject"];
+  public readonly textContent: EmailEntryFieldsFragment["textContent"];
+
+  constructor(client: PlainGraphQLClient, data: EmailEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.authenticity = data.authenticity;
+    this.category = data.category;
+    this.emailId = data.emailId;
+    this.fullMarkdownContent = data.fullMarkdownContent;
+    this.fullTextContent = data.fullTextContent;
+    this.hasMoreMarkdownContent = data.hasMoreMarkdownContent;
+    this.hasMoreTextContent = data.hasMoreTextContent;
+    this.isStartOfThread = data.isStartOfThread;
+    this.markdownContent = data.markdownContent;
+    this.receivedAt = data.receivedAt;
+    this.sendStatus = data.sendStatus;
+    this.sentAt = data.sentAt;
+    this.subject = data.subject;
+    this.textContent = data.textContent;
+  }
+}
+
 export class EmailPreviewUrlModel {
   protected _client: PlainGraphQLClient;
   protected _data: EmailPreviewUrlFieldsFragment;
+  public readonly __typename = "EmailPreviewUrl" as const;
 
   public readonly expiresAt: EmailPreviewUrlFieldsFragment["expiresAt"];
   public readonly previewUrl: EmailPreviewUrlFieldsFragment["previewUrl"];
+
   constructor(client: PlainGraphQLClient, data: EmailPreviewUrlFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2053,11 +3514,15 @@ export class EmailPreviewUrlModel {
 export class EmailSignatureModel {
   protected _client: PlainGraphQLClient;
   protected _data: EmailSignatureFieldsFragment;
+  public readonly __typename = "EmailSignature" as const;
 
   public readonly createdAt: EmailSignatureFieldsFragment["createdAt"];
   public readonly markdown: EmailSignatureFieldsFragment["markdown"];
   public readonly text: EmailSignatureFieldsFragment["text"];
   public readonly updatedAt: EmailSignatureFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: EmailSignatureFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2065,18 +3530,39 @@ export class EmailSignatureModel {
     this.markdown = data.markdown;
     this.text = data.text;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class EscalationPathModel {
   protected _client: PlainGraphQLClient;
   protected _data: EscalationPathFieldsFragment;
+  public readonly __typename = "EscalationPath" as const;
 
   public readonly createdAt: EscalationPathFieldsFragment["createdAt"];
   public readonly description: EscalationPathFieldsFragment["description"];
   public readonly id: EscalationPathFieldsFragment["id"];
   public readonly name: EscalationPathFieldsFragment["name"];
   public readonly updatedAt: EscalationPathFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly steps: (EscalationPathStepLabelTypeModel | EscalationPathStepUserModel)[];
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: EscalationPathFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2085,17 +3571,90 @@ export class EscalationPathModel {
     this.id = data.id;
     this.name = data.name;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.steps = ((data.steps as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "EscalationPathStepLabelType": return new EscalationPathStepLabelTypeModel(client, item as any);
+      case "EscalationPathStepUser": return new EscalationPathStepUserModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class EscalationPathStepLabelTypeModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: EscalationPathStepLabelTypeFieldsFragment;
+  public readonly __typename = "EscalationPathStepLabelType" as const;
+
+  public readonly id: EscalationPathStepLabelTypeFieldsFragment["id"];
+
+  constructor(client: PlainGraphQLClient, data: EscalationPathStepLabelTypeFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.id = data.id;
+  }
+
+  public get labelType(): Promise<LabelTypeModel | undefined> {
+    const id = this._data.labelType?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<LabelTypeQuery, LabelTypeQueryVariables>(
+      LabelTypeDocument,
+      { labelTypeId: id } as LabelTypeQueryVariables
+    ).then(r => r.labelType ? new LabelTypeModel(this._client, r.labelType) : undefined);
+  }
+}
+
+export class EscalationPathStepUserModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: EscalationPathStepUserFieldsFragment;
+  public readonly __typename = "EscalationPathStepUser" as const;
+
+  public readonly id: EscalationPathStepUserFieldsFragment["id"];
+
+  constructor(client: PlainGraphQLClient, data: EscalationPathStepUserFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.id = data.id;
+  }
+
+  public get user(): Promise<UserModel | undefined> {
+    const id = this._data.user?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<UserQuery, UserQueryVariables>(
+      UserDocument,
+      { userId: id } as UserQueryVariables
+    ).then(r => r.user ? new UserModel(this._client, r.user) : undefined);
   }
 }
 
 export class FavoritePageModel {
   protected _client: PlainGraphQLClient;
   protected _data: FavoritePageFieldsFragment;
+  public readonly __typename = "FavoritePage" as const;
 
   public readonly createdAt: FavoritePageFieldsFragment["createdAt"];
   public readonly id: FavoritePageFieldsFragment["id"];
   public readonly key: FavoritePageFieldsFragment["key"];
   public readonly updatedAt: FavoritePageFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: FavoritePageFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2103,39 +3662,182 @@ export class FavoritePageModel {
     this.id = data.id;
     this.key = data.key;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class FirstResponseTimeServiceLevelAgreementModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: FirstResponseTimeServiceLevelAgreementFieldsFragment;
+  public readonly __typename = "FirstResponseTimeServiceLevelAgreement" as const;
+
+  public readonly createdAt: FirstResponseTimeServiceLevelAgreementFieldsFragment["createdAt"];
+  public readonly firstResponseTimeMinutes: FirstResponseTimeServiceLevelAgreementFieldsFragment["firstResponseTimeMinutes"];
+  public readonly id: FirstResponseTimeServiceLevelAgreementFieldsFragment["id"];
+  public readonly threadLabelTypeIdFilter: FirstResponseTimeServiceLevelAgreementFieldsFragment["threadLabelTypeIdFilter"];
+  public readonly threadPriorityFilter: FirstResponseTimeServiceLevelAgreementFieldsFragment["threadPriorityFilter"];
+  public readonly updatedAt: FirstResponseTimeServiceLevelAgreementFieldsFragment["updatedAt"];
+  public readonly useBusinessHoursOnly: FirstResponseTimeServiceLevelAgreementFieldsFragment["useBusinessHoursOnly"];
+  public readonly breachActions: (BeforeBreachActionModel)[];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: FirstResponseTimeServiceLevelAgreementFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.firstResponseTimeMinutes = data.firstResponseTimeMinutes;
+    this.id = data.id;
+    this.threadLabelTypeIdFilter = data.threadLabelTypeIdFilter;
+    this.threadPriorityFilter = data.threadPriorityFilter;
+    this.updatedAt = data.updatedAt;
+    this.useBusinessHoursOnly = data.useBusinessHoursOnly;
+    this.breachActions = ((data.breachActions as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "BeforeBreachAction": return new BeforeBreachActionModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class GeneratedReplyModel {
   protected _client: PlainGraphQLClient;
   protected _data: GeneratedReplyFieldsFragment;
+  public readonly __typename = "GeneratedReply" as const;
 
   public readonly createdAt: GeneratedReplyFieldsFragment["createdAt"];
   public readonly id: GeneratedReplyFieldsFragment["id"];
   public readonly markdown: GeneratedReplyFieldsFragment["markdown"];
-  public readonly text: GeneratedReplyFieldsFragment["text"];
   public readonly timelineEntryId: GeneratedReplyFieldsFragment["timelineEntryId"];
   public readonly updatedAt: GeneratedReplyFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: GeneratedReplyFieldsFragment) {
     this._client = client;
     this._data = data;
     this.createdAt = data.createdAt;
     this.id = data.id;
     this.markdown = data.markdown;
-    this.text = data.text;
     this.timelineEntryId = data.timelineEntryId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class GenericThreadLinkModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: GenericThreadLinkFieldsFragment;
+  public readonly __typename = "GenericThreadLink" as const;
+
+  public readonly createdAt: GenericThreadLinkFieldsFragment["createdAt"];
+  public readonly description: GenericThreadLinkFieldsFragment["description"];
+  public readonly id: GenericThreadLinkFieldsFragment["id"];
+  public readonly linkType: GenericThreadLinkFieldsFragment["linkType"];
+  public readonly sourceId: GenericThreadLinkFieldsFragment["sourceId"];
+  public readonly sourceStatus: GenericThreadLinkFieldsFragment["sourceStatus"];
+  public readonly sourceType: GenericThreadLinkFieldsFragment["sourceType"];
+  public readonly status: GenericThreadLinkFieldsFragment["status"];
+  public readonly threadId: GenericThreadLinkFieldsFragment["threadId"];
+  public readonly title: GenericThreadLinkFieldsFragment["title"];
+  public readonly updatedAt: GenericThreadLinkFieldsFragment["updatedAt"];
+  public readonly url: GenericThreadLinkFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: GenericThreadLinkFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.description = data.description;
+    this.id = data.id;
+    this.linkType = data.linkType;
+    this.sourceId = data.sourceId;
+    this.sourceStatus = data.sourceStatus;
+    this.sourceType = data.sourceType;
+    this.status = data.status;
+    this.threadId = data.threadId;
+    this.title = data.title;
+    this.updatedAt = data.updatedAt;
+    this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class GithubUserAuthIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: GithubUserAuthIntegrationFieldsFragment;
+  public readonly __typename = "GithubUserAuthIntegration" as const;
 
   public readonly createdAt: GithubUserAuthIntegrationFieldsFragment["createdAt"];
   public readonly githubUsername: GithubUserAuthIntegrationFieldsFragment["githubUsername"];
   public readonly id: GithubUserAuthIntegrationFieldsFragment["id"];
   public readonly updatedAt: GithubUserAuthIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: GithubUserAuthIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2143,14 +3845,32 @@ export class GithubUserAuthIntegrationModel {
     this.githubUsername = data.githubUsername;
     this.id = data.id;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class HeatmapMetricModel {
   protected _client: PlainGraphQLClient;
   protected _data: HeatmapMetricFieldsFragment;
+  public readonly __typename = "HeatmapMetric" as const;
 
   public readonly days: HeatmapMetricFieldsFragment["days"];
+
   constructor(client: PlainGraphQLClient, data: HeatmapMetricFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2161,6 +3881,7 @@ export class HeatmapMetricModel {
 export class HelpCenterModel {
   protected _client: PlainGraphQLClient;
   protected _data: HelpCenterFieldsFragment;
+  public readonly __typename = "HelpCenter" as const;
 
   public readonly access: HelpCenterFieldsFragment["access"];
   public readonly bodyCustomJs: HelpCenterFieldsFragment["bodyCustomJs"];
@@ -2178,6 +3899,12 @@ export class HelpCenterModel {
   public readonly publishedAt: HelpCenterFieldsFragment["publishedAt"];
   public readonly type: HelpCenterFieldsFragment["type"];
   public readonly updatedAt: HelpCenterFieldsFragment["updatedAt"];
+  public readonly authMechanism: HelpCenterAuthMechanismWorkosAuthkitModel | HelpCenterAuthMechanismWorkosConnectModel;
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly publishedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: HelpCenterFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2197,12 +3924,102 @@ export class HelpCenterModel {
     this.publishedAt = data.publishedAt;
     this.type = data.type;
     this.updatedAt = data.updatedAt;
+    this.authMechanism = (() => {
+    switch ((data.authMechanism as any).__typename) {
+      case "HelpCenterAuthMechanismWorkosAuthkit": return new HelpCenterAuthMechanismWorkosAuthkitModel(client, data.authMechanism as any);
+      case "HelpCenterAuthMechanismWorkosConnect": return new HelpCenterAuthMechanismWorkosConnectModel(client, data.authMechanism as any);
+      default: return data.authMechanism as any;
+    }
+  })();
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.publishedBy = data.publishedBy ? (() => {
+    switch ((data.publishedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.publishedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.publishedBy as any);
+      case "UserActor": return new UserActorModel(client, data.publishedBy as any);
+      default: return data.publishedBy as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+
+  async articleGroups(variables?: Omit<HelpCenterArticleGroupsQueryVariables, "id">): Promise<PlainConnection<HelpCenterArticleGroupModel>> {
+    const allVars = { ...variables, id: this.id } as HelpCenterArticleGroupsQueryVariables;
+    const response = await this._client.request<HelpCenterArticleGroupsQuery, HelpCenterArticleGroupsQueryVariables>(
+      HelpCenterArticleGroupsDocument, allVars
+    );
+    const parent = response.helpCenter;
+    if (!parent) throw new Error("helpCenter not found");
+    const conn = parent.articleGroups;
+    return new PlainConnection<HelpCenterArticleGroupModel>({
+      nodes: conn.edges.map(e => new HelpCenterArticleGroupModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.articleGroups({ ...variables, ...cursor }),
+    });
+  }
+
+  async articles(variables?: Omit<HelpCenterArticlesQueryVariables, "id">): Promise<PlainConnection<HelpCenterArticleModel>> {
+    const allVars = { ...variables, id: this.id } as HelpCenterArticlesQueryVariables;
+    const response = await this._client.request<HelpCenterArticlesQuery, HelpCenterArticlesQueryVariables>(
+      HelpCenterArticlesDocument, allVars
+    );
+    const parent = response.helpCenter;
+    if (!parent) throw new Error("helpCenter not found");
+    const conn = parent.articles;
+    return new PlainConnection<HelpCenterArticleModel>({
+      nodes: conn.edges.map(e => new HelpCenterArticleModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.articles({ ...variables, ...cursor }),
+    });
+  }
+}
+
+export class HelpCenterAiConversationMessageEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: HelpCenterAiConversationMessageEntryFieldsFragment;
+  public readonly __typename = "HelpCenterAiConversationMessageEntry" as const;
+
+  public readonly helpCenterAiConversationId: HelpCenterAiConversationMessageEntryFieldsFragment["helpCenterAiConversationId"];
+  public readonly helpCenterId: HelpCenterAiConversationMessageEntryFieldsFragment["helpCenterId"];
+  public readonly markdown: HelpCenterAiConversationMessageEntryFieldsFragment["markdown"];
+  public readonly messageId: HelpCenterAiConversationMessageEntryFieldsFragment["messageId"];
+
+  constructor(client: PlainGraphQLClient, data: HelpCenterAiConversationMessageEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.helpCenterAiConversationId = data.helpCenterAiConversationId;
+    this.helpCenterId = data.helpCenterId;
+    this.markdown = data.markdown;
+    this.messageId = data.messageId;
   }
 }
 
 export class HelpCenterArticleModel {
   protected _client: PlainGraphQLClient;
   protected _data: HelpCenterArticleFieldsFragment;
+  public readonly __typename = "HelpCenterArticle" as const;
 
   public readonly contentHtml: HelpCenterArticleFieldsFragment["contentHtml"];
   public readonly createdAt: HelpCenterArticleFieldsFragment["createdAt"];
@@ -2213,6 +4030,9 @@ export class HelpCenterArticleModel {
   public readonly statusChangedAt: HelpCenterArticleFieldsFragment["statusChangedAt"];
   public readonly title: HelpCenterArticleFieldsFragment["title"];
   public readonly updatedAt: HelpCenterArticleFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly statusChangedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: HelpCenterArticleFieldsFragment) {
     this._client = client;
@@ -2226,6 +4046,30 @@ export class HelpCenterArticleModel {
     this.statusChangedAt = data.statusChangedAt;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.statusChangedBy = (() => {
+    switch ((data.statusChangedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.statusChangedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.statusChangedBy as any);
+      case "UserActor": return new UserActorModel(client, data.statusChangedBy as any);
+      default: return data.statusChangedBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get articleGroup(): Promise<HelpCenterArticleGroupModel | undefined> {
@@ -2241,12 +4085,15 @@ export class HelpCenterArticleModel {
 export class HelpCenterArticleGroupModel {
   protected _client: PlainGraphQLClient;
   protected _data: HelpCenterArticleGroupFieldsFragment;
+  public readonly __typename = "HelpCenterArticleGroup" as const;
 
   public readonly createdAt: HelpCenterArticleGroupFieldsFragment["createdAt"];
   public readonly id: HelpCenterArticleGroupFieldsFragment["id"];
   public readonly name: HelpCenterArticleGroupFieldsFragment["name"];
   public readonly slug: HelpCenterArticleGroupFieldsFragment["slug"];
   public readonly updatedAt: HelpCenterArticleGroupFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: HelpCenterArticleGroupFieldsFragment) {
     this._client = client;
@@ -2256,6 +4103,22 @@ export class HelpCenterArticleGroupModel {
     this.name = data.name;
     this.slug = data.slug;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get parentArticleGroup(): Promise<HelpCenterArticleGroupModel | undefined> {
@@ -2266,17 +4129,85 @@ export class HelpCenterArticleGroupModel {
       { id: id } as HelpCenterArticleGroupQueryVariables
     ).then(r => r.helpCenterArticleGroup ? new HelpCenterArticleGroupModel(this._client, r.helpCenterArticleGroup) : undefined);
   }
+
+  async articles(variables?: Omit<HelpCenterArticleGroupArticlesQueryVariables, "id">): Promise<PlainConnection<HelpCenterArticleModel>> {
+    const allVars = { ...variables, id: this.id } as HelpCenterArticleGroupArticlesQueryVariables;
+    const response = await this._client.request<HelpCenterArticleGroupArticlesQuery, HelpCenterArticleGroupArticlesQueryVariables>(
+      HelpCenterArticleGroupArticlesDocument, allVars
+    );
+    const parent = response.helpCenterArticleGroup;
+    if (!parent) throw new Error("helpCenterArticleGroup not found");
+    const conn = parent.articles;
+    return new PlainConnection<HelpCenterArticleModel>({
+      nodes: conn.edges.map(e => new HelpCenterArticleModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.articles({ ...variables, ...cursor }),
+    });
+  }
+
+  async childArticleGroups(variables?: Omit<HelpCenterArticleGroupChildArticleGroupsQueryVariables, "id">): Promise<PlainConnection<HelpCenterArticleGroupModel>> {
+    const allVars = { ...variables, id: this.id } as HelpCenterArticleGroupChildArticleGroupsQueryVariables;
+    const response = await this._client.request<HelpCenterArticleGroupChildArticleGroupsQuery, HelpCenterArticleGroupChildArticleGroupsQueryVariables>(
+      HelpCenterArticleGroupChildArticleGroupsDocument, allVars
+    );
+    const parent = response.helpCenterArticleGroup;
+    if (!parent) throw new Error("helpCenterArticleGroup not found");
+    const conn = parent.childArticleGroups;
+    return new PlainConnection<HelpCenterArticleGroupModel>({
+      nodes: conn.edges.map(e => new HelpCenterArticleGroupModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.childArticleGroups({ ...variables, ...cursor }),
+    });
+  }
+}
+
+export class HelpCenterAuthMechanismWorkosAuthkitModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: HelpCenterAuthMechanismWorkosAuthkitFieldsFragment;
+  public readonly __typename = "HelpCenterAuthMechanismWorkosAuthkit" as const;
+
+  public readonly type: HelpCenterAuthMechanismWorkosAuthkitFieldsFragment["type"];
+
+  constructor(client: PlainGraphQLClient, data: HelpCenterAuthMechanismWorkosAuthkitFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.type = data.type;
+  }
+}
+
+export class HelpCenterAuthMechanismWorkosConnectModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: HelpCenterAuthMechanismWorkosConnectFieldsFragment;
+  public readonly __typename = "HelpCenterAuthMechanismWorkosConnect" as const;
+
+  public readonly apiHost: HelpCenterAuthMechanismWorkosConnectFieldsFragment["apiHost"];
+  public readonly appClientId: HelpCenterAuthMechanismWorkosConnectFieldsFragment["appClientId"];
+  public readonly appSecretMasked: HelpCenterAuthMechanismWorkosConnectFieldsFragment["appSecretMasked"];
+  public readonly type: HelpCenterAuthMechanismWorkosConnectFieldsFragment["type"];
+
+  constructor(client: PlainGraphQLClient, data: HelpCenterAuthMechanismWorkosConnectFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.apiHost = data.apiHost;
+    this.appClientId = data.appClientId;
+    this.appSecretMasked = data.appSecretMasked;
+    this.type = data.type;
+  }
 }
 
 export class HelpCenterIndexModel {
   protected _client: PlainGraphQLClient;
   protected _data: HelpCenterIndexFieldsFragment;
+  public readonly __typename = "HelpCenterIndex" as const;
 
   public readonly createdAt: HelpCenterIndexFieldsFragment["createdAt"];
   public readonly hash: HelpCenterIndexFieldsFragment["hash"];
   public readonly helpCenterId: HelpCenterIndexFieldsFragment["helpCenterId"];
   public readonly navIndex: HelpCenterIndexFieldsFragment["navIndex"];
   public readonly updatedAt: HelpCenterIndexFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: HelpCenterIndexFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2285,17 +4216,120 @@ export class HelpCenterIndexModel {
     this.helpCenterId = data.helpCenterId;
     this.navIndex = data.navIndex;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class ImportJobDefinitionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ImportJobDefinitionFieldsFragment;
+  public readonly __typename = "ImportJobDefinition" as const;
+
+  public readonly createdAt: ImportJobDefinitionFieldsFragment["createdAt"];
+  public readonly enabledAt: ImportJobDefinitionFieldsFragment["enabledAt"];
+  public readonly entityTypes: ImportJobDefinitionFieldsFragment["entityTypes"];
+  public readonly id: ImportJobDefinitionFieldsFragment["id"];
+  public readonly mode: ImportJobDefinitionFieldsFragment["mode"];
+  public readonly updatedAt: ImportJobDefinitionFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: ImportJobDefinitionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.enabledAt = data.enabledAt;
+    this.entityTypes = data.entityTypes;
+    this.id = data.id;
+    this.mode = data.mode;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class ImportRunModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ImportRunFieldsFragment;
+  public readonly __typename = "ImportRun" as const;
+
+  public readonly completedAt: ImportRunFieldsFragment["completedAt"];
+  public readonly downloadedRecords: ImportRunFieldsFragment["downloadedRecords"];
+  public readonly entityType: ImportRunFieldsFragment["entityType"];
+  public readonly savedRecords: ImportRunFieldsFragment["savedRecords"];
+  public readonly startedAt: ImportRunFieldsFragment["startedAt"];
+  public readonly status: ImportRunFieldsFragment["status"];
+
+  constructor(client: PlainGraphQLClient, data: ImportRunFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.completedAt = data.completedAt;
+    this.downloadedRecords = data.downloadedRecords;
+    this.entityType = data.entityType;
+    this.savedRecords = data.savedRecords;
+    this.startedAt = data.startedAt;
+    this.status = data.status;
+  }
+}
+
+export class ImportThreadChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ImportThreadChannelDetailsFieldsFragment;
+  public readonly __typename = "ImportThreadChannelDetails" as const;
+
+  public readonly importIntegrationKey: ImportThreadChannelDetailsFieldsFragment["importIntegrationKey"];
+  public readonly importSourceUrl: ImportThreadChannelDetailsFieldsFragment["importSourceUrl"];
+
+  constructor(client: PlainGraphQLClient, data: ImportThreadChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.importIntegrationKey = data.importIntegrationKey;
+    this.importSourceUrl = data.importSourceUrl;
   }
 }
 
 export class IndexedDocumentModel {
   protected _client: PlainGraphQLClient;
   protected _data: IndexedDocumentFieldsFragment;
+  public readonly __typename = "IndexedDocument" as const;
 
   public readonly createdAt: IndexedDocumentFieldsFragment["createdAt"];
   public readonly id: IndexedDocumentFieldsFragment["id"];
   public readonly updatedAt: IndexedDocumentFieldsFragment["updatedAt"];
   public readonly url: IndexedDocumentFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly status: IndexedDocumentStatusFailedModel | IndexedDocumentStatusIndexedModel | IndexedDocumentStatusPendingModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: IndexedDocumentFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2303,12 +4337,90 @@ export class IndexedDocumentModel {
     this.id = data.id;
     this.updatedAt = data.updatedAt;
     this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.status = (() => {
+    switch ((data.status as any).__typename) {
+      case "IndexedDocumentStatusFailed": return new IndexedDocumentStatusFailedModel(client, data.status as any);
+      case "IndexedDocumentStatusIndexed": return new IndexedDocumentStatusIndexedModel(client, data.status as any);
+      case "IndexedDocumentStatusPending": return new IndexedDocumentStatusPendingModel(client, data.status as any);
+      default: return data.status as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class IndexedDocumentStatusFailedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexedDocumentStatusFailedFieldsFragment;
+  public readonly __typename = "IndexedDocumentStatusFailed" as const;
+
+  public readonly failedAt: IndexedDocumentStatusFailedFieldsFragment["failedAt"];
+  public readonly reason: IndexedDocumentStatusFailedFieldsFragment["reason"];
+
+  constructor(client: PlainGraphQLClient, data: IndexedDocumentStatusFailedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.failedAt = data.failedAt;
+    this.reason = data.reason;
+  }
+}
+
+export class IndexedDocumentStatusIndexedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexedDocumentStatusIndexedFieldsFragment;
+  public readonly __typename = "IndexedDocumentStatusIndexed" as const;
+
+  public readonly indexedAt: IndexedDocumentStatusIndexedFieldsFragment["indexedAt"];
+  public readonly indexedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+
+  constructor(client: PlainGraphQLClient, data: IndexedDocumentStatusIndexedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.indexedAt = data.indexedAt;
+    this.indexedBy = data.indexedBy ? (() => {
+    switch ((data.indexedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.indexedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.indexedBy as any);
+      case "UserActor": return new UserActorModel(client, data.indexedBy as any);
+      default: return data.indexedBy as any;
+    }
+  })() : null;
+  }
+}
+
+export class IndexedDocumentStatusPendingModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexedDocumentStatusPendingFieldsFragment;
+  public readonly __typename = "IndexedDocumentStatusPending" as const;
+
+  public readonly startedAt: IndexedDocumentStatusPendingFieldsFragment["startedAt"];
+
+  constructor(client: PlainGraphQLClient, data: IndexedDocumentStatusPendingFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.startedAt = data.startedAt;
   }
 }
 
 export class InternalNotificationModel {
   protected _client: PlainGraphQLClient;
   protected _data: InternalNotificationFieldsFragment;
+  public readonly __typename = "InternalNotification" as const;
 
   public readonly archivedAt: InternalNotificationFieldsFragment["archivedAt"];
   public readonly createdAt: InternalNotificationFieldsFragment["createdAt"];
@@ -2319,6 +4431,11 @@ export class InternalNotificationModel {
   public readonly type: InternalNotificationFieldsFragment["type"];
   public readonly updatedAt: InternalNotificationFieldsFragment["updatedAt"];
   public readonly userId: InternalNotificationFieldsFragment["userId"];
+  public readonly archivedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly details: (DiscussionResolvedNotificationDetailModel | EmailBounceNotificationDetailModel | NoteMentionNotificationDetailModel | ThreadAssignmentNotificationDetailModel) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: InternalNotificationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2331,12 +4448,46 @@ export class InternalNotificationModel {
     this.type = data.type;
     this.updatedAt = data.updatedAt;
     this.userId = data.userId;
+    this.archivedBy = data.archivedBy ? (() => {
+    switch ((data.archivedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.archivedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.archivedBy as any);
+      case "UserActor": return new UserActorModel(client, data.archivedBy as any);
+      default: return data.archivedBy as any;
+    }
+  })() : null;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.details = data.details ? (() => {
+    switch ((data.details as any).__typename) {
+      case "DiscussionResolvedNotificationDetail": return new DiscussionResolvedNotificationDetailModel(client, data.details as any);
+      case "EmailBounceNotificationDetail": return new EmailBounceNotificationDetailModel(client, data.details as any);
+      case "NoteMentionNotificationDetail": return new NoteMentionNotificationDetailModel(client, data.details as any);
+      case "ThreadAssignmentNotificationDetail": return new ThreadAssignmentNotificationDetailModel(client, data.details as any);
+      default: return data.details as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class IssueTrackerFieldModel {
   protected _client: PlainGraphQLClient;
   protected _data: IssueTrackerFieldFieldsFragment;
+  public readonly __typename = "IssueTrackerField" as const;
 
   public readonly isRequired: IssueTrackerFieldFieldsFragment["isRequired"];
   public readonly key: IssueTrackerFieldFieldsFragment["key"];
@@ -2345,6 +4496,7 @@ export class IssueTrackerFieldModel {
   public readonly parentFieldKey: IssueTrackerFieldFieldsFragment["parentFieldKey"];
   public readonly selectedValue: IssueTrackerFieldFieldsFragment["selectedValue"];
   public readonly type: IssueTrackerFieldFieldsFragment["type"];
+
   constructor(client: PlainGraphQLClient, data: IssueTrackerFieldFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2361,9 +4513,11 @@ export class IssueTrackerFieldModel {
 export class JiraIntegrationTokenModel {
   protected _client: PlainGraphQLClient;
   protected _data: JiraIntegrationTokenFieldsFragment;
+  public readonly __typename = "JiraIntegrationToken" as const;
 
   public readonly createdAt: JiraIntegrationTokenFieldsFragment["createdAt"];
   public readonly token: JiraIntegrationTokenFieldsFragment["token"];
+
   constructor(client: PlainGraphQLClient, data: JiraIntegrationTokenFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2372,13 +4526,144 @@ export class JiraIntegrationTokenModel {
   }
 }
 
+export class JiraIssueThreadLinkModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: JiraIssueThreadLinkFieldsFragment;
+  public readonly __typename = "JiraIssueThreadLink" as const;
+
+  public readonly createdAt: JiraIssueThreadLinkFieldsFragment["createdAt"];
+  public readonly description: JiraIssueThreadLinkFieldsFragment["description"];
+  public readonly id: JiraIssueThreadLinkFieldsFragment["id"];
+  public readonly jiraIssueId: JiraIssueThreadLinkFieldsFragment["jiraIssueId"];
+  public readonly jiraIssueKey: JiraIssueThreadLinkFieldsFragment["jiraIssueKey"];
+  public readonly jiraIssueType: JiraIssueThreadLinkFieldsFragment["jiraIssueType"];
+  public readonly linkType: JiraIssueThreadLinkFieldsFragment["linkType"];
+  public readonly sourceId: JiraIssueThreadLinkFieldsFragment["sourceId"];
+  public readonly sourceType: JiraIssueThreadLinkFieldsFragment["sourceType"];
+  public readonly status: JiraIssueThreadLinkFieldsFragment["status"];
+  public readonly threadId: JiraIssueThreadLinkFieldsFragment["threadId"];
+  public readonly title: JiraIssueThreadLinkFieldsFragment["title"];
+  public readonly updatedAt: JiraIssueThreadLinkFieldsFragment["updatedAt"];
+  public readonly url: JiraIssueThreadLinkFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: JiraIssueThreadLinkFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.description = data.description;
+    this.id = data.id;
+    this.jiraIssueId = data.jiraIssueId;
+    this.jiraIssueKey = data.jiraIssueKey;
+    this.jiraIssueType = data.jiraIssueType;
+    this.linkType = data.linkType;
+    this.sourceId = data.sourceId;
+    this.sourceType = data.sourceType;
+    this.status = data.status;
+    this.threadId = data.threadId;
+    this.title = data.title;
+    this.updatedAt = data.updatedAt;
+    this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class JiraSiteIntegrationModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: JiraSiteIntegrationFieldsFragment;
+  public readonly __typename = "JiraSiteIntegration" as const;
+
+  public readonly key: JiraSiteIntegrationFieldsFragment["key"];
+  public readonly name: JiraSiteIntegrationFieldsFragment["name"];
+  public readonly site: JiraSiteIntegrationFieldsFragment["site"];
+
+  constructor(client: PlainGraphQLClient, data: JiraSiteIntegrationFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.key = data.key;
+    this.name = data.name;
+    this.site = data.site;
+  }
+}
+
+export class KnowledgeGapModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: KnowledgeGapFieldsFragment;
+  public readonly __typename = "KnowledgeGap" as const;
+
+  public readonly createdAt: KnowledgeGapFieldsFragment["createdAt"];
+  public readonly description: KnowledgeGapFieldsFragment["description"];
+  public readonly firstSeenAt: KnowledgeGapFieldsFragment["firstSeenAt"];
+  public readonly id: KnowledgeGapFieldsFragment["id"];
+  public readonly lastSeenAt: KnowledgeGapFieldsFragment["lastSeenAt"];
+  public readonly status: KnowledgeGapFieldsFragment["status"];
+  public readonly statusChangedAt: KnowledgeGapFieldsFragment["statusChangedAt"];
+  public readonly title: KnowledgeGapFieldsFragment["title"];
+  public readonly updatedAt: KnowledgeGapFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: KnowledgeGapFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.description = data.description;
+    this.firstSeenAt = data.firstSeenAt;
+    this.id = data.id;
+    this.lastSeenAt = data.lastSeenAt;
+    this.status = data.status;
+    this.statusChangedAt = data.statusChangedAt;
+    this.title = data.title;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
 export class LabelModel {
   protected _client: PlainGraphQLClient;
   protected _data: LabelFieldsFragment;
+  public readonly __typename = "Label" as const;
 
   public readonly createdAt: LabelFieldsFragment["createdAt"];
   public readonly id: LabelFieldsFragment["id"];
   public readonly updatedAt: LabelFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: LabelFieldsFragment) {
     this._client = client;
@@ -2386,6 +4671,26 @@ export class LabelModel {
     this.createdAt = data.createdAt;
     this.id = data.id;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get labelType(): Promise<LabelTypeModel | undefined> {
@@ -2401,6 +4706,7 @@ export class LabelModel {
 export class LabelTypeModel {
   protected _client: PlainGraphQLClient;
   protected _data: LabelTypeFieldsFragment;
+  public readonly __typename = "LabelType" as const;
 
   public readonly archivedAt: LabelTypeFieldsFragment["archivedAt"];
   public readonly color: LabelTypeFieldsFragment["color"];
@@ -2415,6 +4721,9 @@ export class LabelTypeModel {
   public readonly position: LabelTypeFieldsFragment["position"];
   public readonly type: LabelTypeFieldsFragment["type"];
   public readonly updatedAt: LabelTypeFieldsFragment["updatedAt"];
+  public readonly archivedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: LabelTypeFieldsFragment) {
     this._client = client;
@@ -2432,6 +4741,30 @@ export class LabelTypeModel {
     this.position = data.position;
     this.type = data.type;
     this.updatedAt = data.updatedAt;
+    this.archivedBy = data.archivedBy ? (() => {
+    switch ((data.archivedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.archivedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.archivedBy as any);
+      case "UserActor": return new UserActorModel(client, data.archivedBy as any);
+      default: return data.archivedBy as any;
+    }
+  })() : null;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get parentLabelType(): Promise<LabelTypeModel | undefined> {
@@ -2444,9 +4777,90 @@ export class LabelTypeModel {
   }
 }
 
+export class LinearIssueThreadLinkModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: LinearIssueThreadLinkFieldsFragment;
+  public readonly __typename = "LinearIssueThreadLink" as const;
+
+  public readonly createdAt: LinearIssueThreadLinkFieldsFragment["createdAt"];
+  public readonly description: LinearIssueThreadLinkFieldsFragment["description"];
+  public readonly id: LinearIssueThreadLinkFieldsFragment["id"];
+  public readonly linearIssueCreatedAt: LinearIssueThreadLinkFieldsFragment["linearIssueCreatedAt"];
+  public readonly linearIssueId: LinearIssueThreadLinkFieldsFragment["linearIssueId"];
+  public readonly linearIssueIdentifier: LinearIssueThreadLinkFieldsFragment["linearIssueIdentifier"];
+  public readonly linearIssueState: LinearIssueThreadLinkFieldsFragment["linearIssueState"];
+  public readonly linearIssueUpdatedAt: LinearIssueThreadLinkFieldsFragment["linearIssueUpdatedAt"];
+  public readonly linkType: LinearIssueThreadLinkFieldsFragment["linkType"];
+  public readonly sourceId: LinearIssueThreadLinkFieldsFragment["sourceId"];
+  public readonly sourceType: LinearIssueThreadLinkFieldsFragment["sourceType"];
+  public readonly status: LinearIssueThreadLinkFieldsFragment["status"];
+  public readonly threadId: LinearIssueThreadLinkFieldsFragment["threadId"];
+  public readonly title: LinearIssueThreadLinkFieldsFragment["title"];
+  public readonly updatedAt: LinearIssueThreadLinkFieldsFragment["updatedAt"];
+  public readonly url: LinearIssueThreadLinkFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: LinearIssueThreadLinkFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.description = data.description;
+    this.id = data.id;
+    this.linearIssueCreatedAt = data.linearIssueCreatedAt;
+    this.linearIssueId = data.linearIssueId;
+    this.linearIssueIdentifier = data.linearIssueIdentifier;
+    this.linearIssueState = data.linearIssueState;
+    this.linearIssueUpdatedAt = data.linearIssueUpdatedAt;
+    this.linkType = data.linkType;
+    this.sourceId = data.sourceId;
+    this.sourceType = data.sourceType;
+    this.status = data.status;
+    this.threadId = data.threadId;
+    this.title = data.title;
+    this.updatedAt = data.updatedAt;
+    this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class LinearIssueThreadLinkStateTransitionedEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: LinearIssueThreadLinkStateTransitionedEntryFieldsFragment;
+  public readonly __typename = "LinearIssueThreadLinkStateTransitionedEntry" as const;
+
+  public readonly linearIssueId: LinearIssueThreadLinkStateTransitionedEntryFieldsFragment["linearIssueId"];
+  public readonly nextLinearStateId: LinearIssueThreadLinkStateTransitionedEntryFieldsFragment["nextLinearStateId"];
+  public readonly previousLinearStateId: LinearIssueThreadLinkStateTransitionedEntryFieldsFragment["previousLinearStateId"];
+
+  constructor(client: PlainGraphQLClient, data: LinearIssueThreadLinkStateTransitionedEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.linearIssueId = data.linearIssueId;
+    this.nextLinearStateId = data.nextLinearStateId;
+    this.previousLinearStateId = data.previousLinearStateId;
+  }
+}
+
 export class MachineUserModel {
   protected _client: PlainGraphQLClient;
   protected _data: MachineUserFieldsFragment;
+  public readonly __typename = "MachineUser" as const;
 
   public readonly createdAt: MachineUserFieldsFragment["createdAt"];
   public readonly deletedAt: MachineUserFieldsFragment["deletedAt"];
@@ -2457,6 +4871,10 @@ export class MachineUserModel {
   public readonly publicName: MachineUserFieldsFragment["publicName"];
   public readonly type: MachineUserFieldsFragment["type"];
   public readonly updatedAt: MachineUserFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: MachineUserFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2469,14 +4887,125 @@ export class MachineUserModel {
     this.publicName = data.publicName;
     this.type = data.type;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.deletedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.deletedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+
+  async apiKeys(variables?: Omit<MachineUserApiKeysQueryVariables, "machineUserId">): Promise<PlainConnection<ApiKeyModel>> {
+    const allVars = { ...variables, machineUserId: this.id } as MachineUserApiKeysQueryVariables;
+    const response = await this._client.request<MachineUserApiKeysQuery, MachineUserApiKeysQueryVariables>(
+      MachineUserApiKeysDocument, allVars
+    );
+    const parent = response.machineUser;
+    if (!parent) throw new Error("machineUser not found");
+    const conn = parent.apiKeys;
+    return new PlainConnection<ApiKeyModel>({
+      nodes: conn.edges.map(e => new ApiKeyModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.apiKeys({ ...variables, ...cursor }),
+    });
+  }
+}
+
+export class MachineUserActorModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: MachineUserActorFieldsFragment;
+  public readonly __typename = "MachineUserActor" as const;
+
+  public readonly machineUserId: MachineUserActorFieldsFragment["machineUserId"];
+
+  constructor(client: PlainGraphQLClient, data: MachineUserActorFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.machineUserId = data.machineUserId;
+  }
+
+  public get machineUser(): Promise<MachineUserModel | undefined> {
+    const id = this._data.machineUser?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<MachineUserQuery, MachineUserQueryVariables>(
+      MachineUserDocument,
+      { machineUserId: id } as MachineUserQueryVariables
+    ).then(r => r.machineUser ? new MachineUserModel(this._client, r.machineUser) : undefined);
+  }
+}
+
+export class MergedThreadMessageEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: MergedThreadMessageEntryFieldsFragment;
+  public readonly __typename = "MergedThreadMessageEntry" as const;
+
+  public readonly childThreadDetails: MergedThreadMessageEntryFieldsFragment["childThreadDetails"];
+  public readonly threadLinkId: MergedThreadMessageEntryFieldsFragment["threadLinkId"];
+
+  constructor(client: PlainGraphQLClient, data: MergedThreadMessageEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.childThreadDetails = data.childThreadDetails;
+    this.threadLinkId = data.threadLinkId;
+  }
+
+  public get childTimelineEntry(): Promise<TimelineEntryModel | undefined> {
+    const id = this._data.childTimelineEntry?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<TimelineEntryQuery, TimelineEntryQueryVariables>(
+      TimelineEntryDocument,
+      { customerId: id } as TimelineEntryQueryVariables
+    ).then(r => r.timelineEntry ? new TimelineEntryModel(this._client, r.timelineEntry) : undefined);
+  }
+}
+
+export class MeteredFeatureEntitlementModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: MeteredFeatureEntitlementFieldsFragment;
+  public readonly __typename = "MeteredFeatureEntitlement" as const;
+
+  public readonly current: MeteredFeatureEntitlementFieldsFragment["current"];
+  public readonly feature: MeteredFeatureEntitlementFieldsFragment["feature"];
+  public readonly isEntitled: MeteredFeatureEntitlementFieldsFragment["isEntitled"];
+  public readonly limit: MeteredFeatureEntitlementFieldsFragment["limit"];
+
+  constructor(client: PlainGraphQLClient, data: MeteredFeatureEntitlementFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.current = data.current;
+    this.feature = data.feature;
+    this.isEntitled = data.isEntitled;
+    this.limit = data.limit;
   }
 }
 
 export class MSTeamsChannelMembersModel {
   protected _client: PlainGraphQLClient;
   protected _data: MsTeamsChannelMembersFieldsFragment;
+  public readonly __typename = "MSTeamsChannelMembers" as const;
 
   public readonly members: MsTeamsChannelMembersFieldsFragment["members"];
+
   constructor(client: PlainGraphQLClient, data: MsTeamsChannelMembersFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2487,6 +5016,7 @@ export class MSTeamsChannelMembersModel {
 export class MSTeamsMessageModel {
   protected _client: PlainGraphQLClient;
   protected _data: MsTeamsMessageFieldsFragment;
+  public readonly __typename = "MSTeamsMessage" as const;
 
   public readonly createdAt: MsTeamsMessageFieldsFragment["createdAt"];
   public readonly deletedOnMsTeamsAt: MsTeamsMessageFieldsFragment["deletedOnMsTeamsAt"];
@@ -2503,6 +5033,9 @@ export class MSTeamsMessageModel {
   public readonly text: MsTeamsMessageFieldsFragment["text"];
   public readonly threadId: MsTeamsMessageFieldsFragment["threadId"];
   public readonly updatedAt: MsTeamsMessageFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: MsTeamsMessageFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2521,12 +5054,132 @@ export class MSTeamsMessageModel {
     this.text = data.text;
     this.threadId = data.threadId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class MSTeamsMessageEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: MsTeamsMessageEntryFieldsFragment;
+  public readonly __typename = "MSTeamsMessageEntry" as const;
+
+  public readonly customerId: MsTeamsMessageEntryFieldsFragment["customerId"];
+  public readonly deletedOnMsTeamsAt: MsTeamsMessageEntryFieldsFragment["deletedOnMsTeamsAt"];
+  public readonly hasUnprocessedAttachments: MsTeamsMessageEntryFieldsFragment["hasUnprocessedAttachments"];
+  public readonly lastEditedOnMsTeamsAt: MsTeamsMessageEntryFieldsFragment["lastEditedOnMsTeamsAt"];
+  public readonly markdownContent: MsTeamsMessageEntryFieldsFragment["markdownContent"];
+  public readonly msTeamsMessageId: MsTeamsMessageEntryFieldsFragment["msTeamsMessageId"];
+  public readonly msTeamsMessageLink: MsTeamsMessageEntryFieldsFragment["msTeamsMessageLink"];
+  public readonly text: MsTeamsMessageEntryFieldsFragment["text"];
+
+  constructor(client: PlainGraphQLClient, data: MsTeamsMessageEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.deletedOnMsTeamsAt = data.deletedOnMsTeamsAt;
+    this.hasUnprocessedAttachments = data.hasUnprocessedAttachments;
+    this.lastEditedOnMsTeamsAt = data.lastEditedOnMsTeamsAt;
+    this.markdownContent = data.markdownContent;
+    this.msTeamsMessageId = data.msTeamsMessageId;
+    this.msTeamsMessageLink = data.msTeamsMessageLink;
+    this.text = data.text;
+  }
+}
+
+export class MSTeamsThreadChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: MsTeamsThreadChannelDetailsFieldsFragment;
+  public readonly __typename = "MSTeamsThreadChannelDetails" as const;
+
+  public readonly msTeamsChannelId: MsTeamsThreadChannelDetailsFieldsFragment["msTeamsChannelId"];
+  public readonly msTeamsChannelName: MsTeamsThreadChannelDetailsFieldsFragment["msTeamsChannelName"];
+  public readonly msTeamsTeamId: MsTeamsThreadChannelDetailsFieldsFragment["msTeamsTeamId"];
+  public readonly msTeamsTeamName: MsTeamsThreadChannelDetailsFieldsFragment["msTeamsTeamName"];
+
+  constructor(client: PlainGraphQLClient, data: MsTeamsThreadChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.msTeamsChannelId = data.msTeamsChannelId;
+    this.msTeamsChannelName = data.msTeamsChannelName;
+    this.msTeamsTeamId = data.msTeamsTeamId;
+    this.msTeamsTeamName = data.msTeamsTeamName;
+  }
+}
+
+export class NextResponseTimeServiceLevelAgreementModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: NextResponseTimeServiceLevelAgreementFieldsFragment;
+  public readonly __typename = "NextResponseTimeServiceLevelAgreement" as const;
+
+  public readonly createdAt: NextResponseTimeServiceLevelAgreementFieldsFragment["createdAt"];
+  public readonly id: NextResponseTimeServiceLevelAgreementFieldsFragment["id"];
+  public readonly nextResponseTimeMinutes: NextResponseTimeServiceLevelAgreementFieldsFragment["nextResponseTimeMinutes"];
+  public readonly threadLabelTypeIdFilter: NextResponseTimeServiceLevelAgreementFieldsFragment["threadLabelTypeIdFilter"];
+  public readonly threadPriorityFilter: NextResponseTimeServiceLevelAgreementFieldsFragment["threadPriorityFilter"];
+  public readonly updatedAt: NextResponseTimeServiceLevelAgreementFieldsFragment["updatedAt"];
+  public readonly useBusinessHoursOnly: NextResponseTimeServiceLevelAgreementFieldsFragment["useBusinessHoursOnly"];
+  public readonly breachActions: (BeforeBreachActionModel)[];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: NextResponseTimeServiceLevelAgreementFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.nextResponseTimeMinutes = data.nextResponseTimeMinutes;
+    this.threadLabelTypeIdFilter = data.threadLabelTypeIdFilter;
+    this.threadPriorityFilter = data.threadPriorityFilter;
+    this.updatedAt = data.updatedAt;
+    this.useBusinessHoursOnly = data.useBusinessHoursOnly;
+    this.breachActions = ((data.breachActions as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "BeforeBreachAction": return new BeforeBreachActionModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class NoteModel {
   protected _client: PlainGraphQLClient;
   protected _data: NoteFieldsFragment;
+  public readonly __typename = "Note" as const;
 
   public readonly createdAt: NoteFieldsFragment["createdAt"];
   public readonly deletedAt: NoteFieldsFragment["deletedAt"];
@@ -2537,6 +5190,10 @@ export class NoteModel {
   public readonly markdown: NoteFieldsFragment["markdown"];
   public readonly text: NoteFieldsFragment["text"];
   public readonly updatedAt: NoteFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly editedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: NoteFieldsFragment) {
     this._client = client;
@@ -2550,6 +5207,38 @@ export class NoteModel {
     this.markdown = data.markdown;
     this.text = data.text;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.editedBy = data.editedBy ? (() => {
+    switch ((data.editedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.editedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.editedBy as any);
+      case "UserActor": return new UserActorModel(client, data.editedBy as any);
+      default: return data.editedBy as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get customer(): Promise<CustomerModel | undefined> {
@@ -2562,34 +5251,215 @@ export class NoteModel {
   }
 }
 
+export class NoteEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: NoteEntryFieldsFragment;
+  public readonly __typename = "NoteEntry" as const;
+
+  public readonly editedAt: NoteEntryFieldsFragment["editedAt"];
+  public readonly isEdited: NoteEntryFieldsFragment["isEdited"];
+  public readonly markdown: NoteEntryFieldsFragment["markdown"];
+  public readonly noteId: NoteEntryFieldsFragment["noteId"];
+  public readonly text: NoteEntryFieldsFragment["text"];
+  public readonly editedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+
+  constructor(client: PlainGraphQLClient, data: NoteEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.editedAt = data.editedAt;
+    this.isEdited = data.isEdited;
+    this.markdown = data.markdown;
+    this.noteId = data.noteId;
+    this.text = data.text;
+    this.editedBy = data.editedBy ? (() => {
+    switch ((data.editedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.editedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.editedBy as any);
+      case "UserActor": return new UserActorModel(client, data.editedBy as any);
+      default: return data.editedBy as any;
+    }
+  })() : null;
+  }
+}
+
+export class NoteMentionNotificationDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: NoteMentionNotificationDetailFieldsFragment;
+  public readonly __typename = "NoteMentionNotificationDetail" as const;
+
+  public readonly threadId: NoteMentionNotificationDetailFieldsFragment["threadId"];
+  public readonly timelineEntryId: NoteMentionNotificationDetailFieldsFragment["timelineEntryId"];
+  public readonly mentionedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: NoteMentionNotificationDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.threadId = data.threadId;
+    this.timelineEntryId = data.timelineEntryId;
+    this.mentionedBy = (() => {
+    switch ((data.mentionedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.mentionedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.mentionedBy as any);
+      case "UserActor": return new UserActorModel(client, data.mentionedBy as any);
+      default: return data.mentionedBy as any;
+    }
+  })();
+  }
+}
+
+export class PerSeatRecurringPriceModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: PerSeatRecurringPriceFieldsFragment;
+  public readonly __typename = "PerSeatRecurringPrice" as const;
+
+  public readonly billingIntervalCount: PerSeatRecurringPriceFieldsFragment["billingIntervalCount"];
+  public readonly billingIntervalUnit: PerSeatRecurringPriceFieldsFragment["billingIntervalUnit"];
+  public readonly currency: PerSeatRecurringPriceFieldsFragment["currency"];
+  public readonly perSeatAmount: PerSeatRecurringPriceFieldsFragment["perSeatAmount"];
+
+  constructor(client: PlainGraphQLClient, data: PerSeatRecurringPriceFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.billingIntervalCount = data.billingIntervalCount;
+    this.billingIntervalUnit = data.billingIntervalUnit;
+    this.currency = data.currency;
+    this.perSeatAmount = data.perSeatAmount;
+  }
+}
+
+export class PlainTaskThreadLinkModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: PlainTaskThreadLinkFieldsFragment;
+  public readonly __typename = "PlainTaskThreadLink" as const;
+
+  public readonly createdAt: PlainTaskThreadLinkFieldsFragment["createdAt"];
+  public readonly description: PlainTaskThreadLinkFieldsFragment["description"];
+  public readonly id: PlainTaskThreadLinkFieldsFragment["id"];
+  public readonly linkType: PlainTaskThreadLinkFieldsFragment["linkType"];
+  public readonly plainTaskId: PlainTaskThreadLinkFieldsFragment["plainTaskId"];
+  public readonly sourceId: PlainTaskThreadLinkFieldsFragment["sourceId"];
+  public readonly sourceType: PlainTaskThreadLinkFieldsFragment["sourceType"];
+  public readonly status: PlainTaskThreadLinkFieldsFragment["status"];
+  public readonly threadId: PlainTaskThreadLinkFieldsFragment["threadId"];
+  public readonly title: PlainTaskThreadLinkFieldsFragment["title"];
+  public readonly updatedAt: PlainTaskThreadLinkFieldsFragment["updatedAt"];
+  public readonly url: PlainTaskThreadLinkFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: PlainTaskThreadLinkFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.description = data.description;
+    this.id = data.id;
+    this.linkType = data.linkType;
+    this.plainTaskId = data.plainTaskId;
+    this.sourceId = data.sourceId;
+    this.sourceType = data.sourceType;
+    this.status = data.status;
+    this.threadId = data.threadId;
+    this.title = data.title;
+    this.updatedAt = data.updatedAt;
+    this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class PlainThreadThreadLinkModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: PlainThreadThreadLinkFieldsFragment;
+  public readonly __typename = "PlainThreadThreadLink" as const;
+
+  public readonly createdAt: PlainThreadThreadLinkFieldsFragment["createdAt"];
+  public readonly description: PlainThreadThreadLinkFieldsFragment["description"];
+  public readonly id: PlainThreadThreadLinkFieldsFragment["id"];
+  public readonly linkType: PlainThreadThreadLinkFieldsFragment["linkType"];
+  public readonly plainThreadId: PlainThreadThreadLinkFieldsFragment["plainThreadId"];
+  public readonly plainThreadStatusDetailType: PlainThreadThreadLinkFieldsFragment["plainThreadStatusDetailType"];
+  public readonly sourceId: PlainThreadThreadLinkFieldsFragment["sourceId"];
+  public readonly sourceType: PlainThreadThreadLinkFieldsFragment["sourceType"];
+  public readonly status: PlainThreadThreadLinkFieldsFragment["status"];
+  public readonly threadId: PlainThreadThreadLinkFieldsFragment["threadId"];
+  public readonly title: PlainThreadThreadLinkFieldsFragment["title"];
+  public readonly updatedAt: PlainThreadThreadLinkFieldsFragment["updatedAt"];
+  public readonly url: PlainThreadThreadLinkFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: PlainThreadThreadLinkFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.description = data.description;
+    this.id = data.id;
+    this.linkType = data.linkType;
+    this.plainThreadId = data.plainThreadId;
+    this.plainThreadStatusDetailType = data.plainThreadStatusDetailType;
+    this.sourceId = data.sourceId;
+    this.sourceType = data.sourceType;
+    this.status = data.status;
+    this.threadId = data.threadId;
+    this.title = data.title;
+    this.updatedAt = data.updatedAt;
+    this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
 export class RoleModel {
   protected _client: PlainGraphQLClient;
   protected _data: RoleFieldsFragment;
+  public readonly __typename = "Role" as const;
 
-  public readonly assignableBillingSeats: RoleFieldsFragment["assignableBillingSeats"];
   public readonly customRoleId: RoleFieldsFragment["customRoleId"];
   public readonly description: RoleFieldsFragment["description"];
   public readonly id: RoleFieldsFragment["id"];
-  public readonly isAssignableToCustomer: RoleFieldsFragment["isAssignableToCustomer"];
   public readonly isAssignableToThread: RoleFieldsFragment["isAssignableToThread"];
   public readonly key: RoleFieldsFragment["key"];
   public readonly name: RoleFieldsFragment["name"];
   public readonly permissions: RoleFieldsFragment["permissions"];
-  public readonly requiresBillableSeat: RoleFieldsFragment["requiresBillableSeat"];
 
   constructor(client: PlainGraphQLClient, data: RoleFieldsFragment) {
     this._client = client;
     this._data = data;
-    this.assignableBillingSeats = data.assignableBillingSeats;
     this.customRoleId = data.customRoleId;
     this.description = data.description;
     this.id = data.id;
-    this.isAssignableToCustomer = data.isAssignableToCustomer;
     this.isAssignableToThread = data.isAssignableToThread;
     this.key = data.key;
     this.name = data.name;
     this.permissions = data.permissions;
-    this.requiresBillableSeat = data.requiresBillableSeat;
   }
 
   public get customRole(): Promise<CustomRoleModel | undefined> {
@@ -2605,6 +5475,7 @@ export class RoleModel {
 export class RoleChangeCostModel {
   protected _client: PlainGraphQLClient;
   protected _data: RoleChangeCostFieldsFragment;
+  public readonly __typename = "RoleChangeCost" as const;
 
   public readonly addingSeatType: RoleChangeCostFieldsFragment["addingSeatType"];
   public readonly adjustedPrice: RoleChangeCostFieldsFragment["adjustedPrice"];
@@ -2615,6 +5486,7 @@ export class RoleChangeCostModel {
   public readonly quantity: RoleChangeCostFieldsFragment["quantity"];
   public readonly removingSeatType: RoleChangeCostFieldsFragment["removingSeatType"];
   public readonly totalPrice: RoleChangeCostFieldsFragment["totalPrice"];
+
   constructor(client: PlainGraphQLClient, data: RoleChangeCostFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2633,6 +5505,7 @@ export class RoleChangeCostModel {
 export class SavedThreadsViewModel {
   protected _client: PlainGraphQLClient;
   protected _data: SavedThreadsViewFieldsFragment;
+  public readonly __typename = "SavedThreadsView" as const;
 
   public readonly color: SavedThreadsViewFieldsFragment["color"];
   public readonly createdAt: SavedThreadsViewFieldsFragment["createdAt"];
@@ -2641,6 +5514,9 @@ export class SavedThreadsViewModel {
   public readonly isHidden: SavedThreadsViewFieldsFragment["isHidden"];
   public readonly name: SavedThreadsViewFieldsFragment["name"];
   public readonly updatedAt: SavedThreadsViewFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: SavedThreadsViewFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2651,18 +5527,40 @@ export class SavedThreadsViewModel {
     this.isHidden = data.isHidden;
     this.name = data.name;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ServiceAuthorizationModel {
   protected _client: PlainGraphQLClient;
   protected _data: ServiceAuthorizationFieldsFragment;
+  public readonly __typename = "ServiceAuthorization" as const;
 
   public readonly connectedAt: ServiceAuthorizationFieldsFragment["connectedAt"];
   public readonly createdAt: ServiceAuthorizationFieldsFragment["createdAt"];
   public readonly id: ServiceAuthorizationFieldsFragment["id"];
   public readonly status: ServiceAuthorizationFieldsFragment["status"];
   public readonly updatedAt: ServiceAuthorizationFieldsFragment["updatedAt"];
+  public readonly connectedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly serviceIntegration: DefaultServiceIntegrationModel | JiraSiteIntegrationModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ServiceAuthorizationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2671,12 +5569,192 @@ export class ServiceAuthorizationModel {
     this.id = data.id;
     this.status = data.status;
     this.updatedAt = data.updatedAt;
+    this.connectedBy = (() => {
+    switch ((data.connectedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.connectedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.connectedBy as any);
+      case "UserActor": return new UserActorModel(client, data.connectedBy as any);
+      default: return data.connectedBy as any;
+    }
+  })();
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.serviceIntegration = (() => {
+    switch ((data.serviceIntegration as any).__typename) {
+      case "DefaultServiceIntegration": return new DefaultServiceIntegrationModel(client, data.serviceIntegration as any);
+      case "JiraSiteIntegration": return new JiraSiteIntegrationModel(client, data.serviceIntegration as any);
+      default: return data.serviceIntegration as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class ServiceLevelAgreementStatusTransitionedEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ServiceLevelAgreementStatusTransitionedEntryFieldsFragment;
+  public readonly __typename = "ServiceLevelAgreementStatusTransitionedEntry" as const;
+
+  public readonly nextStatus: ServiceLevelAgreementStatusTransitionedEntryFieldsFragment["nextStatus"];
+  public readonly previousStatus: ServiceLevelAgreementStatusTransitionedEntryFieldsFragment["previousStatus"];
+  public readonly serviceLevelAgreement: (FirstResponseTimeServiceLevelAgreementModel | NextResponseTimeServiceLevelAgreementModel) | null;
+
+  constructor(client: PlainGraphQLClient, data: ServiceLevelAgreementStatusTransitionedEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.nextStatus = data.nextStatus;
+    this.previousStatus = data.previousStatus;
+    this.serviceLevelAgreement = data.serviceLevelAgreement ? (() => {
+    switch ((data.serviceLevelAgreement as any).__typename) {
+      case "FirstResponseTimeServiceLevelAgreement": return new FirstResponseTimeServiceLevelAgreementModel(client, data.serviceLevelAgreement as any);
+      case "NextResponseTimeServiceLevelAgreement": return new NextResponseTimeServiceLevelAgreementModel(client, data.serviceLevelAgreement as any);
+      default: return data.serviceLevelAgreement as any;
+    }
+  })() : null;
+  }
+}
+
+export class SlackCustomerIdentityModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SlackCustomerIdentityFieldsFragment;
+  public readonly __typename = "SlackCustomerIdentity" as const;
+
+  public readonly slackUserId: SlackCustomerIdentityFieldsFragment["slackUserId"];
+
+  constructor(client: PlainGraphQLClient, data: SlackCustomerIdentityFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.slackUserId = data.slackUserId;
+  }
+}
+
+export class SlackMessageEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SlackMessageEntryFieldsFragment;
+  public readonly __typename = "SlackMessageEntry" as const;
+
+  public readonly customerId: SlackMessageEntryFieldsFragment["customerId"];
+  public readonly deletedOnSlackAt: SlackMessageEntryFieldsFragment["deletedOnSlackAt"];
+  public readonly lastEditedOnSlackAt: SlackMessageEntryFieldsFragment["lastEditedOnSlackAt"];
+  public readonly relatedThread: SlackMessageEntryFieldsFragment["relatedThread"];
+  public readonly slackMessageLink: SlackMessageEntryFieldsFragment["slackMessageLink"];
+  public readonly slackWebMessageLink: SlackMessageEntryFieldsFragment["slackWebMessageLink"];
+  public readonly text: SlackMessageEntryFieldsFragment["text"];
+
+  constructor(client: PlainGraphQLClient, data: SlackMessageEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.deletedOnSlackAt = data.deletedOnSlackAt;
+    this.lastEditedOnSlackAt = data.lastEditedOnSlackAt;
+    this.relatedThread = data.relatedThread;
+    this.slackMessageLink = data.slackMessageLink;
+    this.slackWebMessageLink = data.slackWebMessageLink;
+    this.text = data.text;
+  }
+}
+
+export class SlackReplyEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SlackReplyEntryFieldsFragment;
+  public readonly __typename = "SlackReplyEntry" as const;
+
+  public readonly customerId: SlackReplyEntryFieldsFragment["customerId"];
+  public readonly deletedOnSlackAt: SlackReplyEntryFieldsFragment["deletedOnSlackAt"];
+  public readonly lastEditedOnSlackAt: SlackReplyEntryFieldsFragment["lastEditedOnSlackAt"];
+  public readonly slackMessageLink: SlackReplyEntryFieldsFragment["slackMessageLink"];
+  public readonly slackWebMessageLink: SlackReplyEntryFieldsFragment["slackWebMessageLink"];
+  public readonly text: SlackReplyEntryFieldsFragment["text"];
+
+  constructor(client: PlainGraphQLClient, data: SlackReplyEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.deletedOnSlackAt = data.deletedOnSlackAt;
+    this.lastEditedOnSlackAt = data.lastEditedOnSlackAt;
+    this.slackMessageLink = data.slackMessageLink;
+    this.slackWebMessageLink = data.slackWebMessageLink;
+    this.text = data.text;
+  }
+}
+
+export class SlackThreadChannelAssociationModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SlackThreadChannelAssociationFieldsFragment;
+  public readonly __typename = "SlackThreadChannelAssociation" as const;
+
+  public readonly companyId: SlackThreadChannelAssociationFieldsFragment["companyId"];
+  public readonly connectedSlackChannelId: SlackThreadChannelAssociationFieldsFragment["connectedSlackChannelId"];
+  public readonly createdAt: SlackThreadChannelAssociationFieldsFragment["createdAt"];
+  public readonly id: SlackThreadChannelAssociationFieldsFragment["id"];
+  public readonly updatedAt: SlackThreadChannelAssociationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: SlackThreadChannelAssociationFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.companyId = data.companyId;
+    this.connectedSlackChannelId = data.connectedSlackChannelId;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class SlackThreadChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SlackThreadChannelDetailsFieldsFragment;
+  public readonly __typename = "SlackThreadChannelDetails" as const;
+
+  public readonly slackChannelId: SlackThreadChannelDetailsFieldsFragment["slackChannelId"];
+  public readonly slackChannelName: SlackThreadChannelDetailsFieldsFragment["slackChannelName"];
+  public readonly slackTeamId: SlackThreadChannelDetailsFieldsFragment["slackTeamId"];
+  public readonly slackTeamName: SlackThreadChannelDetailsFieldsFragment["slackTeamName"];
+
+  constructor(client: PlainGraphQLClient, data: SlackThreadChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.slackChannelId = data.slackChannelId;
+    this.slackChannelName = data.slackChannelName;
+    this.slackTeamId = data.slackTeamId;
+    this.slackTeamName = data.slackTeamName;
   }
 }
 
 export class SlackUserModel {
   protected _client: PlainGraphQLClient;
   protected _data: SlackUserFieldsFragment;
+  public readonly __typename = "SlackUser" as const;
 
   public readonly createdAt: SlackUserFieldsFragment["createdAt"];
   public readonly fullName: SlackUserFieldsFragment["fullName"];
@@ -2686,6 +5764,9 @@ export class SlackUserModel {
   public readonly slackHandle: SlackUserFieldsFragment["slackHandle"];
   public readonly slackUserId: SlackUserFieldsFragment["slackUserId"];
   public readonly updatedAt: SlackUserFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: SlackUserFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2697,12 +5778,29 @@ export class SlackUserModel {
     this.slackHandle = data.slackHandle;
     this.slackUserId = data.slackUserId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class SnippetModel {
   protected _client: PlainGraphQLClient;
   protected _data: SnippetFieldsFragment;
+  public readonly __typename = "Snippet" as const;
 
   public readonly createdAt: SnippetFieldsFragment["createdAt"];
   public readonly deletedAt: SnippetFieldsFragment["deletedAt"];
@@ -2713,6 +5811,10 @@ export class SnippetModel {
   public readonly path: SnippetFieldsFragment["path"];
   public readonly text: SnippetFieldsFragment["text"];
   public readonly updatedAt: SnippetFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: SnippetFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2725,12 +5827,69 @@ export class SnippetModel {
     this.path = data.path;
     this.text = data.text;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class SystemModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SystemFieldsFragment;
+  public readonly __typename = "System" as const;
+
+  public readonly id: SystemFieldsFragment["id"];
+
+  constructor(client: PlainGraphQLClient, data: SystemFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.id = data.id;
+  }
+}
+
+export class SystemActorModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SystemActorFieldsFragment;
+  public readonly __typename = "SystemActor" as const;
+
+  public readonly systemId: SystemActorFieldsFragment["systemId"];
+  public readonly workflow: SystemActorFieldsFragment["workflow"];
+  public readonly workflowExecutionId: SystemActorFieldsFragment["workflowExecutionId"];
+
+  constructor(client: PlainGraphQLClient, data: SystemActorFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.systemId = data.systemId;
+    this.workflow = data.workflow;
+    this.workflowExecutionId = data.workflowExecutionId;
   }
 }
 
 export class TaskModel {
   protected _client: PlainGraphQLClient;
   protected _data: TaskFieldsFragment;
+  public readonly __typename = "Task" as const;
 
   public readonly assignedAt: TaskFieldsFragment["assignedAt"];
   public readonly createdAt: TaskFieldsFragment["createdAt"];
@@ -2743,6 +5902,10 @@ export class TaskModel {
   public readonly status: TaskFieldsFragment["status"];
   public readonly title: TaskFieldsFragment["title"];
   public readonly updatedAt: TaskFieldsFragment["updatedAt"];
+  public readonly assignedTo: (MachineUserModel | SystemModel | UserModel) | null;
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: TaskFieldsFragment) {
     this._client = client;
@@ -2758,6 +5921,38 @@ export class TaskModel {
     this.status = data.status;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
+    this.assignedTo = data.assignedTo ? (() => {
+    switch ((data.assignedTo as any).__typename) {
+      case "MachineUser": return new MachineUserModel(client, data.assignedTo as any);
+      case "System": return new SystemModel(client, data.assignedTo as any);
+      case "User": return new UserModel(client, data.assignedTo as any);
+      default: return data.assignedTo as any;
+    }
+  })() : null;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get company(): Promise<CompanyModel | undefined> {
@@ -2782,6 +5977,7 @@ export class TaskModel {
 export class TeamSettingsModel {
   protected _client: PlainGraphQLClient;
   protected _data: TeamSettingsFieldsFragment;
+  public readonly __typename = "TeamSettings" as const;
 
   public readonly createdAt: TeamSettingsFieldsFragment["createdAt"];
   public readonly id: TeamSettingsFieldsFragment["id"];
@@ -2789,6 +5985,9 @@ export class TeamSettingsModel {
   public readonly labelTypeId: TeamSettingsFieldsFragment["labelTypeId"];
   public readonly roundRobinMaxCapacity: TeamSettingsFieldsFragment["roundRobinMaxCapacity"];
   public readonly updatedAt: TeamSettingsFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: TeamSettingsFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2798,12 +5997,29 @@ export class TeamSettingsModel {
     this.labelTypeId = data.labelTypeId;
     this.roundRobinMaxCapacity = data.roundRobinMaxCapacity;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class TenantModel {
   protected _client: PlainGraphQLClient;
   protected _data: TenantFieldsFragment;
+  public readonly __typename = "Tenant" as const;
 
   public readonly createdAt: TenantFieldsFragment["createdAt"];
   public readonly externalId: TenantFieldsFragment["externalId"];
@@ -2812,6 +6028,8 @@ export class TenantModel {
   public readonly source: TenantFieldsFragment["source"];
   public readonly updatedAt: TenantFieldsFragment["updatedAt"];
   public readonly url: TenantFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: TenantFieldsFragment) {
     this._client = client;
@@ -2823,6 +6041,22 @@ export class TenantModel {
     this.source = data.source;
     this.updatedAt = data.updatedAt;
     this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get tier(): Promise<TierModel | undefined> {
@@ -2838,11 +6072,16 @@ export class TenantModel {
 export class TenantFieldModel {
   protected _client: PlainGraphQLClient;
   protected _data: TenantFieldFieldsFragment;
+  public readonly __typename = "TenantField" as const;
 
   public readonly createdAt: TenantFieldFieldsFragment["createdAt"];
   public readonly externalFieldId: TenantFieldFieldsFragment["externalFieldId"];
   public readonly id: TenantFieldFieldsFragment["id"];
   public readonly updatedAt: TenantFieldFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly value: TenantFieldBooleanValueModel | TenantFieldDateTimeValueModel | TenantFieldNumberValueModel | TenantFieldStringArrayValueModel | TenantFieldStringValueModel;
+
   constructor(client: PlainGraphQLClient, data: TenantFieldFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2850,12 +6089,81 @@ export class TenantFieldModel {
     this.externalFieldId = data.externalFieldId;
     this.id = data.id;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+    this.value = (() => {
+    switch ((data.value as any).__typename) {
+      case "TenantFieldBooleanValue": return new TenantFieldBooleanValueModel(client, data.value as any);
+      case "TenantFieldDateTimeValue": return new TenantFieldDateTimeValueModel(client, data.value as any);
+      case "TenantFieldNumberValue": return new TenantFieldNumberValueModel(client, data.value as any);
+      case "TenantFieldStringArrayValue": return new TenantFieldStringArrayValueModel(client, data.value as any);
+      case "TenantFieldStringValue": return new TenantFieldStringValueModel(client, data.value as any);
+      default: return data.value as any;
+    }
+  })();
+  }
+}
+
+export class TenantFieldBooleanValueModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: TenantFieldBooleanValueFieldsFragment;
+  public readonly __typename = "TenantFieldBooleanValue" as const;
+
+  public readonly booleanValue: TenantFieldBooleanValueFieldsFragment["booleanValue"];
+
+  constructor(client: PlainGraphQLClient, data: TenantFieldBooleanValueFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.booleanValue = data.booleanValue;
+  }
+}
+
+export class TenantFieldDateTimeValueModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: TenantFieldDateTimeValueFieldsFragment;
+  public readonly __typename = "TenantFieldDateTimeValue" as const;
+
+  public readonly dateValue: TenantFieldDateTimeValueFieldsFragment["dateValue"];
+
+  constructor(client: PlainGraphQLClient, data: TenantFieldDateTimeValueFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.dateValue = data.dateValue;
+  }
+}
+
+export class TenantFieldNumberValueModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: TenantFieldNumberValueFieldsFragment;
+  public readonly __typename = "TenantFieldNumberValue" as const;
+
+  public readonly numberValue: TenantFieldNumberValueFieldsFragment["numberValue"];
+
+  constructor(client: PlainGraphQLClient, data: TenantFieldNumberValueFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.numberValue = data.numberValue;
   }
 }
 
 export class TenantFieldSchemaModel {
   protected _client: PlainGraphQLClient;
   protected _data: TenantFieldSchemaFieldsFragment;
+  public readonly __typename = "TenantFieldSchema" as const;
 
   public readonly createdAt: TenantFieldSchemaFieldsFragment["createdAt"];
   public readonly externalFieldId: TenantFieldSchemaFieldsFragment["externalFieldId"];
@@ -2868,6 +6176,9 @@ export class TenantFieldSchemaModel {
   public readonly source: TenantFieldSchemaFieldsFragment["source"];
   public readonly type: TenantFieldSchemaFieldsFragment["type"];
   public readonly updatedAt: TenantFieldSchemaFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: TenantFieldSchemaFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2882,18 +6193,66 @@ export class TenantFieldSchemaModel {
     this.source = data.source;
     this.type = data.type;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class TenantFieldStringArrayValueModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: TenantFieldStringArrayValueFieldsFragment;
+  public readonly __typename = "TenantFieldStringArrayValue" as const;
+
+  public readonly arrayValue: TenantFieldStringArrayValueFieldsFragment["arrayValue"];
+
+  constructor(client: PlainGraphQLClient, data: TenantFieldStringArrayValueFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.arrayValue = data.arrayValue;
+  }
+}
+
+export class TenantFieldStringValueModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: TenantFieldStringValueFieldsFragment;
+  public readonly __typename = "TenantFieldStringValue" as const;
+
+  public readonly stringValue: TenantFieldStringValueFieldsFragment["stringValue"];
+
+  constructor(client: PlainGraphQLClient, data: TenantFieldStringValueFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.stringValue = data.stringValue;
   }
 }
 
 export class TenantTierMembershipModel {
   protected _client: PlainGraphQLClient;
   protected _data: TenantTierMembershipFieldsFragment;
+  public readonly __typename = "TenantTierMembership" as const;
 
   public readonly createdAt: TenantTierMembershipFieldsFragment["createdAt"];
   public readonly id: TenantTierMembershipFieldsFragment["id"];
   public readonly tenantId: TenantTierMembershipFieldsFragment["tenantId"];
   public readonly tierId: TenantTierMembershipFieldsFragment["tierId"];
   public readonly updatedAt: TenantTierMembershipFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: TenantTierMembershipFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -2902,12 +6261,29 @@ export class TenantTierMembershipModel {
     this.tenantId = data.tenantId;
     this.tierId = data.tierId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ThreadModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadFieldsFragment;
+  public readonly __typename = "Thread" as const;
 
   public readonly agentStatus: ThreadFieldsFragment["agentStatus"];
   public readonly agentStatusUpdatedAt: ThreadFieldsFragment["agentStatusUpdatedAt"];
@@ -2926,6 +6302,16 @@ export class ThreadModel {
   public readonly supportEmailAddresses: ThreadFieldsFragment["supportEmailAddresses"];
   public readonly title: ThreadFieldsFragment["title"];
   public readonly updatedAt: ThreadFieldsFragment["updatedAt"];
+  public readonly additionalAssignees: (MachineUserModel | SystemModel | UserModel)[];
+  public readonly agentStatusDetail: (AgentStatusDetailHandedOffModel | AgentStatusDetailHandledModel | AgentStatusDetailInProgressModel) | null;
+  public readonly agentStatusUpdatedBy: (CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly assignedTo: (MachineUserModel | SystemModel | UserModel) | null;
+  public readonly channelDetails: (ChatThreadChannelDetailsModel | DiscordThreadChannelDetailsModel | ImportThreadChannelDetailsModel | MSTeamsThreadChannelDetailsModel | SlackThreadChannelDetailsModel) | null;
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly lockedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly statusChangedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly statusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel) | null;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: ThreadFieldsFragment) {
     this._client = client;
@@ -2947,6 +6333,103 @@ export class ThreadModel {
     this.supportEmailAddresses = data.supportEmailAddresses;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
+    this.additionalAssignees = ((data.additionalAssignees as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "MachineUser": return new MachineUserModel(client, item as any);
+      case "System": return new SystemModel(client, item as any);
+      case "User": return new UserModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.agentStatusDetail = data.agentStatusDetail ? (() => {
+    switch ((data.agentStatusDetail as any).__typename) {
+      case "AgentStatusDetailHandedOff": return new AgentStatusDetailHandedOffModel(client, data.agentStatusDetail as any);
+      case "AgentStatusDetailHandled": return new AgentStatusDetailHandledModel(client, data.agentStatusDetail as any);
+      case "AgentStatusDetailInProgress": return new AgentStatusDetailInProgressModel(client, data.agentStatusDetail as any);
+      default: return data.agentStatusDetail as any;
+    }
+  })() : null;
+    this.agentStatusUpdatedBy = data.agentStatusUpdatedBy ? (() => {
+    switch ((data.agentStatusUpdatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.agentStatusUpdatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.agentStatusUpdatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.agentStatusUpdatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.agentStatusUpdatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.agentStatusUpdatedBy as any);
+      default: return data.agentStatusUpdatedBy as any;
+    }
+  })() : null;
+    this.assignedTo = data.assignedTo ? (() => {
+    switch ((data.assignedTo as any).__typename) {
+      case "MachineUser": return new MachineUserModel(client, data.assignedTo as any);
+      case "System": return new SystemModel(client, data.assignedTo as any);
+      case "User": return new UserModel(client, data.assignedTo as any);
+      default: return data.assignedTo as any;
+    }
+  })() : null;
+    this.channelDetails = data.channelDetails ? (() => {
+    switch ((data.channelDetails as any).__typename) {
+      case "ChatThreadChannelDetails": return new ChatThreadChannelDetailsModel(client, data.channelDetails as any);
+      case "DiscordThreadChannelDetails": return new DiscordThreadChannelDetailsModel(client, data.channelDetails as any);
+      case "ImportThreadChannelDetails": return new ImportThreadChannelDetailsModel(client, data.channelDetails as any);
+      case "MSTeamsThreadChannelDetails": return new MSTeamsThreadChannelDetailsModel(client, data.channelDetails as any);
+      case "SlackThreadChannelDetails": return new SlackThreadChannelDetailsModel(client, data.channelDetails as any);
+      default: return data.channelDetails as any;
+    }
+  })() : null;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.lockedBy = data.lockedBy ? (() => {
+    switch ((data.lockedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.lockedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.lockedBy as any);
+      case "UserActor": return new UserActorModel(client, data.lockedBy as any);
+      default: return data.lockedBy as any;
+    }
+  })() : null;
+    this.statusChangedBy = (() => {
+    switch ((data.statusChangedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.statusChangedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.statusChangedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.statusChangedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.statusChangedBy as any);
+      case "UserActor": return new UserActorModel(client, data.statusChangedBy as any);
+      default: return data.statusChangedBy as any;
+    }
+  })();
+    this.statusDetail = data.statusDetail ? (() => {
+    switch ((data.statusDetail as any).__typename) {
+      case "ThreadStatusDetailCreated": return new ThreadStatusDetailCreatedModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailDoneAutomaticallySet": return new ThreadStatusDetailDoneAutomaticallySetModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailDoneManuallySet": return new ThreadStatusDetailDoneManuallySetModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailIgnored": return new ThreadStatusDetailIgnoredModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailInProgress": return new ThreadStatusDetailInProgressModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailNewReply": return new ThreadStatusDetailNewReplyModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailThreadDiscussionResolved": return new ThreadStatusDetailThreadDiscussionResolvedModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailThreadLinkUpdated": return new ThreadStatusDetailThreadLinkUpdatedModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailWaitingForCustomer": return new ThreadStatusDetailWaitingForCustomerModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailWaitingForDuration": return new ThreadStatusDetailWaitingForDurationModel(client, data.statusDetail as any);
+      default: return data.statusDetail as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get customer(): Promise<CustomerModel | undefined> {
@@ -2975,11 +6458,70 @@ export class ThreadModel {
       { tierId: id } as TierQueryVariables
     ).then(r => r.tier ? new TierModel(this._client, r.tier) : undefined);
   }
+
+  async timelineEntries(variables?: Omit<ThreadTimelineEntriesQueryVariables, "threadId">): Promise<PlainConnection<TimelineEntryModel>> {
+    const allVars = { ...variables, threadId: this.id } as ThreadTimelineEntriesQueryVariables;
+    const response = await this._client.request<ThreadTimelineEntriesQuery, ThreadTimelineEntriesQueryVariables>(
+      ThreadTimelineEntriesDocument, allVars
+    );
+    const parent = response.thread;
+    if (!parent) throw new Error("thread not found");
+    const conn = parent.timelineEntries;
+    return new PlainConnection<TimelineEntryModel>({
+      nodes: conn.edges.map(e => new TimelineEntryModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.timelineEntries({ ...variables, ...cursor }),
+    });
+  }
+}
+
+export class ThreadAssignmentNotificationDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadAssignmentNotificationDetailFieldsFragment;
+  public readonly __typename = "ThreadAssignmentNotificationDetail" as const;
+
+  public readonly threadId: ThreadAssignmentNotificationDetailFieldsFragment["threadId"];
+  public readonly assignedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: ThreadAssignmentNotificationDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.threadId = data.threadId;
+    this.assignedBy = (() => {
+    switch ((data.assignedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.assignedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.assignedBy as any);
+      case "UserActor": return new UserActorModel(client, data.assignedBy as any);
+      default: return data.assignedBy as any;
+    }
+  })();
+  }
+}
+
+export class ThreadCatchupFeedbackDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadCatchupFeedbackDetailsFieldsFragment;
+  public readonly __typename = "ThreadCatchupFeedbackDetails" as const;
+
+  public readonly comment: ThreadCatchupFeedbackDetailsFieldsFragment["comment"];
+  public readonly reason: ThreadCatchupFeedbackDetailsFieldsFragment["reason"];
+  public readonly sentiment: ThreadCatchupFeedbackDetailsFieldsFragment["sentiment"];
+  public readonly threadId: ThreadCatchupFeedbackDetailsFieldsFragment["threadId"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadCatchupFeedbackDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.comment = data.comment;
+    this.reason = data.reason;
+    this.sentiment = data.sentiment;
+    this.threadId = data.threadId;
+  }
 }
 
 export class ThreadClusterModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadClusterFieldsFragment;
+  public readonly __typename = "ThreadCluster" as const;
 
   public readonly category: ThreadClusterFieldsFragment["category"];
   public readonly confidence: ThreadClusterFieldsFragment["confidence"];
@@ -2991,6 +6533,9 @@ export class ThreadClusterModel {
   public readonly threads: ThreadClusterFieldsFragment["threads"];
   public readonly title: ThreadClusterFieldsFragment["title"];
   public readonly updatedAt: ThreadClusterFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ThreadClusterFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3004,46 +6549,177 @@ export class ThreadClusterModel {
     this.threads = data.threads;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class ThreadClustersFeedbackDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadClustersFeedbackDetailsFieldsFragment;
+  public readonly __typename = "ThreadClustersFeedbackDetails" as const;
+
+  public readonly clusterId: ThreadClustersFeedbackDetailsFieldsFragment["clusterId"];
+  public readonly comment: ThreadClustersFeedbackDetailsFieldsFragment["comment"];
+  public readonly reason: ThreadClustersFeedbackDetailsFieldsFragment["reason"];
+  public readonly sentiment: ThreadClustersFeedbackDetailsFieldsFragment["sentiment"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadClustersFeedbackDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.clusterId = data.clusterId;
+    this.comment = data.comment;
+    this.reason = data.reason;
+    this.sentiment = data.sentiment;
   }
 }
 
 export class ThreadDiscussionModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadDiscussionFieldsFragment;
+  public readonly __typename = "ThreadDiscussion" as const;
 
   public readonly createdAt: ThreadDiscussionFieldsFragment["createdAt"];
-  public readonly emailRecipients: ThreadDiscussionFieldsFragment["emailRecipients"];
   public readonly id: ThreadDiscussionFieldsFragment["id"];
   public readonly resolvedAt: ThreadDiscussionFieldsFragment["resolvedAt"];
-  public readonly slackChannelId: ThreadDiscussionFieldsFragment["slackChannelId"];
-  public readonly slackChannelName: ThreadDiscussionFieldsFragment["slackChannelName"];
-  public readonly slackMessageLink: ThreadDiscussionFieldsFragment["slackMessageLink"];
-  public readonly slackTeamId: ThreadDiscussionFieldsFragment["slackTeamId"];
   public readonly threadId: ThreadDiscussionFieldsFragment["threadId"];
   public readonly title: ThreadDiscussionFieldsFragment["title"];
-  public readonly type: ThreadDiscussionFieldsFragment["type"];
   public readonly updatedAt: ThreadDiscussionFieldsFragment["updatedAt"];
+  public readonly channelDetails: (ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel | ThreadDiscussionEmailChannelDetailsModel | ThreadDiscussionSlackChannelDetailsModel) | null;
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ThreadDiscussionFieldsFragment) {
     this._client = client;
     this._data = data;
     this.createdAt = data.createdAt;
-    this.emailRecipients = data.emailRecipients;
     this.id = data.id;
     this.resolvedAt = data.resolvedAt;
-    this.slackChannelId = data.slackChannelId;
-    this.slackChannelName = data.slackChannelName;
-    this.slackMessageLink = data.slackMessageLink;
-    this.slackTeamId = data.slackTeamId;
     this.threadId = data.threadId;
     this.title = data.title;
-    this.type = data.type;
     this.updatedAt = data.updatedAt;
+    this.channelDetails = data.channelDetails ? (() => {
+    switch ((data.channelDetails as any).__typename) {
+      case "ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails": return new ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel(client, data.channelDetails as any);
+      case "ThreadDiscussionEmailChannelDetails": return new ThreadDiscussionEmailChannelDetailsModel(client, data.channelDetails as any);
+      case "ThreadDiscussionSlackChannelDetails": return new ThreadDiscussionSlackChannelDetailsModel(client, data.channelDetails as any);
+      default: return data.channelDetails as any;
+    }
+  })() : null;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+
+  async messages(variables?: Omit<ThreadDiscussionMessagesQueryVariables, "threadDiscussionId">): Promise<PlainConnection<ThreadDiscussionMessageModel>> {
+    const allVars = { ...variables, threadDiscussionId: this.id } as ThreadDiscussionMessagesQueryVariables;
+    const response = await this._client.request<ThreadDiscussionMessagesQuery, ThreadDiscussionMessagesQueryVariables>(
+      ThreadDiscussionMessagesDocument, allVars
+    );
+    const parent = response.threadDiscussion;
+    if (!parent) throw new Error("threadDiscussion not found");
+    const conn = parent.messages;
+    return new PlainConnection<ThreadDiscussionMessageModel>({
+      nodes: conn.edges.map(e => new ThreadDiscussionMessageModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.messages({ ...variables, ...cursor }),
+    });
+  }
+}
+
+export class ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment;
+  public readonly __typename = "ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails" as const;
+
+  public readonly cursorWorkspaceIntegrationId: ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment["cursorWorkspaceIntegrationId"];
+  public readonly repositoryUrl: ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment["repositoryUrl"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.cursorWorkspaceIntegrationId = data.cursorWorkspaceIntegrationId;
+    this.repositoryUrl = data.repositoryUrl;
+  }
+}
+
+export class ThreadDiscussionEmailChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionEmailChannelDetailsFieldsFragment;
+  public readonly __typename = "ThreadDiscussionEmailChannelDetails" as const;
+
+  public readonly emailRecipients: ThreadDiscussionEmailChannelDetailsFieldsFragment["emailRecipients"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionEmailChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.emailRecipients = data.emailRecipients;
+  }
+}
+
+export class ThreadDiscussionEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionEntryFieldsFragment;
+  public readonly __typename = "ThreadDiscussionEntry" as const;
+
+  public readonly customerId: ThreadDiscussionEntryFieldsFragment["customerId"];
+  public readonly discussionType: ThreadDiscussionEntryFieldsFragment["discussionType"];
+  public readonly emailRecipients: ThreadDiscussionEntryFieldsFragment["emailRecipients"];
+  public readonly slackChannelName: ThreadDiscussionEntryFieldsFragment["slackChannelName"];
+  public readonly slackMessageLink: ThreadDiscussionEntryFieldsFragment["slackMessageLink"];
+  public readonly threadDiscussionId: ThreadDiscussionEntryFieldsFragment["threadDiscussionId"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.discussionType = data.discussionType;
+    this.emailRecipients = data.emailRecipients;
+    this.slackChannelName = data.slackChannelName;
+    this.slackMessageLink = data.slackMessageLink;
+    this.threadDiscussionId = data.threadDiscussionId;
   }
 }
 
 export class ThreadDiscussionMessageModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadDiscussionMessageFieldsFragment;
+  public readonly __typename = "ThreadDiscussionMessage" as const;
 
   public readonly createdAt: ThreadDiscussionMessageFieldsFragment["createdAt"];
   public readonly deletedOnSlackAt: ThreadDiscussionMessageFieldsFragment["deletedOnSlackAt"];
@@ -3053,6 +6729,9 @@ export class ThreadDiscussionMessageModel {
   public readonly text: ThreadDiscussionMessageFieldsFragment["text"];
   public readonly threadDiscussionId: ThreadDiscussionMessageFieldsFragment["threadDiscussionId"];
   public readonly updatedAt: ThreadDiscussionMessageFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ThreadDiscussionMessageFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3064,12 +6743,115 @@ export class ThreadDiscussionMessageModel {
     this.text = data.text;
     this.threadDiscussionId = data.threadDiscussionId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class ThreadDiscussionMessageEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionMessageEntryFieldsFragment;
+  public readonly __typename = "ThreadDiscussionMessageEntry" as const;
+
+  public readonly customerId: ThreadDiscussionMessageEntryFieldsFragment["customerId"];
+  public readonly deletedOnSlackAt: ThreadDiscussionMessageEntryFieldsFragment["deletedOnSlackAt"];
+  public readonly discussionType: ThreadDiscussionMessageEntryFieldsFragment["discussionType"];
+  public readonly hasUnprocessedAttachments: ThreadDiscussionMessageEntryFieldsFragment["hasUnprocessedAttachments"];
+  public readonly lastEditedOnSlackAt: ThreadDiscussionMessageEntryFieldsFragment["lastEditedOnSlackAt"];
+  public readonly resolvedText: ThreadDiscussionMessageEntryFieldsFragment["resolvedText"];
+  public readonly slackMessageLink: ThreadDiscussionMessageEntryFieldsFragment["slackMessageLink"];
+  public readonly slackMessageTimestamp: ThreadDiscussionMessageEntryFieldsFragment["slackMessageTimestamp"];
+  public readonly text: ThreadDiscussionMessageEntryFieldsFragment["text"];
+  public readonly threadDiscussionId: ThreadDiscussionMessageEntryFieldsFragment["threadDiscussionId"];
+  public readonly threadDiscussionMessageId: ThreadDiscussionMessageEntryFieldsFragment["threadDiscussionMessageId"];
+  public readonly type: ThreadDiscussionMessageEntryFieldsFragment["type"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionMessageEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.deletedOnSlackAt = data.deletedOnSlackAt;
+    this.discussionType = data.discussionType;
+    this.hasUnprocessedAttachments = data.hasUnprocessedAttachments;
+    this.lastEditedOnSlackAt = data.lastEditedOnSlackAt;
+    this.resolvedText = data.resolvedText;
+    this.slackMessageLink = data.slackMessageLink;
+    this.slackMessageTimestamp = data.slackMessageTimestamp;
+    this.text = data.text;
+    this.threadDiscussionId = data.threadDiscussionId;
+    this.threadDiscussionMessageId = data.threadDiscussionMessageId;
+    this.type = data.type;
+  }
+}
+
+export class ThreadDiscussionResolvedEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionResolvedEntryFieldsFragment;
+  public readonly __typename = "ThreadDiscussionResolvedEntry" as const;
+
+  public readonly customerId: ThreadDiscussionResolvedEntryFieldsFragment["customerId"];
+  public readonly discussionType: ThreadDiscussionResolvedEntryFieldsFragment["discussionType"];
+  public readonly emailRecipients: ThreadDiscussionResolvedEntryFieldsFragment["emailRecipients"];
+  public readonly resolvedAt: ThreadDiscussionResolvedEntryFieldsFragment["resolvedAt"];
+  public readonly slackChannelName: ThreadDiscussionResolvedEntryFieldsFragment["slackChannelName"];
+  public readonly slackMessageLink: ThreadDiscussionResolvedEntryFieldsFragment["slackMessageLink"];
+  public readonly threadDiscussionId: ThreadDiscussionResolvedEntryFieldsFragment["threadDiscussionId"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionResolvedEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.discussionType = data.discussionType;
+    this.emailRecipients = data.emailRecipients;
+    this.resolvedAt = data.resolvedAt;
+    this.slackChannelName = data.slackChannelName;
+    this.slackMessageLink = data.slackMessageLink;
+    this.threadDiscussionId = data.threadDiscussionId;
+  }
+}
+
+export class ThreadDiscussionSlackChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionSlackChannelDetailsFieldsFragment;
+  public readonly __typename = "ThreadDiscussionSlackChannelDetails" as const;
+
+  public readonly slackChannelId: ThreadDiscussionSlackChannelDetailsFieldsFragment["slackChannelId"];
+  public readonly slackChannelName: ThreadDiscussionSlackChannelDetailsFieldsFragment["slackChannelName"];
+  public readonly slackMessageLink: ThreadDiscussionSlackChannelDetailsFieldsFragment["slackMessageLink"];
+  public readonly slackTeamId: ThreadDiscussionSlackChannelDetailsFieldsFragment["slackTeamId"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionSlackChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.slackChannelId = data.slackChannelId;
+    this.slackChannelName = data.slackChannelName;
+    this.slackMessageLink = data.slackMessageLink;
+    this.slackTeamId = data.slackTeamId;
   }
 }
 
 export class ThreadEventModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadEventFieldsFragment;
+  public readonly __typename = "ThreadEvent" as const;
 
   public readonly createdAt: ThreadEventFieldsFragment["createdAt"];
   public readonly customerId: ThreadEventFieldsFragment["customerId"];
@@ -3077,6 +6859,10 @@ export class ThreadEventModel {
   public readonly threadId: ThreadEventFieldsFragment["threadId"];
   public readonly title: ThreadEventFieldsFragment["title"];
   public readonly updatedAt: ThreadEventFieldsFragment["updatedAt"];
+  public readonly components: (ComponentBadgeModel | ComponentCopyButtonModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | ComponentWorkflowButtonModel)[];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ThreadEventFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3086,12 +6872,82 @@ export class ThreadEventModel {
     this.threadId = data.threadId;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
+    this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
+      case "ComponentDivider": return new ComponentDividerModel(client, item as any);
+      case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
+      case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
+      case "ComponentRow": return item as any;
+      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
+      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class ThreadEventEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadEventEntryFieldsFragment;
+  public readonly __typename = "ThreadEventEntry" as const;
+
+  public readonly customerId: ThreadEventEntryFieldsFragment["customerId"];
+  public readonly externalId: ThreadEventEntryFieldsFragment["externalId"];
+  public readonly timelineEventId: ThreadEventEntryFieldsFragment["timelineEventId"];
+  public readonly title: ThreadEventEntryFieldsFragment["title"];
+  public readonly components: (ComponentBadgeModel | ComponentCopyButtonModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | ComponentWorkflowButtonModel)[];
+
+  constructor(client: PlainGraphQLClient, data: ThreadEventEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.customerId = data.customerId;
+    this.externalId = data.externalId;
+    this.timelineEventId = data.timelineEventId;
+    this.title = data.title;
+    this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
+      case "ComponentDivider": return new ComponentDividerModel(client, item as any);
+      case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
+      case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
+      case "ComponentRow": return item as any;
+      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
+      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
+      default: return item as any;
+    }
+  })());
   }
 }
 
 export class ThreadFieldModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadFieldFieldsFragment;
+  public readonly __typename = "ThreadField" as const;
 
   public readonly booleanValue: ThreadFieldFieldsFragment["booleanValue"];
   public readonly createdAt: ThreadFieldFieldsFragment["createdAt"];
@@ -3104,6 +6960,9 @@ export class ThreadFieldModel {
   public readonly threadId: ThreadFieldFieldsFragment["threadId"];
   public readonly type: ThreadFieldFieldsFragment["type"];
   public readonly updatedAt: ThreadFieldFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ThreadFieldFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3118,12 +6977,33 @@ export class ThreadFieldModel {
     this.threadId = data.threadId;
     this.type = data.type;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ThreadFieldSchemaModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadFieldSchemaFieldsFragment;
+  public readonly __typename = "ThreadFieldSchema" as const;
 
   public readonly createdAt: ThreadFieldSchemaFieldsFragment["createdAt"];
   public readonly defaultBooleanValue: ThreadFieldSchemaFieldsFragment["defaultBooleanValue"];
@@ -3143,6 +7023,9 @@ export class ThreadFieldSchemaModel {
   public readonly order: ThreadFieldSchemaFieldsFragment["order"];
   public readonly type: ThreadFieldSchemaFieldsFragment["type"];
   public readonly updatedAt: ThreadFieldSchemaFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: ThreadFieldSchemaFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3164,12 +7047,29 @@ export class ThreadFieldSchemaModel {
     this.order = data.order;
     this.type = data.type;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class ThreadLinkCandidateModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadLinkCandidateFieldsFragment;
+  public readonly __typename = "ThreadLinkCandidate" as const;
 
   public readonly description: ThreadLinkCandidateFieldsFragment["description"];
   public readonly sourceId: ThreadLinkCandidateFieldsFragment["sourceId"];
@@ -3178,6 +7078,7 @@ export class ThreadLinkCandidateModel {
   public readonly status: ThreadLinkCandidateFieldsFragment["status"];
   public readonly title: ThreadLinkCandidateFieldsFragment["title"];
   public readonly url: ThreadLinkCandidateFieldsFragment["url"];
+
   constructor(client: PlainGraphQLClient, data: ThreadLinkCandidateFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3194,10 +7095,12 @@ export class ThreadLinkCandidateModel {
 export class ThreadLinkGroupModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadLinkGroupFieldsFragment;
+  public readonly __typename = "ThreadLinkGroup" as const;
 
   public readonly currentViewRank: ThreadLinkGroupFieldsFragment["currentViewRank"];
   public readonly defaultViewRank: ThreadLinkGroupFieldsFragment["defaultViewRank"];
   public readonly id: ThreadLinkGroupFieldsFragment["id"];
+
   constructor(client: PlainGraphQLClient, data: ThreadLinkGroupFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3207,9 +7110,274 @@ export class ThreadLinkGroupModel {
   }
 }
 
+export class ThreadLinkTargetCreatedEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadLinkTargetCreatedEntryFieldsFragment;
+  public readonly __typename = "ThreadLinkTargetCreatedEntry" as const;
+
+  public readonly sourceThread: ThreadLinkTargetCreatedEntryFieldsFragment["sourceThread"];
+  public readonly threadLink: GenericThreadLinkModel | JiraIssueThreadLinkModel | LinearIssueThreadLinkModel | PlainTaskThreadLinkModel | PlainThreadThreadLinkModel;
+
+  constructor(client: PlainGraphQLClient, data: ThreadLinkTargetCreatedEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.sourceThread = data.sourceThread;
+    this.threadLink = (() => {
+    switch ((data.threadLink as any).__typename) {
+      case "GenericThreadLink": return new GenericThreadLinkModel(client, data.threadLink as any);
+      case "JiraIssueThreadLink": return new JiraIssueThreadLinkModel(client, data.threadLink as any);
+      case "LinearIssueThreadLink": return new LinearIssueThreadLinkModel(client, data.threadLink as any);
+      case "PlainTaskThreadLink": return new PlainTaskThreadLinkModel(client, data.threadLink as any);
+      case "PlainThreadThreadLink": return new PlainThreadThreadLinkModel(client, data.threadLink as any);
+      default: return data.threadLink as any;
+    }
+  })();
+  }
+}
+
+export class ThreadLinkTargetDeletedEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadLinkTargetDeletedEntryFieldsFragment;
+  public readonly __typename = "ThreadLinkTargetDeletedEntry" as const;
+
+  public readonly sourceThread: ThreadLinkTargetDeletedEntryFieldsFragment["sourceThread"];
+  public readonly threadLink: GenericThreadLinkModel | JiraIssueThreadLinkModel | LinearIssueThreadLinkModel | PlainTaskThreadLinkModel | PlainThreadThreadLinkModel;
+
+  constructor(client: PlainGraphQLClient, data: ThreadLinkTargetDeletedEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.sourceThread = data.sourceThread;
+    this.threadLink = (() => {
+    switch ((data.threadLink as any).__typename) {
+      case "GenericThreadLink": return new GenericThreadLinkModel(client, data.threadLink as any);
+      case "JiraIssueThreadLink": return new JiraIssueThreadLinkModel(client, data.threadLink as any);
+      case "LinearIssueThreadLink": return new LinearIssueThreadLinkModel(client, data.threadLink as any);
+      case "PlainTaskThreadLink": return new PlainTaskThreadLinkModel(client, data.threadLink as any);
+      case "PlainThreadThreadLink": return new PlainThreadThreadLinkModel(client, data.threadLink as any);
+      default: return data.threadLink as any;
+    }
+  })();
+  }
+}
+
+export class ThreadPriorityChangedEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadPriorityChangedEntryFieldsFragment;
+  public readonly __typename = "ThreadPriorityChangedEntry" as const;
+
+  public readonly nextPriority: ThreadPriorityChangedEntryFieldsFragment["nextPriority"];
+  public readonly previousPriority: ThreadPriorityChangedEntryFieldsFragment["previousPriority"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadPriorityChangedEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.nextPriority = data.nextPriority;
+    this.previousPriority = data.previousPriority;
+  }
+}
+
+export class ThreadStatusDetailCreatedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailCreatedFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailCreated" as const;
+
+  public readonly createdAt: ThreadStatusDetailCreatedFieldsFragment["createdAt"];
+  public readonly statusChangedAt: ThreadStatusDetailCreatedFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailCreatedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailDoneAutomaticallySetModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailDoneAutomaticallySetFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailDoneAutomaticallySet" as const;
+
+  public readonly afterSeconds: ThreadStatusDetailDoneAutomaticallySetFieldsFragment["afterSeconds"];
+  public readonly statusChangedAt: ThreadStatusDetailDoneAutomaticallySetFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailDoneAutomaticallySetFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.afterSeconds = data.afterSeconds;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailDoneManuallySetModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailDoneManuallySetFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailDoneManuallySet" as const;
+
+  public readonly statusChangedAt: ThreadStatusDetailDoneManuallySetFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailDoneManuallySetFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailIgnoredModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailIgnoredFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailIgnored" as const;
+
+  public readonly statusChangedAt: ThreadStatusDetailIgnoredFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailIgnoredFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailInProgressModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailInProgressFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailInProgress" as const;
+
+  public readonly statusChangedAt: ThreadStatusDetailInProgressFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailInProgressFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailNewReplyModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailNewReplyFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailNewReply" as const;
+
+  public readonly statusChangedAt: ThreadStatusDetailNewReplyFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailNewReplyFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailThreadDiscussionResolvedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailThreadDiscussionResolvedFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailThreadDiscussionResolved" as const;
+
+  public readonly statusChangedAt: ThreadStatusDetailThreadDiscussionResolvedFieldsFragment["statusChangedAt"];
+  public readonly threadDiscussionId: ThreadStatusDetailThreadDiscussionResolvedFieldsFragment["threadDiscussionId"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailThreadDiscussionResolvedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.statusChangedAt = data.statusChangedAt;
+    this.threadDiscussionId = data.threadDiscussionId;
+  }
+}
+
+export class ThreadStatusDetailThreadLinkUpdatedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailThreadLinkUpdatedFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailThreadLinkUpdated" as const;
+
+  public readonly linearIssueId: ThreadStatusDetailThreadLinkUpdatedFieldsFragment["linearIssueId"];
+  public readonly statusChangedAt: ThreadStatusDetailThreadLinkUpdatedFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailThreadLinkUpdatedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.linearIssueId = data.linearIssueId;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailWaitingForCustomerModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailWaitingForCustomerFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailWaitingForCustomer" as const;
+
+  public readonly statusChangedAt: ThreadStatusDetailWaitingForCustomerFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailWaitingForCustomerFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailWaitingForDurationModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailWaitingForDurationFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailWaitingForDuration" as const;
+
+  public readonly statusChangedAt: ThreadStatusDetailWaitingForDurationFieldsFragment["statusChangedAt"];
+  public readonly waitingUntil: ThreadStatusDetailWaitingForDurationFieldsFragment["waitingUntil"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailWaitingForDurationFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.statusChangedAt = data.statusChangedAt;
+    this.waitingUntil = data.waitingUntil;
+  }
+}
+
+export class ThreadStatusTransitionedEntryModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusTransitionedEntryFieldsFragment;
+  public readonly __typename = "ThreadStatusTransitionedEntry" as const;
+
+  public readonly nextStatus: ThreadStatusTransitionedEntryFieldsFragment["nextStatus"];
+  public readonly previousStatus: ThreadStatusTransitionedEntryFieldsFragment["previousStatus"];
+  public readonly nextStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel) | null;
+  public readonly previousStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel) | null;
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusTransitionedEntryFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.nextStatus = data.nextStatus;
+    this.previousStatus = data.previousStatus;
+    this.nextStatusDetail = data.nextStatusDetail ? (() => {
+    switch ((data.nextStatusDetail as any).__typename) {
+      case "ThreadStatusDetailCreated": return new ThreadStatusDetailCreatedModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailDoneAutomaticallySet": return new ThreadStatusDetailDoneAutomaticallySetModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailDoneManuallySet": return new ThreadStatusDetailDoneManuallySetModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailIgnored": return new ThreadStatusDetailIgnoredModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailInProgress": return new ThreadStatusDetailInProgressModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailNewReply": return new ThreadStatusDetailNewReplyModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailThreadDiscussionResolved": return new ThreadStatusDetailThreadDiscussionResolvedModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailThreadLinkUpdated": return new ThreadStatusDetailThreadLinkUpdatedModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailWaitingForCustomer": return new ThreadStatusDetailWaitingForCustomerModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailWaitingForDuration": return new ThreadStatusDetailWaitingForDurationModel(client, data.nextStatusDetail as any);
+      default: return data.nextStatusDetail as any;
+    }
+  })() : null;
+    this.previousStatusDetail = data.previousStatusDetail ? (() => {
+    switch ((data.previousStatusDetail as any).__typename) {
+      case "ThreadStatusDetailCreated": return new ThreadStatusDetailCreatedModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailDoneAutomaticallySet": return new ThreadStatusDetailDoneAutomaticallySetModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailDoneManuallySet": return new ThreadStatusDetailDoneManuallySetModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailIgnored": return new ThreadStatusDetailIgnoredModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailInProgress": return new ThreadStatusDetailInProgressModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailNewReply": return new ThreadStatusDetailNewReplyModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailThreadDiscussionResolved": return new ThreadStatusDetailThreadDiscussionResolvedModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailThreadLinkUpdated": return new ThreadStatusDetailThreadLinkUpdatedModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailWaitingForCustomer": return new ThreadStatusDetailWaitingForCustomerModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailWaitingForDuration": return new ThreadStatusDetailWaitingForDurationModel(client, data.previousStatusDetail as any);
+      default: return data.previousStatusDetail as any;
+    }
+  })() : null;
+  }
+}
+
 export class ThreadWithDistanceModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadWithDistanceFieldsFragment;
+  public readonly __typename = "ThreadWithDistance" as const;
 
   public readonly distance: ThreadWithDistanceFieldsFragment["distance"];
 
@@ -3232,10 +7400,10 @@ export class ThreadWithDistanceModel {
 export class TierModel {
   protected _client: PlainGraphQLClient;
   protected _data: TierFieldsFragment;
+  public readonly __typename = "Tier" as const;
 
   public readonly color: TierFieldsFragment["color"];
   public readonly createdAt: TierFieldsFragment["createdAt"];
-  public readonly defaultPriority: TierFieldsFragment["defaultPriority"];
   public readonly defaultThreadPriority: TierFieldsFragment["defaultThreadPriority"];
   public readonly externalId: TierFieldsFragment["externalId"];
   public readonly id: TierFieldsFragment["id"];
@@ -3243,12 +7411,15 @@ export class TierModel {
   public readonly isMachineTier: TierFieldsFragment["isMachineTier"];
   public readonly name: TierFieldsFragment["name"];
   public readonly updatedAt: TierFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly serviceLevelAgreements: (FirstResponseTimeServiceLevelAgreementModel | NextResponseTimeServiceLevelAgreementModel)[];
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: TierFieldsFragment) {
     this._client = client;
     this._data = data;
     this.color = data.color;
     this.createdAt = data.createdAt;
-    this.defaultPriority = data.defaultPriority;
     this.defaultThreadPriority = data.defaultThreadPriority;
     this.externalId = data.externalId;
     this.id = data.id;
@@ -3256,18 +7427,65 @@ export class TierModel {
     this.isMachineTier = data.isMachineTier;
     this.name = data.name;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.serviceLevelAgreements = ((data.serviceLevelAgreements as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "FirstResponseTimeServiceLevelAgreement": return new FirstResponseTimeServiceLevelAgreementModel(client, item as any);
+      case "NextResponseTimeServiceLevelAgreement": return new NextResponseTimeServiceLevelAgreementModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class TieredRecurringPriceModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: TieredRecurringPriceFieldsFragment;
+  public readonly __typename = "TieredRecurringPrice" as const;
+
+  public readonly billingIntervalCount: TieredRecurringPriceFieldsFragment["billingIntervalCount"];
+  public readonly billingIntervalUnit: TieredRecurringPriceFieldsFragment["billingIntervalUnit"];
+  public readonly currency: TieredRecurringPriceFieldsFragment["currency"];
+  public readonly tiers: TieredRecurringPriceFieldsFragment["tiers"];
+
+  constructor(client: PlainGraphQLClient, data: TieredRecurringPriceFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.billingIntervalCount = data.billingIntervalCount;
+    this.billingIntervalUnit = data.billingIntervalUnit;
+    this.currency = data.currency;
+    this.tiers = data.tiers;
   }
 }
 
 export class TimelineEntryModel {
   protected _client: PlainGraphQLClient;
   protected _data: TimelineEntryFieldsFragment;
+  public readonly __typename = "TimelineEntry" as const;
 
   public readonly customerId: TimelineEntryFieldsFragment["customerId"];
   public readonly id: TimelineEntryFieldsFragment["id"];
   public readonly llmText: TimelineEntryFieldsFragment["llmText"];
   public readonly threadId: TimelineEntryFieldsFragment["threadId"];
   public readonly timestamp: TimelineEntryFieldsFragment["timestamp"];
+  public readonly actor: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly entry: ChatEntryModel | CustomEntryModel | CustomerEventEntryModel | CustomerSurveyRequestedEntryModel | DiscordMessageEntryModel | EmailEntryModel | HelpCenterAiConversationMessageEntryModel | LinearIssueThreadLinkStateTransitionedEntryModel | MSTeamsMessageEntryModel | MergedThreadMessageEntryModel | NoteEntryModel | ServiceLevelAgreementStatusTransitionedEntryModel | SlackMessageEntryModel | SlackReplyEntryModel | { __typename: "ThreadAdditionalAssigneesTransitionedEntry" } | { __typename: "ThreadAssignmentTransitionedEntry" } | ThreadDiscussionEntryModel | ThreadDiscussionMessageEntryModel | ThreadDiscussionResolvedEntryModel | ThreadEventEntryModel | { __typename: "ThreadLabelsChangedEntry" } | { __typename: "ThreadLinkCreatedEntry" } | { __typename: "ThreadLinkDeletedEntry" } | ThreadLinkTargetCreatedEntryModel | ThreadLinkTargetDeletedEntryModel | { __typename: "ThreadLinkUpdatedEntry" } | ThreadPriorityChangedEntryModel | ThreadStatusTransitionedEntryModel;
+
   constructor(client: PlainGraphQLClient, data: TimelineEntryFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3276,14 +7494,59 @@ export class TimelineEntryModel {
     this.llmText = data.llmText;
     this.threadId = data.threadId;
     this.timestamp = data.timestamp;
+    this.actor = (() => {
+    switch ((data.actor as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.actor as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.actor as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.actor as any);
+      case "SystemActor": return new SystemActorModel(client, data.actor as any);
+      case "UserActor": return new UserActorModel(client, data.actor as any);
+      default: return data.actor as any;
+    }
+  })();
+    this.entry = (() => {
+    switch ((data.entry as any).__typename) {
+      case "ChatEntry": return new ChatEntryModel(client, { ...data.entry as any, text: (data.entry as any).chatEntryText } as any);
+      case "CustomEntry": return new CustomEntryModel(client, { ...data.entry as any, components: (data.entry as any).customEntryComponents, type: (data.entry as any).customEntryType } as any);
+      case "CustomerEventEntry": return new CustomerEventEntryModel(client, { ...data.entry as any, components: (data.entry as any).customerEventEntryComponents } as any);
+      case "CustomerSurveyRequestedEntry": return new CustomerSurveyRequestedEntryModel(client, data.entry as any);
+      case "DiscordMessageEntry": return new DiscordMessageEntryModel(client, data.entry as any);
+      case "EmailEntry": return new EmailEntryModel(client, data.entry as any);
+      case "HelpCenterAiConversationMessageEntry": return new HelpCenterAiConversationMessageEntryModel(client, { ...data.entry as any, markdown: (data.entry as any).helpCenterAiConversationMessageEntryMarkdown } as any);
+      case "LinearIssueThreadLinkStateTransitionedEntry": return new LinearIssueThreadLinkStateTransitionedEntryModel(client, data.entry as any);
+      case "MSTeamsMessageEntry": return new MSTeamsMessageEntryModel(client, { ...data.entry as any, text: (data.entry as any).mSTeamsMessageEntryText } as any);
+      case "MergedThreadMessageEntry": return new MergedThreadMessageEntryModel(client, data.entry as any);
+      case "NoteEntry": return new NoteEntryModel(client, { ...data.entry as any, text: (data.entry as any).noteEntryText, markdown: (data.entry as any).noteEntryMarkdown } as any);
+      case "ServiceLevelAgreementStatusTransitionedEntry": return new ServiceLevelAgreementStatusTransitionedEntryModel(client, { ...data.entry as any, nextStatus: (data.entry as any).serviceLevelAgreementStatusTransitionedEntryNextStatus, previousStatus: (data.entry as any).serviceLevelAgreementStatusTransitionedEntryPreviousStatus } as any);
+      case "SlackMessageEntry": return new SlackMessageEntryModel(client, { ...data.entry as any, text: (data.entry as any).slackMessageEntryText, reactions: (data.entry as any).slackMessageEntryReactions } as any);
+      case "SlackReplyEntry": return new SlackReplyEntryModel(client, { ...data.entry as any, text: (data.entry as any).slackReplyEntryText, reactions: (data.entry as any).slackReplyEntryReactions } as any);
+      case "ThreadAdditionalAssigneesTransitionedEntry": return data.entry as any;
+      case "ThreadAssignmentTransitionedEntry": return data.entry as any;
+      case "ThreadDiscussionEntry": return new ThreadDiscussionEntryModel(client, data.entry as any);
+      case "ThreadDiscussionMessageEntry": return new ThreadDiscussionMessageEntryModel(client, { ...data.entry as any, text: (data.entry as any).threadDiscussionMessageEntryText, reactions: (data.entry as any).threadDiscussionMessageEntryReactions, type: (data.entry as any).threadDiscussionMessageEntryType } as any);
+      case "ThreadDiscussionResolvedEntry": return new ThreadDiscussionResolvedEntryModel(client, data.entry as any);
+      case "ThreadEventEntry": return new ThreadEventEntryModel(client, { ...data.entry as any, components: (data.entry as any).threadEventEntryComponents } as any);
+      case "ThreadLabelsChangedEntry": return data.entry as any;
+      case "ThreadLinkCreatedEntry": return data.entry as any;
+      case "ThreadLinkDeletedEntry": return data.entry as any;
+      case "ThreadLinkTargetCreatedEntry": return new ThreadLinkTargetCreatedEntryModel(client, data.entry as any);
+      case "ThreadLinkTargetDeletedEntry": return new ThreadLinkTargetDeletedEntryModel(client, data.entry as any);
+      case "ThreadLinkUpdatedEntry": return data.entry as any;
+      case "ThreadPriorityChangedEntry": return new ThreadPriorityChangedEntryModel(client, data.entry as any);
+      case "ThreadStatusTransitionedEntry": return new ThreadStatusTransitionedEntryModel(client, { ...data.entry as any, nextStatus: (data.entry as any).threadStatusTransitionedEntryNextStatus, previousStatus: (data.entry as any).threadStatusTransitionedEntryPreviousStatus } as any);
+      default: return data.entry as any;
+    }
+  })();
   }
 }
 
 export class TimeSeriesMetricModel {
   protected _client: PlainGraphQLClient;
   protected _data: TimeSeriesMetricFieldsFragment;
+  public readonly __typename = "TimeSeriesMetric" as const;
 
   public readonly timestamps: TimeSeriesMetricFieldsFragment["timestamps"];
+
   constructor(client: PlainGraphQLClient, data: TimeSeriesMetricFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3291,9 +7554,50 @@ export class TimeSeriesMetricModel {
   }
 }
 
+export class ToggleFeatureEntitlementModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ToggleFeatureEntitlementFieldsFragment;
+  public readonly __typename = "ToggleFeatureEntitlement" as const;
+
+  public readonly feature: ToggleFeatureEntitlementFieldsFragment["feature"];
+  public readonly isEntitled: ToggleFeatureEntitlementFieldsFragment["isEntitled"];
+
+  constructor(client: PlainGraphQLClient, data: ToggleFeatureEntitlementFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.feature = data.feature;
+    this.isEntitled = data.isEntitled;
+  }
+}
+
+export class ToneRuleFeedbackDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ToneRuleFeedbackDetailsFieldsFragment;
+  public readonly __typename = "ToneRuleFeedbackDetails" as const;
+
+  public readonly comment: ToneRuleFeedbackDetailsFieldsFragment["comment"];
+  public readonly reason: ToneRuleFeedbackDetailsFieldsFragment["reason"];
+  public readonly sentiment: ToneRuleFeedbackDetailsFieldsFragment["sentiment"];
+  public readonly toneRuleDescription: ToneRuleFeedbackDetailsFieldsFragment["toneRuleDescription"];
+  public readonly toneRuleId: ToneRuleFeedbackDetailsFieldsFragment["toneRuleId"];
+  public readonly toneRuleInput: ToneRuleFeedbackDetailsFieldsFragment["toneRuleInput"];
+
+  constructor(client: PlainGraphQLClient, data: ToneRuleFeedbackDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.comment = data.comment;
+    this.reason = data.reason;
+    this.sentiment = data.sentiment;
+    this.toneRuleDescription = data.toneRuleDescription;
+    this.toneRuleId = data.toneRuleId;
+    this.toneRuleInput = data.toneRuleInput;
+  }
+}
+
 export class UserModel {
   protected _client: PlainGraphQLClient;
   protected _data: UserFieldsFragment;
+  public readonly __typename = "User" as const;
 
   public readonly avatarUrl: UserFieldsFragment["avatarUrl"];
   public readonly createdAt: UserFieldsFragment["createdAt"];
@@ -3303,10 +7607,15 @@ export class UserModel {
   public readonly id: UserFieldsFragment["id"];
   public readonly isDeleted: UserFieldsFragment["isDeleted"];
   public readonly publicName: UserFieldsFragment["publicName"];
+  public readonly role: UserFieldsFragment["role"];
   public readonly slackIdentities: UserFieldsFragment["slackIdentities"];
   public readonly status: UserFieldsFragment["status"];
   public readonly statusChangedAt: UserFieldsFragment["statusChangedAt"];
   public readonly updatedAt: UserFieldsFragment["updatedAt"];
+  public readonly workingHours: UserFieldsFragment["workingHours"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: UserFieldsFragment) {
     this._client = client;
@@ -3319,10 +7628,38 @@ export class UserModel {
     this.id = data.id;
     this.isDeleted = data.isDeleted;
     this.publicName = data.publicName;
+    this.role = data.role;
     this.slackIdentities = data.slackIdentities;
     this.status = data.status;
     this.statusChangedAt = data.statusChangedAt;
     this.updatedAt = data.updatedAt;
+    this.workingHours = data.workingHours;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.deletedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.deletedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get defaultSavedThreadsView(): Promise<SavedThreadsViewModel | undefined> {
@@ -3335,9 +7672,33 @@ export class UserModel {
   }
 }
 
+export class UserActorModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: UserActorFieldsFragment;
+  public readonly __typename = "UserActor" as const;
+
+  public readonly userId: UserActorFieldsFragment["userId"];
+
+  constructor(client: PlainGraphQLClient, data: UserActorFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.userId = data.userId;
+  }
+
+  public get user(): Promise<UserModel | undefined> {
+    const id = this._data.user?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<UserQuery, UserQueryVariables>(
+      UserDocument,
+      { userId: id } as UserQueryVariables
+    ).then(r => r.user ? new UserModel(this._client, r.user) : undefined);
+  }
+}
+
 export class UserAuthDiscordChannelIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: UserAuthDiscordChannelIntegrationFieldsFragment;
+  public readonly __typename = "UserAuthDiscordChannelIntegration" as const;
 
   public readonly createdAt: UserAuthDiscordChannelIntegrationFieldsFragment["createdAt"];
   public readonly discordGlobalName: UserAuthDiscordChannelIntegrationFieldsFragment["discordGlobalName"];
@@ -3347,6 +7708,9 @@ export class UserAuthDiscordChannelIntegrationModel {
   public readonly discordUsername: UserAuthDiscordChannelIntegrationFieldsFragment["discordUsername"];
   public readonly id: UserAuthDiscordChannelIntegrationFieldsFragment["id"];
   public readonly updatedAt: UserAuthDiscordChannelIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: UserAuthDiscordChannelIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3358,12 +7722,29 @@ export class UserAuthDiscordChannelIntegrationModel {
     this.discordUsername = data.discordUsername;
     this.id = data.id;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class UserAuthSlackIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: UserAuthSlackIntegrationFieldsFragment;
+  public readonly __typename = "UserAuthSlackIntegration" as const;
 
   public readonly createdAt: UserAuthSlackIntegrationFieldsFragment["createdAt"];
   public readonly integrationId: UserAuthSlackIntegrationFieldsFragment["integrationId"];
@@ -3371,6 +7752,9 @@ export class UserAuthSlackIntegrationModel {
   public readonly slackTeamId: UserAuthSlackIntegrationFieldsFragment["slackTeamId"];
   public readonly slackTeamName: UserAuthSlackIntegrationFieldsFragment["slackTeamName"];
   public readonly updatedAt: UserAuthSlackIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: UserAuthSlackIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3380,18 +7764,38 @@ export class UserAuthSlackIntegrationModel {
     this.slackTeamId = data.slackTeamId;
     this.slackTeamName = data.slackTeamName;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class UserLinearIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: UserLinearIntegrationFieldsFragment;
+  public readonly __typename = "UserLinearIntegration" as const;
 
   public readonly createdAt: UserLinearIntegrationFieldsFragment["createdAt"];
   public readonly integrationId: UserLinearIntegrationFieldsFragment["integrationId"];
   public readonly linearOrganisationId: UserLinearIntegrationFieldsFragment["linearOrganisationId"];
   public readonly linearOrganisationName: UserLinearIntegrationFieldsFragment["linearOrganisationName"];
   public readonly updatedAt: UserLinearIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: UserLinearIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3400,12 +7804,29 @@ export class UserLinearIntegrationModel {
     this.linearOrganisationId = data.linearOrganisationId;
     this.linearOrganisationName = data.linearOrganisationName;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class UserMSTeamsIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: UserMsTeamsIntegrationFieldsFragment;
+  public readonly __typename = "UserMSTeamsIntegration" as const;
 
   public readonly createdAt: UserMsTeamsIntegrationFieldsFragment["createdAt"];
   public readonly id: UserMsTeamsIntegrationFieldsFragment["id"];
@@ -3413,6 +7834,9 @@ export class UserMSTeamsIntegrationModel {
   public readonly msTeamsPreferredUsername: UserMsTeamsIntegrationFieldsFragment["msTeamsPreferredUsername"];
   public readonly msTeamsTenantId: UserMsTeamsIntegrationFieldsFragment["msTeamsTenantId"];
   public readonly updatedAt: UserMsTeamsIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: UserMsTeamsIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3422,18 +7846,38 @@ export class UserMSTeamsIntegrationModel {
     this.msTeamsPreferredUsername = data.msTeamsPreferredUsername;
     this.msTeamsTenantId = data.msTeamsTenantId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class UserSlackIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: UserSlackIntegrationFieldsFragment;
+  public readonly __typename = "UserSlackIntegration" as const;
 
   public readonly createdAt: UserSlackIntegrationFieldsFragment["createdAt"];
   public readonly integrationId: UserSlackIntegrationFieldsFragment["integrationId"];
   public readonly isReinstallRequired: UserSlackIntegrationFieldsFragment["isReinstallRequired"];
   public readonly slackTeamName: UserSlackIntegrationFieldsFragment["slackTeamName"];
   public readonly updatedAt: UserSlackIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: UserSlackIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3442,12 +7886,29 @@ export class UserSlackIntegrationModel {
     this.isReinstallRequired = data.isReinstallRequired;
     this.slackTeamName = data.slackTeamName;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class UserWorkingHoursModel {
   protected _client: PlainGraphQLClient;
   protected _data: UserWorkingHoursFieldsFragment;
+  public readonly __typename = "UserWorkingHours" as const;
 
   public readonly createdAt: UserWorkingHoursFieldsFragment["createdAt"];
   public readonly id: UserWorkingHoursFieldsFragment["id"];
@@ -3458,6 +7919,9 @@ export class UserWorkingHoursModel {
   public readonly timezone: UserWorkingHoursFieldsFragment["timezone"];
   public readonly updatedAt: UserWorkingHoursFieldsFragment["updatedAt"];
   public readonly userId: UserWorkingHoursFieldsFragment["userId"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: UserWorkingHoursFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3470,12 +7934,29 @@ export class UserWorkingHoursModel {
     this.timezone = data.timezone;
     this.updatedAt = data.updatedAt;
     this.userId = data.userId;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WebhookTargetModel {
   protected _client: PlainGraphQLClient;
   protected _data: WebhookTargetFieldsFragment;
+  public readonly __typename = "WebhookTarget" as const;
 
   public readonly createdAt: WebhookTargetFieldsFragment["createdAt"];
   public readonly description: WebhookTargetFieldsFragment["description"];
@@ -3485,6 +7966,9 @@ export class WebhookTargetModel {
   public readonly updatedAt: WebhookTargetFieldsFragment["updatedAt"];
   public readonly url: WebhookTargetFieldsFragment["url"];
   public readonly version: WebhookTargetFieldsFragment["version"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WebhookTargetFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3496,12 +7980,29 @@ export class WebhookTargetModel {
     this.updatedAt = data.updatedAt;
     this.url = data.url;
     this.version = data.version;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkflowModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkflowFieldsFragment;
+  public readonly __typename = "Workflow" as const;
 
   public readonly createdAt: WorkflowFieldsFragment["createdAt"];
   public readonly id: WorkflowFieldsFragment["id"];
@@ -3511,6 +8012,9 @@ export class WorkflowModel {
   public readonly startStepId: WorkflowFieldsFragment["startStepId"];
   public readonly trigger: WorkflowFieldsFragment["trigger"];
   public readonly updatedAt: WorkflowFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkflowFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3522,12 +8026,29 @@ export class WorkflowModel {
     this.startStepId = data.startStepId;
     this.trigger = data.trigger;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkflowExecutionModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkflowExecutionFieldsFragment;
+  public readonly __typename = "WorkflowExecution" as const;
 
   public readonly completedAt: WorkflowExecutionFieldsFragment["completedAt"];
   public readonly entityId: WorkflowExecutionFieldsFragment["entityId"];
@@ -3539,6 +8060,7 @@ export class WorkflowExecutionModel {
   public readonly startedAt: WorkflowExecutionFieldsFragment["startedAt"];
   public readonly triggeredBy: WorkflowExecutionFieldsFragment["triggeredBy"];
   public readonly workflowId: WorkflowExecutionFieldsFragment["workflowId"];
+
   constructor(client: PlainGraphQLClient, data: WorkflowExecutionFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3558,6 +8080,7 @@ export class WorkflowExecutionModel {
 export class WorkflowRuleModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkflowRuleFieldsFragment;
+  public readonly __typename = "WorkflowRule" as const;
 
   public readonly createdAt: WorkflowRuleFieldsFragment["createdAt"];
   public readonly id: WorkflowRuleFieldsFragment["id"];
@@ -3566,6 +8089,9 @@ export class WorkflowRuleModel {
   public readonly payload: WorkflowRuleFieldsFragment["payload"];
   public readonly publishedAt: WorkflowRuleFieldsFragment["publishedAt"];
   public readonly updatedAt: WorkflowRuleFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkflowRuleFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3576,12 +8102,29 @@ export class WorkflowRuleModel {
     this.payload = data.payload;
     this.publishedAt = data.publishedAt;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkflowStepModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkflowStepFieldsFragment;
+  public readonly __typename = "WorkflowStep" as const;
 
   public readonly createdAt: WorkflowStepFieldsFragment["createdAt"];
   public readonly id: WorkflowStepFieldsFragment["id"];
@@ -3593,6 +8136,9 @@ export class WorkflowStepModel {
   public readonly type: WorkflowStepFieldsFragment["type"];
   public readonly updatedAt: WorkflowStepFieldsFragment["updatedAt"];
   public readonly workflowId: WorkflowStepFieldsFragment["workflowId"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkflowStepFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3606,15 +8152,31 @@ export class WorkflowStepModel {
     this.type = data.type;
     this.updatedAt = data.updatedAt;
     this.workflowId = data.workflowId;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkspaceModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceFieldsFragment;
+  public readonly __typename = "Workspace" as const;
 
   public readonly createdAt: WorkspaceFieldsFragment["createdAt"];
-  public readonly domainName: WorkspaceFieldsFragment["domainName"];
   public readonly domainNames: WorkspaceFieldsFragment["domainNames"];
   public readonly id: WorkspaceFieldsFragment["id"];
   public readonly isDemoWorkspace: WorkspaceFieldsFragment["isDemoWorkspace"];
@@ -3623,11 +8185,14 @@ export class WorkspaceModel {
   public readonly updatedAt: WorkspaceFieldsFragment["updatedAt"];
   public readonly workOSOrganizationId: WorkspaceFieldsFragment["workOSOrganizationId"];
   public readonly workspaceChatSettings: WorkspaceFieldsFragment["workspaceChatSettings"];
+  public readonly workspaceEmailSettings: WorkspaceFieldsFragment["workspaceEmailSettings"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkspaceFieldsFragment) {
     this._client = client;
     this._data = data;
     this.createdAt = data.createdAt;
-    this.domainName = data.domainName;
     this.domainNames = data.domainNames;
     this.id = data.id;
     this.isDemoWorkspace = data.isDemoWorkspace;
@@ -3636,17 +8201,38 @@ export class WorkspaceModel {
     this.updatedAt = data.updatedAt;
     this.workOSOrganizationId = data.workOSOrganizationId;
     this.workspaceChatSettings = data.workspaceChatSettings;
+    this.workspaceEmailSettings = data.workspaceEmailSettings;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkspaceCursorIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceCursorIntegrationFieldsFragment;
+  public readonly __typename = "WorkspaceCursorIntegration" as const;
 
   public readonly createdAt: WorkspaceCursorIntegrationFieldsFragment["createdAt"];
   public readonly id: WorkspaceCursorIntegrationFieldsFragment["id"];
   public readonly token: WorkspaceCursorIntegrationFieldsFragment["token"];
   public readonly updatedAt: WorkspaceCursorIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkspaceCursorIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3654,18 +8240,38 @@ export class WorkspaceCursorIntegrationModel {
     this.id = data.id;
     this.token = data.token;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkspaceDiscordChannelIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceDiscordChannelIntegrationFieldsFragment;
+  public readonly __typename = "WorkspaceDiscordChannelIntegration" as const;
 
   public readonly createdAt: WorkspaceDiscordChannelIntegrationFieldsFragment["createdAt"];
   public readonly discordGuildId: WorkspaceDiscordChannelIntegrationFieldsFragment["discordGuildId"];
   public readonly discordGuildName: WorkspaceDiscordChannelIntegrationFieldsFragment["discordGuildName"];
   public readonly id: WorkspaceDiscordChannelIntegrationFieldsFragment["id"];
   public readonly updatedAt: WorkspaceDiscordChannelIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkspaceDiscordChannelIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3674,18 +8280,38 @@ export class WorkspaceDiscordChannelIntegrationModel {
     this.discordGuildName = data.discordGuildName;
     this.id = data.id;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkspaceDiscordIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceDiscordIntegrationFieldsFragment;
+  public readonly __typename = "WorkspaceDiscordIntegration" as const;
 
   public readonly createdAt: WorkspaceDiscordIntegrationFieldsFragment["createdAt"];
   public readonly integrationId: WorkspaceDiscordIntegrationFieldsFragment["integrationId"];
   public readonly name: WorkspaceDiscordIntegrationFieldsFragment["name"];
   public readonly updatedAt: WorkspaceDiscordIntegrationFieldsFragment["updatedAt"];
   public readonly webhookUrl: WorkspaceDiscordIntegrationFieldsFragment["webhookUrl"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkspaceDiscordIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3694,12 +8320,29 @@ export class WorkspaceDiscordIntegrationModel {
     this.name = data.name;
     this.updatedAt = data.updatedAt;
     this.webhookUrl = data.webhookUrl;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkspaceEmailDomainSettingsModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceEmailDomainSettingsFieldsFragment;
+  public readonly __typename = "WorkspaceEmailDomainSettings" as const;
 
   public readonly alternateSupportEmailAddresses: WorkspaceEmailDomainSettingsFieldsFragment["alternateSupportEmailAddresses"];
   public readonly domainName: WorkspaceEmailDomainSettingsFieldsFragment["domainName"];
@@ -3707,6 +8350,7 @@ export class WorkspaceEmailDomainSettingsModel {
   public readonly isDomainConfigured: WorkspaceEmailDomainSettingsFieldsFragment["isDomainConfigured"];
   public readonly isForwardingConfigured: WorkspaceEmailDomainSettingsFieldsFragment["isForwardingConfigured"];
   public readonly supportEmailAddress: WorkspaceEmailDomainSettingsFieldsFragment["supportEmailAddress"];
+
   constructor(client: PlainGraphQLClient, data: WorkspaceEmailDomainSettingsFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3722,24 +8366,30 @@ export class WorkspaceEmailDomainSettingsModel {
 export class WorkspaceEmailSettingsModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceEmailSettingsFieldsFragment;
+  public readonly __typename = "WorkspaceEmailSettings" as const;
 
   public readonly bccEmailAddresses: WorkspaceEmailSettingsFieldsFragment["bccEmailAddresses"];
   public readonly isEnabled: WorkspaceEmailSettingsFieldsFragment["isEnabled"];
+  public readonly workspaceEmailDomainSettings: WorkspaceEmailSettingsFieldsFragment["workspaceEmailDomainSettings"];
+
   constructor(client: PlainGraphQLClient, data: WorkspaceEmailSettingsFieldsFragment) {
     this._client = client;
     this._data = data;
     this.bccEmailAddresses = data.bccEmailAddresses;
     this.isEnabled = data.isEnabled;
+    this.workspaceEmailDomainSettings = data.workspaceEmailDomainSettings;
   }
 }
 
 export class WorkspaceFileUploadUrlModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceFileUploadUrlFieldsFragment;
+  public readonly __typename = "WorkspaceFileUploadUrl" as const;
 
   public readonly expiresAt: WorkspaceFileUploadUrlFieldsFragment["expiresAt"];
   public readonly uploadFormData: WorkspaceFileUploadUrlFieldsFragment["uploadFormData"];
   public readonly uploadFormUrl: WorkspaceFileUploadUrlFieldsFragment["uploadFormUrl"];
+
   constructor(client: PlainGraphQLClient, data: WorkspaceFileUploadUrlFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3752,29 +8402,53 @@ export class WorkspaceFileUploadUrlModel {
 export class WorkspaceHmacModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceHmacFieldsFragment;
+  public readonly __typename = "WorkspaceHmac" as const;
 
   public readonly createdAt: WorkspaceHmacFieldsFragment["createdAt"];
   public readonly hmacSecret: WorkspaceHmacFieldsFragment["hmacSecret"];
   public readonly updatedAt: WorkspaceHmacFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkspaceHmacFieldsFragment) {
     this._client = client;
     this._data = data;
     this.createdAt = data.createdAt;
     this.hmacSecret = data.hmacSecret;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkspaceInviteModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceInviteFieldsFragment;
+  public readonly __typename = "WorkspaceInvite" as const;
 
   public readonly createdAt: WorkspaceInviteFieldsFragment["createdAt"];
   public readonly email: WorkspaceInviteFieldsFragment["email"];
   public readonly id: WorkspaceInviteFieldsFragment["id"];
   public readonly isAccepted: WorkspaceInviteFieldsFragment["isAccepted"];
+  public readonly role: WorkspaceInviteFieldsFragment["role"];
   public readonly updatedAt: WorkspaceInviteFieldsFragment["updatedAt"];
   public readonly usingBillingRotaSeat: WorkspaceInviteFieldsFragment["usingBillingRotaSeat"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: WorkspaceInviteFieldsFragment) {
     this._client = client;
@@ -3783,8 +8457,25 @@ export class WorkspaceInviteModel {
     this.email = data.email;
     this.id = data.id;
     this.isAccepted = data.isAccepted;
+    this.role = data.role;
     this.updatedAt = data.updatedAt;
     this.usingBillingRotaSeat = data.usingBillingRotaSeat;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 
   public get customRole(): Promise<CustomRoleModel | undefined> {
@@ -3809,12 +8500,16 @@ export class WorkspaceInviteModel {
 export class WorkspaceMSTeamsIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceMsTeamsIntegrationFieldsFragment;
+  public readonly __typename = "WorkspaceMSTeamsIntegration" as const;
 
   public readonly createdAt: WorkspaceMsTeamsIntegrationFieldsFragment["createdAt"];
   public readonly id: WorkspaceMsTeamsIntegrationFieldsFragment["id"];
   public readonly isReinstallRequired: WorkspaceMsTeamsIntegrationFieldsFragment["isReinstallRequired"];
   public readonly msTeamsTenantId: WorkspaceMsTeamsIntegrationFieldsFragment["msTeamsTenantId"];
   public readonly updatedAt: WorkspaceMsTeamsIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkspaceMsTeamsIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3823,12 +8518,29 @@ export class WorkspaceMSTeamsIntegrationModel {
     this.isReinstallRequired = data.isReinstallRequired;
     this.msTeamsTenantId = data.msTeamsTenantId;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkspaceSlackChannelIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceSlackChannelIntegrationFieldsFragment;
+  public readonly __typename = "WorkspaceSlackChannelIntegration" as const;
 
   public readonly createdAt: WorkspaceSlackChannelIntegrationFieldsFragment["createdAt"];
   public readonly integrationId: WorkspaceSlackChannelIntegrationFieldsFragment["integrationId"];
@@ -3837,6 +8549,9 @@ export class WorkspaceSlackChannelIntegrationModel {
   public readonly slackTeamImageUrl68px: WorkspaceSlackChannelIntegrationFieldsFragment["slackTeamImageUrl68px"];
   public readonly slackTeamName: WorkspaceSlackChannelIntegrationFieldsFragment["slackTeamName"];
   public readonly updatedAt: WorkspaceSlackChannelIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkspaceSlackChannelIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3847,12 +8562,29 @@ export class WorkspaceSlackChannelIntegrationModel {
     this.slackTeamImageUrl68px = data.slackTeamImageUrl68px;
     this.slackTeamName = data.slackTeamName;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
 export class WorkspaceSlackIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceSlackIntegrationFieldsFragment;
+  public readonly __typename = "WorkspaceSlackIntegration" as const;
 
   public readonly createdAt: WorkspaceSlackIntegrationFieldsFragment["createdAt"];
   public readonly integrationId: WorkspaceSlackIntegrationFieldsFragment["integrationId"];
@@ -3862,6 +8594,9 @@ export class WorkspaceSlackIntegrationModel {
   public readonly slackTeamImageUrl68px: WorkspaceSlackIntegrationFieldsFragment["slackTeamImageUrl68px"];
   public readonly slackTeamName: WorkspaceSlackIntegrationFieldsFragment["slackTeamName"];
   public readonly updatedAt: WorkspaceSlackIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
   constructor(client: PlainGraphQLClient, data: WorkspaceSlackIntegrationFieldsFragment) {
     this._client = client;
     this._data = data;
@@ -3873,6 +8608,22 @@ export class WorkspaceSlackIntegrationModel {
     this.slackTeamImageUrl68px = data.slackTeamImageUrl68px;
     this.slackTeamName = data.slackTeamName;
     this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
@@ -4348,6 +9099,25 @@ export class PlainSdk {
     });
   }
 
+  async importRuns(variables: ImportRunsQueryVariables): Promise<PlainConnection<ImportRunModel>> {
+    const response = await this._client.request<ImportRunsQuery, ImportRunsQueryVariables>(
+      ImportRunsDocument, variables
+    );
+    const conn = response.importRuns;
+    return new PlainConnection<ImportRunModel>({
+      nodes: conn.edges.map(e => new ImportRunModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.importRuns({ ...variables, ...cursor } as ImportRunsQueryVariables),
+    });
+  }
+
+  async importerTenantLists(variables: ImporterTenantListsQueryVariables): Promise<ImporterTenantListsQuery["importerTenantLists"]> {
+    const response = await this._client.request<ImporterTenantListsQuery, ImporterTenantListsQueryVariables>(
+      ImporterTenantListsDocument, variables
+    );
+    return response.importerTenantLists;
+  }
+
   async indexedDocuments(variables: IndexedDocumentsQueryVariables): Promise<PlainConnection<IndexedDocumentModel>> {
     const response = await this._client.request<IndexedDocumentsQuery, IndexedDocumentsQueryVariables>(
       IndexedDocumentsDocument, variables
@@ -4365,6 +9135,29 @@ export class PlainSdk {
       IssueTrackerFieldsDocument, variables
     );
     return (response.issueTrackerFields ?? []).map(d => new IssueTrackerFieldModel(this._client, d));
+  }
+
+  async knowledgeGap(variables: KnowledgeGapQueryVariables): Promise<KnowledgeGapModel> {
+    const response = await this._client.request<KnowledgeGapQuery, KnowledgeGapQueryVariables>(
+      KnowledgeGapDocument, variables
+    );
+    if (!response.knowledgeGap) {
+      throw new Error("knowledgeGap not found");
+    }
+    return new KnowledgeGapModel(this._client, response.knowledgeGap);
+  }
+
+  async knowledgeGaps(variables: KnowledgeGapsQueryVariables): Promise<PlainConnection<KnowledgeGapModel>> {
+    const response = await this._client.request<KnowledgeGapsQuery, KnowledgeGapsQueryVariables>(
+      KnowledgeGapsDocument, variables
+    );
+    const conn = response.knowledgeGaps;
+    return new PlainConnection<KnowledgeGapModel>({
+      nodes: conn.edges.map(e => new KnowledgeGapModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      totalCount: conn.totalCount,
+      fetch: (cursor) => this.knowledgeGaps({ ...variables, ...cursor } as KnowledgeGapsQueryVariables),
+    });
   }
 
   async knowledgeSource(variables: KnowledgeSourceQueryVariables): Promise<NonNullable<KnowledgeSourceQuery["knowledgeSource"]>> {
@@ -4955,6 +9748,16 @@ export class PlainSdk {
       throw new Error("threadByRef not found");
     }
     return new ThreadModel(this._client, response.threadByRef);
+  }
+
+  async threadBySlackPermalink(variables: ThreadBySlackPermalinkQueryVariables): Promise<ThreadModel> {
+    const response = await this._client.request<ThreadBySlackPermalinkQuery, ThreadBySlackPermalinkQueryVariables>(
+      ThreadBySlackPermalinkDocument, variables
+    );
+    if (!response.threadBySlackPermalink) {
+      throw new Error("threadBySlackPermalink not found");
+    }
+    return new ThreadModel(this._client, response.threadBySlackPermalink);
   }
 
   async threadCluster(variables: ThreadClusterQueryVariables): Promise<ThreadClusterModel> {
@@ -5620,11 +10423,25 @@ export class PlainSdk {
     return response.calculateRoleChangeCost;
   }
 
+  async cancelHyperlineSubscription(): Promise<CancelHyperlineSubscriptionMutation["cancelHyperlineSubscription"]> {
+    const response = await this._client.request<CancelHyperlineSubscriptionMutation, Record<string, never>>(
+      CancelHyperlineSubscriptionDocument
+    );
+    return response.cancelHyperlineSubscription;
+  }
+
   async changeBillingPlan(variables: ChangeBillingPlanMutationVariables): Promise<ChangeBillingPlanMutation["changeBillingPlan"]> {
     const response = await this._client.request<ChangeBillingPlanMutation, ChangeBillingPlanMutationVariables>(
       ChangeBillingPlanDocument, variables
     );
     return response.changeBillingPlan;
+  }
+
+  async changeKnowledgeGapStatus(variables: ChangeKnowledgeGapStatusMutationVariables): Promise<ChangeKnowledgeGapStatusMutation["changeKnowledgeGapStatus"]> {
+    const response = await this._client.request<ChangeKnowledgeGapStatusMutation, ChangeKnowledgeGapStatusMutationVariables>(
+      ChangeKnowledgeGapStatusDocument, variables
+    );
+    return response.changeKnowledgeGapStatus;
   }
 
   async changeThreadCustomer(variables: ChangeThreadCustomerMutationVariables): Promise<ChangeThreadCustomerMutation["changeThreadCustomer"]> {
@@ -5821,6 +10638,13 @@ export class PlainSdk {
       CreateHyperlineComponentsAuthTokenDocument
     );
     return response.createHyperlineComponentsAuthToken;
+  }
+
+  async createImportSync(variables: CreateImportSyncMutationVariables): Promise<CreateImportSyncMutation["createImportSync"]> {
+    const response = await this._client.request<CreateImportSyncMutation, CreateImportSyncMutationVariables>(
+      CreateImportSyncDocument, variables
+    );
+    return response.createImportSync;
   }
 
   async createIndexedDocument(variables: CreateIndexedDocumentMutationVariables): Promise<CreateIndexedDocumentMutation["createIndexedDocument"]> {
@@ -6493,6 +11317,27 @@ export class PlainSdk {
       GenerateHelpCenterArticleDocument, variables
     );
     return response.generateHelpCenterArticle;
+  }
+
+  async importCustomers(variables: ImportCustomersMutationVariables): Promise<ImportCustomersMutation["importCustomers"]> {
+    const response = await this._client.request<ImportCustomersMutation, ImportCustomersMutationVariables>(
+      ImportCustomersDocument, variables
+    );
+    return response.importCustomers;
+  }
+
+  async importTenantFieldSchemas(variables: ImportTenantFieldSchemasMutationVariables): Promise<ImportTenantFieldSchemasMutation["importTenantFieldSchemas"]> {
+    const response = await this._client.request<ImportTenantFieldSchemasMutation, ImportTenantFieldSchemasMutationVariables>(
+      ImportTenantFieldSchemasDocument, variables
+    );
+    return response.importTenantFieldSchemas;
+  }
+
+  async importTenants(variables: ImportTenantsMutationVariables): Promise<ImportTenantsMutation["importTenants"]> {
+    const response = await this._client.request<ImportTenantsMutation, ImportTenantsMutationVariables>(
+      ImportTenantsDocument, variables
+    );
+    return response.importTenants;
   }
 
   async inviteUserToWorkspace(variables: InviteUserToWorkspaceMutationVariables): Promise<InviteUserToWorkspaceMutation["inviteUserToWorkspace"]> {

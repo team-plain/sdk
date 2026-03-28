@@ -1,5 +1,13 @@
 schema: ./src/schema.graphql
 documents: ./src/_generated_documents.graphql
+# Skip the OverlappingFieldsCanBeMerged validation rule. This rule incorrectly
+# flags field conflicts between different concrete types in a union/interface
+# (e.g. ComponentText.size: ComponentTextSize vs ComponentSpacer.size: ComponentSpacerSize).
+# These fields can never coexist at runtime, so the conflicts are false positives.
+config:
+  skipDocumentsValidation:
+    ignoreRules:
+      - OverlappingFieldsCanBeMergedRule
 generates:
   ./src/_generated_documents.ts:
     plugins:
