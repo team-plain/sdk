@@ -56,16 +56,28 @@ export class PlainGraphQLClient {
     });
 
     if (!response.ok) {
+      const errorDetail = await this.extractErrorMessage(response);
+
       if (response.status === 401) {
-        throw new AuthenticationError("Invalid API key");
+        throw new AuthenticationError(
+          errorDetail ? `Authentication error: ${errorDetail}` : "Authentication error",
+        );
       }
       if (response.status === 403) {
-        throw new ForbiddenError("Insufficient permissions");
+        throw new ForbiddenError(
+          errorDetail ? `Insufficient permissions: ${errorDetail}` : "Insufficient permissions",
+        );
       }
       if (response.status === 429) {
-        throw new RateLimitError("Rate limit exceeded");
+        throw new RateLimitError(
+          errorDetail ? `Rate limit exceeded: ${errorDetail}` : "Rate limit exceeded",
+        );
       }
-      throw new NetworkError(`HTTP ${response.status}: ${response.statusText}`);
+      throw new NetworkError(
+        errorDetail
+          ? `HTTP ${response.status}: ${response.statusText}: ${errorDetail}`
+          : `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     const json = (await response.json()) as GraphQLResponse<TData>;
@@ -79,5 +91,17 @@ export class PlainGraphQLClient {
     }
 
     return json.data;
+  }
+
+  private async extractErrorMessage(response: Response): Promise<string | undefined> {
+    try {
+      const json = (await response.json()) as GraphQLResponse<unknown>;
+      if (json.errors && json.errors.length > 0) {
+        return json.errors.map((e) => e.message).join("; ");
+      }
+    } catch {
+      // Response body wasn't valid JSON — fall back to default message
+    }
+    return undefined;
   }
 }
