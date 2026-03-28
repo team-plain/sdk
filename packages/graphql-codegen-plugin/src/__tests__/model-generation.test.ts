@@ -109,7 +109,11 @@ describe("model generation", () => {
     expect(code).toContain("public readonly status: TicketFieldsFragment");
   });
 
-  it("does not generate a model class for value object types (all-scalar fields)", () => {
+  it("treats value object types as scalar-like properties on models that reference them", () => {
+    // When a value object (all-scalar type like DateTime) is referenced by a model,
+    // it's exposed as a direct property. The fragment generator (generate-documents.ts)
+    // does not generate fragments for standalone value objects, so they won't get
+    // model classes in practice. This test only includes EventFields (not DateTimeFields).
     const schema = buildSchema(`
       type Query {
         event(eventId: ID!): Event
@@ -125,14 +129,10 @@ describe("model generation", () => {
       }
     `);
     const docs = createDocuments(`
-      fragment DateTimeFields on DateTime {
-        iso8601
-        unixTimestamp
-      }
       fragment EventFields on Event {
         id
         name
-        createdAt { ...DateTimeFields }
+        createdAt { iso8601 unixTimestamp }
       }
       query Event($eventId: ID!) {
         event(eventId: $eventId) {

@@ -50,7 +50,7 @@ export class PlainGraphQLClient {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${this.apiKey}`,
-        "User-Agent": `plain-typescript-sdk/0.1.0`,
+        "User-Agent": `@team-plain/graphql`,
       },
       body,
     });
