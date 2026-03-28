@@ -270,6 +270,76 @@ describe("SDK generation", () => {
     expect(code).not.toContain("new CreateUserOutputModel");
   });
 
+  it("aliases conflicting union fields when members share a field name with different types", () => {
+    // When two union members have a field with the same name but different types,
+    // GraphQL's "SameResponseShape" rule requires aliasing. The plugin should
+    // generate a __typename switch that remaps aliased fields back to their original names.
+    const schema = buildSchema(`
+      type Query {
+        thread(threadId: ID!): Thread
+      }
+      ${DATETIME_SCHEMA}
+      type Thread {
+        id: ID!
+        createdAt: DateTime!
+        entry: Entry!
+      }
+      union Entry = NoteEntry | CustomEntry
+      type NoteEntry {
+        id: ID!
+        text: String!
+      }
+      type CustomEntry {
+        id: ID!
+        text: [TextComponent!]!
+      }
+      type TextComponent {
+        value: String!
+      }
+    `);
+    const docs = createDocuments(`
+      fragment TextComponentFields on TextComponent {
+        value
+      }
+      fragment NoteEntryFields on NoteEntry {
+        id
+        noteEntryText: text
+      }
+      fragment CustomEntryFields on CustomEntry {
+        id
+        customEntryText: text { value }
+      }
+      fragment ThreadFields on Thread {
+        id
+        createdAt { iso8601 }
+        entry {
+          ... on NoteEntry { ...NoteEntryFields }
+          ... on CustomEntry { ...CustomEntryFields }
+        }
+      }
+      query Thread($threadId: ID!) {
+        thread(threadId: $threadId) {
+          ...ThreadFields
+        }
+      }
+    `);
+
+    const output = plugin(schema, docs, {});
+    const code = typeof output === "string" ? output : output.content;
+
+    // The plugin should detect that "text" has conflicting types across NoteEntry and CustomEntry
+    // and generate alias remappings in the __typename switch
+    expect(code).toContain("__typename");
+
+    // NoteEntry case should remap the aliased field back: text: (...).noteEntryText
+    expect(code).toMatch(/case "NoteEntry"/);
+    expect(code).toContain("noteEntryText");
+
+    // CustomEntry case should remap the aliased field back: text: (...).customEntryText
+    expect(code).toMatch(/case "CustomEntry"/);
+    expect(code).toContain("customEntryText");
+  });
+
   it("generates sorted document and type imports", () => {
     const schema = buildSchema(`
       type Query {
