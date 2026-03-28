@@ -85,4 +85,46 @@ describe("mutation execution", () => {
     });
     expect(body.query).toContain("addLabels");
   });
+
+  it("sends a well-formed GraphQL mutation with the expected operation and fragment fields", async () => {
+    fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(
+      graphqlResponse({
+        addLabels: { labels: [], thread: null, error: null },
+      }),
+    );
+    const client = new PlainClient({ apiKey: "test-key" });
+
+    await client.mutation.addLabels({
+      input: { threadId: "th_1", labelTypeIds: ["lt_1"] },
+    });
+
+    const body = getRequestBody(fetchMock);
+    const query = body.query as string;
+
+    // Operation definition
+    expect(query).toMatch(/mutation AddLabels\(\$input: AddLabelsInput!\)/);
+    expect(query).toContain("addLabels(input: $input)");
+
+    // Uses fragments for the return fields
+    expect(query).toMatch(/fragment LabelFields on Label/);
+    expect(query).toContain("...LabelFields");
+    expect(query).toMatch(/fragment ThreadFields on Thread/);
+    expect(query).toContain("...ThreadFields");
+
+    // Label fragment scalar fields
+    expect(query).toContain("createdAt");
+    expect(query).toContain("updatedAt");
+    expect(query).toContain("unixTimestamp");
+    expect(query).toContain("iso8601");
+
+    // Label relations only select { id } (lazy-loading pattern)
+    expect(query).toMatch(/labelType\s*\{\s*id\s*\}/);
+
+    // Error fields are selected
+    expect(query).toContain("error");
+    expect(query).toContain("message");
+    expect(query).toContain("type");
+    expect(query).toContain("code");
+  });
 });
