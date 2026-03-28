@@ -10,7 +10,7 @@
 
 - Updated dependencies [5a6cf0b]
 - Updated dependencies [fa8a952]
-  - @team-plain/sdk@1.0.0
+  - @team-plain/graphql@1.0.0
 
 ## 1.0.0
 
@@ -19,4 +19,4 @@
 - 823bc91: Test automated release flow.
 - Updated dependencies [823bc91]
 - Updated dependencies [823bc91]
-  - @team-plain/sdk@0.3.0
+  - @team-plain/graphql@0.3.0

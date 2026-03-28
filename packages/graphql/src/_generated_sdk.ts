@@ -25,7 +25,9 @@ import {
   BusinessHoursDocument,
   BusinessHoursSlotsDocument,
   CalculateRoleChangeCostDocument,
+  CancelHyperlineSubscriptionDocument,
   ChangeBillingPlanDocument,
+  ChangeKnowledgeGapStatusDocument,
   ChangeThreadCustomerDocument,
   ChangeThreadPriorityDocument,
   ChangeUserStatusDocument,
@@ -63,6 +65,7 @@ import {
   CreateHyperlineBillingPortalSessionDocument,
   CreateHyperlineCheckoutSessionDocument,
   CreateHyperlineComponentsAuthTokenDocument,
+  CreateImportSyncDocument,
   CreateIndexedDocumentDocument,
   CreateIssueTrackerIssueDocument,
   CreateKnowledgeSourceDocument,
@@ -188,9 +191,16 @@ import {
   HelpCenterDocument,
   HelpCenterIndexDocument,
   HelpCentersDocument,
+  ImportCustomersDocument,
+  ImportRunsDocument,
+  ImportTenantFieldSchemasDocument,
+  ImportTenantsDocument,
+  ImporterTenantListsDocument,
   IndexedDocumentsDocument,
   InviteUserToWorkspaceDocument,
   IssueTrackerFieldsDocument,
+  KnowledgeGapDocument,
+  KnowledgeGapsDocument,
   KnowledgeSourceDocument,
   KnowledgeSourcesDocument,
   LabelTypeByExternalIdDocument,
@@ -293,6 +303,7 @@ import {
   TenantsDocument,
   ThreadByExternalIdDocument,
   ThreadByRefDocument,
+  ThreadBySlackPermalinkDocument,
   ThreadClusterDocument,
   ThreadClustersDocument,
   ThreadClustersPaginatedDocument,
@@ -475,8 +486,11 @@ import type {
   BusinessHoursSlotsQuery,
   CalculateRoleChangeCostMutation,
   CalculateRoleChangeCostMutationVariables,
+  CancelHyperlineSubscriptionMutation,
   ChangeBillingPlanMutation,
   ChangeBillingPlanMutationVariables,
+  ChangeKnowledgeGapStatusMutation,
+  ChangeKnowledgeGapStatusMutationVariables,
   ChangeThreadCustomerMutation,
   ChangeThreadCustomerMutationVariables,
   ChangeThreadPriorityMutation,
@@ -557,6 +571,8 @@ import type {
   CreateHyperlineCheckoutSessionMutation,
   CreateHyperlineCheckoutSessionMutationVariables,
   CreateHyperlineComponentsAuthTokenMutation,
+  CreateImportSyncMutation,
+  CreateImportSyncMutationVariables,
   CreateIndexedDocumentMutation,
   CreateIndexedDocumentMutationVariables,
   CreateIssueTrackerIssueMutation,
@@ -819,6 +835,18 @@ import type {
   HelpCenterQueryVariables,
   HelpCentersQuery,
   HelpCentersQueryVariables,
+  ImportCustomersMutation,
+  ImportCustomersMutationVariables,
+  ImportJobDefinitionFieldsFragment,
+  ImportRunFieldsFragment,
+  ImportRunsQuery,
+  ImportRunsQueryVariables,
+  ImportTenantFieldSchemasMutation,
+  ImportTenantFieldSchemasMutationVariables,
+  ImportTenantsMutation,
+  ImportTenantsMutationVariables,
+  ImporterTenantListsQuery,
+  ImporterTenantListsQueryVariables,
   IndexedDocumentFieldsFragment,
   IndexedDocumentsQuery,
   IndexedDocumentsQueryVariables,
@@ -829,6 +857,11 @@ import type {
   IssueTrackerFieldsQuery,
   IssueTrackerFieldsQueryVariables,
   JiraIntegrationTokenFieldsFragment,
+  KnowledgeGapFieldsFragment,
+  KnowledgeGapQuery,
+  KnowledgeGapQueryVariables,
+  KnowledgeGapsQuery,
+  KnowledgeGapsQueryVariables,
   KnowledgeSourceQuery,
   KnowledgeSourceQueryVariables,
   KnowledgeSourcesQuery,
@@ -1034,6 +1067,8 @@ import type {
   ThreadByExternalIdQueryVariables,
   ThreadByRefQuery,
   ThreadByRefQueryVariables,
+  ThreadBySlackPermalinkQuery,
+  ThreadBySlackPermalinkQueryVariables,
   ThreadClusterFieldsFragment,
   ThreadClusterQuery,
   ThreadClusterQueryVariables,
@@ -1461,6 +1496,7 @@ export class BillingSubscriptionModel {
   protected _data: BillingSubscriptionFieldsFragment;
 
   public readonly cancelsAt: BillingSubscriptionFieldsFragment["cancelsAt"];
+  public readonly checkoutSession: BillingSubscriptionFieldsFragment["checkoutSession"];
   public readonly endedAt: BillingSubscriptionFieldsFragment["endedAt"];
   public readonly interval: BillingSubscriptionFieldsFragment["interval"];
   public readonly planCode: BillingSubscriptionFieldsFragment["planCode"];
@@ -1472,6 +1508,7 @@ export class BillingSubscriptionModel {
     this._client = client;
     this._data = data;
     this.cancelsAt = data.cancelsAt;
+    this.checkoutSession = data.checkoutSession;
     this.endedAt = data.endedAt;
     this.interval = data.interval;
     this.planCode = data.planCode;
@@ -2288,6 +2325,50 @@ export class HelpCenterIndexModel {
   }
 }
 
+export class ImportJobDefinitionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ImportJobDefinitionFieldsFragment;
+
+  public readonly createdAt: ImportJobDefinitionFieldsFragment["createdAt"];
+  public readonly enabledAt: ImportJobDefinitionFieldsFragment["enabledAt"];
+  public readonly entityTypes: ImportJobDefinitionFieldsFragment["entityTypes"];
+  public readonly id: ImportJobDefinitionFieldsFragment["id"];
+  public readonly mode: ImportJobDefinitionFieldsFragment["mode"];
+  public readonly updatedAt: ImportJobDefinitionFieldsFragment["updatedAt"];
+  constructor(client: PlainGraphQLClient, data: ImportJobDefinitionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.enabledAt = data.enabledAt;
+    this.entityTypes = data.entityTypes;
+    this.id = data.id;
+    this.mode = data.mode;
+    this.updatedAt = data.updatedAt;
+  }
+}
+
+export class ImportRunModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ImportRunFieldsFragment;
+
+  public readonly completedAt: ImportRunFieldsFragment["completedAt"];
+  public readonly downloadedRecords: ImportRunFieldsFragment["downloadedRecords"];
+  public readonly entityType: ImportRunFieldsFragment["entityType"];
+  public readonly savedRecords: ImportRunFieldsFragment["savedRecords"];
+  public readonly startedAt: ImportRunFieldsFragment["startedAt"];
+  public readonly status: ImportRunFieldsFragment["status"];
+  constructor(client: PlainGraphQLClient, data: ImportRunFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.completedAt = data.completedAt;
+    this.downloadedRecords = data.downloadedRecords;
+    this.entityType = data.entityType;
+    this.savedRecords = data.savedRecords;
+    this.startedAt = data.startedAt;
+    this.status = data.status;
+  }
+}
+
 export class IndexedDocumentModel {
   protected _client: PlainGraphQLClient;
   protected _data: IndexedDocumentFieldsFragment;
@@ -2369,6 +2450,34 @@ export class JiraIntegrationTokenModel {
     this._data = data;
     this.createdAt = data.createdAt;
     this.token = data.token;
+  }
+}
+
+export class KnowledgeGapModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: KnowledgeGapFieldsFragment;
+
+  public readonly createdAt: KnowledgeGapFieldsFragment["createdAt"];
+  public readonly description: KnowledgeGapFieldsFragment["description"];
+  public readonly firstSeenAt: KnowledgeGapFieldsFragment["firstSeenAt"];
+  public readonly id: KnowledgeGapFieldsFragment["id"];
+  public readonly lastSeenAt: KnowledgeGapFieldsFragment["lastSeenAt"];
+  public readonly status: KnowledgeGapFieldsFragment["status"];
+  public readonly statusChangedAt: KnowledgeGapFieldsFragment["statusChangedAt"];
+  public readonly title: KnowledgeGapFieldsFragment["title"];
+  public readonly updatedAt: KnowledgeGapFieldsFragment["updatedAt"];
+  constructor(client: PlainGraphQLClient, data: KnowledgeGapFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.description = data.description;
+    this.firstSeenAt = data.firstSeenAt;
+    this.id = data.id;
+    this.lastSeenAt = data.lastSeenAt;
+    this.status = data.status;
+    this.statusChangedAt = data.statusChangedAt;
+    this.title = data.title;
+    this.updatedAt = data.updatedAt;
   }
 }
 
@@ -4348,6 +4457,25 @@ export class PlainSdk {
     });
   }
 
+  async importRuns(variables: ImportRunsQueryVariables): Promise<PlainConnection<ImportRunModel>> {
+    const response = await this._client.request<ImportRunsQuery, ImportRunsQueryVariables>(
+      ImportRunsDocument, variables
+    );
+    const conn = response.importRuns;
+    return new PlainConnection<ImportRunModel>({
+      nodes: conn.edges.map(e => new ImportRunModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      fetch: (cursor) => this.importRuns({ ...variables, ...cursor } as ImportRunsQueryVariables),
+    });
+  }
+
+  async importerTenantLists(variables: ImporterTenantListsQueryVariables): Promise<ImporterTenantListsQuery["importerTenantLists"]> {
+    const response = await this._client.request<ImporterTenantListsQuery, ImporterTenantListsQueryVariables>(
+      ImporterTenantListsDocument, variables
+    );
+    return response.importerTenantLists;
+  }
+
   async indexedDocuments(variables: IndexedDocumentsQueryVariables): Promise<PlainConnection<IndexedDocumentModel>> {
     const response = await this._client.request<IndexedDocumentsQuery, IndexedDocumentsQueryVariables>(
       IndexedDocumentsDocument, variables
@@ -4365,6 +4493,29 @@ export class PlainSdk {
       IssueTrackerFieldsDocument, variables
     );
     return (response.issueTrackerFields ?? []).map(d => new IssueTrackerFieldModel(this._client, d));
+  }
+
+  async knowledgeGap(variables: KnowledgeGapQueryVariables): Promise<KnowledgeGapModel> {
+    const response = await this._client.request<KnowledgeGapQuery, KnowledgeGapQueryVariables>(
+      KnowledgeGapDocument, variables
+    );
+    if (!response.knowledgeGap) {
+      throw new Error("knowledgeGap not found");
+    }
+    return new KnowledgeGapModel(this._client, response.knowledgeGap);
+  }
+
+  async knowledgeGaps(variables: KnowledgeGapsQueryVariables): Promise<PlainConnection<KnowledgeGapModel>> {
+    const response = await this._client.request<KnowledgeGapsQuery, KnowledgeGapsQueryVariables>(
+      KnowledgeGapsDocument, variables
+    );
+    const conn = response.knowledgeGaps;
+    return new PlainConnection<KnowledgeGapModel>({
+      nodes: conn.edges.map(e => new KnowledgeGapModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      totalCount: conn.totalCount,
+      fetch: (cursor) => this.knowledgeGaps({ ...variables, ...cursor } as KnowledgeGapsQueryVariables),
+    });
   }
 
   async knowledgeSource(variables: KnowledgeSourceQueryVariables): Promise<NonNullable<KnowledgeSourceQuery["knowledgeSource"]>> {
@@ -4955,6 +5106,16 @@ export class PlainSdk {
       throw new Error("threadByRef not found");
     }
     return new ThreadModel(this._client, response.threadByRef);
+  }
+
+  async threadBySlackPermalink(variables: ThreadBySlackPermalinkQueryVariables): Promise<ThreadModel> {
+    const response = await this._client.request<ThreadBySlackPermalinkQuery, ThreadBySlackPermalinkQueryVariables>(
+      ThreadBySlackPermalinkDocument, variables
+    );
+    if (!response.threadBySlackPermalink) {
+      throw new Error("threadBySlackPermalink not found");
+    }
+    return new ThreadModel(this._client, response.threadBySlackPermalink);
   }
 
   async threadCluster(variables: ThreadClusterQueryVariables): Promise<ThreadClusterModel> {
@@ -5620,11 +5781,25 @@ export class PlainSdk {
     return response.calculateRoleChangeCost;
   }
 
+  async cancelHyperlineSubscription(): Promise<CancelHyperlineSubscriptionMutation["cancelHyperlineSubscription"]> {
+    const response = await this._client.request<CancelHyperlineSubscriptionMutation, Record<string, never>>(
+      CancelHyperlineSubscriptionDocument
+    );
+    return response.cancelHyperlineSubscription;
+  }
+
   async changeBillingPlan(variables: ChangeBillingPlanMutationVariables): Promise<ChangeBillingPlanMutation["changeBillingPlan"]> {
     const response = await this._client.request<ChangeBillingPlanMutation, ChangeBillingPlanMutationVariables>(
       ChangeBillingPlanDocument, variables
     );
     return response.changeBillingPlan;
+  }
+
+  async changeKnowledgeGapStatus(variables: ChangeKnowledgeGapStatusMutationVariables): Promise<ChangeKnowledgeGapStatusMutation["changeKnowledgeGapStatus"]> {
+    const response = await this._client.request<ChangeKnowledgeGapStatusMutation, ChangeKnowledgeGapStatusMutationVariables>(
+      ChangeKnowledgeGapStatusDocument, variables
+    );
+    return response.changeKnowledgeGapStatus;
   }
 
   async changeThreadCustomer(variables: ChangeThreadCustomerMutationVariables): Promise<ChangeThreadCustomerMutation["changeThreadCustomer"]> {
@@ -5821,6 +5996,13 @@ export class PlainSdk {
       CreateHyperlineComponentsAuthTokenDocument
     );
     return response.createHyperlineComponentsAuthToken;
+  }
+
+  async createImportSync(variables: CreateImportSyncMutationVariables): Promise<CreateImportSyncMutation["createImportSync"]> {
+    const response = await this._client.request<CreateImportSyncMutation, CreateImportSyncMutationVariables>(
+      CreateImportSyncDocument, variables
+    );
+    return response.createImportSync;
   }
 
   async createIndexedDocument(variables: CreateIndexedDocumentMutationVariables): Promise<CreateIndexedDocumentMutation["createIndexedDocument"]> {
@@ -6493,6 +6675,27 @@ export class PlainSdk {
       GenerateHelpCenterArticleDocument, variables
     );
     return response.generateHelpCenterArticle;
+  }
+
+  async importCustomers(variables: ImportCustomersMutationVariables): Promise<ImportCustomersMutation["importCustomers"]> {
+    const response = await this._client.request<ImportCustomersMutation, ImportCustomersMutationVariables>(
+      ImportCustomersDocument, variables
+    );
+    return response.importCustomers;
+  }
+
+  async importTenantFieldSchemas(variables: ImportTenantFieldSchemasMutationVariables): Promise<ImportTenantFieldSchemasMutation["importTenantFieldSchemas"]> {
+    const response = await this._client.request<ImportTenantFieldSchemasMutation, ImportTenantFieldSchemasMutationVariables>(
+      ImportTenantFieldSchemasDocument, variables
+    );
+    return response.importTenantFieldSchemas;
+  }
+
+  async importTenants(variables: ImportTenantsMutationVariables): Promise<ImportTenantsMutation["importTenants"]> {
+    const response = await this._client.request<ImportTenantsMutation, ImportTenantsMutationVariables>(
+      ImportTenantsDocument, variables
+    );
+    return response.importTenants;
   }
 
   async inviteUserToWorkspace(variables: InviteUserToWorkspaceMutationVariables): Promise<InviteUserToWorkspaceMutation["inviteUserToWorkspace"]> {

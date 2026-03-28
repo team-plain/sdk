@@ -2718,6 +2718,12 @@ type Query {
   slackUser(slackTeamId: String!, slackChannelId: String!, slackUserId: ID!): SlackUser
 
   """
+  Resolves a Slack permalink to the associated Plain thread.
+  Returns the thread if found, or null if no thread is associated with the Slack message.
+  """
+  threadBySlackPermalink(slackPermalink: String!): Thread
+
+  """
   Gets a list of Slack channels where the specified user is a member.
   This is a proxy to the Slack API's users.conversations endpoint.
   """
@@ -2817,6 +2823,7 @@ type Query {
   serviceAuthorization(serviceAuthorizationId: ID!): ServiceAuthorization
   serviceAuthorizations(first: Int, after: String, last: Int, before: String, filters: ServiceAuthorizationsFilter): ServiceAuthorizationConnection!
   importerTenantLists(serviceAuthorizationId: ID!, first: Int, after: String, last: Int, before: String): ImporterTenantListConnection!
+  importRuns(serviceAuthorizationId: ID!, first: Int, after: String, last: Int, before: String): ImportRunConnection!
   tiers(first: Int, after: String, last: Int, before: String): TierConnection!
   tier(tierId: ID!): Tier
   businessHours: BusinessHours @deprecated(reason: "Use businessHoursSlots instead.")
@@ -6046,6 +6053,7 @@ type Mutation {
 
   """Delete personal service authorizations for the current user."""
   deleteMyServiceAuthorization(input: DeleteMyServiceAuthorizationInput!): DeleteMyServiceAuthorizationOutput!
+  createImportSync(input: CreateImportSyncInput!): CreateImportSyncOutput!
   createTier(input: CreateTierInput!): CreateTierOutput!
   updateTier(input: UpdateTierInput!): UpdateTierOutput!
   deleteTier(input: DeleteTierInput!): DeleteTierOutput!
@@ -8985,6 +8993,31 @@ type ImporterTenantListConnection {
   pageInfo: PageInfo!
 }
 
+input CreateImportSyncInput {
+  serviceIntegrationKey: String!
+  filters: ImportSyncFiltersInput!
+}
+
+input ImportSyncFiltersInput {
+  tenantListId: ID
+}
+
+type ImportJobDefinition {
+  id: ID!
+  mode: String!
+  entityTypes: [String!]!
+  enabledAt: DateTime
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+type CreateImportSyncOutput {
+  importJobDefinition: ImportJobDefinition
+  error: MutationError
+}
+
 input BusinessHoursWeekDayInput {
   """
   The time you open for business on this day as an UTC ISO time. For example: 09:00Z .
@@ -10196,6 +10229,41 @@ type CustomerSurveyEdge {
 
 type CustomerSurveyConnection {
   edges: [CustomerSurveyEdge!]!
+  pageInfo: PageInfo!
+}
+
+enum ImporterEntityType {
+  THREADS
+  CUSTOMERS
+  TENANTS
+  TENANT_FIELD_SCHEMAS
+  USERS
+}
+
+enum ImporterStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+type ImportRun {
+  entityType: ImporterEntityType!
+  status: ImporterStatus!
+  downloadedRecords: Int
+  savedRecords: Int
+  startedAt: DateTime
+  completedAt: DateTime
+}
+
+type ImportRunEdge {
+  cursor: String!
+  node: ImportRun!
+}
+
+type ImportRunConnection {
+  edges: [ImportRunEdge!]!
   pageInfo: PageInfo!
 }
 
