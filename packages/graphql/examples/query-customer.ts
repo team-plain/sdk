@@ -7,7 +7,7 @@ const client = new PlainClient({
 
 // Query — returns typed model with lazy-loading relations
 async function main() {
-  const customer = await client.query.customer({ customerId: "c_01KAKJEKNAYY879ZYBMZ614DYT" });
+  const customer = await client.query.customer({ customerId: "c_01GW1Z47G0MPXWRDJ0SR9P2JHQ" });
   // customer is a CustomerModel with typed scalar properties
   console.log(customer.fullName, customer.shortName);
 

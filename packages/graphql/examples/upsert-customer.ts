@@ -9,11 +9,11 @@ const client = new PlainClient({
 async function main() {
   const result = await client.mutation.upsertCustomer({
     input: {
-      identifier: { emailAddress: "alice1234@example.com" },
+      identifier: { emailAddress: "alice12345@example.com" },
       onCreate: {
         fullName: "Alice",
         email: {
-          email: "alice1234",
+          email: "alice12345@example.com",
           isVerified: false,
         },
       },
