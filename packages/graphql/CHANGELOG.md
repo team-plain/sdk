@@ -1,4 +1,4 @@
-# @team-plain/sdk
+# @team-plain/graphql
 
 ## 1.0.0
 

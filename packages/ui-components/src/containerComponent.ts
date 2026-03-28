@@ -1,4 +1,4 @@
-import type { ComponentInput } from "@team-plain/sdk";
+import type { ComponentInput } from "@team-plain/graphql";
 
 export function containerComponent(args: { content: ComponentInput[] }): ComponentInput {
   return {

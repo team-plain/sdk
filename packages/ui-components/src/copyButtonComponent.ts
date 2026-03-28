@@ -1,4 +1,4 @@
-import type { ComponentInput } from "@team-plain/sdk";
+import type { ComponentInput } from "@team-plain/graphql";
 
 export function copyButtonComponent(args: { value: string; tooltip?: string }): ComponentInput {
   return {

@@ -2,7 +2,7 @@ import type {
   ComponentInput,
   ComponentPlainTextColor,
   ComponentPlainTextSize,
-} from "@team-plain/sdk";
+} from "@team-plain/graphql";
 
 export function plainTextComponent(args: {
   text: string;
