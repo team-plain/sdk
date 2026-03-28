@@ -18,7 +18,7 @@ async function main() {
   const timelineEntries = await thread.timelineEntries({ first: 25 });
 
   for (const timelineEntry of timelineEntries.nodes) {
-    console.log(`[${timelineEntry.timestamp}]`, timelineEntry.entry.__typename);
+    console.log(`[${timelineEntry.timestamp.iso8601}]`, timelineEntry.entry.__typename);
     console.log(timelineEntry.llmText);
 
     const entry = timelineEntry.entry;
