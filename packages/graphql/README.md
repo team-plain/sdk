@@ -69,6 +69,42 @@ for (const customer of customers.nodes) {
 const nextPage = await customers.fetchNext();
 ```
 
+### Union Types
+
+GraphQL union and interface fields are exposed as discriminated unions of model classes. Each union member has a `__typename` property for narrowing and supports the same lazy-loading as any other model.
+
+```ts
+const thread = await client.thread({ threadId: "t_123" });
+
+// Narrow with __typename
+if (thread.createdBy.__typename === "UserActor") {
+  console.log(thread.createdBy.userId);
+
+  // Lazy-load a relation on the union member
+  const user = await thread.createdBy.user;
+  console.log(user?.fullName);
+}
+
+// Or narrow with instanceof
+import { UserActorModel } from "@team-plain/graphql";
+
+if (thread.createdBy instanceof UserActorModel) {
+  const user = await thread.createdBy.user;
+}
+
+// Value-like unions — scalars available immediately
+if (thread.statusDetail?.__typename === "ThreadStatusDetailWaitingForDuration") {
+  console.log(thread.statusDetail.waitingUntil);
+}
+
+// List of unions
+for (const identity of customer.identities) {
+  if (identity.__typename === "EmailCustomerIdentity") {
+    console.log(identity.email);
+  }
+}
+```
+
 ## Error Handling
 
 - **Queries**: network, auth (401), forbidden (403), and rate limit (429) errors throw typed exceptions (`AuthenticationError`, `ForbiddenError`, `RateLimitError`, `NetworkError`, `PlainGraphQLError`).

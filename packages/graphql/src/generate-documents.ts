@@ -95,6 +95,43 @@ function getConnectionNodeType(connType: GraphQLObjectType): GraphQLNamedType | 
   return unwrapType(nodeField.type);
 }
 
+// ─── Queryable Types ─────────────────────────────────────────────────────────
+
+/**
+ * Build a set of type names that can be fetched by a root query with an ID arg.
+ * Used to decide whether an object relation can be lazy-loaded ({ id } only)
+ * or must be inlined (full data) in fragments.
+ */
+const queryableTypes = new Set<string>();
+
+const queryType = schema.getQueryType();
+if (queryType) {
+  for (const field of Object.values(queryType.getFields())) {
+    const { namedType, isList: fieldIsList } = (() => {
+      let isNonNull = false;
+      let fieldIsList = false;
+      let current = field.type as GraphQLOutputType;
+      if (isNonNullType(current)) {
+        isNonNull = true;
+        current = current.ofType;
+      }
+      if (isListType(current)) {
+        fieldIsList = true;
+      }
+      return { namedType: unwrapType(field.type), isNonNull, isList: fieldIsList };
+    })();
+    if (fieldIsList) continue;
+    if (!isObjectType(namedType)) continue;
+    if (isConnectionType(namedType)) continue;
+    const idArg = field.args.find(
+      (a) => isNonNullType(a.type) && getNamedType(a.type)?.name === "ID",
+    );
+    if (idArg) {
+      queryableTypes.add(namedType.name);
+    }
+  }
+}
+
 // ─── Fragment Generation ──────────────────────────────────────────────────────
 
 /**
@@ -114,6 +151,7 @@ function registerFragmentType(type: GraphQLNamedType): void {
   // Only register types that have at least one selectable scalar/enum/DateTime field
   const fields = type.getFields();
   const hasSelectableField = Object.values(fields).some((f) => {
+    if (f.deprecationReason != null) return false;
     const named = unwrapType(f.type);
     return isSimpleType(named);
   });
@@ -123,8 +161,46 @@ function registerFragmentType(type: GraphQLNamedType): void {
   }
 }
 
+/**
+ * Register a union/interface member type for fragment generation.
+ * Unlike registerFragmentType, this does NOT skip value-object-like types,
+ * because all union members need their own fragment and model class.
+ */
+function registerUnionMemberType(type: GraphQLNamedType): void {
+  if (!isObjectType(type)) return;
+  if (type.name.startsWith("__")) return;
+  if (type.name === "MutationError") return;
+  if (type.name === "MutationFieldError") return;
+  if (fragmentTypes.has(type.name)) return;
+
+  const fields = type.getFields();
+  const hasSelectableField = Object.values(fields).some((f) => {
+    if (f.deprecationReason != null) return false;
+    const named = unwrapType(f.type);
+    return isSimpleType(named);
+  });
+
+  if (hasSelectableField) {
+    fragmentTypes.set(type.name, type);
+  }
+}
+
+/**
+ * Register all member types of a union or interface as fragment types.
+ */
+function registerUnionMembers(type: GraphQLNamedType): void {
+  if (isUnionType(type)) {
+    for (const member of type.getTypes()) {
+      registerUnionMemberType(member);
+    }
+  } else if (isInterfaceType(type)) {
+    for (const impl of schema.getPossibleTypes(type)) {
+      registerUnionMemberType(impl);
+    }
+  }
+}
+
 // Scan query return types
-const queryType = schema.getQueryType();
 if (queryType) {
   for (const field of Object.values(queryType.getFields())) {
     const namedType = unwrapType(field.type);
@@ -161,6 +237,28 @@ if (mutationType) {
   }
 }
 
+// Scan registered fragment types for union/interface fields and register their members.
+// Repeat until stable since newly registered members may themselves have union fields.
+let previousSize = 0;
+while (fragmentTypes.size !== previousSize) {
+  previousSize = fragmentTypes.size;
+  for (const type of [...fragmentTypes.values()]) {
+    for (const field of Object.values(type.getFields())) {
+      const namedType = unwrapType(field.type);
+      registerUnionMembers(namedType);
+    }
+  }
+  // Also scan union/interface members for nested union fields
+  for (const type of [...fragmentTypes.values()]) {
+    for (const field of Object.values(type.getFields())) {
+      const namedType = unwrapType(field.type);
+      if (isUnionType(namedType) || isInterfaceType(namedType)) {
+        registerUnionMembers(namedType);
+      }
+    }
+  }
+}
+
 /**
  * Generate an inline sub-selection for a value object type (all scalar/enum fields).
  * E.g. DateTime → "iso8601", a hypothetical type with {a: String, b: Int} → "a\nb"
@@ -173,16 +271,144 @@ function expandValueObject(type: GraphQLObjectType, indent: string): string {
 }
 
 /**
+ * Find fields that have the same name but different type signatures across
+ * union/interface members. These need GraphQL aliases to avoid validation
+ * errors (the "SameResponseShape" rule rejects e.g. String! vs String).
+ */
+function findConflictingUnionFields(members: readonly GraphQLObjectType[]): Set<string> {
+  const fieldTypeSigs = new Map<string, string>();
+  const conflicting = new Set<string>();
+  for (const member of members) {
+    for (const [fieldName, field] of Object.entries(member.getFields())) {
+      if (field.deprecationReason != null) continue;
+      const sig = field.type.toString();
+      const existing = fieldTypeSigs.get(fieldName);
+      if (existing === undefined) {
+        fieldTypeSigs.set(fieldName, sig);
+      } else if (existing !== sig) {
+        conflicting.add(fieldName);
+      }
+    }
+  }
+  return conflicting;
+}
+
+/**
+ * Generate an inline selection of all fields for a type, matching what its
+ * standalone fragment would contain: scalars, enums, value objects, object
+ * relations ({ id } for queryable, full inline for non-queryable), and
+ * nested union/interface fields.
+ *
+ * When `conflictingFields` is provided, fields in that set are aliased as
+ * `{TypeName}_{fieldName}: fieldName` to avoid GraphQL SameResponseShape errors.
+ */
+function generateMemberInlineSelection(
+  type: GraphQLObjectType,
+  indent: string,
+  conflictingFields?: Set<string>,
+): string {
+  const fields = type.getFields();
+  const lines: string[] = [];
+
+  for (const [fieldName, field] of Object.entries(fields)) {
+    if (field.deprecationReason != null) continue;
+    const namedType = unwrapType(field.type);
+    const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
+    if (hasRequiredArgs) continue;
+
+    // Alias conflicting fields to avoid GraphQL SameResponseShape validation errors
+    const needsAlias = conflictingFields?.has(fieldName) ?? false;
+    const alias = needsAlias
+      ? `${type.name.charAt(0).toLowerCase()}${type.name.slice(1)}${fieldName.charAt(0).toUpperCase()}${fieldName.slice(1)}`
+      : undefined;
+    const fieldRef = alias ? `${alias}: ${fieldName}` : fieldName;
+
+    if (isScalarType(namedType) || isEnumType(namedType)) {
+      lines.push(`${indent}${fieldRef}`);
+    } else if (isValueObjectType(namedType)) {
+      lines.push(
+        `${indent}${fieldRef} {\n${expandValueObject(namedType as GraphQLObjectType, `${indent}  `)}\n${indent}}`,
+      );
+    } else if (isObjectType(namedType) && !isConnectionType(namedType) && !isList(field.type)) {
+      const relatedFields = namedType.getFields();
+      if (queryableTypes.has(namedType.name) && "id" in relatedFields) {
+        lines.push(`${indent}${fieldRef} {\n${indent}  id\n${indent}}`);
+      } else if (fragmentTypes.has(namedType.name)) {
+        lines.push(`${indent}${fieldRef} {\n${indent}  ...${namedType.name}Fields\n${indent}}`);
+      } else {
+        const nested = generateInlineScalarSelection(namedType, `${indent}  `);
+        if (nested) {
+          lines.push(`${indent}${fieldRef} {\n${nested}\n${indent}}`);
+        }
+      }
+    } else if (isUnionType(namedType) || isInterfaceType(namedType)) {
+      // Nested union/interface — recursively generate
+      lines.push(generateUnionSelectionInner(fieldRef, namedType, indent));
+    }
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Generate a union/interface selection with __typename and inline fields for each member.
+ * Uses inline fields (not fragment spreads) to avoid GraphQL validation conflicts when
+ * different union members have fields with the same name but different types.
+ */
+function generateUnionSelectionInner(
+  fieldName: string,
+  type: GraphQLNamedType,
+  indent: string,
+): string {
+  const members = isUnionType(type)
+    ? type.getTypes()
+    : isInterfaceType(type)
+      ? schema.getPossibleTypes(type)
+      : [];
+
+  // Detect fields with same name but different types across members
+  const conflictingFields = findConflictingUnionFields(members);
+
+  const lines: string[] = [];
+  lines.push(`${indent}${fieldName} {`);
+  lines.push(`${indent}  __typename`);
+  for (const member of members) {
+    // Skip members where all fields are deprecated
+    if (!Object.values(member.getFields()).some((f) => f.deprecationReason == null)) continue;
+    const memberFields = generateMemberInlineSelection(member, `${indent}    `, conflictingFields);
+    if (memberFields) {
+      lines.push(`${indent}  ... on ${member.name} {\n${memberFields}\n${indent}  }`);
+    } else {
+      // Member has no selectable fields, just include the type condition
+      lines.push(`${indent}  ... on ${member.name} {\n${indent}    __typename\n${indent}  }`);
+    }
+  }
+  lines.push(`${indent}}`);
+  return lines.join("\n");
+}
+
+function generateUnionSelection(fieldName: string, type: GraphQLNamedType, indent: string): string {
+  return generateUnionSelectionInner(fieldName, type, indent);
+}
+
+/**
  * Generate a fragment for an object type.
- * Includes: scalars, enums, value objects (expanded inline), object relations ({ id }).
- * Skips: connections, lists of objects, unions, interfaces.
+ * Includes: scalars, enums, value objects (expanded inline), object relations ({ id }),
+ *           union/interface fields (with __typename + inline fragment spreads).
+ * Skips: connections, lists of objects.
+ *
+ * For object relations: if the related type is queryable (has a root query), include { id }
+ * for lazy loading. If not queryable, inline the full scalar data or use a fragment spread.
  */
 function generateFragment(type: GraphQLObjectType): string {
   const fields = type.getFields();
   const selections: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
+    if (field.deprecationReason != null) continue;
     const namedType = unwrapType(field.type);
+    const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
+    if (hasRequiredArgs) continue;
 
     if (isScalarType(namedType) || isEnumType(namedType)) {
       selections.push(`  ${fieldName}`);
@@ -191,16 +417,27 @@ function generateFragment(type: GraphQLObjectType): string {
         `  ${fieldName} {\n${expandValueObject(namedType as GraphQLObjectType, "    ")}\n  }`,
       );
     } else if (isObjectType(namedType) && !isConnectionType(namedType) && !isList(field.type)) {
-      // Object relation: include { id } for lazy loading (if the type has an id field)
-      // Skip fields with required arguments (can't include them without args)
-      const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
-      if (hasRequiredArgs) continue;
+      // Object relation: include { id } for lazy loading if queryable,
+      // or inline full data if not queryable
       const relatedFields = namedType.getFields();
-      if ("id" in relatedFields) {
+      if (queryableTypes.has(namedType.name) && "id" in relatedFields) {
         selections.push(`  ${fieldName} {\n    id\n  }`);
+      } else if (fragmentTypes.has(namedType.name)) {
+        selections.push(`  ${fieldName} {\n    ...${namedType.name}Fields\n  }`);
+      } else {
+        const inlineFields = generateInlineScalarSelection(namedType, "    ");
+        if (inlineFields) {
+          selections.push(`  ${fieldName} {\n${inlineFields}\n  }`);
+        }
       }
+    } else if ((isUnionType(namedType) || isInterfaceType(namedType)) && !isList(field.type)) {
+      // Union/interface field (single)
+      selections.push(generateUnionSelection(fieldName, namedType, "  "));
+    } else if ((isUnionType(namedType) || isInterfaceType(namedType)) && isList(field.type)) {
+      // List of union/interface
+      selections.push(generateUnionSelection(fieldName, namedType, "  "));
     }
-    // Skip connections and lists of objects
+    // Skip connections and lists of plain objects
   }
 
   return `fragment ${type.name}Fields on ${type.name} {\n${selections.join("\n")}\n}`;
@@ -238,6 +475,7 @@ function generateInlineScalarSelection(
   const lines: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
+    if (field.deprecationReason != null) continue;
     const namedType = unwrapType(field.type);
     if (isScalarType(namedType) || isEnumType(namedType)) {
       lines.push(`${indent}${fieldName}`);
@@ -292,11 +530,21 @@ function generateSelectionForType(
 
   if (isUnionType(type)) {
     const members = type.getTypes();
+    const conflicting = findConflictingUnionFields(members);
     const lines: string[] = [];
     lines.push(` {`);
     lines.push(`${indent}  __typename`);
     for (const member of members) {
-      if (fragmentTypes.has(member.name)) {
+      if (!Object.values(member.getFields()).some((f) => f.deprecationReason == null)) continue;
+      if (conflicting.size > 0) {
+        // Use inline fields with aliases to avoid SameResponseShape validation errors
+        const memberFields = generateMemberInlineSelection(member, `${indent}    `, conflicting);
+        if (memberFields) {
+          lines.push(`${indent}  ... on ${member.name} {\n${memberFields}\n${indent}  }`);
+        } else {
+          lines.push(`${indent}  ... on ${member.name} {\n${indent}    __typename\n${indent}  }`);
+        }
+      } else if (fragmentTypes.has(member.name)) {
         lines.push(
           `${indent}  ... on ${member.name} {\n${indent}    ...${member.name}Fields\n${indent}  }`,
         );
@@ -313,11 +561,20 @@ function generateSelectionForType(
 
   if (isInterfaceType(type)) {
     const implementations = schema.getPossibleTypes(type);
+    const conflicting = findConflictingUnionFields(implementations);
     const lines: string[] = [];
     lines.push(` {`);
     lines.push(`${indent}  __typename`);
     for (const impl of implementations) {
-      if (fragmentTypes.has(impl.name)) {
+      if (!Object.values(impl.getFields()).some((f) => f.deprecationReason == null)) continue;
+      if (conflicting.size > 0) {
+        const memberFields = generateMemberInlineSelection(impl, `${indent}    `, conflicting);
+        if (memberFields) {
+          lines.push(`${indent}  ... on ${impl.name} {\n${memberFields}\n${indent}  }`);
+        } else {
+          lines.push(`${indent}  ... on ${impl.name} {\n${indent}    __typename\n${indent}  }`);
+        }
+      } else if (fragmentTypes.has(impl.name)) {
         lines.push(
           `${indent}  ... on ${impl.name} {\n${indent}    ...${impl.name}Fields\n${indent}  }`,
         );
@@ -468,6 +725,7 @@ function generateMutationOutputSelection(outputType: GraphQLObjectType): string 
   const lines: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
+    if (field.deprecationReason != null) continue;
     if (fieldName === "error") {
       lines.push(`    ${MUTATION_ERROR_SELECTION}`);
       continue;
@@ -590,6 +848,94 @@ if (mutationType) {
   for (const [fieldName, field] of Object.entries(mutationType.getFields())) {
     outputParts.push(generateMutationOperation(fieldName, field));
     outputParts.push("");
+  }
+}
+
+// ─── Sub-connection Queries ──────────────────────────────────────────────────
+// For connection fields on queryable model types, generate nested queries that
+// fetch the connection through the parent's root query.
+// E.g., Thread.timelineEntries → query ThreadTimelineEntries { thread(...) { timelineEntries(...) { ... } } }
+
+if (queryType) {
+  const subConnectionOps: string[] = [];
+
+  for (const [typeName, type] of fragmentTypes) {
+    if (!queryableTypes.has(typeName)) continue;
+
+    // Find the root query for this type (e.g., thread(threadId: ID!): Thread)
+    let rootField: { fieldName: string; idArg: GraphQLArgument } | null = null;
+    for (const [fieldName, field] of Object.entries(queryType.getFields())) {
+      const rt = unwrapType(field.type);
+      if (rt.name !== typeName) continue;
+      if (isList(field.type)) continue;
+      if (isConnectionType(rt)) continue;
+      const idArg = field.args.find(
+        (a) => isNonNullType(a.type) && getNamedType(a.type)?.name === "ID",
+      );
+      if (idArg) {
+        rootField = { fieldName, idArg };
+        break;
+      }
+    }
+    if (!rootField) continue;
+
+    // Check the type has an id field (needed for model self-reference)
+    if (!("id" in type.getFields())) continue;
+
+    for (const [fieldName, field] of Object.entries(type.getFields())) {
+      const namedType = unwrapType(field.type);
+      if (!isObjectType(namedType) || !isConnectionType(namedType)) continue;
+
+      // Skip fields with required args
+      const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
+      if (hasRequiredArgs) continue;
+
+      const nodeType = getConnectionNodeType(namedType as GraphQLObjectType);
+      if (!nodeType) continue;
+
+      // Only generate if the node type has a fragment (will become a model)
+      if (
+        isObjectType(nodeType) &&
+        !fragmentTypes.has(nodeType.name) &&
+        !isValueObjectType(nodeType)
+      )
+        continue;
+
+      const opName = `${typeName}${toPascalCase(fieldName)}`;
+
+      // Build variable declarations: parent's ID arg (required) + field's own args
+      const varParts: string[] = [`$${rootField.idArg.name}: ID!`];
+      for (const arg of field.args) {
+        varParts.push(`$${arg.name}: ${formatArgType(arg)}`);
+      }
+      const varDecl = `(${varParts.join(", ")})`;
+
+      const rootArgPass = `(${rootField.idArg.name}: $${rootField.idArg.name})`;
+      const fieldArgPass =
+        field.args.length > 0
+          ? `(${field.args.map((a) => `${a.name}: $${a.name}`).join(", ")})`
+          : "";
+
+      const connSelection = generateConnectionSelection(
+        namedType as GraphQLObjectType,
+        nodeType,
+        "      ",
+      );
+
+      subConnectionOps.push(
+        `query ${opName}${varDecl} {\n  ${rootField.fieldName}${rootArgPass} {\n    ${fieldName}${fieldArgPass} {\n${connSelection}\n    }\n  }\n}`,
+      );
+    }
+  }
+
+  if (subConnectionOps.length > 0) {
+    outputParts.push(
+      "# ─── Sub-connection Queries ──────────────────────────────────────────────────\n",
+    );
+    for (const op of subConnectionOps) {
+      outputParts.push(op);
+      outputParts.push("");
+    }
   }
 }
 

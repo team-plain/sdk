@@ -22,16 +22,22 @@ describe("query execution", () => {
       externalId: "ext_1",
       fullName: "Jane Doe",
       shortName: "Jane",
+      email: { email: "jane@example.com", isVerified: true, verifiedAt: null },
       avatarUrl: "https://example.com/avatar.png",
+      assignedToUser: null,
       isAnonymous: false,
       status: "ACTIVE",
       assignedAt: null,
       company: { id: "comp_1" },
       createdAt: { unixTimestamp: "1700000000", iso8601: "2023-11-14T22:13:20Z" },
+      createdBy: { __typename: "UserActor", userId: "u_1", user: { id: "u_1" } },
       updatedAt: { unixTimestamp: "1700000001", iso8601: "2023-11-14T22:13:21Z" },
+      updatedBy: { __typename: "UserActor", userId: "u_1", user: { id: "u_1" } },
       markedAsSpamAt: null,
+      markedAsSpamBy: null,
       statusChangedAt: null,
       lastIdleAt: null,
+      identities: [],
     },
   };
 
@@ -47,7 +53,6 @@ describe("query execution", () => {
     expect(customer.fullName).toBe("Jane Doe");
     expect(customer.shortName).toBe("Jane");
     expect(customer.isAnonymous).toBe(false);
-    expect(customer.status).toBe("ACTIVE");
     expect(customer.createdAt).toEqual({
       unixTimestamp: "1700000000",
       iso8601: "2023-11-14T22:13:20Z",
@@ -119,8 +124,8 @@ describe("query execution", () => {
     expect(query).toMatch(/fragment CustomerFields on Customer/);
     expect(query).toContain("...CustomerFields");
 
-    // Scalar fields are selected
-    for (const field of ["id", "fullName", "shortName", "externalId", "isAnonymous", "status"]) {
+    // Scalar fields are selected (status is deprecated so not included)
+    for (const field of ["id", "fullName", "shortName", "externalId", "isAnonymous"]) {
       expect(query).toContain(field);
     }
 
