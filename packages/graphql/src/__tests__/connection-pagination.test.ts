@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AiToneRuleModel } from "../_generated_sdk.js";
+import { CustomerModel } from "../_generated_sdk.js";
 import { PlainClient } from "../client.js";
 import { PlainConnection } from "../connection.js";
 import { getRequestBody, graphqlResponse, mockFetch } from "./helpers.js";
@@ -11,8 +11,8 @@ describe("connection pagination", () => {
     vi.restoreAllMocks();
   });
 
-  function makeAiToneRulesResponse(
-    rules: Array<{ id: string; category: string }>,
+  function makeCustomersResponse(
+    customers: Array<{ id: string; fullName: string; shortName: string }>,
     pageInfo: {
       hasNextPage: boolean;
       hasPreviousPage: boolean;
@@ -21,14 +21,22 @@ describe("connection pagination", () => {
     },
   ) {
     return {
-      aiToneRules: {
-        edges: rules.map((r) => ({
-          cursor: `cursor_${r.id}`,
+      customers: {
+        edges: customers.map((c) => ({
+          cursor: `cursor_${c.id}`,
           node: {
-            id: r.id,
-            category: r.category,
-            description: `Description for ${r.id}`,
-            isEnabled: true,
+            id: c.id,
+            fullName: c.fullName,
+            shortName: c.shortName,
+            externalId: null,
+            status: "ACTIVE",
+            isAnonymous: false,
+            avatarUrl: null,
+            assignedAt: null,
+            lastIdleAt: null,
+            markedAsSpamAt: null,
+            statusChangedAt: null,
+            company: { id: "comp_1" },
             createdAt: { unixTimestamp: "1700000000", iso8601: "2023-11-14T22:13:20Z" },
             updatedAt: { unixTimestamp: "1700000001", iso8601: "2023-11-14T22:13:21Z" },
           },
@@ -42,37 +50,37 @@ describe("connection pagination", () => {
     fetchMock = mockFetch();
     fetchMock.mockResolvedValueOnce(
       graphqlResponse(
-        makeAiToneRulesResponse(
+        makeCustomersResponse(
           [
-            { id: "rule_1", category: "tone" },
-            { id: "rule_2", category: "style" },
+            { id: "c_1", fullName: "Alice Smith", shortName: "Alice" },
+            { id: "c_2", fullName: "Bob Jones", shortName: "Bob" },
           ],
           {
             hasNextPage: false,
             hasPreviousPage: false,
-            startCursor: "cursor_rule_1",
-            endCursor: "cursor_rule_2",
+            startCursor: "cursor_c_1",
+            endCursor: "cursor_c_2",
           },
         ),
       ),
     );
     const client = new PlainClient({ apiKey: "test-key" });
 
-    const connection = await client.query.aiToneRules({ first: 10 });
+    const connection = await client.query.customers({ first: 10 });
 
     expect(connection).toBeInstanceOf(PlainConnection);
     expect(connection.nodes).toHaveLength(2);
-    expect(connection.nodes[0]).toBeInstanceOf(AiToneRuleModel);
-    expect(connection.nodes[0].id).toBe("rule_1");
-    expect(connection.nodes[0].category).toBe("tone");
-    expect(connection.nodes[1].id).toBe("rule_2");
+    expect(connection.nodes[0]).toBeInstanceOf(CustomerModel);
+    expect(connection.nodes[0].id).toBe("c_1");
+    expect(connection.nodes[0].fullName).toBe("Alice Smith");
+    expect(connection.nodes[1].id).toBe("c_2");
   });
 
   it("populates pageInfo correctly", async () => {
     fetchMock = mockFetch();
     fetchMock.mockResolvedValueOnce(
       graphqlResponse(
-        makeAiToneRulesResponse([{ id: "rule_1", category: "tone" }], {
+        makeCustomersResponse([{ id: "c_1", fullName: "Alice Smith", shortName: "Alice" }], {
           hasNextPage: true,
           hasPreviousPage: false,
           startCursor: "cursor_start",
@@ -82,7 +90,7 @@ describe("connection pagination", () => {
     );
     const client = new PlainClient({ apiKey: "test-key" });
 
-    const connection = await client.query.aiToneRules({ first: 1 });
+    const connection = await client.query.customers({ first: 1 });
 
     expect(connection.hasNextPage).toBe(true);
     expect(connection.hasPreviousPage).toBe(false);
@@ -95,7 +103,7 @@ describe("connection pagination", () => {
     // First page
     fetchMock.mockResolvedValueOnce(
       graphqlResponse(
-        makeAiToneRulesResponse([{ id: "rule_1", category: "tone" }], {
+        makeCustomersResponse([{ id: "c_1", fullName: "Alice Smith", shortName: "Alice" }], {
           hasNextPage: true,
           hasPreviousPage: false,
           startCursor: "cursor_start",
@@ -106,22 +114,22 @@ describe("connection pagination", () => {
     // Second page
     fetchMock.mockResolvedValueOnce(
       graphqlResponse(
-        makeAiToneRulesResponse([{ id: "rule_2", category: "style" }], {
+        makeCustomersResponse([{ id: "c_2", fullName: "Bob Jones", shortName: "Bob" }], {
           hasNextPage: false,
           hasPreviousPage: true,
-          startCursor: "cursor_rule_2",
-          endCursor: "cursor_rule_2",
+          startCursor: "cursor_c_2",
+          endCursor: "cursor_c_2",
         }),
       ),
     );
 
     const client = new PlainClient({ apiKey: "test-key" });
-    const firstPage = await client.query.aiToneRules({ first: 1 });
+    const firstPage = await client.query.customers({ first: 1 });
     const secondPage = await firstPage.fetchNext();
 
     expect(secondPage).toBeInstanceOf(PlainConnection);
     expect(secondPage!.nodes).toHaveLength(1);
-    expect(secondPage!.nodes[0].id).toBe("rule_2");
+    expect(secondPage!.nodes[0].id).toBe("c_2");
 
     const secondCallBody = getRequestBody(fetchMock, 1);
     expect(secondCallBody.variables.after).toBe("cursor_end");
@@ -131,7 +139,7 @@ describe("connection pagination", () => {
     fetchMock = mockFetch();
     fetchMock.mockResolvedValueOnce(
       graphqlResponse(
-        makeAiToneRulesResponse([{ id: "rule_1", category: "tone" }], {
+        makeCustomersResponse([{ id: "c_1", fullName: "Alice Smith", shortName: "Alice" }], {
           hasNextPage: false,
           hasPreviousPage: false,
           startCursor: "cursor_start",
@@ -141,7 +149,7 @@ describe("connection pagination", () => {
     );
     const client = new PlainClient({ apiKey: "test-key" });
 
-    const connection = await client.query.aiToneRules({ first: 10 });
+    const connection = await client.query.customers({ first: 10 });
     const nextPage = await connection.fetchNext();
 
     expect(nextPage).toBeUndefined();
@@ -153,7 +161,7 @@ describe("connection pagination", () => {
     // First call returns a page with hasPreviousPage: true
     fetchMock.mockResolvedValueOnce(
       graphqlResponse(
-        makeAiToneRulesResponse([{ id: "rule_2", category: "style" }], {
+        makeCustomersResponse([{ id: "c_2", fullName: "Bob Jones", shortName: "Bob" }], {
           hasNextPage: false,
           hasPreviousPage: true,
           startCursor: "cursor_start",
@@ -164,7 +172,7 @@ describe("connection pagination", () => {
     // Second call: previous page
     fetchMock.mockResolvedValueOnce(
       graphqlResponse(
-        makeAiToneRulesResponse([{ id: "rule_1", category: "tone" }], {
+        makeCustomersResponse([{ id: "c_1", fullName: "Alice Smith", shortName: "Alice" }], {
           hasNextPage: true,
           hasPreviousPage: false,
           startCursor: "cursor_first",
@@ -174,11 +182,11 @@ describe("connection pagination", () => {
     );
 
     const client = new PlainClient({ apiKey: "test-key" });
-    const page = await client.query.aiToneRules({ first: 1 });
+    const page = await client.query.customers({ first: 1 });
     const prevPage = await page.fetchPrevious();
 
     expect(prevPage).toBeInstanceOf(PlainConnection);
-    expect(prevPage!.nodes[0].id).toBe("rule_1");
+    expect(prevPage!.nodes[0].id).toBe("c_1");
 
     const secondCallBody = getRequestBody(fetchMock, 1);
     expect(secondCallBody.variables.before).toBe("cursor_start");
