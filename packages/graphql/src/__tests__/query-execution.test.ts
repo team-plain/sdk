@@ -101,6 +101,39 @@ describe("query execution", () => {
     expect(getRequestUrl(fetchMock)).toBe("https://custom.api.com/graphql");
   });
 
+  it("sends a well-formed GraphQL query with the expected operation and fragment fields", async () => {
+    fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(graphqlResponse(customerData));
+    const client = new PlainClient({ apiKey: "test-key" });
+
+    await client.query.customer({ customerId: "c_123" });
+
+    const body = getRequestBody(fetchMock);
+    const query = body.query as string;
+
+    // Operation definition
+    expect(query).toMatch(/query Customer\(\$customerId: ID!\)/);
+    expect(query).toContain("customer(customerId: $customerId)");
+
+    // Uses a fragment for the fields
+    expect(query).toMatch(/fragment CustomerFields on Customer/);
+    expect(query).toContain("...CustomerFields");
+
+    // Scalar fields are selected
+    for (const field of ["id", "fullName", "shortName", "externalId", "isAnonymous", "status"]) {
+      expect(query).toContain(field);
+    }
+
+    // Timestamp fields select both representations
+    expect(query).toContain("createdAt");
+    expect(query).toContain("updatedAt");
+    expect(query).toContain("unixTimestamp");
+    expect(query).toContain("iso8601");
+
+    // Relations only select { id } (lazy-loading pattern)
+    expect(query).toMatch(/company\s*\{\s*id\s*\}/);
+  });
+
   it("throws when nullable query returns null", async () => {
     fetchMock = mockFetch();
     fetchMock.mockResolvedValueOnce(graphqlResponse({ customer: null }));
