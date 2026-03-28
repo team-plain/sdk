@@ -1,5 +1,5 @@
 {
-  "name": "@team-plain/sdk-codegen-plugin",
+  "name": "@team-plain/graphql-codegen-plugin",
   "version": "0.1.0",
   "private": true,
   "type": "module",

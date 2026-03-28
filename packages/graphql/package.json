@@ -1,5 +1,5 @@
 {
-  "name": "@team-plain/sdk",
+  "name": "@team-plain/graphql",
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -33,7 +33,7 @@
     "@graphql-codegen/typed-document-node": "^5.0.12",
     "@graphql-codegen/typescript": "^4.1.2",
     "@graphql-codegen/typescript-operations": "^4.3.2",
-    "@team-plain/sdk-codegen-plugin": "workspace:*",
+    "@team-plain/graphql-codegen-plugin": "workspace:*",
     "tsx": "^4.21.0",
     "typescript": "^5.7.0"
   }

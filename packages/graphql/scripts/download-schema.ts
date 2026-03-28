@@ -14,4 +14,4 @@ const { writeFile } = await import("node:fs/promises");
 const { fileURLToPath } = await import("node:url");
 
 await writeFile(fileURLToPath(OUTPUT_PATH), schema, "utf-8");
-console.log(`Schema downloaded to packages/sdk/src/schema.graphql`);
+console.log(`Schema downloaded to packages/graphql/src/schema.graphql`);

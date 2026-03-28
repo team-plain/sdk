@@ -53,7 +53,7 @@ describe("lazy-loading relations", () => {
     fetchMock.mockResolvedValueOnce(graphqlResponse(companyData));
 
     const client = new PlainClient({ apiKey: "test-key" });
-    const customer = await client.customer({ customerId: "c_123" });
+    const customer = await client.query.customer({ customerId: "c_123" });
 
     const company = await customer.company;
 
@@ -70,7 +70,7 @@ describe("lazy-loading relations", () => {
     fetchMock.mockResolvedValueOnce(graphqlResponse(companyData));
 
     const client = new PlainClient({ apiKey: "test-key" });
-    const customer = await client.customer({ customerId: "c_123" });
+    const customer = await client.query.customer({ customerId: "c_123" });
 
     await customer.company;
 
@@ -90,7 +90,7 @@ describe("lazy-loading relations", () => {
     fetchMock.mockResolvedValueOnce(graphqlResponse(customerWithNoCompany));
 
     const client = new PlainClient({ apiKey: "test-key" });
-    const customer = await client.customer({ customerId: "c_123" });
+    const customer = await client.query.customer({ customerId: "c_123" });
 
     const company = await customer.company;
 

@@ -58,7 +58,7 @@ describe("connection pagination", () => {
     );
     const client = new PlainClient({ apiKey: "test-key" });
 
-    const connection = await client.aiToneRules({ first: 10 });
+    const connection = await client.query.aiToneRules({ first: 10 });
 
     expect(connection).toBeInstanceOf(PlainConnection);
     expect(connection.nodes).toHaveLength(2);
@@ -82,7 +82,7 @@ describe("connection pagination", () => {
     );
     const client = new PlainClient({ apiKey: "test-key" });
 
-    const connection = await client.aiToneRules({ first: 1 });
+    const connection = await client.query.aiToneRules({ first: 1 });
 
     expect(connection.hasNextPage).toBe(true);
     expect(connection.hasPreviousPage).toBe(false);
@@ -116,7 +116,7 @@ describe("connection pagination", () => {
     );
 
     const client = new PlainClient({ apiKey: "test-key" });
-    const firstPage = await client.aiToneRules({ first: 1 });
+    const firstPage = await client.query.aiToneRules({ first: 1 });
     const secondPage = await firstPage.fetchNext();
 
     expect(secondPage).toBeInstanceOf(PlainConnection);
@@ -141,7 +141,7 @@ describe("connection pagination", () => {
     );
     const client = new PlainClient({ apiKey: "test-key" });
 
-    const connection = await client.aiToneRules({ first: 10 });
+    const connection = await client.query.aiToneRules({ first: 10 });
     const nextPage = await connection.fetchNext();
 
     expect(nextPage).toBeUndefined();
@@ -174,7 +174,7 @@ describe("connection pagination", () => {
     );
 
     const client = new PlainClient({ apiKey: "test-key" });
-    const page = await client.aiToneRules({ first: 1 });
+    const page = await client.query.aiToneRules({ first: 1 });
     const prevPage = await page.fetchPrevious();
 
     expect(prevPage).toBeInstanceOf(PlainConnection);

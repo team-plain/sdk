@@ -25,7 +25,7 @@ describe("error handling", () => {
     fetchMock.mockResolvedValueOnce(errorResponse(401));
     const client = createClient();
 
-    await expect(client.customer({ customerId: "c_1" })).rejects.toThrow(AuthenticationError);
+    await expect(client.query.customer({ customerId: "c_1" })).rejects.toThrow(AuthenticationError);
   });
 
   it("throws ForbiddenError on 403", async () => {
@@ -33,7 +33,7 @@ describe("error handling", () => {
     fetchMock.mockResolvedValueOnce(errorResponse(403));
     const client = createClient();
 
-    await expect(client.customer({ customerId: "c_1" })).rejects.toThrow(ForbiddenError);
+    await expect(client.query.customer({ customerId: "c_1" })).rejects.toThrow(ForbiddenError);
   });
 
   it("throws RateLimitError on 429", async () => {
@@ -41,7 +41,7 @@ describe("error handling", () => {
     fetchMock.mockResolvedValueOnce(errorResponse(429));
     const client = createClient();
 
-    await expect(client.customer({ customerId: "c_1" })).rejects.toThrow(RateLimitError);
+    await expect(client.query.customer({ customerId: "c_1" })).rejects.toThrow(RateLimitError);
   });
 
   it("throws NetworkError on 500", async () => {
@@ -49,7 +49,7 @@ describe("error handling", () => {
     fetchMock.mockResolvedValueOnce(errorResponse(500));
     const client = createClient();
 
-    await expect(client.customer({ customerId: "c_1" })).rejects.toThrow(NetworkError);
+    await expect(client.query.customer({ customerId: "c_1" })).rejects.toThrow(NetworkError);
   });
 
   it("throws PlainGraphQLError on 200 with GraphQL errors", async () => {
@@ -57,7 +57,7 @@ describe("error handling", () => {
     fetchMock.mockResolvedValueOnce(graphqlErrorResponse([{ message: "Something went wrong" }]));
     const client = createClient();
 
-    await expect(client.customer({ customerId: "c_1" })).rejects.toThrow(PlainGraphQLError);
+    await expect(client.query.customer({ customerId: "c_1" })).rejects.toThrow(PlainGraphQLError);
   });
 
   it("includes error message from JSON body in HTTP errors", async () => {
@@ -67,7 +67,7 @@ describe("error handling", () => {
     );
     const client = createClient();
 
-    await expect(client.customer({ customerId: "c_1" })).rejects.toThrow("Invalid API key");
+    await expect(client.query.customer({ customerId: "c_1" })).rejects.toThrow("Invalid API key");
   });
 
   it("throws PlainGraphQLError with errors array", async () => {
@@ -78,7 +78,7 @@ describe("error handling", () => {
     const client = createClient();
 
     try {
-      await client.customer({ customerId: "c_1" });
+      await client.query.customer({ customerId: "c_1" });
       expect.fail("Should have thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(PlainGraphQLError);

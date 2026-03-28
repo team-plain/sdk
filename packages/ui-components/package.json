@@ -21,10 +21,10 @@
     "test": "vitest run"
   },
   "peerDependencies": {
-    "@team-plain/sdk": "workspace:*"
+    "@team-plain/graphql": "workspace:*"
   },
   "devDependencies": {
-    "@team-plain/sdk": "workspace:*",
+    "@team-plain/graphql": "workspace:*",
     "typescript": "^5.7.0"
   }
 }

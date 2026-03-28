@@ -23,13 +23,13 @@ Per-package scripts (codegen, test, etc.) are run via `pnpm --filter <pkg> <scri
 
 Four packages in a pnpm monorepo:
 
-1. **`packages/sdk-codegen-plugin`** — A `@graphql-codegen` plugin (single file: `src/index.ts`). Takes the GraphQL schema + generated documents and outputs `_generated_sdk.ts` with model classes and a `PlainSdk` class.
+1. **`packages/graphql-codegen-plugin`** — A `@graphql-codegen` plugin (single file: `src/index.ts`). Takes the GraphQL schema + generated documents and outputs `_generated_sdk.ts` with model classes and a `PlainSdk` class.
 
-2. **`packages/sdk`** — The publishable SDK (`@team-plain/sdk`). Hand-written files: `client.ts`, `graphql-client.ts`, `connection.ts`, `error.ts`, `types.ts`, `index.ts`. Generated files: `_generated_documents.graphql`, `_generated_documents.ts`, `_generated_sdk.ts`.
+2. **`packages/graphql`** — The publishable SDK (`@team-plain/graphql`). Hand-written files: `client.ts`, `graphql-client.ts`, `connection.ts`, `error.ts`, `types.ts`, `index.ts`. Generated files: `_generated_documents.graphql`, `_generated_documents.ts`, `_generated_sdk.ts`.
 
-3. **`packages/ui-components`** — UI component builder helpers (`@team-plain/ui-components`). Pure functions that return `ComponentInput` types for building UI components (text, badge, spacer, divider, buttons, containers, rows). Peer-depends on `@team-plain/sdk` for types.
+3. **`packages/ui-components`** — UI component builder helpers (`@team-plain/ui-components`). Pure functions that return `ComponentInput` types for building UI components (text, badge, spacer, divider, buttons, containers, rows). Peer-depends on `@team-plain/graphql` for types.
 
-4. **`packages/webhooks`** — Webhook parsing and verification (`@team-plain/webhooks`). Provides `parsePlainWebhook()` for JSON schema validation and `verifyPlainWebhook()` for HMAC-SHA256 signature verification + replay attack prevention. Uses `ajv` for schema validation. Self-contained — no dependency on `@team-plain/sdk`.
+4. **`packages/webhooks`** — Webhook parsing and verification (`@team-plain/webhooks`). Provides `parsePlainWebhook()` for JSON schema validation and `verifyPlainWebhook()` for HMAC-SHA256 signature verification + replay attack prevention. Uses `ajv` for schema validation. Self-contained — no dependency on `@team-plain/graphql`.
 
 ## Key Design Decisions
 
@@ -56,21 +56,21 @@ Four packages in a pnpm monorepo:
 
 **Update the GraphQL schema:**
 ```bash
-curl -o packages/sdk/src/schema.graphql https://core-api.uk.plain.com/graphql/v1/schema.graphql
+curl -o packages/graphql/src/schema.graphql https://core-api.uk.plain.com/graphql/v1/schema.graphql
 pnpm codegen
 pnpm typecheck
 ```
 
 **Modify how SDK classes are generated:**
-Edit `packages/sdk-codegen-plugin/src/index.ts`, then:
+Edit `packages/graphql-codegen-plugin/src/index.ts`, then:
 ```bash
-pnpm --filter @team-plain/sdk-codegen-plugin build
+pnpm --filter @team-plain/graphql-codegen-plugin build
 pnpm codegen
 pnpm typecheck
 ```
 
 **Add a new hand-written SDK feature:**
-Edit files in `packages/sdk/src/`, export from `index.ts`, then `pnpm build`.
+Edit files in `packages/graphql/src/`, export from `index.ts`, then `pnpm build`.
 
 **Update the webhook schema:**
 ```bash

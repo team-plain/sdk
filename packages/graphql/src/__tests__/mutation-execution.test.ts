@@ -29,7 +29,7 @@ describe("mutation execution", () => {
     );
     const client = new PlainClient({ apiKey: "test-key" });
 
-    const result = await client.addLabels({
+    const result = await client.mutation.addLabels({
       input: { threadId: "th_1", labelTypeIds: ["lt_1"] },
     });
 
@@ -56,7 +56,7 @@ describe("mutation execution", () => {
     );
     const client = new PlainClient({ apiKey: "test-key" });
 
-    const result = await client.addLabels({
+    const result = await client.mutation.addLabels({
       input: { threadId: "th_nonexistent", labelTypeIds: ["lt_1"] },
     });
 
@@ -75,7 +75,7 @@ describe("mutation execution", () => {
     );
     const client = new PlainClient({ apiKey: "test-key" });
 
-    await client.addLabels({
+    await client.mutation.addLabels({
       input: { threadId: "th_1", labelTypeIds: ["lt_1", "lt_2"] },
     });
 

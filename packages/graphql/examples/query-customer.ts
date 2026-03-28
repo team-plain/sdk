@@ -7,7 +7,7 @@ const client = new PlainClient({
 
 // Query — returns typed model with lazy-loading relations
 async function main() {
-  const customer = await client.customer({ customerId: "c_01KAKJEKNAYY879ZYBMZ614DYT" });
+  const customer = await client.query.customer({ customerId: "c_01GW1Z47G0MPXWRDJ0SR9P2JHQ" });
   // customer is a CustomerModel with typed scalar properties
   console.log(customer.fullName, customer.shortName);
 
@@ -18,7 +18,7 @@ async function main() {
   }
 
   // Pagination with PlainConnection
-  const customers = await client.customers({ first: 10 });
+  const customers = await client.query.customers({ first: 10 });
   console.log(customers.nodes.map((c) => c.fullName));
 
   // Paginate forward
