@@ -698,6 +698,39 @@ fragment HelpCenterIndexFields on HelpCenterIndex {
   }
 }
 
+fragment ImportJobDefinitionFields on ImportJobDefinition {
+  id
+  mode
+  entityTypes
+  enabledAt {
+    unixTimestamp
+    iso8601
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
+fragment ImportRunFields on ImportRun {
+  entityType
+  status
+  downloadedRecords
+  savedRecords
+  startedAt {
+    unixTimestamp
+    iso8601
+  }
+  completedAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
 fragment IndexedDocumentFields on IndexedDocument {
   id
   url
@@ -2609,6 +2642,12 @@ query SlackUser($slackTeamId: String!, $slackChannelId: String!, $slackUserId: I
   }
 }
 
+query ThreadBySlackPermalink($slackPermalink: String!) {
+  threadBySlackPermalink(slackPermalink: $slackPermalink) {
+    ...ThreadFields
+  }
+}
+
 query UserSlackChannelMemberships($slackTeamId: String!) {
   userSlackChannelMemberships(slackTeamId: $slackTeamId) {
     slackChannelId
@@ -3179,6 +3218,23 @@ query ImporterTenantLists($serviceAuthorizationId: ID!, $first: Int, $after: Str
       node {
         id
         name
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query ImportRuns($serviceAuthorizationId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
+  importRuns(serviceAuthorizationId: $serviceAuthorizationId, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...ImportRunFields
       }
       cursor
     }
@@ -7151,6 +7207,24 @@ mutation DeleteServiceAuthorization($input: DeleteServiceAuthorizationInput!) {
 
 mutation DeleteMyServiceAuthorization($input: DeleteMyServiceAuthorizationInput!) {
   deleteMyServiceAuthorization(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateImportSync($input: CreateImportSyncInput!) {
+  createImportSync(input: $input) {
+    importJobDefinition {
+      ...ImportJobDefinitionFields
+    }
     error {
       message
       type
