@@ -1,6 +1,6 @@
-# Migration Guide: `@team-plain/typescript-sdk` to `@team-plain/sdk`
+# Migration Guide: `@team-plain/typescript-sdk` to `@team-plain/graphql`
 
-This guide is intended for AI agents and developers migrating code from the old `@team-plain/typescript-sdk` package to the new `@team-plain/sdk` ecosystem. The new SDK is auto-generated from Plain's GraphQL schema and has a significantly different API surface.
+This guide is intended for AI agents and developers migrating code from the old `@team-plain/typescript-sdk` package to the new `@team-plain/graphql` ecosystem. The new SDK is auto-generated from Plain's GraphQL schema and has a significantly different API surface.
 
 ## Package Changes
 
@@ -8,7 +8,7 @@ The old single package has been split into three:
 
 | Old Package | New Package(s) |
 |---|---|
-| `@team-plain/typescript-sdk` | `@team-plain/sdk` (core SDK) |
+| `@team-plain/typescript-sdk` | `@team-plain/graphql` (core SDK) |
 | (included in above) | `@team-plain/webhooks` (webhook parsing/verification) |
 | (included in above) | `@team-plain/ui-components` (UI component builders) |
 
@@ -19,7 +19,7 @@ The old single package has been split into three:
 npm uninstall @team-plain/typescript-sdk
 
 # Install new (pick what you need)
-npm install @team-plain/sdk
+npm install @team-plain/graphql
 npm install @team-plain/webhooks        # only if using webhooks
 npm install @team-plain/ui-components   # only if using uiComponent builder
 ```
@@ -39,7 +39,7 @@ import {
 } from '@team-plain/typescript-sdk';
 
 // NEW: split across packages
-import { PlainClient, type ComponentTextColor, type ThreadStatus } from '@team-plain/sdk';
+import { PlainClient, type ComponentTextColor, type ThreadStatus } from '@team-plain/graphql';
 import { parsePlainWebhook, verifyPlainWebhook } from '@team-plain/webhooks';
 import { uiComponent } from '@team-plain/ui-components';
 ```
@@ -342,7 +342,7 @@ const color = ComponentTextColor.Error;  // ComponentTextColor.Error === 'ERROR'
 const status = ThreadStatus.Todo;        // ThreadStatus.Todo === 'TODO'
 
 // NEW: String literal unions (type-only, no runtime object)
-import type { ComponentTextColor, ThreadStatus } from '@team-plain/sdk';
+import type { ComponentTextColor, ThreadStatus } from '@team-plain/graphql';
 
 const color: ComponentTextColor = 'ERROR';   // Use string literals directly
 const status: ThreadStatus = 'TODO';
@@ -379,8 +379,8 @@ Replace all `EnumName.Value` references with the equivalent string literal:
 **Important:** Since these are now type-only exports, change `import { ... }` to `import type { ... }` when importing only enum types. If you also import runtime values (like `PlainClient`), use a mixed import:
 
 ```typescript
-import { PlainClient } from '@team-plain/sdk';
-import type { ThreadStatus, ComponentTextColor } from '@team-plain/sdk';
+import { PlainClient } from '@team-plain/graphql';
+import type { ThreadStatus, ComponentTextColor } from '@team-plain/graphql';
 ```
 
 ## Type Changes
@@ -434,9 +434,9 @@ import { uiComponent } from '@team-plain/typescript-sdk';
 import { uiComponent } from '@team-plain/ui-components';
 ```
 
-The builder functions accept the same arguments and return the same `ComponentInput` shapes. The `ComponentInput` type itself is now exported from `@team-plain/sdk`.
+The builder functions accept the same arguments and return the same `ComponentInput` shapes. The `ComponentInput` type itself is now exported from `@team-plain/graphql`.
 
-**Note:** `@team-plain/ui-components` has `@team-plain/sdk` as a peer dependency, so install both.
+**Note:** `@team-plain/ui-components` has `@team-plain/graphql` as a peer dependency, so install both.
 
 ## Webhooks
 
@@ -458,7 +458,7 @@ import {
 } from '@team-plain/webhooks';
 ```
 
-Function signatures, error types, and payload types are the same. The `@team-plain/webhooks` package is self-contained with no dependency on `@team-plain/sdk`.
+Function signatures, error types, and payload types are the same. The `@team-plain/webhooks` package is self-contained with no dependency on `@team-plain/graphql`.
 
 ## Pagination
 
@@ -495,7 +495,7 @@ if (connection.hasNextPage) {
 
 ## Step-by-Step Migration Checklist
 
-1. **Update `package.json`:** Replace `@team-plain/typescript-sdk` with `@team-plain/sdk` (and `@team-plain/webhooks` / `@team-plain/ui-components` if used).
+1. **Update `package.json`:** Replace `@team-plain/typescript-sdk` with `@team-plain/graphql` (and `@team-plain/webhooks` / `@team-plain/ui-components` if used).
 
 2. **Update imports:** Change all `from '@team-plain/typescript-sdk'` to the appropriate new package.
 
@@ -565,8 +565,8 @@ import {
   PlainClient,
   ForbiddenError,
   AuthenticationError,
-} from '@team-plain/sdk';
-import type { ThreadStatus } from '@team-plain/sdk';
+} from '@team-plain/graphql';
+import type { ThreadStatus } from '@team-plain/graphql';
 
 const client = new PlainClient({ apiKey: 'key' });
 

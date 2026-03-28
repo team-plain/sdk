@@ -1,4 +1,4 @@
-import type { ComponentBadgeColor, ComponentInput } from "@team-plain/sdk";
+import type { ComponentBadgeColor, ComponentInput } from "@team-plain/graphql";
 
 export function badgeComponent(args: {
   label: string;

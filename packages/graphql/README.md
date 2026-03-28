@@ -1,11 +1,11 @@
-# @team-plain/sdk
+# @team-plain/graphql
 
 A typed TypeScript SDK for [Plain's](https://plain.com) GraphQL API, auto-generated from the schema using a custom codegen pipeline.
 
 ## Installation
 
 ```bash
-npm install @team-plain/sdk
+npm install @team-plain/graphql
 ```
 
 Requires **Node 25+**. ESM-only.
@@ -13,7 +13,7 @@ Requires **Node 25+**. ESM-only.
 ## Usage
 
 ```ts
-import { PlainClient } from "@team-plain/sdk";
+import { PlainClient } from "@team-plain/graphql";
 
 const client = new PlainClient({ apiKey: "plainApiKey_xxx" });
 ```

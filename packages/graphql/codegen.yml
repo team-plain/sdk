@@ -13,4 +13,4 @@ generates:
       skipTypename: true
   ./src/_generated_sdk.ts:
     plugins:
-      - "@team-plain/sdk-codegen-plugin"
+      - "@team-plain/graphql-codegen-plugin"

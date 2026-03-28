@@ -1,4 +1,4 @@
-import type { ComponentInput, ComponentTextColor, ComponentTextSize } from "@team-plain/sdk";
+import type { ComponentInput, ComponentTextColor, ComponentTextSize } from "@team-plain/graphql";
 
 export function textComponent(args: {
   text: string;

@@ -1,4 +1,4 @@
-import type { ComponentDividerSpacingSize, ComponentInput } from "@team-plain/sdk";
+import type { ComponentDividerSpacingSize, ComponentInput } from "@team-plain/graphql";
 
 export function dividerComponent(args: {
   spacingSize?: ComponentDividerSpacingSize;
