@@ -1,4 +1,5 @@
 export * from "./_generated_documents.js";
+export type { PlainSdkMutations, PlainSdkQueries } from "./_generated_sdk.js";
 export * from "./_generated_sdk.js";
 // Re-export generated SDK and types
 export { PlainSdk } from "./_generated_sdk.js";

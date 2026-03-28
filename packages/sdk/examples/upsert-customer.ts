@@ -7,7 +7,7 @@ const client = new PlainClient({
 
 // Mutation — returns Output type directly, error is typed data
 async function main() {
-  const result = await client.upsertCustomer({
+  const result = await client.mutation.upsertCustomer({
     input: {
       identifier: { emailAddress: "alice1234@example.com" },
       onCreate: {

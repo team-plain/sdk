@@ -49,7 +49,7 @@ describe("SDK generation", () => {
     const diagnostics = compileTypeScript(code, stubs);
     expect(diagnostics, formatDiagnostics(diagnostics)).toHaveLength(0);
 
-    expect(code).toContain("new CustomerModel(this._client, response.customer)");
+    expect(code).toContain("new CustomerModel(_client, response.customer)");
   });
 
   it("throws 'not found' for nullable single model query", () => {
@@ -145,7 +145,7 @@ describe("SDK generation", () => {
     expect(diagnostics, formatDiagnostics(diagnostics)).toHaveLength(0);
 
     expect(code).toContain("PlainConnection<CustomerModel>");
-    expect(code).toContain("conn.edges.map(e => new CustomerModel(this._client, e.node))");
+    expect(code).toContain("conn.edges.map(e => new CustomerModel(_client, e.node))");
     expect(code).toContain("totalCount: conn.totalCount");
   });
 
@@ -229,7 +229,7 @@ describe("SDK generation", () => {
     expect(diagnostics, formatDiagnostics(diagnostics)).toHaveLength(0);
 
     expect(code).toContain("Promise<ItemModel[]>");
-    expect(code).toContain(".map(d => new ItemModel(this._client, d))");
+    expect(code).toContain(".map(d => new ItemModel(_client, d))");
   });
 
   it("returns raw output type for mutations (no model wrapping)", () => {

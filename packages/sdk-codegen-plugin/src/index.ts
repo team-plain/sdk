@@ -323,7 +323,10 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
 
   const queryFields = queryType.getFields();
   const mutationFields = mutationType ? mutationType.getFields() : {};
-  const sdkMethods: string[] = [];
+  const queryMethodBodies: string[] = [];
+  const querySignatures: string[] = [];
+  const mutationMethodBodies: string[] = [];
+  const mutationSignatures: string[] = [];
 
   // Process queries
   for (const [fieldName, field] of Object.entries(queryFields)) {
@@ -375,88 +378,100 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
 
       if (nodeHasModel && nodeTypeName) {
         const nodeModelClass = modelClassName(nodeTypeName);
-        sdkMethods.push(
-          `  async ${fieldName}(${varsParam}): Promise<PlainConnection<${nodeModelClass}>> {
-    const response = await this._client.request${typeArgs}(
-      ${documentName}${varsArg}
-    );
-    const conn = response.${fieldName};
-    return new PlainConnection<${nodeModelClass}>({
-      nodes: conn.edges.map(e => new ${nodeModelClass}(this._client, e.node)),
-      pageInfo: conn.pageInfo,${connHasTotalCount ? "\n      totalCount: conn.totalCount," : ""}
-      fetch: (cursor) => this.${fieldName}({ ...${hasArgs ? "variables" : "{}"}, ...cursor } as ${varsTsName}),
-    });
-  }`,
+        const returnType = `Promise<PlainConnection<${nodeModelClass}>>`;
+        querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+        queryMethodBodies.push(
+          `    async ${fieldName}(${varsParam}): ${returnType} {
+      const response = await _client.request${typeArgs}(
+        ${documentName}${varsArg}
+      );
+      const conn = response.${fieldName};
+      return new PlainConnection<${nodeModelClass}>({
+        nodes: conn.edges.map(e => new ${nodeModelClass}(_client, e.node)),
+        pageInfo: conn.pageInfo,${connHasTotalCount ? "\n        totalCount: conn.totalCount," : ""}
+        fetch: (cursor) => query.${fieldName}({ ...${hasArgs ? "variables" : "{}"}, ...cursor } as ${varsTsName}),
+      });
+    }`,
         );
       } else {
         // Connection without model — return raw type
-        sdkMethods.push(
-          `  async ${fieldName}(${varsParam}): Promise<${queryTsName}["${fieldName}"]> {
-    const response = await this._client.request${typeArgs}(
-      ${documentName}${varsArg}
-    );
-    return response.${fieldName};
-  }`,
+        const returnType = `Promise<${queryTsName}["${fieldName}"]>`;
+        querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+        queryMethodBodies.push(
+          `    async ${fieldName}(${varsParam}): ${returnType} {
+      const response = await _client.request${typeArgs}(
+        ${documentName}${varsArg}
+      );
+      return response.${fieldName};
+    }`,
         );
       }
     } else if (isList && hasModel) {
       // List of model type
       const nodeModelClass = modelClassName(namedType.name);
-      sdkMethods.push(
-        `  async ${fieldName}(${varsParam}): Promise<${nodeModelClass}[]> {
-    const response = await this._client.request${typeArgs}(
-      ${documentName}${varsArg}
-    );
-    return (response.${fieldName} ?? []).map(d => new ${nodeModelClass}(this._client, d));
-  }`,
+      const returnType = `Promise<${nodeModelClass}[]>`;
+      querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+      queryMethodBodies.push(
+        `    async ${fieldName}(${varsParam}): ${returnType} {
+      const response = await _client.request${typeArgs}(
+        ${documentName}${varsArg}
+      );
+      return (response.${fieldName} ?? []).map(d => new ${nodeModelClass}(_client, d));
+    }`,
       );
     } else if (hasModel && !isList) {
       // Single model type
       const mClass = modelClassName(namedType.name);
+      const returnType = `Promise<${mClass}>`;
+      querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
       if (isNonNull) {
-        sdkMethods.push(
-          `  async ${fieldName}(${varsParam}): Promise<${mClass}> {
-    const response = await this._client.request${typeArgs}(
-      ${documentName}${varsArg}
-    );
-    return new ${mClass}(this._client, response.${fieldName});
-  }`,
+        queryMethodBodies.push(
+          `    async ${fieldName}(${varsParam}): ${returnType} {
+      const response = await _client.request${typeArgs}(
+        ${documentName}${varsArg}
+      );
+      return new ${mClass}(_client, response.${fieldName});
+    }`,
         );
       } else {
-        sdkMethods.push(
-          `  async ${fieldName}(${varsParam}): Promise<${mClass}> {
-    const response = await this._client.request${typeArgs}(
-      ${documentName}${varsArg}
-    );
-    if (!response.${fieldName}) {
-      throw new Error("${fieldName} not found");
-    }
-    return new ${mClass}(this._client, response.${fieldName});
-  }`,
+        queryMethodBodies.push(
+          `    async ${fieldName}(${varsParam}): ${returnType} {
+      const response = await _client.request${typeArgs}(
+        ${documentName}${varsArg}
+      );
+      if (!response.${fieldName}) {
+        throw new Error("${fieldName} not found");
+      }
+      return new ${mClass}(_client, response.${fieldName});
+    }`,
         );
       }
     } else {
       // Raw return (scalars, enums, types without models, lists of non-models)
       if (!isNonNull && !isList && !isConnection) {
-        sdkMethods.push(
-          `  async ${fieldName}(${varsParam}): Promise<NonNullable<${queryTsName}["${fieldName}"]>> {
-    const response = await this._client.request${typeArgs}(
-      ${documentName}${varsArg}
-    );
-    if (!response.${fieldName}) {
-      throw new Error("${fieldName} not found");
-    }
-    return response.${fieldName};
-  }`,
+        const returnType = `Promise<NonNullable<${queryTsName}["${fieldName}"]>>`;
+        querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+        queryMethodBodies.push(
+          `    async ${fieldName}(${varsParam}): ${returnType} {
+      const response = await _client.request${typeArgs}(
+        ${documentName}${varsArg}
+      );
+      if (!response.${fieldName}) {
+        throw new Error("${fieldName} not found");
+      }
+      return response.${fieldName};
+    }`,
         );
       } else {
-        sdkMethods.push(
-          `  async ${fieldName}(${varsParam}): Promise<${queryTsName}["${fieldName}"]> {
-    const response = await this._client.request${typeArgs}(
-      ${documentName}${varsArg}
-    );
-    return response.${fieldName};
-  }`,
+        const returnType = `Promise<${queryTsName}["${fieldName}"]>`;
+        querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+        queryMethodBodies.push(
+          `    async ${fieldName}(${varsParam}): ${returnType} {
+      const response = await _client.request${typeArgs}(
+        ${documentName}${varsArg}
+      );
+      return response.${fieldName};
+    }`,
         );
       }
     }
@@ -484,13 +499,15 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       ? `<${mutTsName}, ${varsTsName}>`
       : `<${mutTsName}, Record<string, never>>`;
 
-    sdkMethods.push(
-      `  async ${fieldName}(${varsParam}): Promise<${mutTsName}["${fieldName}"]> {
-    const response = await this._client.request${typeArgs}(
-      ${documentName}${varsArg}
-    );
-    return response.${fieldName};
-  }`,
+    const returnType = `Promise<${mutTsName}["${fieldName}"]>`;
+    mutationSignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+    mutationMethodBodies.push(
+      `    async ${fieldName}(${varsParam}): ${returnType} {
+      const response = await _client.request${typeArgs}(
+        ${documentName}${varsArg}
+      );
+      return response.${fieldName};
+    }`,
     );
   }
 
@@ -525,15 +542,38 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     output.push(``);
   }
 
+  // Query and mutation interfaces
+  output.push(`export interface PlainSdkQueries {`);
+  for (const sig of querySignatures) {
+    output.push(`  ${sig}`);
+  }
+  output.push(`}`);
+  output.push(``);
+  output.push(`export interface PlainSdkMutations {`);
+  for (const sig of mutationSignatures) {
+    output.push(`  ${sig}`);
+  }
+  output.push(`}`);
+  output.push(``);
+
   // SDK class
   output.push(`export class PlainSdk {`);
-  output.push(`  protected _client: PlainGraphQLClient;`);
+  output.push(`  public readonly query: PlainSdkQueries;`);
+  output.push(`  public readonly mutation: PlainSdkMutations;`);
   output.push(``);
   output.push(`  constructor(client: PlainGraphQLClient) {`);
-  output.push(`    this._client = client;`);
-  output.push(`  }`);
+  output.push(`    const _client = client;`);
   output.push(``);
-  output.push(sdkMethods.join("\n\n"));
+  output.push(`    const query: PlainSdkQueries = {`);
+  output.push(queryMethodBodies.join(",\n\n"));
+  output.push(`    };`);
+  output.push(`    this.query = query;`);
+  output.push(``);
+  output.push(`    const mutation: PlainSdkMutations = {`);
+  output.push(mutationMethodBodies.join(",\n\n"));
+  output.push(`    };`);
+  output.push(`    this.mutation = mutation;`);
+  output.push(`  }`);
   output.push(`}`);
   output.push(``);
 
