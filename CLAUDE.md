@@ -35,7 +35,7 @@ Four packages in a pnpm monorepo:
 
 - **Mutation errors are data, not exceptions.** Plain's API returns `*Output` types with an `error: MutationError` field. The SDK preserves this — mutation methods return the full output type. Only network/auth errors throw.
 - **Lazy-loading relations.** Model classes expose object relations as `Promise<T>` getters that make separate API calls using the entity's `id`. Fragments only select `{ id }` for relations.
-- **ESM-only, Node 25+.** No CommonJS, no polyfills.
+- **Node 25+. ESM and CJS.** Publishable packages ship both ESM and CJS builds via tsup.
 - **Generated files are committed.** The `_generated_*` files are checked in so consumers don't need to run codegen. Re-run `pnpm codegen` after schema changes.
 
 ## File Conventions
