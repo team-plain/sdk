@@ -20,8 +20,10 @@ const client = new PlainClient({ apiKey: "plainApiKey_xxx" });
 
 ### Query
 
+Queries are accessed via `client.query`:
+
 ```ts
-const customer = await client.customer({ customerId: "c_123" });
+const customer = await client.query.customer({ customerId: "c_123" });
 console.log(customer.fullName);
 
 // Relations are lazy-loaded — accessing them makes a separate API call
@@ -31,10 +33,10 @@ console.log(company.name);
 
 ### Mutation
 
-Mutation errors are returned as typed data, not thrown as exceptions. This matches Plain's API where all mutations return `*Output` types with an optional `error` field.
+Mutations are accessed via `client.mutation`. Mutation errors are returned as typed data, not thrown as exceptions. This matches Plain's API where all mutations return `*Output` types with an optional `error` field.
 
 ```ts
-const result = await client.upsertCustomer({
+const result = await client.mutation.upsertCustomer({
   input: {
     identifier: { emailAddress: "alice@example.com" },
     onCreate: {
@@ -59,7 +61,7 @@ if (result.error) {
 ### Pagination
 
 ```ts
-const customers = await client.customers({ first: 10 });
+const customers = await client.query.customers({ first: 10 });
 
 for (const customer of customers.nodes) {
   console.log(customer.fullName);
@@ -74,7 +76,7 @@ const nextPage = await customers.fetchNext();
 GraphQL union and interface fields are exposed as discriminated unions of model classes. Each union member has a `__typename` property for narrowing and supports the same lazy-loading as any other model.
 
 ```ts
-const thread = await client.thread({ threadId: "t_123" });
+const thread = await client.query.thread({ threadId: "t_123" });
 
 // Narrow with __typename
 if (thread.createdBy.__typename === "UserActor") {

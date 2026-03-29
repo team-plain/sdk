@@ -80,7 +80,7 @@ const customer = result.data;
 ```typescript
 // NEW: Network/auth errors throw. Wrap in try/catch.
 try {
-  const customer = await client.customer({ customerId: '123' });
+  const customer = await client.query.customer({ customerId: '123' });
   // customer is a CustomerModel directly — no .data wrapper
 } catch (err) {
   if (err instanceof AuthenticationError) { /* 401 */ }
@@ -96,7 +96,7 @@ For mutations, the response includes an `error` field:
 ```typescript
 // NEW: Mutations return the output type directly (which may include error)
 try {
-  const result = await client.createThread({ input: { ... } });
+  const result = await client.mutation.createThread({ input: { ... } });
 
   if (result.error) {
     // Mutation-level error (validation, forbidden, internal)
@@ -139,30 +139,30 @@ Method names have changed. The `get` prefix is dropped, and methods use the Grap
 
 | Old Method | New Method |
 |---|---|
-| `getCustomerById({ customerId })` | `customer({ customerId })` |
-| `getCustomerByEmail({ email })` | `customerByEmail({ email })` |
-| `getCustomerByExternalId({ externalId })` | `customerByExternalId({ externalId })` |
-| `getCustomers({ ... })` | `customers({ ... })` |
-| `getThread({ threadId })` | `thread({ threadId })` |
-| `getThreadByRef({ threadRef })` | `threadByRef({ threadRef })` |
-| `getThreadByExternalId({ externalId })` | `threadByExternalId({ externalId })` |
-| `getThreads({ ... })` | `threads({ ... })` |
-| `getUserByEmail({ email })` | `userByEmail({ email })` |
-| `getUserById({ userId })` | `userById({ userId })` |
-| `getLabelTypes({ ... })` | `labelTypes({ ... })` |
-| `getLabelType({ labelTypeId })` | `labelType({ labelTypeId })` |
-| `getMyWorkspace()` | `myWorkspace()` |
-| `getTenantById({ tenantId })` | `tenant({ tenantId })` |
-| `getTenants({ ... })` | `tenants({ ... })` |
-| `searchTenants({ ... })` | `searchTenants({ ... })` |
-| `getCompanies({ ... })` | `companies({ ... })` |
-| `searchCompanies({ ... })` | `searchCompanies({ ... })` |
-| `getTierById({ tierId })` | `tier({ tierId })` |
-| `getTiers({ ... })` | `tiers({ ... })` |
-| `getWebhookTargets({ ... })` | `webhookTargets({ ... })` |
-| `getWebhookTargetById({ ... })` | `webhookTarget({ ... })` |
-| `getCustomerGroupById({ ... })` | `customerGroup({ ... })` |
-| `getCustomerGroups({ ... })` | `customerGroups({ ... })` |
+| `getCustomerById({ customerId })` | `client.query.customer({ customerId })` |
+| `getCustomerByEmail({ email })` | `client.query.customerByEmail({ email })` |
+| `getCustomerByExternalId({ externalId })` | `client.query.customerByExternalId({ externalId })` |
+| `getCustomers({ ... })` | `client.query.customers({ ... })` |
+| `getThread({ threadId })` | `client.query.thread({ threadId })` |
+| `getThreadByRef({ threadRef })` | `client.query.threadByRef({ threadRef })` |
+| `getThreadByExternalId({ externalId })` | `client.query.threadByExternalId({ externalId })` |
+| `getThreads({ ... })` | `client.query.threads({ ... })` |
+| `getUserByEmail({ email })` | `client.query.userByEmail({ email })` |
+| `getUserById({ userId })` | `client.query.userById({ userId })` |
+| `getLabelTypes({ ... })` | `client.query.labelTypes({ ... })` |
+| `getLabelType({ labelTypeId })` | `client.query.labelType({ labelTypeId })` |
+| `getMyWorkspace()` | `client.query.myWorkspace()` |
+| `getTenantById({ tenantId })` | `client.query.tenant({ tenantId })` |
+| `getTenants({ ... })` | `client.query.tenants({ ... })` |
+| `searchTenants({ ... })` | `client.query.searchTenants({ ... })` |
+| `getCompanies({ ... })` | `client.query.companies({ ... })` |
+| `searchCompanies({ ... })` | `client.query.searchCompanies({ ... })` |
+| `getTierById({ tierId })` | `client.query.tier({ tierId })` |
+| `getTiers({ ... })` | `client.query.tiers({ ... })` |
+| `getWebhookTargets({ ... })` | `client.query.webhookTargets({ ... })` |
+| `getWebhookTargetById({ ... })` | `client.query.webhookTarget({ ... })` |
+| `getCustomerGroupById({ ... })` | `client.query.customerGroup({ ... })` |
+| `getCustomerGroups({ ... })` | `client.query.customerGroups({ ... })` |
 | `rawRequest({ query, variables })` | Use `PlainGraphQLClient` directly |
 
 ### Return Type Changes for Queries
@@ -176,7 +176,7 @@ const customer: CustomerPartsFragment | null = result.data;
 customer?.fullName;
 
 // NEW
-const customer: CustomerModel = await client.customer({ customerId: '123' });
+const customer: CustomerModel = await client.query.customer({ customerId: '123' });
 customer.fullName;
 // Note: throws Error("customer not found") if null, no null return
 ```
@@ -191,7 +191,7 @@ const pageInfo: PageInfoPartsFragment = result.data.pageInfo;
 const hasMore = pageInfo.hasNextPage;
 
 // NEW
-const connection = await client.customers({ first: 10 });
+const connection = await client.query.customers({ first: 10 });
 const customers: CustomerModel[] = connection.nodes;
 const hasMore = connection.hasNextPage;
 
@@ -218,7 +218,7 @@ await client.createThread({
 });
 
 // NEW: Pass full variables object with `input` key
-await client.createThread({
+await client.mutation.createThread({
   input: {
     customerIdentifier: { customerId: '123' },
     title: 'Help needed',
@@ -234,7 +234,7 @@ This applies to **all mutation methods**. The general rule:
 await client.someMethod(inputObject);
 
 // NEW
-await client.someMethod({ input: inputObject });
+await client.mutation.someMethod({ input: inputObject });
 ```
 
 ### Return Type Changes for Mutations
@@ -258,7 +258,7 @@ if (result.error) {
 
 // NEW
 try {
-  const result = await client.upsertCustomer({
+  const result = await client.mutation.upsertCustomer({
     input: {
       identifier: { emailAddress: 'test@example.com' },
       onCreate: { fullName: 'Test', email: { email: 'test@example.com', isVerified: false } },
@@ -284,51 +284,51 @@ Most mutation method names are unchanged:
 
 | Old Method | New Method | Notes |
 |---|---|---|
-| `upsertCustomer(input)` | `upsertCustomer({ input })` | Wrap in `{ input }` |
-| `deleteCustomer(input)` | `deleteCustomer({ input })` | |
-| `createThread(input)` | `createThread({ input })` | |
-| `assignThread(input)` | `assignThread({ input })` | |
-| `unassignThread(input)` | `unassignThread({ input })` | |
-| `changeThreadPriority(input)` | `changeThreadPriority({ input })` | |
-| `markThreadAsDone(input)` | `markThreadAsDone({ input })` | |
-| `markThreadAsTodo(input)` | `markThreadAsTodo({ input })` | |
-| `snoozeThread(input)` | `snoozeThread({ input })` | |
-| `addLabels(input)` | `addLabels({ input })` | |
-| `removeLabels(input)` | `removeLabels({ input })` | |
-| `sendNewEmail(input)` | `sendNewEmail({ input })` | |
-| `replyToEmail(input)` | `replyToEmail({ input })` | |
-| `replyToThread(input)` | `replyToThread({ input })` | |
-| `sendChat(input)` | `sendChat({ input })` | |
-| `sendCustomerChat(input)` | `sendCustomerChat({ input })` | |
-| `createNote(input)` | `createNote({ input })` | |
-| `upsertCustomer(input)` | `upsertCustomer({ input })` | |
-| `upsertTenant(input)` | `upsertTenant({ input })` | |
-| `upsertCompany(input)` | `upsertCompany({ input })` | |
-| `createCustomerEvent(input)` | `createCustomerEvent({ input })` | |
-| `createThreadEvent(input)` | `createThreadEvent({ input })` | |
-| `createWebhookTarget(input)` | `createWebhookTarget({ input })` | |
-| `updateWebhookTarget(input)` | `updateWebhookTarget({ input })` | |
-| `deleteWebhookTarget(input)` | `deleteWebhookTarget({ input })` | |
-| `createCustomerCardConfig(input)` | `createCustomerCardConfig({ input })` | |
-| `updateCustomerCardConfig(input)` | `updateCustomerCardConfig({ input })` | |
-| `deleteCustomerCardConfig(input)` | `deleteCustomerCardConfig({ input })` | |
-| `upsertThreadField(input)` | `upsertThreadField({ input })` | |
-| `deleteThreadField(input)` | `deleteThreadField({ input })` | |
-| `createAttachmentUploadUrl(input)` | `createAttachmentUploadUrl({ input })` | |
-| `createLabelType(input)` | `createLabelType({ input })` | |
-| `archiveLabelType(input)` | `archiveLabelType({ input })` | |
-| `addCustomerToCustomerGroups(input)` | `addCustomerToCustomerGroups({ input })` | |
-| `removeCustomerFromCustomerGroups(input)` | `removeCustomerFromCustomerGroups({ input })` | |
-| `setCustomerTenants(input)` | `setCustomerTenants({ input })` | |
-| `addCustomerToTenants(input)` | `addCustomerToTenants({ input })` | |
-| `removeCustomerFromTenants(input)` | `removeCustomerFromTenants({ input })` | |
-| `updateCustomerCompany(input)` | `updateCustomerCompany({ input })` | |
-| `addMembersToTier(input)` | `addMembersToTier({ input })` | |
-| `removeMembersFromTier(input)` | `removeMembersFromTier({ input })` | |
-| `updateTenantTier(input)` | `updateTenantTier({ input })` | |
-| `updateCompanyTier(input)` | `updateCompanyTier({ input })` | |
-| `createKnowledgeSource(input)` | `createKnowledgeSource({ input })` | |
-| `indexDocument(input)` | `createIndexedDocument({ input })` | Renamed |
+| `upsertCustomer(input)` | `client.mutation.upsertCustomer({ input })` | Wrap in `{ input }` |
+| `deleteCustomer(input)` | `client.mutation.deleteCustomer({ input })` | |
+| `createThread(input)` | `client.mutation.createThread({ input })` | |
+| `assignThread(input)` | `client.mutation.assignThread({ input })` | |
+| `unassignThread(input)` | `client.mutation.unassignThread({ input })` | |
+| `changeThreadPriority(input)` | `client.mutation.changeThreadPriority({ input })` | |
+| `markThreadAsDone(input)` | `client.mutation.markThreadAsDone({ input })` | |
+| `markThreadAsTodo(input)` | `client.mutation.markThreadAsTodo({ input })` | |
+| `snoozeThread(input)` | `client.mutation.snoozeThread({ input })` | |
+| `addLabels(input)` | `client.mutation.addLabels({ input })` | |
+| `removeLabels(input)` | `client.mutation.removeLabels({ input })` | |
+| `sendNewEmail(input)` | `client.mutation.sendNewEmail({ input })` | |
+| `replyToEmail(input)` | `client.mutation.replyToEmail({ input })` | |
+| `replyToThread(input)` | `client.mutation.replyToThread({ input })` | |
+| `sendChat(input)` | `client.mutation.sendChat({ input })` | |
+| `sendCustomerChat(input)` | `client.mutation.sendCustomerChat({ input })` | |
+| `createNote(input)` | `client.mutation.createNote({ input })` | |
+| `upsertCustomer(input)` | `client.mutation.upsertCustomer({ input })` | |
+| `upsertTenant(input)` | `client.mutation.upsertTenant({ input })` | |
+| `upsertCompany(input)` | `client.mutation.upsertCompany({ input })` | |
+| `createCustomerEvent(input)` | `client.mutation.createCustomerEvent({ input })` | |
+| `createThreadEvent(input)` | `client.mutation.createThreadEvent({ input })` | |
+| `createWebhookTarget(input)` | `client.mutation.createWebhookTarget({ input })` | |
+| `updateWebhookTarget(input)` | `client.mutation.updateWebhookTarget({ input })` | |
+| `deleteWebhookTarget(input)` | `client.mutation.deleteWebhookTarget({ input })` | |
+| `createCustomerCardConfig(input)` | `client.mutation.createCustomerCardConfig({ input })` | |
+| `updateCustomerCardConfig(input)` | `client.mutation.updateCustomerCardConfig({ input })` | |
+| `deleteCustomerCardConfig(input)` | `client.mutation.deleteCustomerCardConfig({ input })` | |
+| `upsertThreadField(input)` | `client.mutation.upsertThreadField({ input })` | |
+| `deleteThreadField(input)` | `client.mutation.deleteThreadField({ input })` | |
+| `createAttachmentUploadUrl(input)` | `client.mutation.createAttachmentUploadUrl({ input })` | |
+| `createLabelType(input)` | `client.mutation.createLabelType({ input })` | |
+| `archiveLabelType(input)` | `client.mutation.archiveLabelType({ input })` | |
+| `addCustomerToCustomerGroups(input)` | `client.mutation.addCustomerToCustomerGroups({ input })` | |
+| `removeCustomerFromCustomerGroups(input)` | `client.mutation.removeCustomerFromCustomerGroups({ input })` | |
+| `setCustomerTenants(input)` | `client.mutation.setCustomerTenants({ input })` | |
+| `addCustomerToTenants(input)` | `client.mutation.addCustomerToTenants({ input })` | |
+| `removeCustomerFromTenants(input)` | `client.mutation.removeCustomerFromTenants({ input })` | |
+| `updateCustomerCompany(input)` | `client.mutation.updateCustomerCompany({ input })` | |
+| `addMembersToTier(input)` | `client.mutation.addMembersToTier({ input })` | |
+| `removeMembersFromTier(input)` | `client.mutation.removeMembersFromTier({ input })` | |
+| `updateTenantTier(input)` | `client.mutation.updateTenantTier({ input })` | |
+| `updateCompanyTier(input)` | `client.mutation.updateCompanyTier({ input })` | |
+| `createKnowledgeSource(input)` | `client.mutation.createKnowledgeSource({ input })` | |
+| `indexDocument(input)` | `client.mutation.createIndexedDocument({ input })` | Renamed |
 
 ## Enums: TypeScript Enums to String Literal Unions
 
@@ -396,7 +396,7 @@ customer.fullName;
 customer.email;
 
 // NEW
-const customer: CustomerModel = await client.customer({ customerId: '123' });
+const customer: CustomerModel = await client.query.customer({ customerId: '123' });
 customer.fullName;
 customer.email;
 
@@ -481,7 +481,7 @@ if (pageInfo.hasNextPage) {
 ### New Pattern
 
 ```typescript
-const connection = await client.customers({ first: 25 });
+const connection = await client.query.customers({ first: 25 });
 
 const customers = connection.nodes;             // CustomerModel[]
 const hasMore = connection.hasNextPage;         // boolean
@@ -503,9 +503,9 @@ if (connection.hasNextPage) {
 
 4. **Convert error handling:** Wrap SDK calls in `try/catch` for network/auth errors. For mutations, check `result.error` on the response. Remove all `result.data` / `result.error` Result-type patterns from query calls.
 
-5. **Update query method names:** Drop the `get` prefix (e.g., `getCustomerById` to `customer`).
+5. **Update query method names:** Drop the `get` prefix and use `client.query.*` (e.g., `client.getCustomerById(...)` to `client.query.customer(...)`).
 
-6. **Wrap mutation inputs:** Change `client.method(input)` to `client.method({ input })`.
+6. **Wrap mutation inputs:** Change `client.method(input)` to `client.mutation.method({ input })`.
 
 7. **Update mutation return handling:** Old: `result.data.customer`. New: `result.customer` (access fields directly on the output object, no `.data` wrapper).
 
@@ -572,9 +572,9 @@ const client = new PlainClient({ apiKey: 'key' });
 
 async function handleCustomer(email: string) {
   try {
-    const customer = await client.customerByEmail({ email });
+    const customer = await client.query.customerByEmail({ email });
 
-    const result = await client.createThread({
+    const result = await client.mutation.createThread({
       input: {
         customerIdentifier: { customerId: customer.id },
         title: 'New thread',
