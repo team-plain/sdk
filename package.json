@@ -16,6 +16,11 @@
   "engines": {
     "node": ">=25.0.0"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.7",
     "@changesets/cli": "^2.30.0",

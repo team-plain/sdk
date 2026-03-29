@@ -2,12 +2,19 @@
   "name": "@team-plain/ui-components",
   "version": "2.0.0",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     }
   },
   "publishConfig": {
@@ -17,7 +24,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsup",
     "test": "vitest run"
   },
   "peerDependencies": {
@@ -25,6 +32,7 @@
   },
   "devDependencies": {
     "@team-plain/graphql": "workspace:*",
+    "tsup": "^8.5.1",
     "typescript": "^5.7.0"
   }
 }
