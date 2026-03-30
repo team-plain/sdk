@@ -1,6 +1,24 @@
 {
   "name": "@team-plain/webhooks",
   "version": "1.0.0",
+  "description": "Webhook parsing and signature verification for Plain webhooks",
+  "license": "MIT",
+  "author": "Plain <hello@plain.com> (https://plain.com)",
+  "homepage": "https://github.com/team-plain/sdk/tree/main/packages/webhooks#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/team-plain/sdk.git",
+    "directory": "packages/webhooks"
+  },
+  "bugs": {
+    "url": "https://github.com/team-plain/sdk/issues"
+  },
+  "keywords": [
+    "plain",
+    "webhooks",
+    "signature-verification",
+    "typescript"
+  ],
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/index.js",

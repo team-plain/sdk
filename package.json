@@ -1,5 +1,6 @@
 {
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "pnpm --filter @team-plain/graphql-codegen-plugin build && pnpm --filter @team-plain/graphql codegen && pnpm --filter @team-plain/graphql build && pnpm --filter @team-plain/ui-components build && pnpm --filter @team-plain/webhooks build",
