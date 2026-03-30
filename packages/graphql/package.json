@@ -1,6 +1,26 @@
 {
   "name": "@team-plain/graphql",
   "version": "1.0.0",
+  "description": "Typed TypeScript SDK for Plain's GraphQL API with auto-generated model classes",
+  "license": "MIT",
+  "author": "Plain <hello@plain.com> (https://plain.com)",
+  "homepage": "https://github.com/team-plain/sdk/tree/main/packages/graphql#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/team-plain/sdk.git",
+    "directory": "packages/graphql"
+  },
+  "bugs": {
+    "url": "https://github.com/team-plain/sdk/issues"
+  },
+  "keywords": [
+    "plain",
+    "graphql",
+    "sdk",
+    "typescript",
+    "api",
+    "customer-support"
+  ],
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/index.js",
