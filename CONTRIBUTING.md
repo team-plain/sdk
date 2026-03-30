@@ -25,7 +25,7 @@ pnpm build
 
 These are important to understand before contributing:
 
-- **ESM-only, Node 25+.** No CommonJS, no polyfills. Applies to all packages.
+- **Node 25+. ESM and CJS.** Publishable packages ship both ESM and CJS builds via tsup.
 - **Generated files are committed.** The `_generated_*` files are checked in so consumers don't need to run codegen. Re-run `pnpm codegen` after schema changes.
 
 ### SDK-specific

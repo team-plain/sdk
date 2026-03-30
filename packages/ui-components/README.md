@@ -5,10 +5,10 @@ Helper functions for building Plain [UI components](https://plain.com/docs). Pro
 ## Installation
 
 ```bash
-npm install @team-plain/ui-components @team-plain/sdk
+npm install @team-plain/ui-components @team-plain/graphql
 ```
 
-Requires `@team-plain/sdk` as a peer dependency.
+Requires `@team-plain/graphql` as a peer dependency.
 
 ## Usage
 
