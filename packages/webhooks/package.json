@@ -1,6 +1,6 @@
 {
   "name": "@team-plain/webhooks",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Webhook parsing and signature verification for Plain webhooks",
   "license": "MIT",
   "author": "Plain <hello@plain.com> (https://plain.com)",

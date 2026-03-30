@@ -1,5 +1,13 @@
 # @team-plain/ui-components
 
+## 2.0.1
+
+### Patch Changes
+
+- 7335db4: Add CommonJS support alongside existing ESM output.
+- Updated dependencies [7335db4]
+  - @team-plain/graphql@1.0.1
+
 ## 2.0.0
 
 ### Major Changes
