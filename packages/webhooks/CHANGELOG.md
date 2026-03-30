@@ -1,5 +1,11 @@
 # @team-plain/webhooks
 
+## 1.0.1
+
+### Patch Changes
+
+- 7335db4: Add CommonJS support alongside existing ESM output.
+
 ## 1.0.0
 
 ### Major Changes
