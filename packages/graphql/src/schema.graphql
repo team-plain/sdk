@@ -432,7 +432,7 @@ type ThreadField {
   updatedBy: Actor!
 }
 
-union ThreadDiscussionChannelDetails = ThreadDiscussionSlackChannelDetails | ThreadDiscussionEmailChannelDetails | ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails
+union ThreadDiscussionChannelDetails = ThreadDiscussionSlackChannelDetails | ThreadDiscussionEmailChannelDetails | ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails | ThreadDiscussionAgentSessionChannelDetails
 
 type ThreadDiscussionSlackChannelDetails {
   slackTeamId: ID!
@@ -450,9 +450,13 @@ type ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails {
   repositoryUrl: String
 }
 
+type ThreadDiscussionAgentSessionChannelDetails {
+  agentSessionId: ID!
+}
+
 type ThreadDiscussion {
   id: ID!
-  threadId: ID!
+  threadId: ID
   title: String!
   messages(first: Int, after: String, last: Int, before: String): ThreadDiscussionMessageConnection!
   resolvedAt: DateTime
@@ -488,16 +492,38 @@ type ThreadDiscussionMessageReaction {
 type ThreadDiscussionMessage {
   id: ID!
   threadDiscussionId: ID!
+  type: ThreadDiscussionMessageType!
   text: String!
   slackMessageLink: String
   attachments: [Attachment!]!
   lastEditedOnSlackAt: DateTime
   deletedOnSlackAt: DateTime
   reactions: [ThreadDiscussionMessageReaction!]!
+  entryType: String!
+  entry: ThreadDiscussionEntryPayload
   createdAt: DateTime!
   createdBy: Actor!
   updatedAt: DateTime!
   updatedBy: Actor!
+}
+
+union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload
+
+type ThreadDiscussionMessageEntryPayload {
+  text: String!
+  type: ThreadDiscussionMessageType!
+  attachments: [Attachment!]!
+  isFinal: Boolean!
+}
+
+type ThreadDiscussionToolCallEntryPayload {
+  service: String!
+  op: String!
+  description: String!
+  args: String
+  isSuccess: Boolean!
+  error: String
+  durationMs: Int!
 }
 
 type WorkflowRule {
@@ -749,6 +775,11 @@ type SavedThreadsViewFilterTenantField {
   dateValue: DateTime
 }
 
+type SavedThreadsViewFilterThreadLinkSource {
+  sourceType: String!
+  sourceId: ID!
+}
+
 type ThreadsDisplayOptions {
   hasStatus: Boolean!
   hasCustomer: Boolean!
@@ -813,6 +844,7 @@ type SavedThreadsViewNestedFilter {
   threadFields: [SavedThreadsViewFilterThreadField!]!
   tenantFields: [SavedThreadsViewFilterTenantField!]!
   threadLinkGroupIds: [ID!]!
+  threadLinkSources: [SavedThreadsViewFilterThreadLinkSource!]!
   createdAtFilter: DatetimeFilterOutput
   surveyResponse: SurveyResponseFilterOutput
   and: [SavedThreadsViewNestedFilter!]
@@ -838,6 +870,7 @@ type SavedThreadsViewFilter {
   threadFields: [SavedThreadsViewFilterThreadField!]!
   tenantFields: [SavedThreadsViewFilterTenantField!]!
   threadLinkGroupIds: [ID!]!
+  threadLinkSources: [SavedThreadsViewFilterThreadLinkSource!]!
   createdAtFilter: DatetimeFilterOutput
   surveyResponse: SurveyResponseFilterOutput
   sort: SavedThreadsViewSort!
@@ -2753,6 +2786,15 @@ type Query {
   """List webhook targets."""
   webhookTargets(first: Int, after: String, last: Int, before: String): WebhookTargetConnection!
 
+  """List webhook delivery attempts for a webhook target."""
+  webhookDeliveryAttempts(webhookTargetId: ID!, filters: WebhookDeliveryAttemptFilter, first: Int, after: String, last: Int, before: String): WebhookDeliveryAttemptConnection!
+
+  """
+  Get the request body payload for a public event.
+  Returns null if the event has expired (events are retained for 30 days).
+  """
+  publicEventRequestBody(publicEventId: ID!): String
+
   """List all the events types you can subscribe to."""
   subscriptionEventTypes: [SubscriptionEventType!]!
 
@@ -2820,10 +2862,12 @@ type Query {
   tenantFieldSchemas(filters: TenantFieldSchemasFilter, first: Int, after: String, last: Int, before: String): TenantFieldSchemaConnection!
   searchTenants(searchQuery: TenantsSearchQuery!, first: Int, after: String, last: Int, before: String): TenantSearchResultConnection!
   threadDiscussion(threadDiscussionId: ID!): ThreadDiscussion
+  discussion(discussionId: ID!): ThreadDiscussion
   serviceAuthorization(serviceAuthorizationId: ID!): ServiceAuthorization
   serviceAuthorizations(first: Int, after: String, last: Int, before: String, filters: ServiceAuthorizationsFilter): ServiceAuthorizationConnection!
   importerTenantLists(serviceAuthorizationId: ID!, first: Int, after: String, last: Int, before: String): ImporterTenantListConnection!
-  importRuns(serviceAuthorizationId: ID!, first: Int, after: String, last: Int, before: String): ImportRunConnection!
+  importJobDefinition(serviceIntegrationKey: String!, isEnabled: Boolean): ImportJobDefinition
+  importRuns(first: Int, after: String, last: Int, before: String, filters: ImportRunsFilter!): ImportRunConnection!
   tiers(first: Int, after: String, last: Int, before: String): TierConnection!
   tier(tierId: ID!): Tier
   businessHours: BusinessHours @deprecated(reason: "Use businessHoursSlots instead.")
@@ -3364,6 +3408,11 @@ input ThreadFieldFilter {
   date: ThreadFieldDateFilter
 }
 
+input ThreadLinkSourceFilter {
+  sourceType: String!
+  sourceId: ID!
+}
+
 input DatetimeFilter {
   """
   Timestamps -greater or equal- than this value. ISO 8601 format (e.g. 2024-10-28T18:30:00Z).
@@ -3461,6 +3510,7 @@ input ThreadsFilter {
   statuses: [ThreadStatus!]
   statusDetails: [StatusDetailType!]
   threadLinkGroupIds: [ID!]
+  threadLinkSources: [ThreadLinkSourceFilter!]
   createdAt: DatetimeFilter
   updatedAt: DatetimeFilter
   surveyResponse: SurveyResponseFilter
@@ -3478,6 +3528,7 @@ input TenantFieldFilter {
   dateValue: String
   numberValue: Float
   stringArrayValue: [String!]
+  userReferenceValues: [ID!]
 }
 
 enum ServiceLevelAgreementType {
@@ -4693,6 +4744,7 @@ input SavedThreadsViewFilterInput {
   threadFields: [ThreadFieldFilter!]!
   tenantFields: [TenantFieldFilter!]!
   threadLinkGroupIds: [ID!]!
+  threadLinkSources: [ThreadLinkSourceFilter!]!
   createdAtFilter: DatetimeFilter
   surveyResponse: SurveyResponseFilter
   sort: ThreadsSort!
@@ -6019,7 +6071,9 @@ type Mutation {
   """
   deleteThread(input: DeleteThreadInput!): DeleteThreadOutput!
   createThreadDiscussion(input: CreateThreadDiscussionInput!): CreateThreadDiscussionOutput!
+  createDiscussion(input: CreateDiscussionInput!): CreateDiscussionOutput!
   sendThreadDiscussionMessage(input: SendThreadDiscussionMessageInput!): SendThreadDiscussionMessageOutput!
+  sendDiscussionMessage(input: SendDiscussionMessageInput!): SendDiscussionMessageOutput!
   markThreadDiscussionAsResolved(input: MarkThreadDiscussionAsResolvedInput!): MarkThreadDiscussionAsResolvedOutput!
 
   """
@@ -6054,6 +6108,9 @@ type Mutation {
   """Delete personal service authorizations for the current user."""
   deleteMyServiceAuthorization(input: DeleteMyServiceAuthorizationInput!): DeleteMyServiceAuthorizationOutput!
   createImportSync(input: CreateImportSyncInput!): CreateImportSyncOutput!
+
+  """Disables the import job definition for the given service integration."""
+  updateImportJobDefinition(input: UpdateImportJobDefinitionInput!): UpdateImportJobDefinitionOutput!
   createTier(input: CreateTierInput!): CreateTierOutput!
   updateTier(input: UpdateTierInput!): UpdateTierOutput!
   deleteTier(input: DeleteTierInput!): DeleteTierOutput!
@@ -6557,6 +6614,7 @@ enum KnowledgeSourceSearchResultType {
 input SearchKnowledgeSourcesOptions {
   labelTypeIds: [ID!]
   types: [KnowledgeSourceSearchResultType!]
+  includeNonCustomerFacing: Boolean
 }
 
 union KnowledgeSourceSearchResult = IndexedDocumentSearchResult | HelpCenterArticleSearchResult
@@ -6590,6 +6648,25 @@ enum ThreadDiscussionType {
   EMAIL
   SLACK
   CURSOR_WORKSPACE_BACKGROUND_AGENT
+  AGENT_SESSION
+}
+
+enum CreateThreadDiscussionType {
+  EMAIL
+  SLACK
+  CURSOR_WORKSPACE_BACKGROUND_AGENT
+}
+
+enum DiscussionType {
+  EMAIL
+  SLACK
+  CURSOR_WORKSPACE_BACKGROUND_AGENT
+  AGENT_SESSION
+}
+
+enum DiscussionSourceEntityType {
+  COMPANY
+  TENANT
 }
 
 enum ThreadDiscussionMessageType {
@@ -6601,10 +6678,36 @@ input CreateThreadDiscussionInput {
   threadId: ID!
   markdownContent: String!
   attachmentIds: [ID!]
-  type: ThreadDiscussionType!
+  type: CreateThreadDiscussionType!
   slackDetails: ThreadDiscussionSlackDetailsInput
   emailDetails: ThreadDiscussionEmailDetailsInput
   cursorDetails: ThreadDiscussionCursorDetailsInput
+}
+
+input CreateDiscussionInput {
+  threadId: ID
+  markdownContent: String!
+  attachmentIds: [ID!]
+  type: DiscussionType!
+  slackDetails: ThreadDiscussionSlackDetailsInput
+  emailDetails: ThreadDiscussionEmailDetailsInput
+  cursorDetails: ThreadDiscussionCursorDetailsInput
+
+  """
+  The entity ID where this discussion was started (e.g. a company or customer ID).
+  Used to provide context to agent sessions started outside of a thread.
+  """
+  sourceEntityId: ID
+
+  """
+  The entity type for sourceEntityId. Required when sourceEntityId is provided.
+  """
+  sourceEntityType: DiscussionSourceEntityType
+}
+
+type CreateDiscussionOutput {
+  discussion: ThreadDiscussion
+  error: MutationError
 }
 
 type CreateThreadDiscussionOutput {
@@ -6620,6 +6723,17 @@ input SendThreadDiscussionMessageInput {
 
 type SendThreadDiscussionMessageOutput {
   threadDiscussionMessage: ThreadDiscussionMessage
+  error: MutationError
+}
+
+input SendDiscussionMessageInput {
+  discussionId: ID!
+  markdownContent: String!
+  attachmentIds: [ID!]
+}
+
+type SendDiscussionMessageOutput {
+  discussionMessage: ThreadDiscussionMessage
   error: MutationError
 }
 
@@ -6894,6 +7008,7 @@ enum TenantFieldType {
   BOOLEAN_TYPE
   STRING_ARRAY
   DATETIME_TYPE
+  USER_REFERENCE_TYPE
 }
 
 enum TenantFieldMappingConcept {
@@ -6932,6 +7047,7 @@ type TenantFieldSchemaConnection {
 
 input TenantFieldSchemasFilter {
   source: String
+  isVisible: Boolean
 }
 
 input TenantFieldSchemaInput {
@@ -6967,6 +7083,7 @@ input UpsertTenantFieldInput {
   booleanValue: Boolean
   arrayValue: [String!]
   dateValue: String
+  userReferenceValues: [ID!]
 }
 
 type UpsertTenantFieldOutput {
@@ -7012,7 +7129,7 @@ type RemoveTenantFieldSchemaMappingOutput {
   error: MutationError
 }
 
-union TenantFieldValue = TenantFieldStringValue | TenantFieldNumberValue | TenantFieldBooleanValue | TenantFieldStringArrayValue | TenantFieldDateTimeValue
+union TenantFieldValue = TenantFieldStringValue | TenantFieldNumberValue | TenantFieldBooleanValue | TenantFieldStringArrayValue | TenantFieldDateTimeValue | TenantFieldUserReferenceValue
 
 type TenantFieldStringValue {
   stringValue: String!
@@ -7032,6 +7149,11 @@ type TenantFieldStringArrayValue {
 
 type TenantFieldDateTimeValue {
   dateValue: DateTime!
+}
+
+type TenantFieldUserReferenceValue {
+  userReferenceValues: [ID!]!
+  users: [User!]!
 }
 
 type TenantField {
@@ -7535,11 +7657,17 @@ type ChatThreadChannelDetails {
   customerReadAt: DateTime!
 }
 
+enum MSTeamsMessageType {
+  CHATS
+  CHANNELS
+}
+
 type MSTeamsThreadChannelDetails {
   msTeamsTeamId: ID!
   msTeamsTeamName: String!
   msTeamsChannelId: ID!
   msTeamsChannelName: String!
+  msTeamsMessageType: MSTeamsMessageType!
 }
 
 type DiscordThreadChannelDetails {
@@ -8076,6 +8204,67 @@ type UpdateWebhookTargetOutput {
 
 type DeleteWebhookTargetOutput {
   error: MutationError
+}
+
+enum WebhookDeliveryAttemptResultStatus {
+  SUCCESSFUL_RESPONSE
+  FAILED_RESPONSE
+  ERROR
+  REJECTED
+  SCHEMA_VALIDATION_FAILED
+}
+
+type WebhookDeliveryAttemptSuccessfulResult {
+  status: WebhookDeliveryAttemptResultStatus!
+  httpStatusCode: Int!
+}
+
+type WebhookDeliveryAttemptFailedResult {
+  status: WebhookDeliveryAttemptResultStatus!
+  httpStatusCode: Int!
+}
+
+type WebhookDeliveryAttemptErrorResult {
+  status: WebhookDeliveryAttemptResultStatus!
+  errorCode: String!
+  errorMessage: String!
+}
+
+type WebhookDeliveryAttemptRejectedResult {
+  status: WebhookDeliveryAttemptResultStatus!
+  rejectedMessage: String!
+}
+
+type WebhookDeliveryAttemptSchemaValidationFailedResult {
+  status: WebhookDeliveryAttemptResultStatus!
+  errorMessage: String!
+}
+
+union WebhookDeliveryAttemptResult = WebhookDeliveryAttemptSuccessfulResult | WebhookDeliveryAttemptFailedResult | WebhookDeliveryAttemptErrorResult | WebhookDeliveryAttemptRejectedResult | WebhookDeliveryAttemptSchemaValidationFailedResult
+
+type WebhookDeliveryAttempt {
+  id: ID!
+  webhookTargetId: ID!
+  publicEventId: ID!
+  publicEventEventType: String!
+  attemptedAt: DateTime!
+  durationInMilliseconds: Int!
+  result: WebhookDeliveryAttemptResult!
+}
+
+type WebhookDeliveryAttemptEdge {
+  cursor: String!
+  node: WebhookDeliveryAttempt!
+}
+
+type WebhookDeliveryAttemptConnection {
+  edges: [WebhookDeliveryAttemptEdge!]!
+  pageInfo: PageInfo!
+}
+
+input WebhookDeliveryAttemptFilter {
+  eventTypes: [String!]
+  resultStatus: WebhookDeliveryAttemptResultStatus
 }
 
 input CustomerCardConfigOrderInput {
@@ -8676,6 +8865,12 @@ type ThreadChange {
   thread: Thread!
 }
 
+type DiscussionChange {
+  changeType: ChangeType!
+  discussion: ThreadDiscussion!
+  discussionMessage: ThreadDiscussionMessage
+}
+
 type UserChange {
   changeType: ChangeType!
   user: User!
@@ -8702,6 +8897,11 @@ type SubscriptionAcknowledgement {
 
 union CustomerCardInstanceChangesResult = CustomerCardInstanceChange | SubscriptionAcknowledgement
 
+type AgentSessionDelta {
+  agentSessionId: ID!
+  text: String!
+}
+
 input ThreadChangesFilter {
   statuses: [ThreadStatus!]
   statusChangedAt: DatetimeFilter
@@ -8713,10 +8913,12 @@ type Subscription {
   threadTimelineChanges(threadId: ID!): TimelineEntryChange!
   customerChanges: CustomerChange!
   threadChanges(filters: ThreadChangesFilter): ThreadChange!
+  discussionChanges(discussionId: ID!): DiscussionChange!
   customerCardInstanceChanges(customerId: ID!): CustomerCardInstanceChangesResult!
   userChanges: UserChange!
   threadFieldSchemaChanges: ThreadFieldSchemaChange!
   internalNotificationChanges: InternalNotificationChange!
+  agentSessionDelta(agentSessionId: ID!): AgentSessionDelta!
 }
 
 input UpsertCustomerGroupInput {
@@ -8966,6 +9168,13 @@ type ServiceAuthorization {
   updatedBy: InternalActor!
   connectedAt: DateTime!
   connectedBy: InternalActor!
+
+  """
+  Whether this service authorization uses the import runner system.
+  When true, the connection was established with the new import runner flow.
+  When false, the connection uses legacy Nango-managed syncs.
+  """
+  isImportRunnerIntegration: Boolean!
 }
 
 type ServiceAuthorizationEdge {
@@ -9000,12 +9209,23 @@ input CreateImportSyncInput {
 
 input ImportSyncFiltersInput {
   tenantListId: ID
+  tenantListName: String
+}
+
+type ImportJobDefinitionList {
+  id: ID!
+  name: String
+}
+
+type ImportJobDefinitionMetadata {
+  lists: [ImportJobDefinitionList!]!
 }
 
 type ImportJobDefinition {
   id: ID!
   mode: String!
   entityTypes: [String!]!
+  metadata: ImportJobDefinitionMetadata
   enabledAt: DateTime
   createdAt: DateTime!
   createdBy: InternalActor!
@@ -9014,6 +9234,16 @@ type ImportJobDefinition {
 }
 
 type CreateImportSyncOutput {
+  importJobDefinition: ImportJobDefinition
+  error: MutationError
+}
+
+input UpdateImportJobDefinitionInput {
+  serviceIntegrationKey: String!
+  isEnabled: Boolean
+}
+
+type UpdateImportJobDefinitionOutput {
   importJobDefinition: ImportJobDefinition
   error: MutationError
 }
@@ -9442,6 +9672,15 @@ enum FeatureKey {
   SLACK_DISCUSSIONS
   SERVICE_LEVEL_AGREEMENTS
   DATA_IMPORTERS
+  ZENDESK_IMPORTER
+  INTERCOM_IMPORTER
+  SALESFORCE_IMPORTER
+  HELPSCOUT_SYNC
+  HUBSPOT_SYNC
+  INCIDENTIO_INTEGRATION
+  ATTIO_IMPORTER
+  FRESHDESK_IMPORTER
+  ROOTLY_INTEGRATION
   MS_TEAMS_INTEGRATION
   LIVE_CHAT
   ESCALATION_PATHS
@@ -10249,6 +10488,7 @@ enum ImporterStatus {
 }
 
 type ImportRun {
+  importJobId: ID!
   entityType: ImporterEntityType!
   status: ImporterStatus!
   downloadedRecords: Int
@@ -10265,6 +10505,13 @@ type ImportRunEdge {
 type ImportRunConnection {
   edges: [ImportRunEdge!]!
   pageInfo: PageInfo!
+}
+
+input ImportRunsFilter {
+  """
+  One of: zendesk, salesforce, freshdesk, helpscout-mailbox, hubspot, jira, shortcut, rootly, incidentio, github-app-oauth, attio.
+  """
+  serviceIntegrationKey: String!
 }
 
 type ImportResult {
@@ -10352,7 +10599,6 @@ type KnowledgeGap {
   description: String!
   status: KnowledgeGapStatus!
   statusChangedAt: DateTime!
-  firstSeenAt: DateTime!
   lastSeenAt: DateTime!
   createdAt: DateTime!
   createdBy: Actor!
@@ -10363,11 +10609,12 @@ type KnowledgeGap {
   signals(first: Int, after: String, last: Int, before: String): KnowledgeGapSignalConnection!
 }
 
-type KnowledgeGapSignal {
+union KnowledgeGapSignal = AriKnowledgeGapSignal
+
+type AriKnowledgeGapSignal {
   id: ID!
   type: KnowledgeGapSignalType!
   threadId: ID!
-  knowledgeGapId: ID
   createdAt: DateTime!
   createdBy: Actor!
   updatedAt: DateTime!

@@ -96,6 +96,9 @@
         },
         {
           "$ref": "#/definitions/threadDiscordMessageUpdatedEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadTenantUpdatedPublicEventPayload"
         }
       ]
     },
@@ -2644,6 +2647,20 @@
       ],
       "additionalProperties": true
     },
+    "slackReactionChange": {
+      "type": "object",
+      "properties": {
+        "changeType": {
+          "type": "string",
+          "enum": ["ADDED", "REMOVED", "UNKNOWN_SLACK_REACTION_CHANGE_TYPE"]
+        },
+        "reaction": {
+          "$ref": "#/definitions/slackMessage/properties/slackReactions/items"
+        }
+      },
+      "required": ["changeType", "reaction"],
+      "additionalProperties": true
+    },
     "discordMessage": {
       "type": "object",
       "properties": {
@@ -2885,7 +2902,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-03-13"
+          "const": "2026-04-21"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
@@ -3355,6 +3372,17 @@
         },
         "slackMessage": {
           "$ref": "#/definitions/slackMessage"
+        },
+        "reactionChange": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/slackReactionChange"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": ["eventType", "thread", "slackMessage"],
@@ -3492,6 +3520,89 @@
       "required": ["eventType", "previousCustomer"],
       "additionalProperties": true,
       "description": "A customer has been deleted"
+    },
+    "threadTenantUpdatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_tenant_updated"
+        },
+        "previousThread": {
+          "$ref": "#/definitions/thread"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "previousTenant": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "$ref": "#/definitions/id"
+                },
+                "workspaceId": {
+                  "$ref": "#/definitions/id"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "externalId": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": ["string", "null"]
+                },
+                "source": {
+                  "type": "string",
+                  "enum": ["api", "salesforce", "hubspot", "UNKNOWN_TENANT_SOURCE"],
+                  "default": "api"
+                },
+                "createdAt": {
+                  "$ref": "#/definitions/datetime"
+                },
+                "createdBy": {
+                  "$ref": "#/definitions/actor"
+                },
+                "updatedAt": {
+                  "$ref": "#/definitions/datetime"
+                },
+                "updatedBy": {
+                  "$ref": "#/definitions/actor"
+                }
+              },
+              "required": [
+                "id",
+                "workspaceId",
+                "name",
+                "externalId",
+                "url",
+                "createdAt",
+                "createdBy",
+                "updatedAt",
+                "updatedBy"
+              ],
+              "additionalProperties": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tenant": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/threadTenantUpdatedPublicEventPayload/properties/previousTenant/anyOf/0"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["eventType", "previousThread", "thread", "previousTenant", "tenant"],
+      "additionalProperties": true
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#"

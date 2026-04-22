@@ -3650,6 +3650,12 @@ fragment ImportJobDefinitionFields on ImportJobDefinition {
   id
   mode
   entityTypes
+  metadata {
+    lists {
+      id
+      name
+    }
+  }
   enabledAt {
     unixTimestamp
     iso8601
@@ -3711,6 +3717,7 @@ fragment ImportJobDefinitionFields on ImportJobDefinition {
 }
 
 fragment ImportRunFields on ImportRun {
+  importJobId
   entityType
   status
   downloadedRecords
@@ -4147,10 +4154,6 @@ fragment KnowledgeGapFields on KnowledgeGap {
   description
   status
   statusChangedAt {
-    unixTimestamp
-    iso8601
-  }
-  firstSeenAt {
     unixTimestamp
     iso8601
   }
@@ -4768,6 +4771,7 @@ fragment MSTeamsThreadChannelDetailsFields on MSTeamsThreadChannelDetails {
   msTeamsTeamName
   msTeamsChannelId
   msTeamsChannelName
+  msTeamsMessageType
 }
 
 fragment NextResponseTimeServiceLevelAgreementFields on NextResponseTimeServiceLevelAgreement {
@@ -5276,6 +5280,10 @@ fragment SavedThreadsViewFields on SavedThreadsView {
     slaTypes
     slaStatuses
     threadLinkGroupIds
+    threadLinkSources {
+      sourceType
+      sourceId
+    }
     createdAtFilter {
       after
       before
@@ -5466,6 +5474,7 @@ fragment ServiceAuthorizationFields on ServiceAuthorization {
       }
     }
   }
+  isImportRunnerIntegration
 }
 
 fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgreementStatusTransitionedEntry {
@@ -6504,6 +6513,9 @@ fragment TenantFieldFields on TenantField {
         iso8601
       }
     }
+    ... on TenantFieldUserReferenceValue {
+      userReferenceValues
+    }
   }
   createdAt {
     unixTimestamp
@@ -6648,6 +6660,10 @@ fragment TenantFieldStringArrayValueFields on TenantFieldStringArrayValue {
 
 fragment TenantFieldStringValueFields on TenantFieldStringValue {
   stringValue
+}
+
+fragment TenantFieldUserReferenceValueFields on TenantFieldUserReferenceValue {
+  userReferenceValues
 }
 
 fragment TenantTierMembershipFields on TenantTierMembership {
@@ -7527,6 +7543,7 @@ fragment ThreadFields on Thread {
       msTeamsTeamName
       msTeamsChannelId
       msTeamsChannelName
+      msTeamsMessageType
     }
     ... on ChatThreadChannelDetails {
       customerReadAt {
@@ -7831,7 +7848,14 @@ fragment ThreadDiscussionFields on ThreadDiscussion {
       cursorWorkspaceIntegrationId
       repositoryUrl
     }
+    ... on ThreadDiscussionAgentSessionChannelDetails {
+      agentSessionId
+    }
   }
+}
+
+fragment ThreadDiscussionAgentSessionChannelDetailsFields on ThreadDiscussionAgentSessionChannelDetails {
+  agentSessionId
 }
 
 fragment ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFields on ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails {
@@ -7855,6 +7879,7 @@ fragment ThreadDiscussionEntryFields on ThreadDiscussionEntry {
 fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
   id
   threadDiscussionId
+  type
   text
   slackMessageLink
   lastEditedOnSlackAt {
@@ -7864,6 +7889,24 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
   deletedOnSlackAt {
     unixTimestamp
     iso8601
+  }
+  entryType
+  entry {
+    __typename
+    ... on ThreadDiscussionMessageEntryPayload {
+      text
+      type
+      isFinal
+    }
+    ... on ThreadDiscussionToolCallEntryPayload {
+      service
+      op
+      description
+      args
+      isSuccess
+      error
+      durationMs
+    }
   }
   createdAt {
     unixTimestamp
@@ -7960,6 +8003,12 @@ fragment ThreadDiscussionMessageEntryFields on ThreadDiscussionMessageEntry {
   }
 }
 
+fragment ThreadDiscussionMessageEntryPayloadFields on ThreadDiscussionMessageEntryPayload {
+  text
+  type
+  isFinal
+}
+
 fragment ThreadDiscussionResolvedEntryFields on ThreadDiscussionResolvedEntry {
   customerId
   threadDiscussionId
@@ -7978,6 +8027,16 @@ fragment ThreadDiscussionSlackChannelDetailsFields on ThreadDiscussionSlackChann
   slackChannelId
   slackChannelName
   slackMessageLink
+}
+
+fragment ThreadDiscussionToolCallEntryPayloadFields on ThreadDiscussionToolCallEntryPayload {
+  service
+  op
+  description
+  args
+  isSuccess
+  error
+  durationMs
 }
 
 fragment ThreadEventFields on ThreadEvent {
@@ -14701,6 +14760,68 @@ fragment UserWorkingHoursFields on UserWorkingHours {
   }
 }
 
+fragment WebhookDeliveryAttemptFields on WebhookDeliveryAttempt {
+  id
+  webhookTargetId
+  publicEventId
+  publicEventEventType
+  attemptedAt {
+    unixTimestamp
+    iso8601
+  }
+  durationInMilliseconds
+  result {
+    __typename
+    ... on WebhookDeliveryAttemptSuccessfulResult {
+      status
+      httpStatusCode
+    }
+    ... on WebhookDeliveryAttemptFailedResult {
+      status
+      httpStatusCode
+    }
+    ... on WebhookDeliveryAttemptErrorResult {
+      status
+      errorCode
+      errorMessage
+    }
+    ... on WebhookDeliveryAttemptRejectedResult {
+      status
+      rejectedMessage
+    }
+    ... on WebhookDeliveryAttemptSchemaValidationFailedResult {
+      status
+      errorMessage
+    }
+  }
+}
+
+fragment WebhookDeliveryAttemptErrorResultFields on WebhookDeliveryAttemptErrorResult {
+  status
+  errorCode
+  errorMessage
+}
+
+fragment WebhookDeliveryAttemptFailedResultFields on WebhookDeliveryAttemptFailedResult {
+  status
+  httpStatusCode
+}
+
+fragment WebhookDeliveryAttemptRejectedResultFields on WebhookDeliveryAttemptRejectedResult {
+  status
+  rejectedMessage
+}
+
+fragment WebhookDeliveryAttemptSchemaValidationFailedResultFields on WebhookDeliveryAttemptSchemaValidationFailedResult {
+  status
+  errorMessage
+}
+
+fragment WebhookDeliveryAttemptSuccessfulResultFields on WebhookDeliveryAttemptSuccessfulResult {
+  status
+  httpStatusCode
+}
+
 fragment WebhookTargetFields on WebhookTarget {
   id
   url
@@ -16588,6 +16709,27 @@ query WebhookTargets($first: Int, $after: String, $last: Int, $before: String) {
   }
 }
 
+query WebhookDeliveryAttempts($webhookTargetId: ID!, $filters: WebhookDeliveryAttemptFilter, $first: Int, $after: String, $last: Int, $before: String) {
+  webhookDeliveryAttempts(webhookTargetId: $webhookTargetId, filters: $filters, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...WebhookDeliveryAttemptFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query PublicEventRequestBody($publicEventId: ID!) {
+  publicEventRequestBody(publicEventId: $publicEventId)
+}
+
 query SubscriptionEventTypes {
   subscriptionEventTypes {
     eventType
@@ -16973,6 +17115,12 @@ query ThreadDiscussion($threadDiscussionId: ID!) {
   }
 }
 
+query Discussion($discussionId: ID!) {
+  discussion(discussionId: $discussionId) {
+    ...ThreadDiscussionFields
+  }
+}
+
 query ServiceAuthorization($serviceAuthorizationId: ID!) {
   serviceAuthorization(serviceAuthorizationId: $serviceAuthorizationId) {
     ...ServiceAuthorizationFields
@@ -17014,8 +17162,14 @@ query ImporterTenantLists($serviceAuthorizationId: ID!, $first: Int, $after: Str
   }
 }
 
-query ImportRuns($serviceAuthorizationId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
-  importRuns(serviceAuthorizationId: $serviceAuthorizationId, first: $first, after: $after, last: $last, before: $before) {
+query ImportJobDefinition($serviceIntegrationKey: String!, $isEnabled: Boolean) {
+  importJobDefinition(serviceIntegrationKey: $serviceIntegrationKey, isEnabled: $isEnabled) {
+    ...ImportJobDefinitionFields
+  }
+}
+
+query ImportRuns($first: Int, $after: String, $last: Int, $before: String, $filters: ImportRunsFilter!) {
+  importRuns(first: $first, after: $after, last: $last, before: $before, filters: $filters) {
     edges {
       node {
         ...ImportRunFields
@@ -20448,9 +20602,45 @@ mutation CreateThreadDiscussion($input: CreateThreadDiscussionInput!) {
   }
 }
 
+mutation CreateDiscussion($input: CreateDiscussionInput!) {
+  createDiscussion(input: $input) {
+    discussion {
+      ...ThreadDiscussionFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation SendThreadDiscussionMessage($input: SendThreadDiscussionMessageInput!) {
   sendThreadDiscussionMessage(input: $input) {
     threadDiscussionMessage {
+      ...ThreadDiscussionMessageFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation SendDiscussionMessage($input: SendDiscussionMessageInput!) {
+  sendDiscussionMessage(input: $input) {
+    discussionMessage {
       ...ThreadDiscussionMessageFields
     }
     error {
@@ -20895,6 +21085,24 @@ mutation DeleteMyServiceAuthorization($input: DeleteMyServiceAuthorizationInput!
 
 mutation CreateImportSync($input: CreateImportSyncInput!) {
   createImportSync(input: $input) {
+    importJobDefinition {
+      ...ImportJobDefinitionFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateImportJobDefinition($input: UpdateImportJobDefinitionInput!) {
+  updateImportJobDefinition(input: $input) {
     importJobDefinition {
       ...ImportJobDefinitionFields
     }
@@ -22464,6 +22672,39 @@ query HelpCenterArticleGroupArticles($id: ID!, $first: Int, $after: String, $las
         startCursor
         endCursor
       }
+    }
+  }
+}
+
+query KnowledgeGapSignals($knowledgeGapId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
+  knowledgeGap(knowledgeGapId: $knowledgeGapId) {
+    signals(first: $first, after: $after, last: $last, before: $before) {
+      edges {
+        node {
+          __typename
+          ... on AriKnowledgeGapSignal {
+            id
+            type
+            threadId
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
+          }
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 }

@@ -313,7 +313,8 @@ export interface WebhooksSchemaDefinition {
     | ThreadSlackMessageUpdatedEventPayload
     | ThreadDiscordMessageReceivedEventPayload
     | ThreadDiscordMessageSentEventPayload
-    | ThreadDiscordMessageUpdatedEventPayload;
+    | ThreadDiscordMessageUpdatedEventPayload
+    | ThreadTenantUpdatedPublicEventPayload;
   id: Id;
   type:
     | "thread.thread_created"
@@ -785,21 +786,22 @@ export interface SlackMessage {
   slackChannelId: string;
   slackChannelName: string;
   slackMessageLink: string;
-  slackReactions?: {
-    name: string;
-    actors: {
-      actorId: Id;
-      actorType: "user" | "machineUser" | "customer" | "system";
-      slackUserId: string;
-      [k: string]: unknown;
-    }[];
-    imageUrl?: string | null;
-    [k: string]: unknown;
-  }[];
+  slackReactions?: Items[];
   createdAt: Datetime;
   createdBy: Actor;
   updatedAt: Datetime;
   updatedBy: Actor;
+  [k: string]: unknown;
+}
+export interface Items {
+  name: string;
+  actors: {
+    actorId: Id;
+    actorType: "user" | "machineUser" | "customer" | "system";
+    slackUserId: string;
+    [k: string]: unknown;
+  }[];
+  imageUrl?: string | null;
   [k: string]: unknown;
 }
 export interface ThreadSlackMessageSentEventPayload {
@@ -986,6 +988,12 @@ export interface ThreadSlackMessageUpdatedEventPayload {
     | "UNKNOWN_SLACK_MESSAGE_CHANGE_TYPE";
   thread: Thread;
   slackMessage: SlackMessage;
+  reactionChange?: SlackReactionChange | null;
+  [k: string]: unknown;
+}
+export interface SlackReactionChange {
+  changeType: "ADDED" | "REMOVED" | "UNKNOWN_SLACK_REACTION_CHANGE_TYPE";
+  reaction: Items;
   [k: string]: unknown;
 }
 export interface ThreadDiscordMessageReceivedEventPayload {
@@ -1024,9 +1032,41 @@ export interface ThreadDiscordMessageUpdatedEventPayload {
   discordMessage: DiscordMessage;
   [k: string]: unknown;
 }
+export interface ThreadTenantUpdatedPublicEventPayload {
+  eventType: "thread.thread_tenant_updated";
+  previousThread: Thread;
+  thread: Thread;
+  previousTenant: {
+    id: Id;
+    workspaceId: Id;
+    name: string;
+    externalId: string;
+    url: string | null;
+    source?: "api" | "salesforce" | "hubspot" | "UNKNOWN_TENANT_SOURCE";
+    createdAt: Datetime;
+    createdBy: Actor;
+    updatedAt: Datetime;
+    updatedBy: Actor;
+    [k: string]: unknown;
+  } | null;
+  tenant: {
+    id: Id;
+    workspaceId: Id;
+    name: string;
+    externalId: string;
+    url: string | null;
+    source?: "api" | "salesforce" | "hubspot" | "UNKNOWN_TENANT_SOURCE";
+    createdAt: Datetime;
+    createdBy: Actor;
+    updatedAt: Datetime;
+    updatedBy: Actor;
+    [k: string]: unknown;
+  } | null;
+  [k: string]: unknown;
+}
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-03-13";
+  webhookTargetVersion: "2026-04-21";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

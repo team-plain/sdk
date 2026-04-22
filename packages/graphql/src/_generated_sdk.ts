@@ -57,6 +57,7 @@ import {
   CreateCustomerEventDocument,
   CreateCustomerGroupDocument,
   CreateCustomerSurveyDocument,
+  CreateDiscussionDocument,
   CreateEmailPreviewUrlDocument,
   CreateEscalationPathDocument,
   CreateGithubUserAuthIntegrationDocument,
@@ -174,6 +175,7 @@ import {
   DeleteWorkspaceSlackChannelIntegrationDocument,
   DeleteWorkspaceSlackIntegrationDocument,
   DeletedThreadsDocument,
+  DiscussionDocument,
   EnabledAiToneRulesTextDocument,
   EscalateThreadDocument,
   EscalationPathDocument,
@@ -197,6 +199,7 @@ import {
   HelpCenterIndexDocument,
   HelpCentersDocument,
   ImportCustomersDocument,
+  ImportJobDefinitionDocument,
   ImportRunsDocument,
   ImportTenantFieldSchemasDocument,
   ImportTenantsDocument,
@@ -243,6 +246,7 @@ import {
   MyWorkspacesDocument,
   PermissionsDocument,
   PreviewBillingPlanChangeDocument,
+  PublicEventRequestBodyDocument,
   RefreshConnectedDiscordChannelsDocument,
   RefreshWorkspaceSlackChannelIntegrationDocument,
   RegenerateWorkspaceHmacDocument,
@@ -281,6 +285,7 @@ import {
   SendChatDocument,
   SendCustomerChatDocument,
   SendDiscordMessageDocument,
+  SendDiscussionMessageDocument,
   SendMsTeamsMessageDocument,
   SendNewEmailDocument,
   SendSlackMessageDocument,
@@ -353,6 +358,7 @@ import {
   UpdateHelpCenterCustomDomainNameDocument,
   UpdateHelpCenterDocument,
   UpdateHelpCenterIndexDocument,
+  UpdateImportJobDefinitionDocument,
   UpdateInternalNotificationsDocument,
   UpdateLabelTypeDocument,
   UpdateMachineUserDocument,
@@ -404,6 +410,7 @@ import {
   VerifyHelpCenterCustomDomainNameDocument,
   VerifyWorkspaceEmailDnsSettingsDocument,
   VerifyWorkspaceEmailForwardingSettingsDocument,
+  WebhookDeliveryAttemptsDocument,
   WebhookTargetDocument,
   WebhookTargetsDocument,
   WebhookVersionsDocument,
@@ -585,6 +592,8 @@ import type {
   CreateCustomerGroupMutationVariables,
   CreateCustomerSurveyMutation,
   CreateCustomerSurveyMutationVariables,
+  CreateDiscussionMutation,
+  CreateDiscussionMutationVariables,
   CreateEmailPreviewUrlMutation,
   CreateEmailPreviewUrlMutationVariables,
   CreateEscalationPathMutation,
@@ -834,6 +843,8 @@ import type {
   DiscordMessageEntryFieldsFragment,
   DiscordMessageFieldsFragment,
   DiscordThreadChannelDetailsFieldsFragment,
+  DiscussionQuery,
+  DiscussionQueryVariables,
   DiscussionResolvedNotificationDetailFieldsFragment,
   EmailBounceNotificationDetailFieldsFragment,
   EmailCustomerIdentityFieldsFragment,
@@ -902,6 +913,8 @@ import type {
   ImportCustomersMutation,
   ImportCustomersMutationVariables,
   ImportJobDefinitionFieldsFragment,
+  ImportJobDefinitionQuery,
+  ImportJobDefinitionQueryVariables,
   ImportRunFieldsFragment,
   ImportRunsQuery,
   ImportRunsQueryVariables,
@@ -1010,6 +1023,8 @@ import type {
   PlainThreadThreadLinkFieldsFragment,
   PreviewBillingPlanChangeMutation,
   PreviewBillingPlanChangeMutationVariables,
+  PublicEventRequestBodyQuery,
+  PublicEventRequestBodyQueryVariables,
   RefreshConnectedDiscordChannelsMutation,
   RefreshConnectedDiscordChannelsMutationVariables,
   RefreshWorkspaceSlackChannelIntegrationMutation,
@@ -1088,6 +1103,8 @@ import type {
   SendCustomerChatMutationVariables,
   SendDiscordMessageMutation,
   SendDiscordMessageMutationVariables,
+  SendDiscussionMessageMutation,
+  SendDiscussionMessageMutationVariables,
   SendMsTeamsMessageMutation,
   SendMsTeamsMessageMutationVariables,
   SendNewEmailMutation,
@@ -1155,6 +1172,7 @@ import type {
   TenantFieldSchemasQueryVariables,
   TenantFieldStringArrayValueFieldsFragment,
   TenantFieldStringValueFieldsFragment,
+  TenantFieldUserReferenceValueFieldsFragment,
   TenantFieldsFragment,
   TenantQuery,
   TenantQueryVariables,
@@ -1177,11 +1195,13 @@ import type {
   ThreadClustersPaginatedQueryVariables,
   ThreadClustersQuery,
   ThreadClustersQueryVariables,
+  ThreadDiscussionAgentSessionChannelDetailsFieldsFragment,
   ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment,
   ThreadDiscussionEmailChannelDetailsFieldsFragment,
   ThreadDiscussionEntryFieldsFragment,
   ThreadDiscussionFieldsFragment,
   ThreadDiscussionMessageEntryFieldsFragment,
+  ThreadDiscussionMessageEntryPayloadFieldsFragment,
   ThreadDiscussionMessageFieldsFragment,
   ThreadDiscussionMessagesQuery,
   ThreadDiscussionMessagesQueryVariables,
@@ -1189,6 +1209,7 @@ import type {
   ThreadDiscussionQueryVariables,
   ThreadDiscussionResolvedEntryFieldsFragment,
   ThreadDiscussionSlackChannelDetailsFieldsFragment,
+  ThreadDiscussionToolCallEntryPayloadFieldsFragment,
   ThreadEventEntryFieldsFragment,
   ThreadEventFieldsFragment,
   ThreadFieldFieldsFragment,
@@ -1293,6 +1314,8 @@ import type {
   UpdateHelpCenterIndexMutationVariables,
   UpdateHelpCenterMutation,
   UpdateHelpCenterMutationVariables,
+  UpdateImportJobDefinitionMutation,
+  UpdateImportJobDefinitionMutationVariables,
   UpdateInternalNotificationsMutation,
   UpdateInternalNotificationsMutationVariables,
   UpdateLabelTypeMutation,
@@ -1402,6 +1425,14 @@ import type {
   VerifyWorkspaceEmailDnsSettingsMutation,
   VerifyWorkspaceEmailForwardingSettingsMutation,
   VerifyWorkspaceEmailForwardingSettingsMutationVariables,
+  WebhookDeliveryAttemptErrorResultFieldsFragment,
+  WebhookDeliveryAttemptFailedResultFieldsFragment,
+  WebhookDeliveryAttemptFieldsFragment,
+  WebhookDeliveryAttemptRejectedResultFieldsFragment,
+  WebhookDeliveryAttemptSchemaValidationFailedResultFieldsFragment,
+  WebhookDeliveryAttemptSuccessfulResultFieldsFragment,
+  WebhookDeliveryAttemptsQuery,
+  WebhookDeliveryAttemptsQueryVariables,
   WebhookTargetFieldsFragment,
   WebhookTargetQuery,
   WebhookTargetQueryVariables,
@@ -4285,6 +4316,7 @@ export class ImportRunModel {
   public readonly completedAt: ImportRunFieldsFragment["completedAt"];
   public readonly downloadedRecords: ImportRunFieldsFragment["downloadedRecords"];
   public readonly entityType: ImportRunFieldsFragment["entityType"];
+  public readonly importJobId: ImportRunFieldsFragment["importJobId"];
   public readonly savedRecords: ImportRunFieldsFragment["savedRecords"];
   public readonly startedAt: ImportRunFieldsFragment["startedAt"];
   public readonly status: ImportRunFieldsFragment["status"];
@@ -4295,6 +4327,7 @@ export class ImportRunModel {
     this.completedAt = data.completedAt;
     this.downloadedRecords = data.downloadedRecords;
     this.entityType = data.entityType;
+    this.importJobId = data.importJobId;
     this.savedRecords = data.savedRecords;
     this.startedAt = data.startedAt;
     this.status = data.status;
@@ -4609,7 +4642,6 @@ export class KnowledgeGapModel {
 
   public readonly createdAt: KnowledgeGapFieldsFragment["createdAt"];
   public readonly description: KnowledgeGapFieldsFragment["description"];
-  public readonly firstSeenAt: KnowledgeGapFieldsFragment["firstSeenAt"];
   public readonly id: KnowledgeGapFieldsFragment["id"];
   public readonly lastSeenAt: KnowledgeGapFieldsFragment["lastSeenAt"];
   public readonly status: KnowledgeGapFieldsFragment["status"];
@@ -4624,7 +4656,6 @@ export class KnowledgeGapModel {
     this._data = data;
     this.createdAt = data.createdAt;
     this.description = data.description;
-    this.firstSeenAt = data.firstSeenAt;
     this.id = data.id;
     this.lastSeenAt = data.lastSeenAt;
     this.status = data.status;
@@ -5112,6 +5143,7 @@ export class MSTeamsThreadChannelDetailsModel {
 
   public readonly msTeamsChannelId: MsTeamsThreadChannelDetailsFieldsFragment["msTeamsChannelId"];
   public readonly msTeamsChannelName: MsTeamsThreadChannelDetailsFieldsFragment["msTeamsChannelName"];
+  public readonly msTeamsMessageType: MsTeamsThreadChannelDetailsFieldsFragment["msTeamsMessageType"];
   public readonly msTeamsTeamId: MsTeamsThreadChannelDetailsFieldsFragment["msTeamsTeamId"];
   public readonly msTeamsTeamName: MsTeamsThreadChannelDetailsFieldsFragment["msTeamsTeamName"];
 
@@ -5120,6 +5152,7 @@ export class MSTeamsThreadChannelDetailsModel {
     this._data = data;
     this.msTeamsChannelId = data.msTeamsChannelId;
     this.msTeamsChannelName = data.msTeamsChannelName;
+    this.msTeamsMessageType = data.msTeamsMessageType;
     this.msTeamsTeamId = data.msTeamsTeamId;
     this.msTeamsTeamName = data.msTeamsTeamName;
   }
@@ -5554,6 +5587,7 @@ export class ServiceAuthorizationModel {
   public readonly connectedAt: ServiceAuthorizationFieldsFragment["connectedAt"];
   public readonly createdAt: ServiceAuthorizationFieldsFragment["createdAt"];
   public readonly id: ServiceAuthorizationFieldsFragment["id"];
+  public readonly isImportRunnerIntegration: ServiceAuthorizationFieldsFragment["isImportRunnerIntegration"];
   public readonly status: ServiceAuthorizationFieldsFragment["status"];
   public readonly updatedAt: ServiceAuthorizationFieldsFragment["updatedAt"];
   public readonly connectedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -5567,6 +5601,7 @@ export class ServiceAuthorizationModel {
     this.connectedAt = data.connectedAt;
     this.createdAt = data.createdAt;
     this.id = data.id;
+    this.isImportRunnerIntegration = data.isImportRunnerIntegration;
     this.status = data.status;
     this.updatedAt = data.updatedAt;
     this.connectedBy = (() => {
@@ -6080,7 +6115,7 @@ export class TenantFieldModel {
   public readonly updatedAt: TenantFieldFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly value: TenantFieldBooleanValueModel | TenantFieldDateTimeValueModel | TenantFieldNumberValueModel | TenantFieldStringArrayValueModel | TenantFieldStringValueModel;
+  public readonly value: TenantFieldBooleanValueModel | TenantFieldDateTimeValueModel | TenantFieldNumberValueModel | TenantFieldStringArrayValueModel | TenantFieldStringValueModel | TenantFieldUserReferenceValueModel;
 
   constructor(client: PlainGraphQLClient, data: TenantFieldFieldsFragment) {
     this._client = client;
@@ -6112,6 +6147,7 @@ export class TenantFieldModel {
       case "TenantFieldNumberValue": return new TenantFieldNumberValueModel(client, data.value as any);
       case "TenantFieldStringArrayValue": return new TenantFieldStringArrayValueModel(client, data.value as any);
       case "TenantFieldStringValue": return new TenantFieldStringValueModel(client, data.value as any);
+      case "TenantFieldUserReferenceValue": return new TenantFieldUserReferenceValueModel(client, data.value as any);
       default: return data.value as any;
     }
   })();
@@ -6237,6 +6273,20 @@ export class TenantFieldStringValueModel {
     this._client = client;
     this._data = data;
     this.stringValue = data.stringValue;
+  }
+}
+
+export class TenantFieldUserReferenceValueModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: TenantFieldUserReferenceValueFieldsFragment;
+  public readonly __typename = "TenantFieldUserReferenceValue" as const;
+
+  public readonly userReferenceValues: TenantFieldUserReferenceValueFieldsFragment["userReferenceValues"];
+
+  constructor(client: PlainGraphQLClient, data: TenantFieldUserReferenceValueFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.userReferenceValues = data.userReferenceValues;
   }
 }
 
@@ -6603,7 +6653,7 @@ export class ThreadDiscussionModel {
   public readonly threadId: ThreadDiscussionFieldsFragment["threadId"];
   public readonly title: ThreadDiscussionFieldsFragment["title"];
   public readonly updatedAt: ThreadDiscussionFieldsFragment["updatedAt"];
-  public readonly channelDetails: (ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel | ThreadDiscussionEmailChannelDetailsModel | ThreadDiscussionSlackChannelDetailsModel) | null;
+  public readonly channelDetails: (ThreadDiscussionAgentSessionChannelDetailsModel | ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel | ThreadDiscussionEmailChannelDetailsModel | ThreadDiscussionSlackChannelDetailsModel) | null;
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
@@ -6618,6 +6668,7 @@ export class ThreadDiscussionModel {
     this.updatedAt = data.updatedAt;
     this.channelDetails = data.channelDetails ? (() => {
     switch ((data.channelDetails as any).__typename) {
+      case "ThreadDiscussionAgentSessionChannelDetails": return new ThreadDiscussionAgentSessionChannelDetailsModel(client, data.channelDetails as any);
       case "ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails": return new ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel(client, data.channelDetails as any);
       case "ThreadDiscussionEmailChannelDetails": return new ThreadDiscussionEmailChannelDetailsModel(client, data.channelDetails as any);
       case "ThreadDiscussionSlackChannelDetails": return new ThreadDiscussionSlackChannelDetailsModel(client, data.channelDetails as any);
@@ -6659,6 +6710,20 @@ export class ThreadDiscussionModel {
       pageInfo: conn.pageInfo,
       fetch: (cursor) => this.messages({ ...variables, ...cursor }),
     });
+  }
+}
+
+export class ThreadDiscussionAgentSessionChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionAgentSessionChannelDetailsFieldsFragment;
+  public readonly __typename = "ThreadDiscussionAgentSessionChannelDetails" as const;
+
+  public readonly agentSessionId: ThreadDiscussionAgentSessionChannelDetailsFieldsFragment["agentSessionId"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionAgentSessionChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.agentSessionId = data.agentSessionId;
   }
 }
 
@@ -6723,13 +6788,16 @@ export class ThreadDiscussionMessageModel {
 
   public readonly createdAt: ThreadDiscussionMessageFieldsFragment["createdAt"];
   public readonly deletedOnSlackAt: ThreadDiscussionMessageFieldsFragment["deletedOnSlackAt"];
+  public readonly entryType: ThreadDiscussionMessageFieldsFragment["entryType"];
   public readonly id: ThreadDiscussionMessageFieldsFragment["id"];
   public readonly lastEditedOnSlackAt: ThreadDiscussionMessageFieldsFragment["lastEditedOnSlackAt"];
   public readonly slackMessageLink: ThreadDiscussionMessageFieldsFragment["slackMessageLink"];
   public readonly text: ThreadDiscussionMessageFieldsFragment["text"];
   public readonly threadDiscussionId: ThreadDiscussionMessageFieldsFragment["threadDiscussionId"];
+  public readonly type: ThreadDiscussionMessageFieldsFragment["type"];
   public readonly updatedAt: ThreadDiscussionMessageFieldsFragment["updatedAt"];
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly entry: (ThreadDiscussionMessageEntryPayloadModel | ThreadDiscussionToolCallEntryPayloadModel) | null;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: ThreadDiscussionMessageFieldsFragment) {
@@ -6737,11 +6805,13 @@ export class ThreadDiscussionMessageModel {
     this._data = data;
     this.createdAt = data.createdAt;
     this.deletedOnSlackAt = data.deletedOnSlackAt;
+    this.entryType = data.entryType;
     this.id = data.id;
     this.lastEditedOnSlackAt = data.lastEditedOnSlackAt;
     this.slackMessageLink = data.slackMessageLink;
     this.text = data.text;
     this.threadDiscussionId = data.threadDiscussionId;
+    this.type = data.type;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
@@ -6753,6 +6823,13 @@ export class ThreadDiscussionMessageModel {
       default: return data.createdBy as any;
     }
   })();
+    this.entry = data.entry ? (() => {
+    switch ((data.entry as any).__typename) {
+      case "ThreadDiscussionMessageEntryPayload": return new ThreadDiscussionMessageEntryPayloadModel(client, data.entry as any);
+      case "ThreadDiscussionToolCallEntryPayload": return new ThreadDiscussionToolCallEntryPayloadModel(client, data.entry as any);
+      default: return data.entry as any;
+    }
+  })() : null;
     this.updatedBy = (() => {
     switch ((data.updatedBy as any).__typename) {
       case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
@@ -6802,6 +6879,24 @@ export class ThreadDiscussionMessageEntryModel {
   }
 }
 
+export class ThreadDiscussionMessageEntryPayloadModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionMessageEntryPayloadFieldsFragment;
+  public readonly __typename = "ThreadDiscussionMessageEntryPayload" as const;
+
+  public readonly isFinal: ThreadDiscussionMessageEntryPayloadFieldsFragment["isFinal"];
+  public readonly text: ThreadDiscussionMessageEntryPayloadFieldsFragment["text"];
+  public readonly type: ThreadDiscussionMessageEntryPayloadFieldsFragment["type"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionMessageEntryPayloadFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.isFinal = data.isFinal;
+    this.text = data.text;
+    this.type = data.type;
+  }
+}
+
 export class ThreadDiscussionResolvedEntryModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadDiscussionResolvedEntryFieldsFragment;
@@ -6845,6 +6940,32 @@ export class ThreadDiscussionSlackChannelDetailsModel {
     this.slackChannelName = data.slackChannelName;
     this.slackMessageLink = data.slackMessageLink;
     this.slackTeamId = data.slackTeamId;
+  }
+}
+
+export class ThreadDiscussionToolCallEntryPayloadModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionToolCallEntryPayloadFieldsFragment;
+  public readonly __typename = "ThreadDiscussionToolCallEntryPayload" as const;
+
+  public readonly args: ThreadDiscussionToolCallEntryPayloadFieldsFragment["args"];
+  public readonly description: ThreadDiscussionToolCallEntryPayloadFieldsFragment["description"];
+  public readonly durationMs: ThreadDiscussionToolCallEntryPayloadFieldsFragment["durationMs"];
+  public readonly error: ThreadDiscussionToolCallEntryPayloadFieldsFragment["error"];
+  public readonly isSuccess: ThreadDiscussionToolCallEntryPayloadFieldsFragment["isSuccess"];
+  public readonly op: ThreadDiscussionToolCallEntryPayloadFieldsFragment["op"];
+  public readonly service: ThreadDiscussionToolCallEntryPayloadFieldsFragment["service"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionToolCallEntryPayloadFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.args = data.args;
+    this.description = data.description;
+    this.durationMs = data.durationMs;
+    this.error = data.error;
+    this.isSuccess = data.isSuccess;
+    this.op = data.op;
+    this.service = data.service;
   }
 }
 
@@ -7953,6 +8074,123 @@ export class UserWorkingHoursModel {
   }
 }
 
+export class WebhookDeliveryAttemptModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WebhookDeliveryAttemptFieldsFragment;
+  public readonly __typename = "WebhookDeliveryAttempt" as const;
+
+  public readonly attemptedAt: WebhookDeliveryAttemptFieldsFragment["attemptedAt"];
+  public readonly durationInMilliseconds: WebhookDeliveryAttemptFieldsFragment["durationInMilliseconds"];
+  public readonly id: WebhookDeliveryAttemptFieldsFragment["id"];
+  public readonly publicEventEventType: WebhookDeliveryAttemptFieldsFragment["publicEventEventType"];
+  public readonly publicEventId: WebhookDeliveryAttemptFieldsFragment["publicEventId"];
+  public readonly webhookTargetId: WebhookDeliveryAttemptFieldsFragment["webhookTargetId"];
+  public readonly result: WebhookDeliveryAttemptErrorResultModel | WebhookDeliveryAttemptFailedResultModel | WebhookDeliveryAttemptRejectedResultModel | WebhookDeliveryAttemptSchemaValidationFailedResultModel | WebhookDeliveryAttemptSuccessfulResultModel;
+
+  constructor(client: PlainGraphQLClient, data: WebhookDeliveryAttemptFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.attemptedAt = data.attemptedAt;
+    this.durationInMilliseconds = data.durationInMilliseconds;
+    this.id = data.id;
+    this.publicEventEventType = data.publicEventEventType;
+    this.publicEventId = data.publicEventId;
+    this.webhookTargetId = data.webhookTargetId;
+    this.result = (() => {
+    switch ((data.result as any).__typename) {
+      case "WebhookDeliveryAttemptErrorResult": return new WebhookDeliveryAttemptErrorResultModel(client, data.result as any);
+      case "WebhookDeliveryAttemptFailedResult": return new WebhookDeliveryAttemptFailedResultModel(client, data.result as any);
+      case "WebhookDeliveryAttemptRejectedResult": return new WebhookDeliveryAttemptRejectedResultModel(client, data.result as any);
+      case "WebhookDeliveryAttemptSchemaValidationFailedResult": return new WebhookDeliveryAttemptSchemaValidationFailedResultModel(client, data.result as any);
+      case "WebhookDeliveryAttemptSuccessfulResult": return new WebhookDeliveryAttemptSuccessfulResultModel(client, data.result as any);
+      default: return data.result as any;
+    }
+  })();
+  }
+}
+
+export class WebhookDeliveryAttemptErrorResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WebhookDeliveryAttemptErrorResultFieldsFragment;
+  public readonly __typename = "WebhookDeliveryAttemptErrorResult" as const;
+
+  public readonly errorCode: WebhookDeliveryAttemptErrorResultFieldsFragment["errorCode"];
+  public readonly errorMessage: WebhookDeliveryAttemptErrorResultFieldsFragment["errorMessage"];
+  public readonly status: WebhookDeliveryAttemptErrorResultFieldsFragment["status"];
+
+  constructor(client: PlainGraphQLClient, data: WebhookDeliveryAttemptErrorResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.errorCode = data.errorCode;
+    this.errorMessage = data.errorMessage;
+    this.status = data.status;
+  }
+}
+
+export class WebhookDeliveryAttemptFailedResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WebhookDeliveryAttemptFailedResultFieldsFragment;
+  public readonly __typename = "WebhookDeliveryAttemptFailedResult" as const;
+
+  public readonly httpStatusCode: WebhookDeliveryAttemptFailedResultFieldsFragment["httpStatusCode"];
+  public readonly status: WebhookDeliveryAttemptFailedResultFieldsFragment["status"];
+
+  constructor(client: PlainGraphQLClient, data: WebhookDeliveryAttemptFailedResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.httpStatusCode = data.httpStatusCode;
+    this.status = data.status;
+  }
+}
+
+export class WebhookDeliveryAttemptRejectedResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WebhookDeliveryAttemptRejectedResultFieldsFragment;
+  public readonly __typename = "WebhookDeliveryAttemptRejectedResult" as const;
+
+  public readonly rejectedMessage: WebhookDeliveryAttemptRejectedResultFieldsFragment["rejectedMessage"];
+  public readonly status: WebhookDeliveryAttemptRejectedResultFieldsFragment["status"];
+
+  constructor(client: PlainGraphQLClient, data: WebhookDeliveryAttemptRejectedResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.rejectedMessage = data.rejectedMessage;
+    this.status = data.status;
+  }
+}
+
+export class WebhookDeliveryAttemptSchemaValidationFailedResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WebhookDeliveryAttemptSchemaValidationFailedResultFieldsFragment;
+  public readonly __typename = "WebhookDeliveryAttemptSchemaValidationFailedResult" as const;
+
+  public readonly errorMessage: WebhookDeliveryAttemptSchemaValidationFailedResultFieldsFragment["errorMessage"];
+  public readonly status: WebhookDeliveryAttemptSchemaValidationFailedResultFieldsFragment["status"];
+
+  constructor(client: PlainGraphQLClient, data: WebhookDeliveryAttemptSchemaValidationFailedResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.errorMessage = data.errorMessage;
+    this.status = data.status;
+  }
+}
+
+export class WebhookDeliveryAttemptSuccessfulResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WebhookDeliveryAttemptSuccessfulResultFieldsFragment;
+  public readonly __typename = "WebhookDeliveryAttemptSuccessfulResult" as const;
+
+  public readonly httpStatusCode: WebhookDeliveryAttemptSuccessfulResultFieldsFragment["httpStatusCode"];
+  public readonly status: WebhookDeliveryAttemptSuccessfulResultFieldsFragment["status"];
+
+  constructor(client: PlainGraphQLClient, data: WebhookDeliveryAttemptSuccessfulResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.httpStatusCode = data.httpStatusCode;
+    this.status = data.status;
+  }
+}
+
 export class WebhookTargetModel {
   protected _client: PlainGraphQLClient;
   protected _data: WebhookTargetFieldsFragment;
@@ -8659,6 +8897,7 @@ export interface PlainSdkQueries {
   customerSurveys(variables: CustomerSurveysQueryVariables): Promise<PlainConnection<CustomerSurveyModel>>;
   customers(variables: CustomersQueryVariables): Promise<PlainConnection<CustomerModel>>;
   deletedThreads(variables: DeletedThreadsQueryVariables): Promise<PlainConnection<DeletedThreadModel>>;
+  discussion(variables: DiscussionQueryVariables): Promise<ThreadDiscussionModel>;
   enabledAiToneRulesText(): Promise<NonNullable<EnabledAiToneRulesTextQuery["enabledAiToneRulesText"]>>;
   escalationPath(variables: EscalationPathQueryVariables): Promise<EscalationPathModel>;
   escalationPaths(variables: EscalationPathsQueryVariables): Promise<PlainConnection<EscalationPathModel>>;
@@ -8673,6 +8912,7 @@ export interface PlainSdkQueries {
   helpCenterArticleGroupBySlug(variables: HelpCenterArticleGroupBySlugQueryVariables): Promise<HelpCenterArticleGroupModel>;
   helpCenterIndex(variables: HelpCenterIndexQueryVariables): Promise<HelpCenterIndexModel>;
   helpCenters(variables: HelpCentersQueryVariables): Promise<PlainConnection<HelpCenterModel>>;
+  importJobDefinition(variables: ImportJobDefinitionQueryVariables): Promise<ImportJobDefinitionModel>;
   importRuns(variables: ImportRunsQueryVariables): Promise<PlainConnection<ImportRunModel>>;
   importerTenantLists(variables: ImporterTenantListsQueryVariables): Promise<ImporterTenantListsQuery["importerTenantLists"]>;
   indexedDocuments(variables: IndexedDocumentsQueryVariables): Promise<PlainConnection<IndexedDocumentModel>>;
@@ -8708,6 +8948,7 @@ export interface PlainSdkQueries {
   myWorkspaceInvites(variables: MyWorkspaceInvitesQueryVariables): Promise<PlainConnection<WorkspaceInviteModel>>;
   myWorkspaces(variables: MyWorkspacesQueryVariables): Promise<PlainConnection<WorkspaceModel>>;
   permissions(): Promise<PermissionsQuery["permissions"]>;
+  publicEventRequestBody(variables: PublicEventRequestBodyQueryVariables): Promise<NonNullable<PublicEventRequestBodyQuery["publicEventRequestBody"]>>;
   relatedThreads(variables: RelatedThreadsQueryVariables): Promise<ThreadWithDistanceModel[]>;
   roles(variables: RolesQueryVariables): Promise<PlainConnection<RoleModel>>;
   savedThreadsView(variables: SavedThreadsViewQueryVariables): Promise<SavedThreadsViewModel>;
@@ -8763,6 +9004,7 @@ export interface PlainSdkQueries {
   userByEmail(variables: UserByEmailQueryVariables): Promise<UserModel>;
   userSlackChannelMemberships(variables: UserSlackChannelMembershipsQueryVariables): Promise<UserSlackChannelMembershipsQuery["userSlackChannelMemberships"]>;
   users(variables: UsersQueryVariables): Promise<PlainConnection<UserModel>>;
+  webhookDeliveryAttempts(variables: WebhookDeliveryAttemptsQueryVariables): Promise<PlainConnection<WebhookDeliveryAttemptModel>>;
   webhookTarget(variables: WebhookTargetQueryVariables): Promise<WebhookTargetModel>;
   webhookTargets(variables: WebhookTargetsQueryVariables): Promise<PlainConnection<WebhookTargetModel>>;
   webhookVersions(variables: WebhookVersionsQueryVariables): Promise<WebhookVersionsQuery["webhookVersions"]>;
@@ -8836,6 +9078,7 @@ export interface PlainSdkMutations {
   createCustomerEvent(variables: CreateCustomerEventMutationVariables): Promise<CreateCustomerEventMutation["createCustomerEvent"]>;
   createCustomerGroup(variables: CreateCustomerGroupMutationVariables): Promise<CreateCustomerGroupMutation["createCustomerGroup"]>;
   createCustomerSurvey(variables: CreateCustomerSurveyMutationVariables): Promise<CreateCustomerSurveyMutation["createCustomerSurvey"]>;
+  createDiscussion(variables: CreateDiscussionMutationVariables): Promise<CreateDiscussionMutation["createDiscussion"]>;
   createEmailPreviewUrl(variables: CreateEmailPreviewUrlMutationVariables): Promise<CreateEmailPreviewUrlMutation["createEmailPreviewUrl"]>;
   createEscalationPath(variables: CreateEscalationPathMutationVariables): Promise<CreateEscalationPathMutation["createEscalationPath"]>;
   createGithubUserAuthIntegration(variables: CreateGithubUserAuthIntegrationMutationVariables): Promise<CreateGithubUserAuthIntegrationMutation["createGithubUserAuthIntegration"]>;
@@ -8978,6 +9221,7 @@ export interface PlainSdkMutations {
   sendChat(variables: SendChatMutationVariables): Promise<SendChatMutation["sendChat"]>;
   sendCustomerChat(variables: SendCustomerChatMutationVariables): Promise<SendCustomerChatMutation["sendCustomerChat"]>;
   sendDiscordMessage(variables: SendDiscordMessageMutationVariables): Promise<SendDiscordMessageMutation["sendDiscordMessage"]>;
+  sendDiscussionMessage(variables: SendDiscussionMessageMutationVariables): Promise<SendDiscussionMessageMutation["sendDiscussionMessage"]>;
   sendMSTeamsMessage(variables: SendMsTeamsMessageMutationVariables): Promise<SendMsTeamsMessageMutation["sendMSTeamsMessage"]>;
   sendNewEmail(variables: SendNewEmailMutationVariables): Promise<SendNewEmailMutation["sendNewEmail"]>;
   sendSlackMessage(variables: SendSlackMessageMutationVariables): Promise<SendSlackMessageMutation["sendSlackMessage"]>;
@@ -9015,6 +9259,7 @@ export interface PlainSdkMutations {
   updateHelpCenterArticleGroup(variables: UpdateHelpCenterArticleGroupMutationVariables): Promise<UpdateHelpCenterArticleGroupMutation["updateHelpCenterArticleGroup"]>;
   updateHelpCenterCustomDomainName(variables: UpdateHelpCenterCustomDomainNameMutationVariables): Promise<UpdateHelpCenterCustomDomainNameMutation["updateHelpCenterCustomDomainName"]>;
   updateHelpCenterIndex(variables: UpdateHelpCenterIndexMutationVariables): Promise<UpdateHelpCenterIndexMutation["updateHelpCenterIndex"]>;
+  updateImportJobDefinition(variables: UpdateImportJobDefinitionMutationVariables): Promise<UpdateImportJobDefinitionMutation["updateImportJobDefinition"]>;
   updateInternalNotifications(variables: UpdateInternalNotificationsMutationVariables): Promise<UpdateInternalNotificationsMutation["updateInternalNotifications"]>;
   updateLabelType(variables: UpdateLabelTypeMutationVariables): Promise<UpdateLabelTypeMutation["updateLabelType"]>;
   updateMachineUser(variables: UpdateMachineUserMutationVariables): Promise<UpdateMachineUserMutation["updateMachineUser"]>;
@@ -9393,6 +9638,16 @@ export class PlainSdk {
       });
     },
 
+    async discussion(variables: DiscussionQueryVariables): Promise<ThreadDiscussionModel> {
+      const response = await _client.request<DiscussionQuery, DiscussionQueryVariables>(
+        DiscussionDocument, variables
+      );
+      if (!response.discussion) {
+        throw new Error("discussion not found");
+      }
+      return new ThreadDiscussionModel(_client, response.discussion);
+    },
+
     async enabledAiToneRulesText(): Promise<NonNullable<EnabledAiToneRulesTextQuery["enabledAiToneRulesText"]>> {
       const response = await _client.request<EnabledAiToneRulesTextQuery, Record<string, never>>(
         EnabledAiToneRulesTextDocument
@@ -9529,6 +9784,16 @@ export class PlainSdk {
         pageInfo: conn.pageInfo,
         fetch: (cursor) => query.helpCenters({ ...variables, ...cursor } as HelpCentersQueryVariables),
       });
+    },
+
+    async importJobDefinition(variables: ImportJobDefinitionQueryVariables): Promise<ImportJobDefinitionModel> {
+      const response = await _client.request<ImportJobDefinitionQuery, ImportJobDefinitionQueryVariables>(
+        ImportJobDefinitionDocument, variables
+      );
+      if (!response.importJobDefinition) {
+        throw new Error("importJobDefinition not found");
+      }
+      return new ImportJobDefinitionModel(_client, response.importJobDefinition);
     },
 
     async importRuns(variables: ImportRunsQueryVariables): Promise<PlainConnection<ImportRunModel>> {
@@ -9875,6 +10140,16 @@ export class PlainSdk {
         PermissionsDocument
       );
       return response.permissions;
+    },
+
+    async publicEventRequestBody(variables: PublicEventRequestBodyQueryVariables): Promise<NonNullable<PublicEventRequestBodyQuery["publicEventRequestBody"]>> {
+      const response = await _client.request<PublicEventRequestBodyQuery, PublicEventRequestBodyQueryVariables>(
+        PublicEventRequestBodyDocument, variables
+      );
+      if (!response.publicEventRequestBody) {
+        throw new Error("publicEventRequestBody not found");
+      }
+      return response.publicEventRequestBody;
     },
 
     async relatedThreads(variables: RelatedThreadsQueryVariables): Promise<ThreadWithDistanceModel[]> {
@@ -10434,6 +10709,18 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new UserModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         fetch: (cursor) => query.users({ ...variables, ...cursor } as UsersQueryVariables),
+      });
+    },
+
+    async webhookDeliveryAttempts(variables: WebhookDeliveryAttemptsQueryVariables): Promise<PlainConnection<WebhookDeliveryAttemptModel>> {
+      const response = await _client.request<WebhookDeliveryAttemptsQuery, WebhookDeliveryAttemptsQueryVariables>(
+        WebhookDeliveryAttemptsDocument, variables
+      );
+      const conn = response.webhookDeliveryAttempts;
+      return new PlainConnection<WebhookDeliveryAttemptModel>({
+        nodes: conn.edges.map(e => new WebhookDeliveryAttemptModel(_client, e.node)),
+        pageInfo: conn.pageInfo,
+        fetch: (cursor) => query.webhookDeliveryAttempts({ ...variables, ...cursor } as WebhookDeliveryAttemptsQueryVariables),
       });
     },
 
@@ -11017,6 +11304,13 @@ export class PlainSdk {
         CreateCustomerSurveyDocument, variables
       );
       return response.createCustomerSurvey;
+    },
+
+    async createDiscussion(variables: CreateDiscussionMutationVariables): Promise<CreateDiscussionMutation["createDiscussion"]> {
+      const response = await _client.request<CreateDiscussionMutation, CreateDiscussionMutationVariables>(
+        CreateDiscussionDocument, variables
+      );
+      return response.createDiscussion;
     },
 
     async createEmailPreviewUrl(variables: CreateEmailPreviewUrlMutationVariables): Promise<CreateEmailPreviewUrlMutation["createEmailPreviewUrl"]> {
@@ -12013,6 +12307,13 @@ export class PlainSdk {
       return response.sendDiscordMessage;
     },
 
+    async sendDiscussionMessage(variables: SendDiscussionMessageMutationVariables): Promise<SendDiscussionMessageMutation["sendDiscussionMessage"]> {
+      const response = await _client.request<SendDiscussionMessageMutation, SendDiscussionMessageMutationVariables>(
+        SendDiscussionMessageDocument, variables
+      );
+      return response.sendDiscussionMessage;
+    },
+
     async sendMSTeamsMessage(variables: SendMsTeamsMessageMutationVariables): Promise<SendMsTeamsMessageMutation["sendMSTeamsMessage"]> {
       const response = await _client.request<SendMsTeamsMessageMutation, SendMsTeamsMessageMutationVariables>(
         SendMsTeamsMessageDocument, variables
@@ -12270,6 +12571,13 @@ export class PlainSdk {
         UpdateHelpCenterIndexDocument, variables
       );
       return response.updateHelpCenterIndex;
+    },
+
+    async updateImportJobDefinition(variables: UpdateImportJobDefinitionMutationVariables): Promise<UpdateImportJobDefinitionMutation["updateImportJobDefinition"]> {
+      const response = await _client.request<UpdateImportJobDefinitionMutation, UpdateImportJobDefinitionMutationVariables>(
+        UpdateImportJobDefinitionDocument, variables
+      );
+      return response.updateImportJobDefinition;
     },
 
     async updateInternalNotifications(variables: UpdateInternalNotificationsMutationVariables): Promise<UpdateInternalNotificationsMutation["updateInternalNotifications"]> {
