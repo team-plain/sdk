@@ -144,14 +144,7 @@
       "$ref": "#/definitions/webhookMetadata"
     }
   },
-  "required": [
-    "timestamp",
-    "workspaceId",
-    "payload",
-    "id",
-    "type",
-    "webhookMetadata"
-  ],
+  "required": ["timestamp", "workspaceId", "payload", "id", "type", "webhookMetadata"],
   "additionalProperties": true,
   "description": "Webhook request",
   "definitions": {
@@ -177,10 +170,7 @@
       "format": "date-time"
     },
     "nullableString": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": ["string", "null"]
     },
     "nullableDatetime": {
       "anyOf": [
@@ -223,10 +213,7 @@
           "$ref": "#/definitions/id"
         }
       },
-      "required": [
-        "actorType",
-        "userId"
-      ],
+      "required": ["actorType", "userId"],
       "additionalProperties": true
     },
     "customerActor": {
@@ -240,10 +227,7 @@
           "$ref": "#/definitions/id"
         }
       },
-      "required": [
-        "actorType",
-        "customerId"
-      ],
+      "required": ["actorType", "customerId"],
       "additionalProperties": true
     },
     "systemActor": {
@@ -257,10 +241,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "actorType",
-        "system"
-      ],
+      "required": ["actorType", "system"],
       "additionalProperties": true
     },
     "machineUserActor": {
@@ -274,10 +255,7 @@
           "$ref": "#/definitions/id"
         }
       },
-      "required": [
-        "actorType",
-        "machineUserId"
-      ],
+      "required": ["actorType", "machineUserId"],
       "additionalProperties": true
     },
     "internalActor": {
@@ -290,9 +268,7 @@
               "const": "UNKNOWN"
             }
           },
-          "required": [
-            "actorType"
-          ],
+          "required": ["actorType"],
           "additionalProperties": true
         },
         {
@@ -342,13 +318,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "ONLINE",
-            "OFFLINE",
-            "BREAK",
-            "AWAY",
-            "UNKNOWN_USER_STATUS"
-          ]
+          "enum": ["ONLINE", "OFFLINE", "BREAK", "AWAY", "UNKNOWN_USER_STATUS"]
         },
         "statusChangedAt": {
           "$ref": "#/definitions/datetime"
@@ -401,10 +371,7 @@
           "type": "string"
         },
         "description": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "createdAt": {
           "$ref": "#/definitions/datetime"
@@ -554,27 +521,17 @@
               ]
             }
           },
-          "required": [
-            "email",
-            "isVerified",
-            "verifiedAt"
-          ],
+          "required": ["email", "isVerified", "verifiedAt"],
           "additionalProperties": true
         },
         "externalId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "fullName": {
           "type": "string"
         },
         "shortName": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "markedAsSpamAt": {
           "anyOf": [
@@ -680,12 +637,7 @@
     },
     "emailAuthenticity": {
       "type": "string",
-      "enum": [
-        "PASS",
-        "FAIL",
-        "UNKNOWN",
-        "UNKNOWN_EMAIL_AUTHENTICITY"
-      ]
+      "enum": ["PASS", "FAIL", "UNKNOWN", "UNKNOWN_EMAIL_AUTHENTICITY"]
     },
     "emailActor": {
       "anyOf": [
@@ -709,10 +661,7 @@
               "type": "string"
             }
           },
-          "required": [
-            "actorType",
-            "supportEmailAddress"
-          ],
+          "required": ["actorType", "supportEmailAddress"],
           "additionalProperties": true
         },
         {
@@ -726,10 +675,7 @@
               "$ref": "#/definitions/id"
             }
           },
-          "required": [
-            "actorType",
-            "customerId"
-          ],
+          "required": ["actorType", "customerId"],
           "additionalProperties": true
         }
       ]
@@ -741,10 +687,7 @@
           "type": "string"
         },
         "name": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "emailActor": {
           "anyOf": [
@@ -757,11 +700,7 @@
           ]
         }
       },
-      "required": [
-        "email",
-        "name",
-        "emailActor"
-      ],
+      "required": ["email", "name", "emailActor"],
       "additionalProperties": true
     },
     "email": {
@@ -780,10 +719,7 @@
           "$ref": "#/definitions/emailParticipant"
         },
         "replyTo": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "additionalRecipients": {
           "type": "array",
@@ -798,22 +734,13 @@
           }
         },
         "subject": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "textContent": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "markdownContent": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "authenticity": {
           "$ref": "#/definitions/emailAuthenticity"
@@ -845,10 +772,7 @@
           }
         },
         "inReplyToEmailId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "isStartOfThread": {
           "type": "boolean"
@@ -1106,32 +1030,15 @@
     },
     "componentTextSize": {
       "type": "string",
-      "enum": [
-        "S",
-        "M",
-        "L",
-        "UNKNOWN_COMPONENT_TEXT_SIZE"
-      ]
+      "enum": ["S", "M", "L", "UNKNOWN_COMPONENT_TEXT_SIZE"]
     },
     "componentTextColor": {
       "type": "string",
-      "enum": [
-        "NORMAL",
-        "MUTED",
-        "SUCCESS",
-        "WARNING",
-        "ERROR",
-        "UNKNOWN_COMPONENT_TEXT_COLOR"
-      ]
+      "enum": ["NORMAL", "MUTED", "SUCCESS", "WARNING", "ERROR", "UNKNOWN_COMPONENT_TEXT_COLOR"]
     },
     "componentPlainTextSize": {
       "type": "string",
-      "enum": [
-        "S",
-        "M",
-        "L",
-        "UNKNOWN_COMPONENT_PLAIN_TEXT_SIZE"
-      ]
+      "enum": ["S", "M", "L", "UNKNOWN_COMPONENT_PLAIN_TEXT_SIZE"]
     },
     "componentPlainTextColor": {
       "type": "string",
@@ -1146,36 +1053,15 @@
     },
     "componentSpacerSize": {
       "type": "string",
-      "enum": [
-        "XS",
-        "S",
-        "M",
-        "L",
-        "XL",
-        "UNKNOWN_COMPONENT_SPACER_SIZE"
-      ]
+      "enum": ["XS", "S", "M", "L", "XL", "UNKNOWN_COMPONENT_SPACER_SIZE"]
     },
     "componentDividerSpacingSize": {
       "type": "string",
-      "enum": [
-        "XS",
-        "S",
-        "M",
-        "L",
-        "XL",
-        "UNKNOWN_COMPONENT_DIVIDER_SPACING_SIZE"
-      ]
+      "enum": ["XS", "S", "M", "L", "XL", "UNKNOWN_COMPONENT_DIVIDER_SPACING_SIZE"]
     },
     "componentBadgeColor": {
       "type": "string",
-      "enum": [
-        "GREY",
-        "GREEN",
-        "YELLOW",
-        "RED",
-        "BLUE",
-        "UNKNOWN_COMPONENT_BADGE_COLOR"
-      ]
+      "enum": ["GREY", "GREEN", "YELLOW", "RED", "BLUE", "UNKNOWN_COMPONENT_BADGE_COLOR"]
     },
     "componentText": {
       "type": "object",
@@ -1210,12 +1096,7 @@
           "maxLength": 5000
         }
       },
-      "required": [
-        "type",
-        "textSize",
-        "textColor",
-        "text"
-      ],
+      "required": ["type", "textSize", "textColor", "text"],
       "additionalProperties": true
     },
     "componentPlainText": {
@@ -1251,12 +1132,7 @@
           "const": "plainText"
         }
       },
-      "required": [
-        "plainTextSize",
-        "plainTextColor",
-        "plainText",
-        "type"
-      ],
+      "required": ["plainTextSize", "plainTextColor", "plainText", "type"],
       "additionalProperties": true
     },
     "componentSpacer": {
@@ -1270,10 +1146,7 @@
           "const": "spacer"
         }
       },
-      "required": [
-        "spacerSize",
-        "type"
-      ],
+      "required": ["spacerSize", "type"],
       "additionalProperties": true
     },
     "componentDivider": {
@@ -1294,10 +1167,7 @@
           "const": "divider"
         }
       },
-      "required": [
-        "dividerSpacingSize",
-        "type"
-      ],
+      "required": ["dividerSpacingSize", "type"],
       "additionalProperties": true
     },
     "componentLinkButton": {
@@ -1316,11 +1186,7 @@
           "const": "linkButton"
         }
       },
-      "required": [
-        "linkButtonUrl",
-        "linkButtonLabel",
-        "type"
-      ],
+      "required": ["linkButtonUrl", "linkButtonLabel", "type"],
       "additionalProperties": true
     },
     "componentWorkflowButton": {
@@ -1347,11 +1213,7 @@
           "const": "workflowButton"
         }
       },
-      "required": [
-        "workflowButtonWorkflowIdentifier",
-        "workflowButtonLabel",
-        "type"
-      ],
+      "required": ["workflowButtonWorkflowIdentifier", "workflowButtonLabel", "type"],
       "additionalProperties": true
     },
     "componentBadge": {
@@ -1376,11 +1238,7 @@
           "const": "badge"
         }
       },
-      "required": [
-        "badgeLabel",
-        "badgeColor",
-        "type"
-      ],
+      "required": ["badgeLabel", "badgeColor", "type"],
       "additionalProperties": true
     },
     "componentCopyButton": {
@@ -1406,11 +1264,7 @@
           "const": "copyButton"
         }
       },
-      "required": [
-        "copyButtonValue",
-        "copyButtonTooltipLabel",
-        "type"
-      ],
+      "required": ["copyButtonValue", "copyButtonTooltipLabel", "type"],
       "additionalProperties": true
     },
     "componentRowContent": {
@@ -1423,9 +1277,7 @@
               "const": "UNKNOWN"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -1474,11 +1326,7 @@
           }
         }
       },
-      "required": [
-        "type",
-        "rowMainContent",
-        "rowAsideContent"
-      ],
+      "required": ["type", "rowMainContent", "rowAsideContent"],
       "additionalProperties": true
     },
     "componentContainerContent": {
@@ -1529,10 +1377,7 @@
           }
         }
       },
-      "required": [
-        "type",
-        "containerContent"
-      ],
+      "required": ["type", "containerContent"],
       "additionalProperties": true
     },
     "component": {
@@ -1584,10 +1429,7 @@
           "maxLength": 500
         },
         "icon": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "default": null
         },
         "isArchived": {
@@ -1677,14 +1519,7 @@
           "$ref": "#/definitions/actor"
         }
       },
-      "required": [
-        "id",
-        "labelType",
-        "createdAt",
-        "createdBy",
-        "updatedAt",
-        "updatedBy"
-      ],
+      "required": ["id", "labelType", "createdAt", "createdBy", "updatedAt", "updatedBy"],
       "additionalProperties": true
     },
     "tier": {
@@ -1768,9 +1603,7 @@
               "const": "UNKNOWN"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -1786,21 +1619,14 @@
               "type": "string"
             }
           },
-          "required": [
-            "id"
-          ],
+          "required": ["id"],
           "additionalProperties": true
         }
       ]
     },
     "threadStatus": {
       "type": "string",
-      "enum": [
-        "TODO",
-        "DONE",
-        "SNOOZED",
-        "UNKNOWN_THREAD_STATUS"
-      ]
+      "enum": ["TODO", "DONE", "SNOOZED", "UNKNOWN_THREAD_STATUS"]
     },
     "threadMessageInfo": {
       "type": "object",
@@ -1820,22 +1646,14 @@
           ]
         },
         "actorId": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "default": null
         },
         "actorType": {
           "anyOf": [
             {
               "type": "string",
-              "enum": [
-                "user",
-                "machineUser",
-                "customer",
-                "system"
-              ]
+              "enum": ["user", "machineUser", "customer", "system"]
             },
             {
               "type": "null"
@@ -1844,10 +1662,7 @@
           "default": null
         }
       },
-      "required": [
-        "timestamp",
-        "messageSource"
-      ],
+      "required": ["timestamp", "messageSource"],
       "additionalProperties": true
     },
     "threadStatusDetail": {
@@ -1860,9 +1675,7 @@
               "const": "UNKNOWN"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -1876,10 +1689,7 @@
               "$ref": "#/definitions/datetime"
             }
           },
-          "required": [
-            "type",
-            "createdAt"
-          ],
+          "required": ["type", "createdAt"],
           "additionalProperties": true
         },
         {
@@ -1890,9 +1700,7 @@
               "const": "NEW_REPLY"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -1903,9 +1711,7 @@
               "const": "IN_PROGRESS"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -1916,9 +1722,7 @@
               "const": "WAITING_FOR_CUSTOMER"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -1935,11 +1739,7 @@
               "type": "number"
             }
           },
-          "required": [
-            "type",
-            "waitingUntil",
-            "durationSeconds"
-          ],
+          "required": ["type", "waitingUntil", "durationSeconds"],
           "additionalProperties": true
         },
         {
@@ -1957,15 +1757,11 @@
                   "format": "uuid"
                 }
               },
-              "required": [
-                "issueId"
-              ],
+              "required": ["issueId"],
               "additionalProperties": true
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -1976,9 +1772,7 @@
               "const": "DONE_MANUALLY_SET"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -1989,9 +1783,7 @@
               "const": "IGNORED"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -2005,9 +1797,7 @@
               "type": "number"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -2021,9 +1811,7 @@
               "$ref": "#/definitions/id"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         }
       ]
@@ -2053,29 +1841,17 @@
           ]
         },
         "stringValue": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "booleanValue": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "numberValue": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "default": null
         },
         "dateValue": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "default": null
         },
         "createdAt": {
@@ -2317,12 +2093,7 @@
           ]
         }
       },
-      "required": [
-        "entryType",
-        "noteId",
-        "text",
-        "markdown"
-      ],
+      "required": ["entryType", "noteId", "text", "markdown"],
       "additionalProperties": true
     },
     "chatEntry": {
@@ -2336,10 +2107,7 @@
           "$ref": "#/definitions/id"
         },
         "text": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "attachments": {
           "type": "array",
@@ -2358,13 +2126,7 @@
           ]
         }
       },
-      "required": [
-        "entryType",
-        "chatId",
-        "text",
-        "attachments",
-        "customerReadAt"
-      ],
+      "required": ["entryType", "chatId", "text", "attachments", "customerReadAt"],
       "additionalProperties": true
     },
     "emailEntry": {
@@ -2396,25 +2158,16 @@
           }
         },
         "subject": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "textContent": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "hasMoreTextContent": {
           "type": "boolean"
         },
         "markdownContent": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "hasMoreMarkdownContent": {
           "type": "boolean"
@@ -2449,10 +2202,7 @@
           }
         },
         "inReplyToEmailId": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "isStartOfThread": {
           "type": "boolean"
@@ -2503,10 +2253,7 @@
           "maxLength": 500
         },
         "type": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "components": {
           "type": "array",
@@ -2521,14 +2268,7 @@
           }
         }
       },
-      "required": [
-        "entryType",
-        "externalId",
-        "title",
-        "type",
-        "components",
-        "attachments"
-      ],
+      "required": ["entryType", "externalId", "title", "type", "components", "attachments"],
       "additionalProperties": true
     },
     "timelineEntry": {
@@ -2567,9 +2307,7 @@
                   "const": "UNKNOWN"
                 }
               },
-              "required": [
-                "entryType"
-              ],
+              "required": ["entryType"],
               "additionalProperties": true
             },
             {
@@ -2587,13 +2325,7 @@
           ]
         }
       },
-      "required": [
-        "id",
-        "customerId",
-        "timestamp",
-        "actor",
-        "entry"
-      ],
+      "required": ["id", "customerId", "timestamp", "actor", "entry"],
       "additionalProperties": true
     },
     "serviceLevelAgreementStatusDetail": {
@@ -2606,9 +2338,7 @@
               "const": "UNKNOWN"
             }
           },
-          "required": [
-            "status"
-          ],
+          "required": ["status"],
           "additionalProperties": true
         },
         {
@@ -2622,10 +2352,7 @@
               "const": "PENDING"
             }
           },
-          "required": [
-            "breachTime",
-            "status"
-          ],
+          "required": ["breachTime", "status"],
           "additionalProperties": true
         },
         {
@@ -2639,10 +2366,7 @@
               "const": "ACHIEVED"
             }
           },
-          "required": [
-            "achievedAt",
-            "status"
-          ],
+          "required": ["achievedAt", "status"],
           "additionalProperties": true
         },
         {
@@ -2656,10 +2380,7 @@
               "const": "IMMINENT_BREACH"
             }
           },
-          "required": [
-            "breachTime",
-            "status"
-          ],
+          "required": ["breachTime", "status"],
           "additionalProperties": true
         },
         {
@@ -2673,10 +2394,7 @@
               "const": "BREACHING"
             }
           },
-          "required": [
-            "breachedAt",
-            "status"
-          ],
+          "required": ["breachedAt", "status"],
           "additionalProperties": true
         },
         {
@@ -2693,11 +2411,7 @@
               "const": "BREACHED"
             }
           },
-          "required": [
-            "breachedAt",
-            "completedAt",
-            "status"
-          ],
+          "required": ["breachedAt", "completedAt", "status"],
           "additionalProperties": true
         },
         {
@@ -2711,10 +2425,7 @@
               "const": "CANCELLED"
             }
           },
-          "required": [
-            "cancelledAt",
-            "status"
-          ],
+          "required": ["cancelledAt", "status"],
           "additionalProperties": true
         }
       ]
@@ -2729,9 +2440,7 @@
               "const": "UNKNOWN"
             }
           },
-          "required": [
-            "type"
-          ],
+          "required": ["type"],
           "additionalProperties": true
         },
         {
@@ -2888,11 +2597,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "actorId",
-                    "actorType",
-                    "slackUserId"
-                  ],
+                  "required": ["actorId", "actorType", "slackUserId"],
                   "additionalProperties": true
                 }
               },
@@ -2909,10 +2614,7 @@
                 "default": null
               }
             },
-            "required": [
-              "name",
-              "actors"
-            ],
+            "required": ["name", "actors"],
             "additionalProperties": true
           },
           "default": []
@@ -2950,20 +2652,13 @@
       "properties": {
         "changeType": {
           "type": "string",
-          "enum": [
-            "ADDED",
-            "REMOVED",
-            "UNKNOWN_SLACK_REACTION_CHANGE_TYPE"
-          ]
+          "enum": ["ADDED", "REMOVED", "UNKNOWN_SLACK_REACTION_CHANGE_TYPE"]
         },
         "reaction": {
           "$ref": "#/definitions/slackMessage/properties/slackReactions/items"
         }
       },
-      "required": [
-        "changeType",
-        "reaction"
-      ],
+      "required": ["changeType", "reaction"],
       "additionalProperties": true
     },
     "discordMessage": {
@@ -3067,11 +2762,7 @@
           "anyOf": [
             {
               "type": "string",
-              "enum": [
-                "INBOUND",
-                "OUTBOUND",
-                "UNKNOWN_MS_TEAMS_MESSAGE_TYPE"
-              ]
+              "enum": ["INBOUND", "OUTBOUND", "UNKNOWN_MS_TEAMS_MESSAGE_TYPE"]
             },
             {
               "type": "null"
@@ -3141,10 +2832,7 @@
       "properties": {
         "changeType": {
           "type": "string",
-          "enum": [
-            "ADDED",
-            "UPDATED"
-          ]
+          "enum": ["ADDED", "UPDATED"]
         },
         "eventType": {
           "type": "string",
@@ -3164,12 +2852,7 @@
           ]
         }
       },
-      "required": [
-        "changeType",
-        "eventType",
-        "customer",
-        "previousCustomer"
-      ],
+      "required": ["changeType", "eventType", "customer", "previousCustomer"],
       "additionalProperties": true,
       "description": "A customer has been created or updated"
     },
@@ -3204,19 +2887,10 @@
         },
         "changeType": {
           "type": "string",
-          "enum": [
-            "ADDED",
-            "UPDATED",
-            "REMOVED"
-          ]
+          "enum": ["ADDED", "UPDATED", "REMOVED"]
         }
       },
-      "required": [
-        "eventType",
-        "previousTimelineEntry",
-        "timelineEntry",
-        "changeType"
-      ],
+      "required": ["eventType", "previousTimelineEntry", "timelineEntry", "changeType"],
       "additionalProperties": true,
       "description": "A timeline entry has been added, updated or removed"
     },
@@ -3259,10 +2933,7 @@
         },
         "changeType": {
           "type": "string",
-          "enum": [
-            "ADDED",
-            "REMOVED"
-          ]
+          "enum": ["ADDED", "REMOVED"]
         },
         "customer": {
           "$ref": "#/definitions/customer"
@@ -3271,12 +2942,7 @@
           "$ref": "#/definitions/customer"
         }
       },
-      "required": [
-        "eventType",
-        "changeType",
-        "customer",
-        "previousCustomer"
-      ],
+      "required": ["eventType", "changeType", "customer", "previousCustomer"],
       "additionalProperties": true
     },
     "customerGroupChangedPayload": {
@@ -3296,11 +2962,7 @@
               "$ref": "#/definitions/customerGroup"
             }
           },
-          "required": [
-            "changeType",
-            "eventType",
-            "customerGroup"
-          ],
+          "required": ["changeType", "eventType", "customerGroup"],
           "additionalProperties": true
         },
         {
@@ -3321,12 +2983,7 @@
               "$ref": "#/definitions/customerGroup"
             }
           },
-          "required": [
-            "changeType",
-            "eventType",
-            "customerGroup",
-            "previousCustomerGroup"
-          ],
+          "required": ["changeType", "eventType", "customerGroup", "previousCustomerGroup"],
           "additionalProperties": true
         },
         {
@@ -3344,11 +3001,7 @@
               "$ref": "#/definitions/customerGroup"
             }
           },
-          "required": [
-            "changeType",
-            "eventType",
-            "previousCustomerGroup"
-          ],
+          "required": ["changeType", "eventType", "previousCustomerGroup"],
           "additionalProperties": true
         }
       ]
@@ -3364,10 +3017,7 @@
           "$ref": "#/definitions/thread"
         }
       },
-      "required": [
-        "eventType",
-        "thread"
-      ],
+      "required": ["eventType", "thread"],
       "additionalProperties": true
     },
     "threadStatusTransitionedPublicEventPayload": {
@@ -3384,11 +3034,7 @@
           "$ref": "#/definitions/thread"
         }
       },
-      "required": [
-        "eventType",
-        "previousThread",
-        "thread"
-      ],
+      "required": ["eventType", "previousThread", "thread"],
       "additionalProperties": true
     },
     "threadAssignmentTransitionedPublicEventPayload": {
@@ -3405,11 +3051,7 @@
           "$ref": "#/definitions/thread"
         }
       },
-      "required": [
-        "eventType",
-        "previousThread",
-        "thread"
-      ],
+      "required": ["eventType", "previousThread", "thread"],
       "additionalProperties": true
     },
     "threadEmailReceivedPublicEventPayload": {
@@ -3426,11 +3068,7 @@
           "$ref": "#/definitions/email"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "email"
-      ],
+      "required": ["eventType", "thread", "email"],
       "additionalProperties": true
     },
     "threadEmailSentPublicEventPayload": {
@@ -3447,11 +3085,7 @@
           "$ref": "#/definitions/email"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "email"
-      ],
+      "required": ["eventType", "thread", "email"],
       "additionalProperties": true
     },
     "threadLabelsChangedPublicEventPayload": {
@@ -3463,10 +3097,7 @@
         },
         "changeType": {
           "type": "string",
-          "enum": [
-            "ADDED",
-            "REMOVED"
-          ]
+          "enum": ["ADDED", "REMOVED"]
         },
         "thread": {
           "$ref": "#/definitions/thread"
@@ -3475,12 +3106,7 @@
           "$ref": "#/definitions/thread"
         }
       },
-      "required": [
-        "eventType",
-        "changeType",
-        "thread",
-        "previousThread"
-      ],
+      "required": ["eventType", "changeType", "thread", "previousThread"],
       "additionalProperties": true
     },
     "threadPriorityChangedPublicEventPayload": {
@@ -3497,11 +3123,7 @@
           "$ref": "#/definitions/thread"
         }
       },
-      "required": [
-        "eventType",
-        "previousThread",
-        "thread"
-      ],
+      "required": ["eventType", "previousThread", "thread"],
       "additionalProperties": true
     },
     "threadFieldCreatedPublicEventPayload": {
@@ -3518,11 +3140,7 @@
           "$ref": "#/definitions/threadField"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "threadField"
-      ],
+      "required": ["eventType", "thread", "threadField"],
       "additionalProperties": true
     },
     "threadFieldUpdatedPublicEventPayload": {
@@ -3542,12 +3160,7 @@
           "$ref": "#/definitions/threadField"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "previousThreadField",
-        "threadField"
-      ],
+      "required": ["eventType", "thread", "previousThreadField", "threadField"],
       "additionalProperties": true
     },
     "threadFieldDeletedPublicEventPayload": {
@@ -3564,11 +3177,7 @@
           "$ref": "#/definitions/threadField"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "previousThreadField"
-      ],
+      "required": ["eventType", "thread", "previousThreadField"],
       "additionalProperties": true
     },
     "threadChatSentPublicEventPayload": {
@@ -3585,11 +3194,7 @@
           "$ref": "#/definitions/thread"
         }
       },
-      "required": [
-        "eventType",
-        "chat",
-        "thread"
-      ],
+      "required": ["eventType", "chat", "thread"],
       "additionalProperties": true
     },
     "threadChatReceivedPublicEventPayload": {
@@ -3606,11 +3211,7 @@
           "$ref": "#/definitions/thread"
         }
       },
-      "required": [
-        "eventType",
-        "chat",
-        "thread"
-      ],
+      "required": ["eventType", "chat", "thread"],
       "additionalProperties": true
     },
     "threadNoteCreatedEventPayload": {
@@ -3683,11 +3284,7 @@
           "additionalProperties": true
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "note"
-      ],
+      "required": ["eventType", "thread", "note"],
       "additionalProperties": true
     },
     "threadServiceLevelAgreementStatusTransitionedPayload": {
@@ -3733,11 +3330,7 @@
           "$ref": "#/definitions/slackMessage"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "slackMessage"
-      ],
+      "required": ["eventType", "thread", "slackMessage"],
       "additionalProperties": true
     },
     "threadSlackMessageSentEventPayload": {
@@ -3754,11 +3347,7 @@
           "$ref": "#/definitions/slackMessage"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "slackMessage"
-      ],
+      "required": ["eventType", "thread", "slackMessage"],
       "additionalProperties": true
     },
     "threadSlackMessageUpdatedEventPayload": {
@@ -3796,11 +3385,7 @@
           "default": null
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "slackMessage"
-      ],
+      "required": ["eventType", "thread", "slackMessage"],
       "additionalProperties": true
     },
     "threadDiscordMessageReceivedEventPayload": {
@@ -3817,11 +3402,7 @@
           "$ref": "#/definitions/discordMessage"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "discordMessage"
-      ],
+      "required": ["eventType", "thread", "discordMessage"],
       "additionalProperties": true
     },
     "threadDiscordMessageSentEventPayload": {
@@ -3838,11 +3419,7 @@
           "$ref": "#/definitions/discordMessage"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "discordMessage"
-      ],
+      "required": ["eventType", "thread", "discordMessage"],
       "additionalProperties": true
     },
     "threadDiscordMessageUpdatedEventPayload": {
@@ -3859,11 +3436,7 @@
           "$ref": "#/definitions/discordMessage"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "discordMessage"
-      ],
+      "required": ["eventType", "thread", "discordMessage"],
       "additionalProperties": true
     },
     "threadMSTeamsMessageReceivedEventPayload": {
@@ -3880,11 +3453,7 @@
           "$ref": "#/definitions/msTeamsMessage"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "msTeamsMessage"
-      ],
+      "required": ["eventType", "thread", "msTeamsMessage"],
       "additionalProperties": true
     },
     "threadMSTeamsMessageSentEventPayload": {
@@ -3901,11 +3470,7 @@
           "$ref": "#/definitions/msTeamsMessage"
         }
       },
-      "required": [
-        "eventType",
-        "thread",
-        "msTeamsMessage"
-      ],
+      "required": ["eventType", "thread", "msTeamsMessage"],
       "additionalProperties": true
     },
     "customerCreatedPublicEventPayload": {
@@ -3919,10 +3484,7 @@
           "$ref": "#/definitions/customer"
         }
       },
-      "required": [
-        "eventType",
-        "customer"
-      ],
+      "required": ["eventType", "customer"],
       "additionalProperties": true,
       "description": "A customer has been created"
     },
@@ -3940,11 +3502,7 @@
           "$ref": "#/definitions/customer"
         }
       },
-      "required": [
-        "eventType",
-        "customer",
-        "previousCustomer"
-      ],
+      "required": ["eventType", "customer", "previousCustomer"],
       "additionalProperties": true,
       "description": "A customer has been updated"
     },
@@ -3959,10 +3517,7 @@
           "$ref": "#/definitions/customer"
         }
       },
-      "required": [
-        "eventType",
-        "previousCustomer"
-      ],
+      "required": ["eventType", "previousCustomer"],
       "additionalProperties": true,
       "description": "A customer has been deleted"
     },
@@ -3997,19 +3552,11 @@
                   "type": "string"
                 },
                 "url": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": ["string", "null"]
                 },
                 "source": {
                   "type": "string",
-                  "enum": [
-                    "api",
-                    "salesforce",
-                    "hubspot",
-                    "UNKNOWN_TENANT_SOURCE"
-                  ],
+                  "enum": ["api", "salesforce", "hubspot", "UNKNOWN_TENANT_SOURCE"],
                   "default": "api"
                 },
                 "createdAt": {
@@ -4054,13 +3601,7 @@
           ]
         }
       },
-      "required": [
-        "eventType",
-        "previousThread",
-        "thread",
-        "previousTenant",
-        "tenant"
-      ],
+      "required": ["eventType", "previousThread", "thread", "previousTenant", "tenant"],
       "additionalProperties": true
     }
   },
