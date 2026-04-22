@@ -76,7 +76,12 @@ function isOutputType(name: string): boolean {
 
 /**
  * Build a mapping: GraphQL type name → root query that fetches it by ID.
- * Looks for Query fields with pattern: entityName(entityNameId: ID!): Entity
+ * Looks for Query fields with pattern: entityName(entityNameId: ID!): Entity.
+ * When multiple root queries return the same type (e.g. both
+ * `threadDiscussion(threadDiscussionId: ID!): ThreadDiscussion` and
+ * `discussion(discussionId: ID!): ThreadDiscussion`), prefer the one whose
+ * field name is the canonical camelCase of the type name, so the plugin's
+ * choice stays stable regardless of field iteration order.
  */
 function buildTypeQueryMap(schema: GraphQLSchema): Map<string, TypeQueryMapping> {
   const map = new Map<string, TypeQueryMapping>();
@@ -89,14 +94,14 @@ function buildTypeQueryMap(schema: GraphQLSchema): Map<string, TypeQueryMapping>
     if (!isObjectType(namedType)) continue;
     if (isConnectionType(namedType.name)) continue;
 
-    // Find the first required ID argument
     const idArg = field.args.find(
       (a) => isNonNullType(a.type) && getNamedType(a.type)?.name === "ID",
     );
     if (!idArg) continue;
 
-    // Only map if we haven't already (first match wins)
-    if (!map.has(namedType.name)) {
+    const canonicalFieldName = namedType.name[0].toLowerCase() + namedType.name.slice(1);
+    const existing = map.get(namedType.name);
+    if (!existing || fieldName === canonicalFieldName) {
       map.set(namedType.name, {
         queryFieldName: fieldName,
         idArgName: idArg.name,
