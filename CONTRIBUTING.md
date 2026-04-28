@@ -4,7 +4,7 @@ Thanks for your interest in contributing! This is a monorepo containing Plain's 
 
 ## Prerequisites
 
-- **Node 25+**
+- **Node 24+**
 - **pnpm**
 
 ```bash
@@ -25,7 +25,7 @@ pnpm build
 
 These are important to understand before contributing:
 
-- **Node 25+. ESM and CJS.** Publishable packages ship both ESM and CJS builds via tsup.
+- **Node 24+. ESM and CJS.** Publishable packages ship both ESM and CJS builds via tsup.
 - **Generated files are committed.** The `_generated_*` files are checked in so consumers don't need to run codegen. Re-run `pnpm codegen` after schema changes.
 
 ### SDK-specific
