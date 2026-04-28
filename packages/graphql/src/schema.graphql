@@ -134,6 +134,7 @@ type Role {
   permissions: [String!]!
   isAssignableToCustomer: Boolean! @deprecated(reason: "Use isAssignableToThread instead")
   isAssignableToThread: Boolean!
+  isAssignableToTask: Boolean!
   assignableBillingSeats: [BillingSeatType!]! @deprecated(reason: "Don't use. Will be removed soon.")
   requiresBillableSeat: Boolean! @deprecated(reason: "Don't use. Will be removed soon.")
   key: RoleKey
@@ -616,6 +617,7 @@ type WorkflowStep {
 }
 
 enum WorkflowExecutionStatus {
+  QUEUED
   RUNNING
   SUCCESS
   FAILED
@@ -1133,6 +1135,12 @@ type WorkspaceInviteConnection {
 input UsersFilter {
   isAssignableToCustomer: Boolean @deprecated(reason: "Use isAssignableToThread instead")
   isAssignableToThread: Boolean
+
+  """
+  When set, filters workspace members by task assignability instead of thread assignability.
+  Do not combine with isAssignableToThread or isAssignableToCustomer.
+  """
+  isAssignableToTask: Boolean
 }
 
 type UserEdge {
@@ -2376,6 +2384,15 @@ enum SettingScopeType {
   An `id` is mandatory and should be a workspace slack channel integration id (`wsSlackInt_123`)
   """
   WORKSPACE_SLACK_CHANNEL
+
+  """
+  Scope for per-channel slack ingestion overrides (`ingestion_mode`,
+  `manual_ingestion_emoji`, `manual_ingestion_customer_enabled`).
+  An `id` is mandatory and should be a connected slack channel id
+  (`slackChan_123`). Falls back to `WORKSPACE_SLACK_CHANNEL` when no
+  per-channel value is set.
+  """
+  WORKSPACE_SLACK_CONNECTED_CHANNEL
 
   """
   Scope for slack notifications configured for the whole workspace.
@@ -4198,6 +4215,7 @@ input TriggerWorkflowInput {
 }
 
 type TriggerWorkflowOutput {
+  workflowExecution: WorkflowExecution
   error: MutationError
 }
 
@@ -6109,6 +6127,9 @@ type Mutation {
   deleteMyServiceAuthorization(input: DeleteMyServiceAuthorizationInput!): DeleteMyServiceAuthorizationOutput!
   createImportSync(input: CreateImportSyncInput!): CreateImportSyncOutput!
 
+  """Imports tenant field schemas from the connected service."""
+  importTenantFieldSchemasFromService(input: ImportTenantFieldSchemasFromServiceInput!): ImportTenantFieldSchemasFromServiceOutput!
+
   """Disables the import job definition for the given service integration."""
   updateImportJobDefinition(input: UpdateImportJobDefinitionInput!): UpdateImportJobDefinitionOutput!
   createTier(input: CreateTierInput!): CreateTierOutput!
@@ -6667,6 +6688,11 @@ enum DiscussionType {
 enum DiscussionSourceEntityType {
   COMPANY
   TENANT
+  LABEL
+  CHANNEL
+  TIER
+  CUSTOMER_GROUP
+  CUSTOMER
 }
 
 enum ThreadDiscussionMessageType {
@@ -6703,6 +6729,12 @@ input CreateDiscussionInput {
   The entity type for sourceEntityId. Required when sourceEntityId is provided.
   """
   sourceEntityType: DiscussionSourceEntityType
+
+  """
+  The page path where this discussion was started (e.g. '/insights', '/settings').
+  Used to provide context when the user is on a page without a specific entity.
+  """
+  sourcePageLink: String
 }
 
 type CreateDiscussionOutput {
@@ -7597,6 +7629,7 @@ enum MessageSource {
   SLACK
   MS_TEAMS
   DISCORD
+  INTERNAL
 }
 
 type ThreadMessageInfo {
@@ -7706,6 +7739,7 @@ enum ThreadChannel {
   MS_TEAMS
   DISCORD
   IMPORT
+  INTERNAL
 }
 
 enum TimelineEntryType {
@@ -8086,7 +8120,7 @@ input CreateThreadInput {
   tenantIdentifier: TenantIdentifierInput
 
   """
-  The channel to create the thread for. Currently supported: API, EMAIL, SLACK, MS_TEAMS, or CHAT. Defaults to API.
+  The channel to create the thread for. Currently supported: API, EMAIL, SLACK, MS_TEAMS, CHAT, or INTERNAL. Defaults to API.
   """
   channel: ThreadChannel
 
@@ -8578,6 +8612,7 @@ input ConnectedSlackChannelsFilter {
   slackChannelIds: [String!]
   channelTypes: [ConnectedSlackChannelType!]
   isEnabled: BooleanInput
+  name: String
 }
 
 type ConnectedSlackChannelConnection {
@@ -10083,6 +10118,17 @@ type HelpCenterIndexItem {
   title: String!
   slug: String!
   parentId: ID
+
+  """Publication status of the article. Null for ARTICLE_GROUP items."""
+  status: HelpCenterArticleStatus
+
+  """
+  Short summary. Null for ARTICLE_GROUP items and for articles that have no description set.
+  """
+  description: String
+
+  """Opaque icon key for ARTICLE items; null for groups or when unset."""
+  icon: String
 }
 
 type HelpCenterArticleGroup {
@@ -10108,6 +10154,7 @@ type HelpCenterArticle {
   id: ID!
   title: String!
   description: String
+  icon: String
   contentHtml: String!
   slug: String!
   status: HelpCenterArticleStatus!
@@ -10376,6 +10423,7 @@ input UpsertHelpCenterArticleInput {
   helpCenterArticleGroupId: ID
   title: String!
   description: String
+  icon: String
   contentHtml: String!
   slug: String
   status: HelpCenterArticleStatus
@@ -10488,6 +10536,7 @@ enum ImporterStatus {
 }
 
 type ImportRun {
+  id: ID!
   importJobId: ID!
   entityType: ImporterEntityType!
   status: ImporterStatus!
@@ -10518,6 +10567,15 @@ type ImportResult {
   added: Int!
   updated: Int!
   skipped: Int!
+}
+
+input ImportTenantFieldSchemasFromServiceInput {
+  serviceIntegrationKey: String!
+}
+
+type ImportTenantFieldSchemasFromServiceOutput {
+  tenantFieldSchemas: [TenantFieldSchema!]!
+  error: MutationError
 }
 
 input ImportTenantFieldSchemaInput {

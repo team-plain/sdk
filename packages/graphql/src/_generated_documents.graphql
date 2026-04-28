@@ -3417,6 +3417,7 @@ fragment HelpCenterArticleFields on HelpCenterArticle {
   id
   title
   description
+  icon
   contentHtml
   slug
   status
@@ -3589,6 +3590,9 @@ fragment HelpCenterIndexFields on HelpCenterIndex {
     title
     slug
     parentId
+    status
+    description
+    icon
   }
   createdAt {
     unixTimestamp
@@ -3717,6 +3721,7 @@ fragment ImportJobDefinitionFields on ImportJobDefinition {
 }
 
 fragment ImportRunFields on ImportRun {
+  id
   importJobId
   entityType
   status
@@ -5228,6 +5233,7 @@ fragment RoleFields on Role {
   description
   permissions
   isAssignableToThread
+  isAssignableToTask
   key
   customRoleId
   customRole {
@@ -18852,6 +18858,9 @@ mutation DeleteWorkflow($input: DeleteWorkflowInput!) {
 
 mutation TriggerWorkflow($input: TriggerWorkflowInput!) {
   triggerWorkflow(input: $input) {
+    workflowExecution {
+      ...WorkflowExecutionFields
+    }
     error {
       message
       type
@@ -21087,6 +21096,24 @@ mutation CreateImportSync($input: CreateImportSyncInput!) {
   createImportSync(input: $input) {
     importJobDefinition {
       ...ImportJobDefinitionFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ImportTenantFieldSchemasFromService($input: ImportTenantFieldSchemasFromServiceInput!) {
+  importTenantFieldSchemasFromService(input: $input) {
+    tenantFieldSchemas {
+      ...TenantFieldSchemaFields
     }
     error {
       message
