@@ -1,6 +1,6 @@
 {
   "name": "@team-plain/graphql",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Typed TypeScript SDK for Plain's GraphQL API with auto-generated model classes",
   "license": "MIT",
   "author": "Plain <hello@plain.com> (https://plain.com)",
