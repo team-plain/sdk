@@ -16,7 +16,7 @@ npm install @team-plain/ui-components  # requires @team-plain/graphql as peer
 npm install @team-plain/webhooks       # standalone, no SDK dependency
 ```
 
-Requires **Node 25+**. Supports both ESM and CJS.
+Requires **Node 24+**. Supports both ESM and CJS.
 
 ## Contributing
 

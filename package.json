@@ -15,12 +15,15 @@
     "check": "biome check --write ."
   },
   "engines": {
-    "node": ">=25.0.0"
+    "node": ">=24.0.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "overrides": {
+      "@types/node": "^24.0.0"
+    }
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.7",

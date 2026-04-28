@@ -8,7 +8,7 @@ A typed TypeScript SDK for [Plain's](https://plain.com) GraphQL API, auto-genera
 npm install @team-plain/graphql
 ```
 
-Requires **Node 25+**. Supports both ESM and CJS.
+Requires **Node 24+**. Supports both ESM and CJS.
 
 ## Usage
 

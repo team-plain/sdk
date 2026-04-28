@@ -202,6 +202,7 @@ import {
   ImportJobDefinitionDocument,
   ImportRunsDocument,
   ImportTenantFieldSchemasDocument,
+  ImportTenantFieldSchemasFromServiceDocument,
   ImportTenantsDocument,
   ImporterTenantListsDocument,
   IndexedDocumentsDocument,
@@ -918,6 +919,8 @@ import type {
   ImportRunFieldsFragment,
   ImportRunsQuery,
   ImportRunsQueryVariables,
+  ImportTenantFieldSchemasFromServiceMutation,
+  ImportTenantFieldSchemasFromServiceMutationVariables,
   ImportTenantFieldSchemasMutation,
   ImportTenantFieldSchemasMutationVariables,
   ImportTenantsMutation,
@@ -4055,6 +4058,7 @@ export class HelpCenterArticleModel {
   public readonly contentHtml: HelpCenterArticleFieldsFragment["contentHtml"];
   public readonly createdAt: HelpCenterArticleFieldsFragment["createdAt"];
   public readonly description: HelpCenterArticleFieldsFragment["description"];
+  public readonly icon: HelpCenterArticleFieldsFragment["icon"];
   public readonly id: HelpCenterArticleFieldsFragment["id"];
   public readonly slug: HelpCenterArticleFieldsFragment["slug"];
   public readonly status: HelpCenterArticleFieldsFragment["status"];
@@ -4071,6 +4075,7 @@ export class HelpCenterArticleModel {
     this.contentHtml = data.contentHtml;
     this.createdAt = data.createdAt;
     this.description = data.description;
+    this.icon = data.icon;
     this.id = data.id;
     this.slug = data.slug;
     this.status = data.status;
@@ -4316,6 +4321,7 @@ export class ImportRunModel {
   public readonly completedAt: ImportRunFieldsFragment["completedAt"];
   public readonly downloadedRecords: ImportRunFieldsFragment["downloadedRecords"];
   public readonly entityType: ImportRunFieldsFragment["entityType"];
+  public readonly id: ImportRunFieldsFragment["id"];
   public readonly importJobId: ImportRunFieldsFragment["importJobId"];
   public readonly savedRecords: ImportRunFieldsFragment["savedRecords"];
   public readonly startedAt: ImportRunFieldsFragment["startedAt"];
@@ -4327,6 +4333,7 @@ export class ImportRunModel {
     this.completedAt = data.completedAt;
     this.downloadedRecords = data.downloadedRecords;
     this.entityType = data.entityType;
+    this.id = data.id;
     this.importJobId = data.importJobId;
     this.savedRecords = data.savedRecords;
     this.startedAt = data.startedAt;
@@ -5478,6 +5485,7 @@ export class RoleModel {
   public readonly customRoleId: RoleFieldsFragment["customRoleId"];
   public readonly description: RoleFieldsFragment["description"];
   public readonly id: RoleFieldsFragment["id"];
+  public readonly isAssignableToTask: RoleFieldsFragment["isAssignableToTask"];
   public readonly isAssignableToThread: RoleFieldsFragment["isAssignableToThread"];
   public readonly key: RoleFieldsFragment["key"];
   public readonly name: RoleFieldsFragment["name"];
@@ -5489,6 +5497,7 @@ export class RoleModel {
     this.customRoleId = data.customRoleId;
     this.description = data.description;
     this.id = data.id;
+    this.isAssignableToTask = data.isAssignableToTask;
     this.isAssignableToThread = data.isAssignableToThread;
     this.key = data.key;
     this.name = data.name;
@@ -9186,6 +9195,7 @@ export interface PlainSdkMutations {
   generateHelpCenterArticle(variables: GenerateHelpCenterArticleMutationVariables): Promise<GenerateHelpCenterArticleMutation["generateHelpCenterArticle"]>;
   importCustomers(variables: ImportCustomersMutationVariables): Promise<ImportCustomersMutation["importCustomers"]>;
   importTenantFieldSchemas(variables: ImportTenantFieldSchemasMutationVariables): Promise<ImportTenantFieldSchemasMutation["importTenantFieldSchemas"]>;
+  importTenantFieldSchemasFromService(variables: ImportTenantFieldSchemasFromServiceMutationVariables): Promise<ImportTenantFieldSchemasFromServiceMutation["importTenantFieldSchemasFromService"]>;
   importTenants(variables: ImportTenantsMutationVariables): Promise<ImportTenantsMutation["importTenants"]>;
   inviteUserToWorkspace(variables: InviteUserToWorkspaceMutationVariables): Promise<InviteUserToWorkspaceMutation["inviteUserToWorkspace"]>;
   lockThread(variables: LockThreadMutationVariables): Promise<LockThreadMutation["lockThread"]>;
@@ -12060,6 +12070,13 @@ export class PlainSdk {
         ImportTenantFieldSchemasDocument, variables
       );
       return response.importTenantFieldSchemas;
+    },
+
+    async importTenantFieldSchemasFromService(variables: ImportTenantFieldSchemasFromServiceMutationVariables): Promise<ImportTenantFieldSchemasFromServiceMutation["importTenantFieldSchemasFromService"]> {
+      const response = await _client.request<ImportTenantFieldSchemasFromServiceMutation, ImportTenantFieldSchemasFromServiceMutationVariables>(
+        ImportTenantFieldSchemasFromServiceDocument, variables
+      );
+      return response.importTenantFieldSchemasFromService;
     },
 
     async importTenants(variables: ImportTenantsMutationVariables): Promise<ImportTenantsMutation["importTenants"]> {
