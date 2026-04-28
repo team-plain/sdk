@@ -1,5 +1,15 @@
 # @team-plain/graphql
 
+## 1.1.0
+
+### Minor Changes
+
+- ea8afe4: Update graphql schema
+
+### Patch Changes
+
+- ea8afe4: Correct documentation and node version requirements to allow for node 24
+
 ## 1.0.1
 
 ### Patch Changes
