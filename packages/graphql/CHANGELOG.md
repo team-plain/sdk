@@ -1,5 +1,11 @@
 # @team-plain/graphql
 
+## 1.2.0
+
+### Minor Changes
+
+- d4ba601: Add DateTime and User UI components
+
 ## 1.1.0
 
 ### Minor Changes
