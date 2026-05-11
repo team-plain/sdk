@@ -84,6 +84,7 @@ type Workspace {
   workspaceChatSettings: WorkspaceChatSettings!
   logo: WorkspaceFile
   workOSOrganizationId: String
+  workOSHubOrganizationId: String
 }
 
 type WorkspaceInvite {
@@ -455,23 +456,118 @@ type ThreadDiscussionAgentSessionChannelDetails {
   agentSessionId: ID!
 }
 
+enum ThreadDiscussionStatus {
+  IN_PROGRESS
+  IDLE
+  RESOLVED
+}
+
 type ThreadDiscussion {
   id: ID!
   threadId: ID
+
+  """
+  The support thread when threadId is set. Null when the discussion has no thread (e.g. some global Sidekick sessions).
+  """
+  thread: Thread
   title: String!
   messages(first: Int, after: String, last: Int, before: String): ThreadDiscussionMessageConnection!
+
+  """
+  High-level status of the discussion. RESOLVED when resolvedAt is set.
+  For agent session discussions, IN_PROGRESS while the agent is running, otherwise IDLE.
+  Non-agent-session discussions are IDLE until resolved.
+  """
+  status: ThreadDiscussionStatus!
   resolvedAt: DateTime
+
+  """
+  Timestamp of the most recent message in the discussion. Null when no messages have been posted yet.
+  """
+  lastActivityAt: DateTime
   createdAt: DateTime!
   createdBy: Actor!
   updatedAt: DateTime!
   updatedBy: Actor!
   channelDetails: ThreadDiscussionChannelDetails
+
+  """
+  When the discussion was started from an entity page (company, tenant, etc.). Null when source is thread-only, a plain link, or absent.
+  """
+  sourceEntityId: ID
+  sourceEntityType: DiscussionSourceEntityType
   type: ThreadDiscussionType! @deprecated(reason: "Use channelDetails instead")
   slackTeamId: String @deprecated(reason: "Use channelDetails.slackTeamId instead")
   slackChannelId: String @deprecated(reason: "Use channelDetails.slackChannelId instead")
   slackChannelName: String @deprecated(reason: "Use channelDetails.slackChannelName instead")
   slackMessageLink: String @deprecated(reason: "Use channelDetails.slackMessageLink instead")
   emailRecipients: [String!]! @deprecated(reason: "Use channelDetails.emailRecipients instead")
+
+  """
+  User-authored messages that the user has submitted but the agent has not
+  picked up yet because it was mid-turn. Empty for non-AGENT_SESSION
+  discussions. Frontend can render these as greyed-out preview bubbles
+  pinned to the bottom of the chat; they disappear when the agent picks
+  them up (a real ThreadDiscussionMessage is created at that point with a
+  correctly-ordered timestamp) or when the queue is cleared by error /
+  timeout / manual stop.
+  """
+  queuedAgentSessionMessages: [QueuedAgentSessionMessage!]!
+}
+
+"""
+A user message that has been submitted to a Sidekick AGENT_SESSION
+discussion while the agent was mid-turn. Lives in the queue until the
+agent picks it up. Once picked up, it's promoted to a regular
+ThreadDiscussionMessage and removed from the queue.
+"""
+type QueuedAgentSessionMessage {
+  id: ID!
+  text: String!
+  workspaceFiles: [WorkspaceFile!]!
+  createdAt: DateTime!
+  createdBy: Actor!
+  updatedAt: DateTime!
+  updatedBy: Actor!
+}
+
+type ThreadDiscussionEdge {
+  node: ThreadDiscussion!
+  cursor: String!
+}
+
+type ThreadDiscussionConnection {
+  edges: [ThreadDiscussionEdge!]!
+  pageInfo: PageInfo!
+}
+
+input DiscussionsFilter {
+  createdByUserIds: [ID!]
+  discussionTypes: [DiscussionType!]
+  threadIds: [ID!]
+
+  """
+  Only return discussions whose last activity is at or after this timestamp. ISO 8601 format (e.g. 2024-10-28T18:30:00Z).
+  """
+  lastActivityAtAfter: String
+
+  """
+  Only return discussions whose last activity is strictly before this timestamp. ISO 8601 format (e.g. 2024-10-28T18:30:00Z).
+  """
+  lastActivityAtBefore: String
+
+  """Only return discussions whose status is one of the provided values."""
+  statuses: [ThreadDiscussionStatus!]
+}
+
+enum DiscussionsSortField {
+  CREATED_AT
+  LAST_ACTIVITY_AT
+}
+
+input DiscussionsSort {
+  field: DiscussionsSortField!
+  direction: SortDirection!
 }
 
 type ThreadDiscussionMessageConnection {
@@ -496,7 +592,14 @@ type ThreadDiscussionMessage {
   type: ThreadDiscussionMessageType!
   text: String!
   slackMessageLink: String
+
+  """
+  Customer-scoped attachments. Populated for EMAIL / SLACK / CURSOR messages.
+  """
   attachments: [Attachment!]!
+
+  """Workspace-scoped files. Populated for Sidekick AGENT_SESSION messages."""
+  workspaceFiles: [WorkspaceFile!]!
   lastEditedOnSlackAt: DateTime
   deletedOnSlackAt: DateTime
   reactions: [ThreadDiscussionMessageReaction!]!
@@ -508,13 +611,21 @@ type ThreadDiscussionMessage {
   updatedBy: Actor!
 }
 
-union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload
+union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionApprovalRequestEntryPayload
 
 type ThreadDiscussionMessageEntryPayload {
   text: String!
   type: ThreadDiscussionMessageType!
   attachments: [Attachment!]!
   isFinal: Boolean!
+
+  """
+  Slack Block Kit blocks (https://api.slack.com/block-kit) sent with this
+  message, if any. JSON-encoded array of blocks. Null when the message was
+  sent as plain markdown. The Plain UI renders a placeholder + a link to the
+  Slack message instead of rendering the blocks natively.
+  """
+  slackBlocks: String
 }
 
 type ThreadDiscussionToolCallEntryPayload {
@@ -525,6 +636,35 @@ type ThreadDiscussionToolCallEntryPayload {
   isSuccess: Boolean!
   error: String
   durationMs: Int!
+}
+
+enum AgentApprovalStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+"""
+Subset of AgentApprovalStatus valid as a resolution input (excludes PENDING).
+"""
+enum AgentApprovalDecision {
+  APPROVED
+  DENIED
+}
+
+type ThreadDiscussionApprovalRequestEntryPayload {
+  approvalId: ID!
+  leaseId: ID!
+  justification: String!
+  status: AgentApprovalStatus!
+  reviewerNote: String
+  resolvedAt: DateTime
+  resolvedBy: InternalActor
+
+  """
+  JSON-encoded array of { service, op, maxInvocations, usedCount, args }.
+  """
+  calls: String!
 }
 
 type WorkflowRule {
@@ -581,6 +721,20 @@ type WorkflowConnection {
   pageInfo: PageInfo!
 }
 
+enum WorkflowTriggerType {
+  MANUAL
+  EVENTS
+}
+
+input WorkflowsFilter {
+  triggerTypes: [WorkflowTriggerType!]
+
+  """
+  Filter by published status. true returns only published workflows (publishedAt set), false returns only unpublished workflows (publishedAt null).
+  """
+  isPublished: Boolean
+}
+
 enum WorkflowStepType {
   CONDITION
   ACTION
@@ -634,6 +788,11 @@ type WorkflowExecution {
   workflowId: ID!
 
   """
+  The workflow this execution belongs to. Null if the workflow has been deleted.
+  """
+  workflow: Workflow
+
+  """
   The event type that triggered this execution (e.g., thread.thread_created).
   """
   triggeredBy: String!
@@ -648,6 +807,11 @@ type WorkflowExecution {
 
   """The ID of the entity this execution was triggered for."""
   entityId: ID
+
+  """
+  The actor that manually triggered this execution, if it was manually triggered.
+  """
+  manuallyTriggeredBy: InternalActor
 
   """The step executions for this workflow execution."""
   stepExecutions: [WorkflowStepExecution!]!
@@ -801,6 +965,8 @@ type ThreadsDisplayOptions {
   hasIssueTrackerIssues: Boolean!
   hasTasks: Boolean!
   hasThreadFieldKeys: [String!]!
+  hasTenants: Boolean!
+  hasTenantFieldExternalIds: [ID!]!
 }
 
 enum ThreadsLayout {
@@ -1721,6 +1887,25 @@ type ComponentBadge {
   badgeColor: ComponentBadgeColor
 }
 
+type ComponentDateTime {
+  """
+  An ISO 8601 datetime that the frontend will format in the viewer's local timezone.
+  """
+  dateTimeIso8601: DateTime!
+}
+
+"""
+Renders a Plain user resolved from the supplied identifier. The user is
+resolved at read time so callers cannot supply a spoofed display name.
+"""
+type ComponentUser {
+  """
+  The resolved Plain user. Null if the identifier no longer matches a user
+  (e.g. the user was deleted or the email is unknown).
+  """
+  user: User
+}
+
 type ComponentRow {
   rowMainContent: [ComponentRowContent!]!
   rowAsideContent: [ComponentRowContent!]!
@@ -1730,15 +1915,15 @@ type ComponentContainer {
   containerContent: [ComponentContainerContent!]!
 }
 
-union ComponentContainerContent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentBadge | ComponentCopyButton | ComponentRow
+union ComponentContainerContent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentBadge | ComponentCopyButton | ComponentDateTime | ComponentUser | ComponentRow
 
-union ComponentRowContent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentBadge | ComponentCopyButton
+union ComponentRowContent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentBadge | ComponentCopyButton | ComponentDateTime | ComponentUser
 
-union CustomTimelineEntryComponent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentRow | ComponentContainer | ComponentBadge | ComponentCopyButton
+union CustomTimelineEntryComponent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentRow | ComponentContainer | ComponentBadge | ComponentCopyButton | ComponentDateTime | ComponentUser
 
-union EventComponent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentRow | ComponentBadge | ComponentCopyButton
+union EventComponent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentRow | ComponentBadge | ComponentCopyButton | ComponentDateTime | ComponentUser
 
-union CustomerCardComponent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentRow | ComponentContainer | ComponentBadge | ComponentCopyButton
+union CustomerCardComponent = ComponentText | ComponentPlainText | ComponentSpacer | ComponentDivider | ComponentLinkButton | ComponentWorkflowButton | ComponentRow | ComponentContainer | ComponentBadge | ComponentCopyButton | ComponentDateTime | ComponentUser
 
 type CustomEntry {
   externalId: ID
@@ -2207,7 +2392,27 @@ type GithubUserAuthIntegration {
 
 type WorkspaceCursorIntegration {
   id: ID!
-  token: String!
+  tokenPreview: String!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+type AgentToolIntegration {
+  id: ID!
+  provider: String!
+  toolkitSlug: String!
+  connectedAccountId: ID!
+  status: String!
+  statusReason: String
+  linkExpiresAt: DateTime
+
+  """
+  Free-text guidance appended to the Sidekick system prompt when this
+  integration is available. Null when no per-tool guidance has been set.
+  """
+  operatingPrompt: String
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -2645,6 +2850,7 @@ type Query {
   myLinearIntegrationToken: LinearIntegrationToken
   githubUserAuthIntegration: GithubUserAuthIntegration
   workspaceCursorIntegration: WorkspaceCursorIntegration
+  agentToolIntegration(provider: String!, toolkitSlug: String!): AgentToolIntegration
   cursorRepositories(integrationId: ID!): [CursorRepository!]!
   myJiraIntegrationToken: JiraIntegrationToken
   myEmailSignature: EmailSignature
@@ -2652,7 +2858,6 @@ type Query {
   billingPlans(first: Int, after: String, last: Int, before: String): BillingPlanConnection!
   myBillingSubscription: BillingSubscription
   myBillingRota: BillingRota
-  myPaymentMethod: PaymentMethod
 
   """
   Returns configuration for WorkOS features including admin portal URLs for SSO, directory sync, and domain verification.
@@ -2825,7 +3030,7 @@ type Query {
   workflow(workflowId: ID!): Workflow
 
   """List workflows."""
-  workflows(first: Int, after: String, last: Int, before: String): WorkflowConnection!
+  workflows(first: Int, after: String, last: Int, before: String, filters: WorkflowsFilter): WorkflowConnection!
 
   """Get a workflow execution by id."""
   workflowExecution(workflowExecutionId: ID!): WorkflowExecution
@@ -2880,11 +3085,26 @@ type Query {
   searchTenants(searchQuery: TenantsSearchQuery!, first: Int, after: String, last: Int, before: String): TenantSearchResultConnection!
   threadDiscussion(threadDiscussionId: ID!): ThreadDiscussion
   discussion(discussionId: ID!): ThreadDiscussion
+  discussions(filters: DiscussionsFilter, sortBy: DiscussionsSort, first: Int, after: String, last: Int, before: String): ThreadDiscussionConnection!
   serviceAuthorization(serviceAuthorizationId: ID!): ServiceAuthorization
   serviceAuthorizations(first: Int, after: String, last: Int, before: String, filters: ServiceAuthorizationsFilter): ServiceAuthorizationConnection!
+
+  """
+  Repositories the workspace's Sidekick GitHub integration can currently access.
+  """
+  sidekickGithubAccessibleRepos(serviceAuthorizationId: ID!): [SidekickGithubRepo!]!
+
+  """
+  The Sidekick GitHub configuration for a workspace: selected repositories
+  and operating instructions.
+  """
+  sidekickGithubServiceConfig(serviceAuthorizationId: ID!): SidekickGithubServiceConfig
+
+  """The workspace's Sidekick settings (custom instructions, etc.)."""
+  sidekickSettings: SidekickSettings!
   importerTenantLists(serviceAuthorizationId: ID!, first: Int, after: String, last: Int, before: String): ImporterTenantListConnection!
   importJobDefinition(serviceIntegrationKey: String!, isEnabled: Boolean): ImportJobDefinition
-  importRuns(first: Int, after: String, last: Int, before: String, filters: ImportRunsFilter!): ImportRunConnection!
+  importJobs(filters: ImportJobsFilter, first: Int, after: String, last: Int, before: String): ImportJobConnection!
   tiers(first: Int, after: String, last: Int, before: String): TierConnection!
   tier(tierId: ID!): Tier
   businessHours: BusinessHours @deprecated(reason: "Use businessHoursSlots instead.")
@@ -4742,6 +4962,8 @@ input ThreadsDisplayOptionsInput {
   hasIssueTrackerIssues: Boolean
   hasTasks: Boolean
   hasThreadFieldKeys: [String!]
+  hasTenants: Boolean
+  hasTenantFieldExternalIds: [ID!]
 }
 
 input SavedThreadsViewFilterInput {
@@ -5354,6 +5576,23 @@ input ComponentCopyButtonInput {
   copyButtonTooltipLabel: String
 }
 
+input ComponentDateTimeInput {
+  """
+  An ISO 8601 datetime string. The frontend formats it in the viewer's local timezone.
+  """
+  dateTimeIso8601: String!
+}
+
+"""Identifies a Plain user. Exactly one field must be set."""
+input UserIdentifierInput {
+  userId: ID
+  emailAddress: String
+}
+
+input ComponentUserInput {
+  userIdentifier: UserIdentifierInput!
+}
+
 input ComponentRowInput {
   """Must contain at least one component."""
   rowMainContent: [ComponentRowContentInput!]!
@@ -5387,6 +5626,8 @@ input ComponentContainerContentInput {
   componentSpacer: ComponentSpacerInput
   componentBadge: ComponentBadgeInput
   componentCopyButton: ComponentCopyButtonInput
+  componentDateTime: ComponentDateTimeInput
+  componentUser: ComponentUserInput
   componentRow: ComponentRowInput
 }
 
@@ -5399,6 +5640,8 @@ input ComponentRowContentInput {
   componentSpacer: ComponentSpacerInput
   componentBadge: ComponentBadgeInput
   componentCopyButton: ComponentCopyButtonInput
+  componentDateTime: ComponentDateTimeInput
+  componentUser: ComponentUserInput
 }
 
 input ComponentInput {
@@ -5410,6 +5653,8 @@ input ComponentInput {
   componentSpacer: ComponentSpacerInput
   componentBadge: ComponentBadgeInput
   componentCopyButton: ComponentCopyButtonInput
+  componentDateTime: ComponentDateTimeInput
+  componentUser: ComponentUserInput
   componentRow: ComponentRowInput
   componentContainer: ComponentContainerInput
 }
@@ -5423,6 +5668,8 @@ input EventComponentInput {
   componentSpacer: ComponentSpacerInput
   componentBadge: ComponentBadgeInput
   componentCopyButton: ComponentCopyButtonInput
+  componentDateTime: ComponentDateTimeInput
+  componentUser: ComponentUserInput
   componentRow: ComponentRowInput
 }
 
@@ -6022,6 +6269,10 @@ type Mutation {
   deleteGithubUserAuthIntegration: DeleteGithubUserAuthIntegrationOutput!
   createWorkspaceCursorIntegration(input: CreateWorkspaceCursorIntegrationInput!): CreateWorkspaceCursorIntegrationOutput!
   deleteWorkspaceCursorIntegration(id: ID!): DeleteWorkspaceCursorIntegrationOutput!
+  startAgentToolIntegration(input: StartAgentToolIntegrationInput!): StartAgentToolIntegrationOutput!
+  syncAgentToolIntegration(input: SyncAgentToolIntegrationInput!): SyncAgentToolIntegrationOutput!
+  disconnectAgentToolIntegration(input: DisconnectAgentToolIntegrationInput!): DisconnectAgentToolIntegrationOutput!
+  updateAgentToolIntegrationOperatingPrompt(input: UpdateAgentToolIntegrationOperatingPromptInput!): UpdateAgentToolIntegrationOperatingPromptOutput!
   createMyMSTeamsIntegration(input: CreateMyMSTeamsIntegrationInput!): CreateMyMSTeamsIntegrationOutput!
   deleteMyMSTeamsIntegration: DeleteMyMSTeamsIntegrationOutput!
   createWorkspaceMSTeamsIntegration(input: CreateWorkspaceMSTeamsIntegrationInput!): CreateWorkspaceMSTeamsIntegrationOutput!
@@ -6029,6 +6280,22 @@ type Mutation {
 
   """Updates a setting."""
   updateSetting(input: UpdateSettingInput!): UpdateSettingOutput!
+
+  """
+  Deletes a setting at the given scope, reverting the effective value to the
+  next fallback in the scope hierarchy (e.g. a per-channel override deletion
+  reveals the team-integration setting, which in turn falls back to the
+  workspace default).
+  """
+  deleteSetting(input: DeleteSettingInput!): DeleteSettingOutput!
+
+  """
+  Applies many Slack per-channel setting writes in a single request. Each
+  update targets the `WORKSPACE_SLACK_CONNECTED_CHANNEL` scope and is
+  written with the same semantics as `updateSetting`. The writes are
+  attempted independently; partial failures are reported per-item.
+  """
+  bulkUpdateSlackChannelSettings(input: BulkUpdateSlackChannelSettingsInput!): BulkUpdateSlackChannelSettingsOutput!
 
   """
   Creates a customer card config. A maximum of 25 card configs can be created.
@@ -6089,16 +6356,44 @@ type Mutation {
   """
   deleteThread(input: DeleteThreadInput!): DeleteThreadOutput!
   createThreadDiscussion(input: CreateThreadDiscussionInput!): CreateThreadDiscussionOutput!
+
+  """
+  Imports an existing external conversation as a discussion on a Plain thread.
+  The external messages are backfilled into Plain.
+  
+  Currently supports importing Slack threads via permalink. If the Slack channel is
+  not yet connected to Plain, the bot will join the channel (public channels only)
+  and the channel will be set up as a DISCUSSION channel automatically — this
+  requires the connectedSlackChannel:edit permission. Private channels must have
+  the bot invited via /invite @plain first.
+  """
+  importThreadDiscussion(input: ImportThreadDiscussionInput!): ImportThreadDiscussionOutput!
   createDiscussion(input: CreateDiscussionInput!): CreateDiscussionOutput!
   sendThreadDiscussionMessage(input: SendThreadDiscussionMessageInput!): SendThreadDiscussionMessageOutput!
   sendDiscussionMessage(input: SendDiscussionMessageInput!): SendDiscussionMessageOutput!
   markThreadDiscussionAsResolved(input: MarkThreadDiscussionAsResolvedInput!): MarkThreadDiscussionAsResolvedOutput!
+
+  """Only Slack-channel discussions are supported."""
+  deleteThreadDiscussion(input: DeleteThreadDiscussionInput!): DeleteThreadDiscussionOutput!
+
+  """
+  Resolves a Sidekick agent-session approval request (lease) with APPROVED or DENIED.
+  On APPROVED, resumes the agent session with a synthetic message carrying the lease
+  so the agent can call its approved tools.
+  """
+  resolveAgentApproval(input: ResolveAgentApprovalInput!): ResolveAgentApprovalOutput!
 
   """
   Reply to the last message in a thread. This mutation supports replying to threads where the last message is
   a Slack message, an email or a form submission. If the thread is empty, it will send an email to the customer.
   """
   replyToThread(input: ReplyToThreadInput!): ReplyToThreadOutput!
+
+  """
+  Mints a short-lived signed JWT that a Plain-hosted embed iframe can pass to a customer's
+  backend. The customer verifies the token against the Plain-hosted JWKS at `jwksUrl`.
+  """
+  mintEmbedToken(input: MintEmbedTokenInput!): MintEmbedTokenOutput!
   upsertMyEmailSignature(input: UpsertMyEmailSignatureInput!): UpsertMyEmailSignatureOutput!
   createAutoresponder(input: CreateAutoresponderInput!): CreateAutoresponderOutput!
   updateAutoresponder(input: UpdateAutoresponderInput!): UpdateAutoresponderOutput!
@@ -6125,6 +6420,17 @@ type Mutation {
 
   """Delete personal service authorizations for the current user."""
   deleteMyServiceAuthorization(input: DeleteMyServiceAuthorizationInput!): DeleteMyServiceAuthorizationOutput!
+
+  """
+  Update the Sidekick GitHub integration's selected repositories and operating instructions.
+  """
+  updateSidekickGithubConfig(input: UpdateSidekickGithubConfigInput!): UpdateSidekickGithubConfigOutput!
+
+  """
+  Update the workspace's Sidekick settings.
+  Pass null in customPrompt to clear it.
+  """
+  updateSidekickSettings(input: UpdateSidekickSettingsInput!): UpdateSidekickSettingsOutput!
   createImportSync(input: CreateImportSyncInput!): CreateImportSyncOutput!
 
   """Imports tenant field schemas from the connected service."""
@@ -6148,9 +6454,7 @@ type Mutation {
 
   """Configure a user's working hours for automatic status switching."""
   syncUserWorkingHours(input: SyncUserWorkingHoursInput!): SyncUserWorkingHoursOutput!
-  createCheckoutSession(input: CreateCheckoutSessionInput!): CreateCheckoutSessionOutput!
   createHyperlineCheckoutSession(input: CreateHyperlineCheckoutSessionInput!): CreateHyperlineCheckoutSessionOutput!
-  createBillingPortalSession: CreateBillingPortalSessionOutput!
   createHyperlineBillingPortalSession: CreateHyperlineBillingPortalSessionOutput!
   createHyperlineComponentsAuthToken: CreateHyperlineComponentsAuthTokenOutput!
   cancelHyperlineSubscription: CancelHyperlineSubscriptionOutput!
@@ -6174,6 +6478,7 @@ type Mutation {
   createThreadChannelAssociation(input: CreateThreadChannelAssociationInput!): CreateThreadChannelAssociationOutput!
   deleteThreadChannelAssociation(input: DeleteThreadChannelAssociationInput!): DeleteThreadChannelAssociationOutput!
   createWorkspaceFileUploadUrl(input: CreateWorkspaceFileUploadUrlInput!): CreateWorkspaceFileUploadUrlOutput!
+  createWorkspaceFileDownloadUrl(input: CreateWorkspaceFileDownloadUrlInput!): CreateWorkspaceFileDownloadUrlOutput!
   deleteWorkspaceFile(input: DeleteWorkspaceFileInput!): DeleteWorkspaceFileOutput!
 
   """
@@ -6279,7 +6584,14 @@ type ToneRuleFeedbackDetails {
   toneRuleDescription: String!
 }
 
-union AiFeatureFeedbackDetails = AiAgentFeedbackDetails | ThreadCatchupFeedbackDetails | ThreadClustersFeedbackDetails | ToneRuleFeedbackDetails
+type KnowledgeGapFeedbackDetails {
+  reason: String!
+  comment: String
+  sentiment: AiFeedbackSentiment
+  knowledgeGapId: ID!
+}
+
+union AiFeatureFeedbackDetails = AiAgentFeedbackDetails | ThreadCatchupFeedbackDetails | ThreadClustersFeedbackDetails | ToneRuleFeedbackDetails | KnowledgeGapFeedbackDetails
 
 type AiFeatureFeedbackOutput {
   id: ID!
@@ -6474,6 +6786,7 @@ type AddGeneratedReplyOutput {
 
 input GeneratedReplyFeedbackInput {
   type: OptionalGeneratedReplyFeedbackInput
+  comment: String
 }
 
 input UpdateGeneratedReplyInput {
@@ -6702,18 +7015,43 @@ enum ThreadDiscussionMessageType {
 
 input CreateThreadDiscussionInput {
   threadId: ID!
+
+  """
+  The markdown content of the first message. When slackBlocks are provided, this
+  is used as the fallback content rendered in Plain's UI.
+  """
   markdownContent: String!
   attachmentIds: [ID!]
   type: CreateThreadDiscussionType!
   slackDetails: ThreadDiscussionSlackDetailsInput
   emailDetails: ThreadDiscussionEmailDetailsInput
   cursorDetails: ThreadDiscussionCursorDetailsInput
+  unfurlLinks: Boolean
+
+  """
+  Slack Block Kit blocks (https://api.slack.com/block-kit) to send as the first
+  message of the discussion. Only valid when type is SLACK. Provided as a JSON
+  string holding an array of blocks. In Plain, the UI will fall back to the
+  markdownContent property but will render Slack blocks in Slack.
+  """
+  slackBlocks: String
 }
 
 input CreateDiscussionInput {
   threadId: ID
   markdownContent: String!
+
+  """
+  Customer-scoped attachments. Used by EMAIL / SLACK / CURSOR discussions.
+  Sidekick AGENT_SESSION discussions use workspaceFileIds instead.
+  """
   attachmentIds: [ID!]
+
+  """
+  Workspace-scoped files. Used by Sidekick AGENT_SESSION discussions, which
+  are not customer-scoped. Other discussion types ignore this field.
+  """
+  workspaceFileIds: [ID!]
   type: DiscussionType!
   slackDetails: ThreadDiscussionSlackDetailsInput
   emailDetails: ThreadDiscussionEmailDetailsInput
@@ -6747,10 +7085,60 @@ type CreateThreadDiscussionOutput {
   error: MutationError
 }
 
+enum ImportThreadDiscussionType {
+  SLACK
+}
+
+input ImportThreadDiscussionInput {
+  """The ID of the Plain thread to attach the discussion to."""
+  threadId: ID!
+
+  """
+  The type of external source the discussion is imported from. Determines which
+  *Details field on this input is required.
+  """
+  type: ImportThreadDiscussionType!
+
+  """Required when type is SLACK."""
+  slackDetails: ImportThreadDiscussionSlackDetailsInput
+}
+
+input ImportThreadDiscussionSlackDetailsInput {
+  """
+  A Slack message permalink, e.g.
+  https://workspace.slack.com/archives/C123ABC/p1234567890123456
+  The link can point to either the root message of a thread or any reply within it —
+  in either case the entire Slack thread (root + all replies) is imported.
+  """
+  slackMessageUrl: String!
+}
+
+type ImportThreadDiscussionOutput {
+  threadDiscussion: ThreadDiscussion
+  error: MutationError
+}
+
 input SendThreadDiscussionMessageInput {
   threadDiscussionId: ID!
   markdownContent: String!
   attachmentIds: [ID!]
+
+  """
+  Channel-specific details for the message. Discriminated by type. Currently only SLACK is supported.
+  """
+  channelDetails: SendThreadDiscussionMessageChannelDetailsInput
+}
+
+input SendThreadDiscussionMessageChannelDetailsInput {
+  type: ThreadDiscussionType!
+  slack: SendThreadDiscussionMessageSlackChannelDetailsInput
+}
+
+input SendThreadDiscussionMessageSlackChannelDetailsInput {
+  """
+  JSON-encoded Slack Block Kit blocks. markdownContent is still required as the text fallback.
+  """
+  slackBlocks: String
 }
 
 type SendThreadDiscussionMessageOutput {
@@ -6761,7 +7149,15 @@ type SendThreadDiscussionMessageOutput {
 input SendDiscussionMessageInput {
   discussionId: ID!
   markdownContent: String!
+
+  """
+  Customer-scoped attachments. Used by EMAIL / SLACK / CURSOR discussions.
+  Sidekick AGENT_SESSION discussions use workspaceFileIds instead.
+  """
   attachmentIds: [ID!]
+
+  """Workspace-scoped files. Used by Sidekick AGENT_SESSION discussions."""
+  workspaceFileIds: [ID!]
 }
 
 type SendDiscussionMessageOutput {
@@ -6774,6 +7170,24 @@ input MarkThreadDiscussionAsResolvedInput {
 }
 
 type MarkThreadDiscussionAsResolvedOutput {
+  error: MutationError
+}
+
+input DeleteThreadDiscussionInput {
+  threadDiscussionId: ID!
+}
+
+type DeleteThreadDiscussionOutput {
+  error: MutationError
+}
+
+input ResolveAgentApprovalInput {
+  leaseId: ID!
+  decision: AgentApprovalDecision!
+  reviewerNote: String
+}
+
+type ResolveAgentApprovalOutput {
   error: MutationError
 }
 
@@ -7521,6 +7935,34 @@ input RemoveAdditionalAssigneesInput {
 
 type RemoveAdditionalAssigneesOutput {
   thread: Thread
+  error: MutationError
+}
+
+"""
+A short-lived signed JWT that an embed iframe can pass to a customer's backend for
+verification against the Plain-hosted JWKS at `jwksUrl`.
+"""
+type EmbedToken {
+  token: String!
+  expiresAt: DateTime!
+  jwksUrl: String!
+}
+
+input MintEmbedTokenInput {
+  """
+  Stable identifier for the embed. Passed through as the `plain_embed_id`
+  claim for audit logging.
+  """
+  embedId: String!
+
+  """
+  Thread the command is being invoked from. Access is checked server-side.
+  """
+  threadId: ID!
+}
+
+type MintEmbedTokenOutput {
+  token: EmbedToken
   error: MutationError
 }
 
@@ -8480,6 +8922,86 @@ type UpdateSettingOutput {
   error: MutationError
 }
 
+"""An input provided to the `deleteSetting` mutation."""
+input DeleteSettingInput {
+  """A code for the setting."""
+  code: String!
+
+  """A valid scope for the setting code."""
+  scope: SettingScopeInput!
+}
+
+"""
+An output type provided by the `deleteSetting` mutation.
+Returns the deleted setting (or null if it did not exist) or an error.
+"""
+type DeleteSettingOutput {
+  """
+  The setting that was removed. Null when no stored value existed at the given scope.
+  """
+  previousSetting: Setting
+  error: MutationError
+}
+
+"""An input provided to the `bulkUpdateSlackChannelSettings` mutation."""
+input BulkUpdateSlackChannelSettingsInput {
+  """
+  List of per-channel setting writes to apply. Writes are applied as a single batched DynamoDB transaction (chunked at 100 items per call) and emit a single batched event publish, so large lists are accepted without per-item fan-out cost.
+  """
+  updates: [BulkUpdateSlackChannelSettingItem!]!
+}
+
+"""
+A single update applied by the `bulkUpdateSlackChannelSettings` mutation.
+"""
+input BulkUpdateSlackChannelSettingItem {
+  """
+  The Plain slack channel id that the setting applies to. Used as the scope id of the `WORKSPACE_SLACK_CONNECTED_CHANNEL` scope.
+  """
+  slackChannelId: ID!
+
+  """The setting code."""
+  code: String!
+
+  """The setting value."""
+  value: SettingValueInput!
+}
+
+"""
+An output type provided by the `bulkUpdateSlackChannelSettings` mutation.
+Returns per-update results so the caller can distinguish successful writes
+from failed ones.
+"""
+type BulkUpdateSlackChannelSettingsOutput {
+  """Per-update results, in the same order as the input list."""
+  results: [BulkUpdateSlackChannelSettingResult!]!
+
+  """
+  Top-level error. Set to a `bulk_partial_failure` error whenever any
+  per-item write failed, so callers that only check the top-level error
+  don't silently miss per-item failures. Null only when every item
+  succeeded.
+  """
+  error: MutationError
+}
+
+"""
+The outcome of a single update inside `bulkUpdateSlackChannelSettings`.
+"""
+type BulkUpdateSlackChannelSettingResult {
+  """The Plain slack channel id this result corresponds to."""
+  slackChannelId: ID!
+
+  """The setting code this result corresponds to."""
+  code: String!
+
+  """The setting after the update. Null when the update failed."""
+  setting: Setting
+
+  """Per-item error, if the update failed. Null when the update succeeded."""
+  error: MutationError
+}
+
 input CreateMySlackIntegrationInput {
   authCode: String!
   redirectUrl: String!
@@ -8808,6 +9330,54 @@ type CreateWorkspaceCursorIntegrationOutput {
 
 type DeleteWorkspaceCursorIntegrationOutput {
   id: ID
+  error: MutationError
+}
+
+input StartAgentToolIntegrationInput {
+  provider: String!
+  toolkitSlug: String!
+  callbackUrl: String
+}
+
+type StartAgentToolIntegrationOutput {
+  integration: AgentToolIntegration
+  redirectUrl: String
+  error: MutationError
+}
+
+input SyncAgentToolIntegrationInput {
+  provider: String!
+  connectedAccountId: ID!
+}
+
+type SyncAgentToolIntegrationOutput {
+  integration: AgentToolIntegration
+  error: MutationError
+}
+
+input DisconnectAgentToolIntegrationInput {
+  provider: String!
+  toolkitSlug: String!
+}
+
+type DisconnectAgentToolIntegrationOutput {
+  integration: AgentToolIntegration
+  error: MutationError
+}
+
+input UpdateAgentToolIntegrationOperatingPromptInput {
+  provider: String!
+  toolkitSlug: String!
+
+  """
+  Free-text guidance for Sidekick about how to use this integration.
+  Pass null or an empty string to clear.
+  """
+  operatingPrompt: String
+}
+
+type UpdateAgentToolIntegrationOperatingPromptOutput {
+  integration: AgentToolIntegration
   error: MutationError
 }
 
@@ -9222,6 +9792,89 @@ type ServiceAuthorizationConnection {
   pageInfo: PageInfo!
 }
 
+"""
+A GitHub repository the workspace's Sidekick GitHub integration has access to.
+"""
+type SidekickGithubRepo {
+  """GitHub's repository id. Stable across renames."""
+  repoId: ID!
+  owner: String!
+  name: String!
+}
+
+"""A repository selected for the workspace's Sidekick GitHub integration."""
+type SidekickGithubSelectedRepo {
+  repoId: ID!
+  owner: String!
+  name: String!
+
+  """Free-text guidance for the agent that is specific to this repository."""
+  operatingInstructions: String
+}
+
+"""
+The Sidekick GitHub configuration for a workspace: selected repositories
+and operating instructions.
+"""
+type SidekickGithubServiceConfig {
+  selectedRepos: [SidekickGithubSelectedRepo!]!
+
+  """Free-text guidance for the agent that applies across the workspace."""
+  operatingInstructions: String
+}
+
+"""
+A repository to select for the workspace's Sidekick GitHub integration,
+with optional per-repo operating instructions.
+"""
+input SidekickGithubRepoInput {
+  """GitHub's repository id."""
+  repoId: ID!
+  owner: String!
+  name: String!
+
+  """Free-text guidance for the agent that is specific to this repository."""
+  operatingInstructions: String
+}
+
+input UpdateSidekickGithubConfigInput {
+  serviceAuthorizationId: ID!
+  selectedRepos: [SidekickGithubRepoInput!]!
+
+  """Free-text guidance for the agent that applies across the workspace."""
+  operatingInstructions: String
+}
+
+type UpdateSidekickGithubConfigOutput {
+  serviceAuthorization: ServiceAuthorization
+  error: MutationError
+}
+
+"""
+Workspace-level settings for Sidekick. Wrapper type so additional settings
+can be added without breaking existing clients.
+"""
+type SidekickSettings {
+  """
+  Free-text guidance appended to the Sidekick system prompt for every
+  session in this workspace. Null when the workspace has not configured any.
+  """
+  customPrompt: String
+}
+
+input UpdateSidekickSettingsInput {
+  """
+  Custom prompt to append to the Sidekick system prompt. Pass null
+  or an empty string to clear.
+  """
+  customPrompt: String
+}
+
+type UpdateSidekickSettingsOutput {
+  sidekickSettings: SidekickSettings
+  error: MutationError
+}
+
 type ImporterTenantList {
   id: ID!
   name: String!
@@ -9605,17 +10258,6 @@ enum BillingIntervalUnit {
   YEAR
 }
 
-input CreateCheckoutSessionInput {
-  plan: BillingPlanKey!
-  interval: BillingInterval @deprecated(reason: "Use intervalUnit instead")
-  intervalUnit: BillingIntervalUnit
-}
-
-type CreateCheckoutSessionOutput {
-  sessionClientSecret: String
-  error: MutationError
-}
-
 input CreateHyperlineCheckoutSessionInput {
   plan: HyperlineCheckoutPlanKey!
   intervalUnit: BillingIntervalUnit!
@@ -9681,11 +10323,6 @@ type BillingPlanConnection {
 type BillingPlanEdge {
   cursor: String!
   node: BillingPlan!
-}
-
-type CreateBillingPortalSessionOutput {
-  billingPortalSessionUrl: String
-  error: MutationError
 }
 
 type CreateHyperlineBillingPortalSessionOutput {
@@ -9899,10 +10536,6 @@ type BillingPlanChangePreview {
   earliestEffectiveAt: DateTime!
 }
 
-type PaymentMethod {
-  isAvailable: Boolean!
-}
-
 type WorkspaceHmac {
   hmacSecret: String
   createdAt: DateTime!
@@ -9961,6 +10594,15 @@ input CreateWorkspaceFileUploadUrlInput {
 
 type CreateWorkspaceFileUploadUrlOutput {
   workspaceFileUploadUrl: WorkspaceFileUploadUrl
+  error: MutationError
+}
+
+input CreateWorkspaceFileDownloadUrlInput {
+  workspaceFileId: ID!
+}
+
+type CreateWorkspaceFileDownloadUrlOutput {
+  workspaceFileDownloadUrl: WorkspaceFileDownloadUrl
   error: MutationError
 }
 
@@ -10139,6 +10781,9 @@ type HelpCenterArticleGroup {
   updatedAt: DateTime!
   updatedBy: InternalActor!
 
+  """The help center this group belongs to."""
+  helpCenter: HelpCenter!
+
   """Parent group in the hierarchy. Null for top-level groups."""
   parentArticleGroup: HelpCenterArticleGroup
 
@@ -10164,6 +10809,9 @@ type HelpCenterArticle {
   createdBy: InternalActor!
   updatedAt: DateTime!
   updatedBy: InternalActor!
+
+  """The help center this article belongs to."""
+  helpCenter: HelpCenter!
 
   """The group this article belongs to, if any."""
   articleGroup: HelpCenterArticleGroup
@@ -10546,21 +11194,27 @@ type ImportRun {
   completedAt: DateTime
 }
 
-type ImportRunEdge {
-  cursor: String!
-  node: ImportRun!
+type ImportJob {
+  id: ID!
+  status: ImporterStatus!
+  startedAt: DateTime
+  completedAt: DateTime
+  importRuns: [ImportRun!]!
 }
 
-type ImportRunConnection {
-  edges: [ImportRunEdge!]!
+type ImportJobEdge {
+  cursor: String!
+  node: ImportJob!
+}
+
+type ImportJobConnection {
+  edges: [ImportJobEdge!]!
   pageInfo: PageInfo!
 }
 
-input ImportRunsFilter {
-  """
-  One of: zendesk, salesforce, freshdesk, helpscout-mailbox, hubspot, jira, shortcut, rootly, incidentio, github-app-oauth, attio.
-  """
-  serviceIntegrationKey: String!
+input ImportJobsFilter {
+  serviceIntegrationKeys: [String!]
+  importJobDefinitionIds: [ID!]
 }
 
 type ImportResult {

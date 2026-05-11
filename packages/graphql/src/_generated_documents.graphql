@@ -14,6 +14,74 @@ fragment AgentStatusDetailInProgressFields on AgentStatusDetailInProgress {
   type
 }
 
+fragment AgentToolIntegrationFields on AgentToolIntegration {
+  id
+  provider
+  toolkitSlug
+  connectedAccountId
+  status
+  statusReason
+  linkExpiresAt {
+    unixTimestamp
+    iso8601
+  }
+  operatingPrompt
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
 fragment AiAgentFeedbackDetailsFields on AiAgentFeedbackDetails {
   reason
   comment
@@ -53,6 +121,12 @@ fragment AiFeatureFeedbackOutputFields on AiFeatureFeedbackOutput {
       toneRuleId
       toneRuleInput
       toneRuleDescription
+    }
+    ... on KnowledgeGapFeedbackDetails {
+      reason
+      comment
+      sentiment
+      knowledgeGapId
     }
   }
 }
@@ -510,6 +584,65 @@ fragment BillingSubscriptionFields on BillingSubscription {
     id
     status
     url
+  }
+}
+
+fragment BooleanSettingFields on BooleanSetting {
+  code
+  booleanValue
+  scope {
+    id
+    scopeType
+  }
+}
+
+fragment BulkUpdateSlackChannelSettingResultFields on BulkUpdateSlackChannelSettingResult {
+  slackChannelId
+  code
+  setting {
+    __typename
+    ... on BooleanSetting {
+      code
+      booleanValue
+      scope {
+        id
+        scopeType
+      }
+    }
+    ... on StringSetting {
+      code
+      stringValue
+      scope {
+        id
+        scopeType
+      }
+    }
+    ... on NumberSetting {
+      code
+      numberValue
+      scope {
+        id
+        scopeType
+      }
+    }
+    ... on StringArraySetting {
+      code
+      stringArrayValue
+      scope {
+        id
+        scopeType
+      }
+    }
+  }
+  error {
+    message
+    type
+    code
+    fields {
+      field
+      message
+      type
+    }
   }
 }
 
@@ -1114,6 +1247,13 @@ fragment ComponentCopyButtonFields on ComponentCopyButton {
   copyButtonTooltipLabel
 }
 
+fragment ComponentDateTimeFields on ComponentDateTime {
+  dateTimeIso8601 {
+    unixTimestamp
+    iso8601
+  }
+}
+
 fragment ComponentDividerFields on ComponentDivider {
   dividerSpacingSize
 }
@@ -1413,6 +1553,17 @@ fragment CustomEntryFields on CustomEntry {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
       }
       rowAsideContent {
         __typename
@@ -1450,6 +1601,17 @@ fragment CustomEntryFields on CustomEntry {
         ... on ComponentCopyButton {
           copyButtonValue
           copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
         }
       }
     }
@@ -1491,6 +1653,17 @@ fragment CustomEntryFields on CustomEntry {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
         ... on ComponentRow {
           rowMainContent {
             __typename
@@ -1528,6 +1701,17 @@ fragment CustomEntryFields on CustomEntry {
             ... on ComponentCopyButton {
               copyButtonValue
               copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
             }
           }
           rowAsideContent {
@@ -1567,6 +1751,17 @@ fragment CustomEntryFields on CustomEntry {
               copyButtonValue
               copyButtonTooltipLabel
             }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+            }
           }
         }
       }
@@ -1578,6 +1773,17 @@ fragment CustomEntryFields on CustomEntry {
     ... on ComponentCopyButton {
       copyButtonValue
       copyButtonTooltipLabel
+    }
+    ... on ComponentDateTime {
+      dateTimeIso8601 {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ComponentUser {
+      user {
+        id
+      }
     }
   }
 }
@@ -1866,6 +2072,17 @@ fragment CustomerEventFields on CustomerEvent {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
       }
       rowAsideContent {
         __typename
@@ -1904,6 +2121,17 @@ fragment CustomerEventFields on CustomerEvent {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
       }
     }
     ... on ComponentBadge {
@@ -1913,6 +2141,17 @@ fragment CustomerEventFields on CustomerEvent {
     ... on ComponentCopyButton {
       copyButtonValue
       copyButtonTooltipLabel
+    }
+    ... on ComponentDateTime {
+      dateTimeIso8601 {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ComponentUser {
+      user {
+        id
+      }
     }
   }
   createdAt {
@@ -2059,6 +2298,17 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
       }
       rowAsideContent {
         __typename
@@ -2097,6 +2347,17 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
       }
     }
     ... on ComponentBadge {
@@ -2106,6 +2367,17 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
     ... on ComponentCopyButton {
       copyButtonValue
       copyButtonTooltipLabel
+    }
+    ... on ComponentDateTime {
+      dateTimeIso8601 {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ComponentUser {
+      user {
+        id
+      }
     }
   }
   customerId
@@ -2745,6 +3017,15 @@ fragment EmailSignatureFields on EmailSignature {
       }
     }
   }
+}
+
+fragment EmbedTokenFields on EmbedToken {
+  token
+  expiresAt {
+    unixTimestamp
+    iso8601
+  }
+  jwksUrl
 }
 
 fragment EscalationPathFields on EscalationPath {
@@ -3502,6 +3783,9 @@ fragment HelpCenterArticleFields on HelpCenterArticle {
       }
     }
   }
+  helpCenter {
+    id
+  }
   articleGroup {
     id
   }
@@ -3563,6 +3847,9 @@ fragment HelpCenterArticleGroupFields on HelpCenterArticleGroup {
         id
       }
     }
+  }
+  helpCenter {
+    id
   }
   parentArticleGroup {
     id
@@ -3650,6 +3937,19 @@ fragment HelpCenterIndexFields on HelpCenterIndex {
   }
 }
 
+fragment ImportJobFields on ImportJob {
+  id
+  status
+  startedAt {
+    unixTimestamp
+    iso8601
+  }
+  completedAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
 fragment ImportJobDefinitionFields on ImportJobDefinition {
   id
   mode
@@ -3717,23 +4017,6 @@ fragment ImportJobDefinitionFields on ImportJobDefinition {
         id
       }
     }
-  }
-}
-
-fragment ImportRunFields on ImportRun {
-  id
-  importJobId
-  entityType
-  status
-  downloadedRecords
-  savedRecords
-  startedAt {
-    unixTimestamp
-    iso8601
-  }
-  completedAt {
-    unixTimestamp
-    iso8601
   }
 }
 
@@ -4238,6 +4521,13 @@ fragment KnowledgeGapFields on KnowledgeGap {
       }
     }
   }
+}
+
+fragment KnowledgeGapFeedbackDetailsFields on KnowledgeGapFeedbackDetails {
+  reason
+  comment
+  sentiment
+  knowledgeGapId
 }
 
 fragment LabelFields on Label {
@@ -5085,6 +5375,15 @@ fragment NoteMentionNotificationDetailFields on NoteMentionNotificationDetail {
   }
 }
 
+fragment NumberSettingFields on NumberSetting {
+  code
+  numberValue
+  scope {
+    id
+    scopeType
+  }
+}
+
 fragment PerSeatRecurringPriceFields on PerSeatRecurringPrice {
   billingIntervalUnit
   billingIntervalCount
@@ -5318,6 +5617,8 @@ fragment SavedThreadsViewFields on SavedThreadsView {
       hasIssueTrackerIssues
       hasTasks
       hasThreadFieldKeys
+      hasTenants
+      hasTenantFieldExternalIds
     }
     groupBy
     layout
@@ -5739,6 +6040,16 @@ fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgree
   }
 }
 
+fragment SidekickGithubServiceConfigFields on SidekickGithubServiceConfig {
+  selectedRepos {
+    repoId
+    owner
+    name
+    operatingInstructions
+  }
+  operatingInstructions
+}
+
 fragment SlackCustomerIdentityFields on SlackCustomerIdentity {
   slackUserId
 }
@@ -5993,6 +6304,24 @@ fragment SnippetFields on Snippet {
         id
       }
     }
+  }
+}
+
+fragment StringArraySettingFields on StringArraySetting {
+  code
+  stringArrayValue
+  scope {
+    id
+    scopeType
+  }
+}
+
+fragment StringSettingFields on StringSetting {
+  code
+  stringValue
+  scope {
+    id
+    scopeType
   }
 }
 
@@ -7762,8 +8091,16 @@ fragment ThreadClustersFeedbackDetailsFields on ThreadClustersFeedbackDetails {
 fragment ThreadDiscussionFields on ThreadDiscussion {
   id
   threadId
+  thread {
+    id
+  }
   title
+  status
   resolvedAt {
+    unixTimestamp
+    iso8601
+  }
+  lastActivityAt {
     unixTimestamp
     iso8601
   }
@@ -7858,10 +8195,48 @@ fragment ThreadDiscussionFields on ThreadDiscussion {
       agentSessionId
     }
   }
+  sourceEntityId
+  sourceEntityType
 }
 
 fragment ThreadDiscussionAgentSessionChannelDetailsFields on ThreadDiscussionAgentSessionChannelDetails {
   agentSessionId
+}
+
+fragment ThreadDiscussionApprovalRequestEntryPayloadFields on ThreadDiscussionApprovalRequestEntryPayload {
+  approvalId
+  leaseId
+  justification
+  status
+  reviewerNote
+  resolvedAt {
+    unixTimestamp
+    iso8601
+  }
+  resolvedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  calls
 }
 
 fragment ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFields on ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails {
@@ -7903,6 +8278,7 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
       text
       type
       isFinal
+      slackBlocks
     }
     ... on ThreadDiscussionToolCallEntryPayload {
       service
@@ -7912,6 +8288,41 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
       isSuccess
       error
       durationMs
+    }
+    ... on ThreadDiscussionApprovalRequestEntryPayload {
+      approvalId
+      leaseId
+      justification
+      status
+      reviewerNote
+      resolvedAt {
+        unixTimestamp
+        iso8601
+      }
+      resolvedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      calls
     }
   }
   createdAt {
@@ -8013,6 +8424,7 @@ fragment ThreadDiscussionMessageEntryPayloadFields on ThreadDiscussionMessageEnt
   text
   type
   isFinal
+  slackBlocks
 }
 
 fragment ThreadDiscussionResolvedEntryFields on ThreadDiscussionResolvedEntry {
@@ -8117,6 +8529,17 @@ fragment ThreadEventFields on ThreadEvent {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
       }
       rowAsideContent {
         __typename
@@ -8155,6 +8578,17 @@ fragment ThreadEventFields on ThreadEvent {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
       }
     }
     ... on ComponentBadge {
@@ -8164,6 +8598,17 @@ fragment ThreadEventFields on ThreadEvent {
     ... on ComponentCopyButton {
       copyButtonValue
       copyButtonTooltipLabel
+    }
+    ... on ComponentDateTime {
+      dateTimeIso8601 {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ComponentUser {
+      user {
+        id
+      }
     }
   }
   createdAt {
@@ -8310,6 +8755,17 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
       }
       rowAsideContent {
         __typename
@@ -8348,6 +8804,17 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
           copyButtonValue
           copyButtonTooltipLabel
         }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
       }
     }
     ... on ComponentBadge {
@@ -8357,6 +8824,17 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
     ... on ComponentCopyButton {
       copyButtonValue
       copyButtonTooltipLabel
+    }
+    ... on ComponentDateTime {
+      dateTimeIso8601 {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ComponentUser {
+      user {
+        id
+      }
     }
   }
   customerId
@@ -10018,6 +10496,17 @@ fragment TimelineEntryFields on TimelineEntry {
               copyButtonValue
               copyButtonTooltipLabel
             }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+            }
           }
           rowAsideContent {
             __typename
@@ -10055,6 +10544,17 @@ fragment TimelineEntryFields on TimelineEntry {
             ... on ComponentCopyButton {
               copyButtonValue
               copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
             }
           }
         }
@@ -10096,6 +10596,17 @@ fragment TimelineEntryFields on TimelineEntry {
               copyButtonValue
               copyButtonTooltipLabel
             }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+            }
             ... on ComponentRow {
               rowMainContent {
                 __typename
@@ -10133,6 +10644,17 @@ fragment TimelineEntryFields on TimelineEntry {
                 ... on ComponentCopyButton {
                   copyButtonValue
                   copyButtonTooltipLabel
+                }
+                ... on ComponentDateTime {
+                  dateTimeIso8601 {
+                    unixTimestamp
+                    iso8601
+                  }
+                }
+                ... on ComponentUser {
+                  user {
+                    id
+                  }
                 }
               }
               rowAsideContent {
@@ -10172,6 +10694,17 @@ fragment TimelineEntryFields on TimelineEntry {
                   copyButtonValue
                   copyButtonTooltipLabel
                 }
+                ... on ComponentDateTime {
+                  dateTimeIso8601 {
+                    unixTimestamp
+                    iso8601
+                  }
+                }
+                ... on ComponentUser {
+                  user {
+                    id
+                  }
+                }
               }
             }
           }
@@ -10183,6 +10716,17 @@ fragment TimelineEntryFields on TimelineEntry {
         ... on ComponentCopyButton {
           copyButtonValue
           copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
         }
       }
     }
@@ -11461,6 +12005,17 @@ fragment TimelineEntryFields on TimelineEntry {
               copyButtonValue
               copyButtonTooltipLabel
             }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+            }
           }
           rowAsideContent {
             __typename
@@ -11499,6 +12054,17 @@ fragment TimelineEntryFields on TimelineEntry {
               copyButtonValue
               copyButtonTooltipLabel
             }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+            }
           }
         }
         ... on ComponentBadge {
@@ -11508,6 +12074,17 @@ fragment TimelineEntryFields on TimelineEntry {
         ... on ComponentCopyButton {
           copyButtonValue
           copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
         }
       }
       customerId
@@ -11583,6 +12160,17 @@ fragment TimelineEntryFields on TimelineEntry {
               copyButtonValue
               copyButtonTooltipLabel
             }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+            }
           }
           rowAsideContent {
             __typename
@@ -11621,6 +12209,17 @@ fragment TimelineEntryFields on TimelineEntry {
               copyButtonValue
               copyButtonTooltipLabel
             }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+            }
           }
         }
         ... on ComponentBadge {
@@ -11630,6 +12229,17 @@ fragment TimelineEntryFields on TimelineEntry {
         ... on ComponentCopyButton {
           copyButtonValue
           copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
         }
       }
       customerId
@@ -14962,6 +15572,9 @@ fragment WorkflowFields on Workflow {
 fragment WorkflowExecutionFields on WorkflowExecution {
   id
   workflowId
+  workflow {
+    id
+  }
   triggeredBy
   executionStatus
   errorMessage
@@ -14976,6 +15589,29 @@ fragment WorkflowExecutionFields on WorkflowExecution {
   executionDurationMs
   entityType
   entityId
+  manuallyTriggeredBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
 }
 
 fragment WorkflowRuleFields on WorkflowRule {
@@ -15195,11 +15831,12 @@ fragment WorkspaceFields on Workspace {
     }
   }
   workOSOrganizationId
+  workOSHubOrganizationId
 }
 
 fragment WorkspaceCursorIntegrationFields on WorkspaceCursorIntegration {
   id
-  token
+  tokenPreview
   createdAt {
     unixTimestamp
     iso8601
@@ -15419,6 +16056,14 @@ fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
     ...WorkspaceEmailDomainSettingsFields
   }
   bccEmailAddresses
+}
+
+fragment WorkspaceFileDownloadUrlFields on WorkspaceFileDownloadUrl {
+  downloadUrl
+  expiresAt {
+    unixTimestamp
+    iso8601
+  }
 }
 
 fragment WorkspaceFileUploadUrlFields on WorkspaceFileUploadUrl {
@@ -15877,6 +16522,12 @@ query WorkspaceCursorIntegration {
   }
 }
 
+query AgentToolIntegration($provider: String!, $toolkitSlug: String!) {
+  agentToolIntegration(provider: $provider, toolkitSlug: $toolkitSlug) {
+    ...AgentToolIntegrationFields
+  }
+}
+
 query CursorRepositories($integrationId: ID!) {
   cursorRepositories(integrationId: $integrationId) {
     owner
@@ -15941,12 +16592,6 @@ query MyBillingRota {
   myBillingRota {
     onRotaUserIds
     offRotaUserIds
-  }
-}
-
-query MyPaymentMethod {
-  myPaymentMethod {
-    isAvailable
   }
 }
 
@@ -16639,36 +17284,16 @@ query Setting($code: String!, $scope: SettingScopeInput!) {
   setting(code: $code, scope: $scope) {
     __typename
     ... on BooleanSetting {
-      code
-      booleanValue
-      scope {
-        id
-        scopeType
-      }
+      ...BooleanSettingFields
     }
     ... on StringSetting {
-      code
-      stringValue
-      scope {
-        id
-        scopeType
-      }
+      ...StringSettingFields
     }
     ... on NumberSetting {
-      code
-      numberValue
-      scope {
-        id
-        scopeType
-      }
+      ...NumberSettingFields
     }
     ... on StringArraySetting {
-      code
-      stringArrayValue
-      scope {
-        id
-        scopeType
-      }
+      ...StringArraySettingFields
     }
   }
 }
@@ -16772,8 +17397,8 @@ query Workflow($workflowId: ID!) {
   }
 }
 
-query Workflows($first: Int, $after: String, $last: Int, $before: String) {
-  workflows(first: $first, after: $after, last: $last, before: $before) {
+query Workflows($first: Int, $after: String, $last: Int, $before: String, $filters: WorkflowsFilter) {
+  workflows(first: $first, after: $after, last: $last, before: $before, filters: $filters) {
     edges {
       node {
         ...WorkflowFields
@@ -17127,6 +17752,23 @@ query Discussion($discussionId: ID!) {
   }
 }
 
+query Discussions($filters: DiscussionsFilter, $sortBy: DiscussionsSort, $first: Int, $after: String, $last: Int, $before: String) {
+  discussions(filters: $filters, sortBy: $sortBy, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...ThreadDiscussionFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
 query ServiceAuthorization($serviceAuthorizationId: ID!) {
   serviceAuthorization(serviceAuthorizationId: $serviceAuthorizationId) {
     ...ServiceAuthorizationFields
@@ -17147,6 +17789,26 @@ query ServiceAuthorizations($first: Int, $after: String, $last: Int, $before: St
       startCursor
       endCursor
     }
+  }
+}
+
+query SidekickGithubAccessibleRepos($serviceAuthorizationId: ID!) {
+  sidekickGithubAccessibleRepos(serviceAuthorizationId: $serviceAuthorizationId) {
+    repoId
+    owner
+    name
+  }
+}
+
+query SidekickGithubServiceConfig($serviceAuthorizationId: ID!) {
+  sidekickGithubServiceConfig(serviceAuthorizationId: $serviceAuthorizationId) {
+    ...SidekickGithubServiceConfigFields
+  }
+}
+
+query SidekickSettings {
+  sidekickSettings {
+    customPrompt
   }
 }
 
@@ -17174,11 +17836,11 @@ query ImportJobDefinition($serviceIntegrationKey: String!, $isEnabled: Boolean) 
   }
 }
 
-query ImportRuns($first: Int, $after: String, $last: Int, $before: String, $filters: ImportRunsFilter!) {
-  importRuns(first: $first, after: $after, last: $last, before: $before, filters: $filters) {
+query ImportJobs($filters: ImportJobsFilter, $first: Int, $after: String, $last: Int, $before: String) {
+  importJobs(filters: $filters, first: $first, after: $after, last: $last, before: $before) {
     edges {
       node {
-        ...ImportRunFields
+        ...ImportJobFields
       }
       cursor
     }
@@ -19965,6 +20627,79 @@ mutation DeleteWorkspaceCursorIntegration($id: ID!) {
   }
 }
 
+mutation StartAgentToolIntegration($input: StartAgentToolIntegrationInput!) {
+  startAgentToolIntegration(input: $input) {
+    integration {
+      ...AgentToolIntegrationFields
+    }
+    redirectUrl
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation SyncAgentToolIntegration($input: SyncAgentToolIntegrationInput!) {
+  syncAgentToolIntegration(input: $input) {
+    integration {
+      ...AgentToolIntegrationFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DisconnectAgentToolIntegration($input: DisconnectAgentToolIntegrationInput!) {
+  disconnectAgentToolIntegration(input: $input) {
+    integration {
+      ...AgentToolIntegrationFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateAgentToolIntegrationOperatingPrompt($input: UpdateAgentToolIntegrationOperatingPromptInput!) {
+  updateAgentToolIntegrationOperatingPrompt(input: $input) {
+    integration {
+      ...AgentToolIntegrationFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation CreateMyMSTeamsIntegration($input: CreateMyMSTeamsIntegrationInput!) {
   createMyMSTeamsIntegration(input: $input) {
     integration {
@@ -20042,37 +20777,65 @@ mutation UpdateSetting($input: UpdateSettingInput!) {
     setting {
       __typename
       ... on BooleanSetting {
-        code
-        booleanValue
-        scope {
-          id
-          scopeType
-        }
+        ...BooleanSettingFields
       }
       ... on StringSetting {
-        code
-        stringValue
-        scope {
-          id
-          scopeType
-        }
+        ...StringSettingFields
       }
       ... on NumberSetting {
-        code
-        numberValue
-        scope {
-          id
-          scopeType
-        }
+        ...NumberSettingFields
       }
       ... on StringArraySetting {
-        code
-        stringArrayValue
-        scope {
-          id
-          scopeType
-        }
+        ...StringArraySettingFields
       }
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteSetting($input: DeleteSettingInput!) {
+  deleteSetting(input: $input) {
+    previousSetting {
+      __typename
+      ... on BooleanSetting {
+        ...BooleanSettingFields
+      }
+      ... on StringSetting {
+        ...StringSettingFields
+      }
+      ... on NumberSetting {
+        ...NumberSettingFields
+      }
+      ... on StringArraySetting {
+        ...StringArraySettingFields
+      }
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation BulkUpdateSlackChannelSettings($input: BulkUpdateSlackChannelSettingsInput!) {
+  bulkUpdateSlackChannelSettings(input: $input) {
+    results {
+      ...BulkUpdateSlackChannelSettingResultFields
     }
     error {
       message
@@ -20611,6 +21374,24 @@ mutation CreateThreadDiscussion($input: CreateThreadDiscussionInput!) {
   }
 }
 
+mutation ImportThreadDiscussion($input: ImportThreadDiscussionInput!) {
+  importThreadDiscussion(input: $input) {
+    threadDiscussion {
+      ...ThreadDiscussionFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation CreateDiscussion($input: CreateDiscussionInput!) {
   createDiscussion(input: $input) {
     discussion {
@@ -20680,8 +21461,56 @@ mutation MarkThreadDiscussionAsResolved($input: MarkThreadDiscussionAsResolvedIn
   }
 }
 
+mutation DeleteThreadDiscussion($input: DeleteThreadDiscussionInput!) {
+  deleteThreadDiscussion(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ResolveAgentApproval($input: ResolveAgentApprovalInput!) {
+  resolveAgentApproval(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation ReplyToThread($input: ReplyToThreadInput!) {
   replyToThread(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation MintEmbedToken($input: MintEmbedTokenInput!) {
+  mintEmbedToken(input: $input) {
+    token {
+      ...EmbedTokenFields
+    }
     error {
       message
       type
@@ -21092,6 +21921,42 @@ mutation DeleteMyServiceAuthorization($input: DeleteMyServiceAuthorizationInput!
   }
 }
 
+mutation UpdateSidekickGithubConfig($input: UpdateSidekickGithubConfigInput!) {
+  updateSidekickGithubConfig(input: $input) {
+    serviceAuthorization {
+      ...ServiceAuthorizationFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateSidekickSettings($input: UpdateSidekickSettingsInput!) {
+  updateSidekickSettings(input: $input) {
+    sidekickSettings {
+      customPrompt
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation CreateImportSync($input: CreateImportSyncInput!) {
   createImportSync(input: $input) {
     importJobDefinition {
@@ -21426,41 +22291,9 @@ mutation SyncUserWorkingHours($input: SyncUserWorkingHoursInput!) {
   }
 }
 
-mutation CreateCheckoutSession($input: CreateCheckoutSessionInput!) {
-  createCheckoutSession(input: $input) {
-    sessionClientSecret
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
 mutation CreateHyperlineCheckoutSession($input: CreateHyperlineCheckoutSessionInput!) {
   createHyperlineCheckoutSession(input: $input) {
     checkoutUrl
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation CreateBillingPortalSession {
-  createBillingPortalSession {
-    billingPortalSessionUrl
     error {
       message
       type
@@ -21826,6 +22659,24 @@ mutation CreateWorkspaceFileUploadUrl($input: CreateWorkspaceFileUploadUrlInput!
   createWorkspaceFileUploadUrl(input: $input) {
     workspaceFileUploadUrl {
       ...WorkspaceFileUploadUrlFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateWorkspaceFileDownloadUrl($input: CreateWorkspaceFileDownloadUrlInput!) {
+  createWorkspaceFileDownloadUrl(input: $input) {
+    workspaceFileDownloadUrl {
+      ...WorkspaceFileDownloadUrlFields
     }
     error {
       message
