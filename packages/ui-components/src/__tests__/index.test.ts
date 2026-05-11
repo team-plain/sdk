@@ -55,4 +55,36 @@ describe("ui components builder", () => {
       },
     ]);
   });
+
+  test("date time component", () => {
+    expect([uiComponent.dateTime({ dateTimeIso8601: "2026-05-11T12:00:00Z" })]).toEqual([
+      {
+        componentDateTime: {
+          dateTimeIso8601: "2026-05-11T12:00:00Z",
+        },
+      },
+    ]);
+  });
+
+  test("user component", () => {
+    expect([
+      uiComponent.user({ userIdentifier: { emailAddress: "david@plain.com" } }),
+      uiComponent.user({ userIdentifier: { userId: "u_123" } }),
+    ]).toEqual([
+      {
+        componentUser: {
+          userIdentifier: {
+            emailAddress: "david@plain.com",
+          },
+        },
+      },
+      {
+        componentUser: {
+          userIdentifier: {
+            userId: "u_123",
+          },
+        },
+      },
+    ]);
+  });
 });
