@@ -1,5 +1,16 @@
 # @team-plain/ui-components
 
+## 4.0.0
+
+### Minor Changes
+
+- d4ba601: Add DateTime and User UI components
+
+### Patch Changes
+
+- Updated dependencies [d4ba601]
+  - @team-plain/graphql@1.2.0
+
 ## 3.0.0
 
 ### Patch Changes
