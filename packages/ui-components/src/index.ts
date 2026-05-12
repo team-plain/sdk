@@ -3,6 +3,7 @@ import { containerComponent } from "./containerComponent.js";
 import { copyButtonComponent } from "./copyButtonComponent.js";
 import { dateTimeComponent } from "./dateTimeComponent.js";
 import { dividerComponent } from "./dividerComponent.js";
+import { inline } from "./inline.js";
 import { linkButtonComponent } from "./linkButtonComponent.js";
 import { plainTextComponent } from "./plainTextComponent.js";
 import { rowComponent } from "./rowComponent.js";
@@ -17,6 +18,7 @@ export const uiComponent = {
   copyButton: copyButtonComponent,
   dateTime: dateTimeComponent,
   divider: dividerComponent,
+  inline,
   linkButton: linkButtonComponent,
   plainText: plainTextComponent,
   row: rowComponent,
