@@ -102,9 +102,7 @@ describe("ui components builder", () => {
 
   test("inline marker for user with emailAddress flattens nested identifier", () => {
     expect(
-      uiComponent.inline(
-        uiComponent.user({ userIdentifier: { emailAddress: "david@plain.com" } }),
-      ),
+      uiComponent.inline(uiComponent.user({ userIdentifier: { emailAddress: "david@plain.com" } })),
     ).toBe('{componentUser:userIdentifier.emailAddress="david@plain.com"}');
   });
 

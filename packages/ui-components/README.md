@@ -78,7 +78,7 @@ Notes:
 
 - Inline interpolation is supported in `text`, not `plainText`.
 - Only `dateTime` and `user` are accepted by `inline(...)`. Other component types (text, badge, container, row, …) are rejected at the type level.
-- For `user`, only `userIdentifier.userId` renders today — markers built with `emailAddress` will be passed through as literal text until the renderer adds email resolution.
+- For `user`, both `userIdentifier.userId` and `userIdentifier.emailAddress` resolve to an avatar and name. Email lookup is case-insensitive.
 
 ## License
 
