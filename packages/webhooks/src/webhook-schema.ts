@@ -57,16 +57,12 @@ export type Component =
   | ComponentWorkflowButton
   | ComponentBadge
   | ComponentCopyButton
+  | ComponentDateTime
+  | ComponentUser
   | ComponentRow
   | ComponentContainer;
 export type ComponentTextSize = "S" | "M" | "L" | "UNKNOWN_COMPONENT_TEXT_SIZE";
-export type ComponentTextColor =
-  | "NORMAL"
-  | "MUTED"
-  | "SUCCESS"
-  | "WARNING"
-  | "ERROR"
-  | "UNKNOWN_COMPONENT_TEXT_COLOR";
+export type ComponentTextColor = "NORMAL" | "MUTED" | "SUCCESS" | "WARNING" | "ERROR" | "UNKNOWN_COMPONENT_TEXT_COLOR";
 export type ComponentPlainTextSize = "S" | "M" | "L" | "UNKNOWN_COMPONENT_PLAIN_TEXT_SIZE";
 export type ComponentPlainTextColor =
   | "NORMAL"
@@ -76,20 +72,10 @@ export type ComponentPlainTextColor =
   | "ERROR"
   | "UNKNOWN_COMPONENT_PLAIN_TEXT_COLOR";
 export type ComponentSpacerSize = "XS" | "S" | "M" | "L" | "XL" | "UNKNOWN_COMPONENT_SPACER_SIZE";
-export type ComponentDividerSpacingSize =
-  | "XS"
-  | "S"
-  | "M"
-  | "L"
-  | "XL"
-  | "UNKNOWN_COMPONENT_DIVIDER_SPACING_SIZE";
-export type ComponentBadgeColor =
-  | "GREY"
-  | "GREEN"
-  | "YELLOW"
-  | "RED"
-  | "BLUE"
-  | "UNKNOWN_COMPONENT_BADGE_COLOR";
+export type ComponentDividerSpacingSize = "XS" | "S" | "M" | "L" | "XL" | "UNKNOWN_COMPONENT_DIVIDER_SPACING_SIZE";
+export type ComponentBadgeColor = "GREY" | "GREEN" | "YELLOW" | "RED" | "BLUE" | "UNKNOWN_COMPONENT_BADGE_COLOR";
+export type NullableDatetime = Datetime | null;
+export type NullableInternalActor = InternalActor | null;
 export type ComponentRowContent =
   | {
       type: "UNKNOWN";
@@ -102,7 +88,9 @@ export type ComponentRowContent =
   | ComponentLinkButton
   | ComponentWorkflowButton
   | ComponentBadge
-  | ComponentCopyButton;
+  | ComponentCopyButton
+  | ComponentDateTime
+  | ComponentUser;
 export type ComponentContainerContent =
   | {
       type: "UNKNOWN";
@@ -116,6 +104,8 @@ export type ComponentContainerContent =
   | ComponentWorkflowButton
   | ComponentBadge
   | ComponentCopyButton
+  | ComponentDateTime
+  | ComponentUser
   | ComponentRow;
 export type CustomerGroupChangedPayload =
   | {
@@ -204,8 +194,6 @@ export type ThreadAssignee =
       id: string;
       [k: string]: unknown;
     };
-export type NullableDatetime = Datetime | null;
-export type NullableInternalActor = InternalActor | null;
 export type ServiceLevelAgreement =
   | {
       type: "UNKNOWN";
@@ -592,6 +580,31 @@ export interface ComponentCopyButton {
   type: "copyButton";
   [k: string]: unknown;
 }
+export interface ComponentDateTime {
+  type: "dateTime";
+  dateTimeIso8601: Datetime;
+  [k: string]: unknown;
+}
+export interface ComponentUser {
+  type: "user";
+  user: User | null;
+  [k: string]: unknown;
+}
+export interface User {
+  id: Id;
+  email: EmailAddress;
+  fullName: string;
+  publicName: string;
+  status: "ONLINE" | "OFFLINE" | "BREAK" | "AWAY" | "UNKNOWN_USER_STATUS";
+  statusChangedAt: Datetime;
+  createdAt: Datetime;
+  createdBy: InternalActor;
+  updatedAt: Datetime;
+  updatedBy: InternalActor;
+  deletedAt: NullableDatetime;
+  deletedBy: NullableInternalActor;
+  [k: string]: unknown;
+}
 export interface ComponentRow {
   type: "row";
   rowMainContent: ComponentRowContent[];
@@ -647,21 +660,6 @@ export interface Thread {
   updatedBy: Actor;
   [k: string]: unknown;
 }
-export interface User {
-  id: Id;
-  email: EmailAddress;
-  fullName: string;
-  publicName: string;
-  status: "ONLINE" | "OFFLINE" | "BREAK" | "AWAY" | "UNKNOWN_USER_STATUS";
-  statusChangedAt: Datetime;
-  createdAt: Datetime;
-  createdBy: InternalActor;
-  updatedAt: Datetime;
-  updatedBy: InternalActor;
-  deletedAt: NullableDatetime;
-  deletedBy: NullableInternalActor;
-  [k: string]: unknown;
-}
 export interface MachineUser {
   id: Id;
   fullName: string;
@@ -701,13 +699,7 @@ export interface LabelType {
 }
 export interface ThreadMessageInfo {
   timestamp: Datetime;
-  messageSource:
-    | "CHAT"
-    | "EMAIL"
-    | "API"
-    | "SLACK"
-    | "MS_TEAMS"
-    | "UNKNOWN_THREAD_MESSAGE_INFO_MESSAGE_SOURCE";
+  messageSource: "CHAT" | "EMAIL" | "API" | "SLACK" | "MS_TEAMS" | "UNKNOWN_THREAD_MESSAGE_INFO_MESSAGE_SOURCE";
   actorId?: string | null;
   actorType?: ("user" | "machineUser" | "customer" | "system") | null;
   [k: string]: unknown;
@@ -860,14 +852,7 @@ export interface ThreadField {
   id: Id;
   threadId: Id;
   key: string;
-  type:
-    | "STRING"
-    | "BOOL"
-    | "ENUM"
-    | "NUMBER"
-    | "CURRENCY"
-    | "DATE"
-    | "UNKNOWN_THREAD_FIELD_SCHEMA_TYPE";
+  type: "STRING" | "BOOL" | "ENUM" | "NUMBER" | "CURRENCY" | "DATE" | "UNKNOWN_THREAD_FIELD_SCHEMA_TYPE";
   stringValue: string | null;
   booleanValue: boolean | null;
   numberValue?: number | null;
@@ -981,11 +966,7 @@ export interface ThreadChatReceivedPublicEventPayload {
 }
 export interface ThreadSlackMessageUpdatedEventPayload {
   eventType: "thread.slack_message_updated";
-  changeType?:
-    | "MESSAGE_EDITED"
-    | "MESSAGE_DELETED"
-    | "REACTIONS_CHANGED"
-    | "UNKNOWN_SLACK_MESSAGE_CHANGE_TYPE";
+  changeType?: "MESSAGE_EDITED" | "MESSAGE_DELETED" | "REACTIONS_CHANGED" | "UNKNOWN_SLACK_MESSAGE_CHANGE_TYPE";
   thread: Thread;
   slackMessage: SlackMessage;
   reactionChange?: SlackReactionChange | null;
@@ -1066,7 +1047,7 @@ export interface ThreadTenantUpdatedPublicEventPayload {
 }
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-04-21";
+  webhookTargetVersion: "2026-05-06";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;
