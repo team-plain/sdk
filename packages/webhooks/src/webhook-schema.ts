@@ -57,6 +57,8 @@ export type Component =
   | ComponentWorkflowButton
   | ComponentBadge
   | ComponentCopyButton
+  | ComponentDateTime
+  | ComponentUser
   | ComponentRow
   | ComponentContainer;
 export type ComponentTextSize = "S" | "M" | "L" | "UNKNOWN_COMPONENT_TEXT_SIZE";
@@ -90,6 +92,8 @@ export type ComponentBadgeColor =
   | "RED"
   | "BLUE"
   | "UNKNOWN_COMPONENT_BADGE_COLOR";
+export type NullableDatetime = Datetime | null;
+export type NullableInternalActor = InternalActor | null;
 export type ComponentRowContent =
   | {
       type: "UNKNOWN";
@@ -102,7 +106,9 @@ export type ComponentRowContent =
   | ComponentLinkButton
   | ComponentWorkflowButton
   | ComponentBadge
-  | ComponentCopyButton;
+  | ComponentCopyButton
+  | ComponentDateTime
+  | ComponentUser;
 export type ComponentContainerContent =
   | {
       type: "UNKNOWN";
@@ -116,6 +122,8 @@ export type ComponentContainerContent =
   | ComponentWorkflowButton
   | ComponentBadge
   | ComponentCopyButton
+  | ComponentDateTime
+  | ComponentUser
   | ComponentRow;
 export type CustomerGroupChangedPayload =
   | {
@@ -204,8 +212,6 @@ export type ThreadAssignee =
       id: string;
       [k: string]: unknown;
     };
-export type NullableDatetime = Datetime | null;
-export type NullableInternalActor = InternalActor | null;
 export type ServiceLevelAgreement =
   | {
       type: "UNKNOWN";
@@ -592,6 +598,31 @@ export interface ComponentCopyButton {
   type: "copyButton";
   [k: string]: unknown;
 }
+export interface ComponentDateTime {
+  type: "dateTime";
+  dateTimeIso8601: Datetime;
+  [k: string]: unknown;
+}
+export interface ComponentUser {
+  type: "user";
+  user: User | null;
+  [k: string]: unknown;
+}
+export interface User {
+  id: Id;
+  email: EmailAddress;
+  fullName: string;
+  publicName: string;
+  status: "ONLINE" | "OFFLINE" | "BREAK" | "AWAY" | "UNKNOWN_USER_STATUS";
+  statusChangedAt: Datetime;
+  createdAt: Datetime;
+  createdBy: InternalActor;
+  updatedAt: Datetime;
+  updatedBy: InternalActor;
+  deletedAt: NullableDatetime;
+  deletedBy: NullableInternalActor;
+  [k: string]: unknown;
+}
 export interface ComponentRow {
   type: "row";
   rowMainContent: ComponentRowContent[];
@@ -645,21 +676,6 @@ export interface Thread {
   createdBy: Actor;
   updatedAt: Datetime;
   updatedBy: Actor;
-  [k: string]: unknown;
-}
-export interface User {
-  id: Id;
-  email: EmailAddress;
-  fullName: string;
-  publicName: string;
-  status: "ONLINE" | "OFFLINE" | "BREAK" | "AWAY" | "UNKNOWN_USER_STATUS";
-  statusChangedAt: Datetime;
-  createdAt: Datetime;
-  createdBy: InternalActor;
-  updatedAt: Datetime;
-  updatedBy: InternalActor;
-  deletedAt: NullableDatetime;
-  deletedBy: NullableInternalActor;
   [k: string]: unknown;
 }
 export interface MachineUser {
@@ -1066,7 +1082,7 @@ export interface ThreadTenantUpdatedPublicEventPayload {
 }
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-04-21";
+  webhookTargetVersion: "2026-05-06";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

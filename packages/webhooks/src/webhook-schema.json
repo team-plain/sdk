@@ -838,7 +838,7 @@
             {
               "type": "string",
               "minLength": 1,
-              "maxLength": 5000
+              "maxLength": 10000
             },
             {
               "type": "null"
@@ -1267,6 +1267,41 @@
       "required": ["copyButtonValue", "copyButtonTooltipLabel", "type"],
       "additionalProperties": true
     },
+    "componentDateTime": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "dateTime"
+        },
+        "dateTimeIso8601": {
+          "$ref": "#/definitions/datetime"
+        }
+      },
+      "required": ["type", "dateTimeIso8601"],
+      "additionalProperties": true
+    },
+    "componentUser": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "user"
+        },
+        "user": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/user"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": ["type", "user"],
+      "additionalProperties": true
+    },
     "componentRowContent": {
       "anyOf": [
         {
@@ -1303,6 +1338,12 @@
         },
         {
           "$ref": "#/definitions/componentCopyButton"
+        },
+        {
+          "$ref": "#/definitions/componentDateTime"
+        },
+        {
+          "$ref": "#/definitions/componentUser"
         }
       ]
     },
@@ -1359,6 +1400,12 @@
           "$ref": "#/definitions/componentCopyButton"
         },
         {
+          "$ref": "#/definitions/componentDateTime"
+        },
+        {
+          "$ref": "#/definitions/componentUser"
+        },
+        {
           "$ref": "#/definitions/componentRow"
         }
       ]
@@ -1408,6 +1455,12 @@
         },
         {
           "$ref": "#/definitions/componentCopyButton"
+        },
+        {
+          "$ref": "#/definitions/componentDateTime"
+        },
+        {
+          "$ref": "#/definitions/componentUser"
         },
         {
           "$ref": "#/definitions/componentRow"
@@ -2902,7 +2955,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-04-21"
+          "const": "2026-05-06"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
