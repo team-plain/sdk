@@ -1,5 +1,11 @@
 # @team-plain/webhooks
 
+## 1.3.0
+
+### Minor Changes
+
+- cdf2f42: Update webhook schema.
+
 ## 1.2.0
 
 ### Minor Changes
