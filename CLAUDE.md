@@ -17,6 +17,8 @@ Per-package scripts (codegen, test, etc.) are run via `pnpm --filter <pkg> <scri
 
 **Always run `pnpm check` after making any changes.** This auto-fixes formatting and linting issues. CI enforces both via `pnpm format:check` and `pnpm lint`, so unformatted or unlinted code will fail the build.
 
+- **CRITICAL: Any change that should ship to npm needs a changeset.** Without one the change will never be released. Run `pnpm changeset`, pick the affected package(s) (`@team-plain/graphql`, `@team-plain/ui-components`, or `@team-plain/webhooks`), and write a short summary. The codegen plugin is internal and won't appear. Commit the generated `.changeset/*.md` file with your PR. See [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
+
 ## File Conventions
 
 - Files prefixed with `_generated_` are auto-generated — don't edit them manually.
