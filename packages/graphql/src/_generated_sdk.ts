@@ -12,7 +12,7 @@ import {
   AddMembersToTierDocument,
   AddUserToActiveBillingRotaDocument,
   AddWorkspaceAlternateSupportEmailAddressDocument,
-  AgentToolIntegrationDocument,
+  AgentSandboxToolPoliciesDocument,
   AiToneRulesDocument,
   ArchiveLabelTypeDocument,
   AssignRolesToUserDocument,
@@ -21,6 +21,7 @@ import {
   AutorespondersDocument,
   BillingPlansDocument,
   BulkJoinSlackChannelsDocument,
+  BulkUpdateConnectedSlackChannelsDocument,
   BulkUpdateSlackChannelSettingsDocument,
   BulkUpsertThreadFieldsDocument,
   BulkUpsertWorkflowStepsDocument,
@@ -71,6 +72,7 @@ import {
   CreateIssueTrackerIssueDocument,
   CreateKnowledgeSourceDocument,
   CreateLabelTypeDocument,
+  CreateLinearAppIntegrationDocument,
   CreateMachineUserDocument,
   CreateMyFavoritePageDocument,
   CreateMyLinearIntegrationDocument,
@@ -105,6 +107,7 @@ import {
   CreateWorkspaceMsTeamsIntegrationDocument,
   CreateWorkspaceSlackChannelIntegrationDocument,
   CreateWorkspaceSlackIntegrationDocument,
+  CreateWorkspaceSlackSidekickIntegrationDocument,
   CursorRepositoriesDocument,
   CustomRoleDocument,
   CustomRolesDocument,
@@ -138,6 +141,7 @@ import {
   DeleteHelpCenterArticleGroupDocument,
   DeleteHelpCenterDocument,
   DeleteKnowledgeSourceDocument,
+  DeleteLinearAppIntegrationDocument,
   DeleteMachineUserDocument,
   DeleteMyFavoritePageDocument,
   DeleteMyLinearIntegrationDocument,
@@ -145,6 +149,7 @@ import {
   DeleteMyServiceAuthorizationDocument,
   DeleteMySlackIntegrationDocument,
   DeleteNoteDocument,
+  DeleteQueuedAgentSessionMessageDocument,
   DeleteSavedThreadsViewDocument,
   DeleteServiceAuthorizationDocument,
   DeleteServiceLevelAgreementDocument,
@@ -177,10 +182,11 @@ import {
   DeleteWorkspaceMsTeamsIntegrationDocument,
   DeleteWorkspaceSlackChannelIntegrationDocument,
   DeleteWorkspaceSlackIntegrationDocument,
+  DeleteWorkspaceSlackSidekickIntegrationDocument,
   DeletedThreadsDocument,
-  DisconnectAgentToolIntegrationDocument,
   DiscussionDocument,
   DiscussionsDocument,
+  EditQueuedAgentSessionMessageDocument,
   EnabledAiToneRulesTextDocument,
   EscalateThreadDocument,
   EscalationPathDocument,
@@ -210,6 +216,8 @@ import {
   ImportTenantFieldSchemasFromServiceDocument,
   ImportTenantsDocument,
   ImportThreadDiscussionDocument,
+  ImportThreadDocument,
+  ImportThreadMessagesDocument,
   ImporterTenantListsDocument,
   IndexedDocumentsDocument,
   InviteUserToWorkspaceDocument,
@@ -221,6 +229,7 @@ import {
   LabelTypeByExternalIdDocument,
   LabelTypeDocument,
   LabelTypesDocument,
+  LinearAppIntegrationDocument,
   LockThreadDocument,
   MachineUserApiKeysDocument,
   MachineUserDocument,
@@ -229,6 +238,7 @@ import {
   MarkThreadAsDoneDocument,
   MarkThreadAsTodoDocument,
   MarkThreadDiscussionAsResolvedDocument,
+  MarkThreadDiscussionReadDocument,
   MintEmbedTokenDocument,
   MoveLabelTypeDocument,
   MyBillingRotaDocument,
@@ -254,8 +264,10 @@ import {
   PermissionsDocument,
   PreviewBillingPlanChangeDocument,
   PublicEventRequestBodyDocument,
+  PurchaseCreditsDocument,
   RefreshConnectedDiscordChannelsDocument,
   RefreshWorkspaceSlackChannelIntegrationDocument,
+  RefreshWorkspaceSlackSidekickIntegrationDocument,
   RegenerateWorkspaceHmacDocument,
   ReindexKnowledgeSourceDocument,
   RelatedThreadsDocument,
@@ -301,21 +313,24 @@ import {
   ServiceAuthorizationDocument,
   ServiceAuthorizationsDocument,
   SetCustomerTenantsDocument,
+  SetSlackAutoJoinRulesDocument,
   SettingDocument,
   SetupTenantFieldSchemaMappingDocument,
   ShareThreadToUserInSlackDocument,
+  SidekickCreditUsageByDayDocument,
   SidekickGithubAccessibleReposDocument,
   SidekickGithubServiceConfigDocument,
+  SidekickPosthogServiceConfigDocument,
+  SidekickServiceConfigDocument,
   SidekickSettingsDocument,
   SingleValueMetricDocument,
+  SlackAutoJoinRulesDocument,
   SlackUserDocument,
   SnippetDocument,
   SnippetsDocument,
   SnoozeThreadDocument,
-  StartAgentToolIntegrationDocument,
   StartServiceAuthorizationDocument,
   SubscriptionEventTypesDocument,
-  SyncAgentToolIntegrationDocument,
   SyncBusinessHoursSlotsDocument,
   SyncUserWorkingHoursDocument,
   TaskByRefDocument,
@@ -336,8 +351,11 @@ import {
   ThreadDocument,
   ThreadFieldSchemaDocument,
   ThreadFieldSchemasDocument,
+  ThreadHeatmapMetricDocument,
   ThreadLinkGroupsDocument,
+  ThreadSingleValueMetricDocument,
   ThreadSlackUserDocument,
+  ThreadTimeSeriesMetricDocument,
   ThreadTimelineEntriesDocument,
   ThreadsDocument,
   TierDocument,
@@ -353,7 +371,7 @@ import {
   UnassignThreadDocument,
   UnmarkCustomerAsSpamDocument,
   UpdateActiveBillingRotaDocument,
-  UpdateAgentToolIntegrationOperatingPromptDocument,
+  UpdateAgentSandboxToolPolicyDocument,
   UpdateAiToneRulesDocument,
   UpdateApiKeyDocument,
   UpdateAutoresponderDocument,
@@ -382,12 +400,16 @@ import {
   UpdateServiceLevelAgreementDocument,
   UpdateSettingDocument,
   UpdateSidekickGithubConfigDocument,
+  UpdateSidekickPosthogConfigDocument,
+  UpdateSidekickServiceConfigDocument,
   UpdateSidekickSettingsDocument,
+  UpdateSidekickSlackConfigDocument,
   UpdateSnippetDocument,
   UpdateTaskDocument,
   UpdateTenantTierDocument,
   UpdateThreadAgentStatusDocument,
   UpdateThreadEscalationPathDocument,
+  UpdateThreadExternalIdDocument,
   UpdateThreadFieldSchemaDocument,
   UpdateThreadSuggestedActionStatusDocument,
   UpdateThreadTenantDocument,
@@ -449,6 +471,7 @@ import {
   WorkspaceEmailSettingsDocument,
   WorkspaceHmacDocument,
   WorkspaceInvitesDocument,
+  WorkspaceLinearInstallationInfoDocument,
   WorkspaceMsTeamsInstallationInfoDocument,
   WorkspaceMsTeamsIntegrationDocument,
   WorkspaceSlackChannelInstallationInfoDocument,
@@ -457,6 +480,8 @@ import {
   WorkspaceSlackInstallationInfoDocument,
   WorkspaceSlackIntegrationDocument,
   WorkspaceSlackIntegrationsDocument,
+  WorkspaceSlackSidekickInstallationInfoDocument,
+  WorkspaceSlackSidekickIntegrationDocument,
 } from "./_generated_documents.js";
 import type {
   AcceptWorkspaceInviteMutation,
@@ -481,12 +506,11 @@ import type {
   AddUserToActiveBillingRotaMutationVariables,
   AddWorkspaceAlternateSupportEmailAddressMutation,
   AddWorkspaceAlternateSupportEmailAddressMutationVariables,
+  AgentSandboxToolPoliciesQuery,
+  AgentSandboxToolPoliciesQueryVariables,
   AgentStatusDetailHandedOffFieldsFragment,
   AgentStatusDetailHandledFieldsFragment,
   AgentStatusDetailInProgressFieldsFragment,
-  AgentToolIntegrationFieldsFragment,
-  AgentToolIntegrationQuery,
-  AgentToolIntegrationQueryVariables,
   AiAgentFeedbackDetailsFieldsFragment,
   AiToneRuleFieldsFragment,
   AiToneRulesQuery,
@@ -511,14 +535,19 @@ import type {
   AutorespondersQuery,
   AutorespondersQueryVariables,
   BeforeBreachActionFieldsFragment,
+  BillingMonthlyAllowanceCreditBalanceFieldsFragment,
   BillingPlanChangePreviewFieldsFragment,
   BillingPlanFieldsFragment,
   BillingPlansQuery,
   BillingPlansQueryVariables,
   BillingSubscriptionFieldsFragment,
+  BillingTopupCreditBalanceFieldsFragment,
   BooleanSettingFieldsFragment,
   BulkJoinSlackChannelsMutation,
   BulkJoinSlackChannelsMutationVariables,
+  BulkUpdateConnectedSlackChannelResultFieldsFragment,
+  BulkUpdateConnectedSlackChannelsMutation,
+  BulkUpdateConnectedSlackChannelsMutationVariables,
   BulkUpdateSlackChannelSettingResultFieldsFragment,
   BulkUpdateSlackChannelSettingsMutation,
   BulkUpdateSlackChannelSettingsMutationVariables,
@@ -639,6 +668,8 @@ import type {
   CreateKnowledgeSourceMutationVariables,
   CreateLabelTypeMutation,
   CreateLabelTypeMutationVariables,
+  CreateLinearAppIntegrationMutation,
+  CreateLinearAppIntegrationMutationVariables,
   CreateMachineUserMutation,
   CreateMachineUserMutationVariables,
   CreateMyFavoritePageMutation,
@@ -707,6 +738,8 @@ import type {
   CreateWorkspaceSlackChannelIntegrationMutationVariables,
   CreateWorkspaceSlackIntegrationMutation,
   CreateWorkspaceSlackIntegrationMutationVariables,
+  CreateWorkspaceSlackSidekickIntegrationMutation,
+  CreateWorkspaceSlackSidekickIntegrationMutationVariables,
   CsatCustomerSurveyTemplateFieldsFragment,
   CursorRepositoriesQuery,
   CursorRepositoriesQueryVariables,
@@ -725,6 +758,16 @@ import type {
   CustomerCardConfigQuery,
   CustomerCardConfigQueryVariables,
   CustomerCardConfigsQuery,
+  CustomerCardInstanceCardTooBigErrorDetailFieldsFragment,
+  CustomerCardInstanceErrorFieldsFragment,
+  CustomerCardInstanceLoadedFieldsFragment,
+  CustomerCardInstanceLoadingFieldsFragment,
+  CustomerCardInstanceMissingCardErrorDetailFieldsFragment,
+  CustomerCardInstanceRequestErrorDetailFieldsFragment,
+  CustomerCardInstanceResponseBodyErrorDetailFieldsFragment,
+  CustomerCardInstanceStatusCodeErrorDetailFieldsFragment,
+  CustomerCardInstanceTimeoutErrorDetailFieldsFragment,
+  CustomerCardInstanceUnknownErrorDetailFieldsFragment,
   CustomerCardInstancesQuery,
   CustomerCardInstancesQueryVariables,
   CustomerCustomerGroupMembershipsQuery,
@@ -788,6 +831,7 @@ import type {
   DeleteHelpCenterMutationVariables,
   DeleteKnowledgeSourceMutation,
   DeleteKnowledgeSourceMutationVariables,
+  DeleteLinearAppIntegrationMutation,
   DeleteMachineUserMutation,
   DeleteMachineUserMutationVariables,
   DeleteMyFavoritePageMutation,
@@ -799,6 +843,8 @@ import type {
   DeleteMySlackIntegrationMutation,
   DeleteNoteMutation,
   DeleteNoteMutationVariables,
+  DeleteQueuedAgentSessionMessageMutation,
+  DeleteQueuedAgentSessionMessageMutationVariables,
   DeleteSavedThreadsViewMutation,
   DeleteSavedThreadsViewMutationVariables,
   DeleteServiceAuthorizationMutation,
@@ -862,12 +908,11 @@ import type {
   DeleteWorkspaceSlackChannelIntegrationMutationVariables,
   DeleteWorkspaceSlackIntegrationMutation,
   DeleteWorkspaceSlackIntegrationMutationVariables,
+  DeleteWorkspaceSlackSidekickIntegrationMutation,
   DeletedCustomerActorFieldsFragment,
   DeletedThreadFieldsFragment,
   DeletedThreadsQuery,
   DeletedThreadsQueryVariables,
-  DisconnectAgentToolIntegrationMutation,
-  DisconnectAgentToolIntegrationMutationVariables,
   DiscordCustomerIdentityFieldsFragment,
   DiscordMessageEntryFieldsFragment,
   DiscordMessageFieldsFragment,
@@ -877,6 +922,8 @@ import type {
   DiscussionResolvedNotificationDetailFieldsFragment,
   DiscussionsQuery,
   DiscussionsQueryVariables,
+  EditQueuedAgentSessionMessageMutation,
+  EditQueuedAgentSessionMessageMutationVariables,
   EmailBounceNotificationDetailFieldsFragment,
   EmailCustomerIdentityFieldsFragment,
   EmailEntryFieldsFragment,
@@ -930,6 +977,7 @@ import type {
   HelpCenterArticleGroupsQueryVariables,
   HelpCenterArticleQuery,
   HelpCenterArticleQueryVariables,
+  HelpCenterArticleSearchResultFieldsFragment,
   HelpCenterArticlesQuery,
   HelpCenterArticlesQueryVariables,
   HelpCenterAuthMechanismWorkosAuthkitFieldsFragment,
@@ -959,14 +1007,23 @@ import type {
   ImportThreadChannelDetailsFieldsFragment,
   ImportThreadDiscussionMutation,
   ImportThreadDiscussionMutationVariables,
+  ImportThreadMessageResultFieldsFragment,
+  ImportThreadMessagesMutation,
+  ImportThreadMessagesMutationVariables,
+  ImportThreadMutation,
+  ImportThreadMutationVariables,
   ImporterTenantListsQuery,
   ImporterTenantListsQueryVariables,
   IndexedDocumentFieldsFragment,
+  IndexedDocumentSearchResultFieldsFragment,
   IndexedDocumentStatusFailedFieldsFragment,
   IndexedDocumentStatusIndexedFieldsFragment,
   IndexedDocumentStatusPendingFieldsFragment,
   IndexedDocumentsQuery,
   IndexedDocumentsQueryVariables,
+  IndexingStatusFailedFieldsFragment,
+  IndexingStatusIndexedFieldsFragment,
+  IndexingStatusPendingFieldsFragment,
   InternalNotificationFieldsFragment,
   InviteUserToWorkspaceMutation,
   InviteUserToWorkspaceMutationVariables,
@@ -984,6 +1041,8 @@ import type {
   KnowledgeGapsQueryVariables,
   KnowledgeSourceQuery,
   KnowledgeSourceQueryVariables,
+  KnowledgeSourceSitemapFieldsFragment,
+  KnowledgeSourceUrlFieldsFragment,
   KnowledgeSourcesQuery,
   KnowledgeSourcesQueryVariables,
   LabelFieldsFragment,
@@ -994,6 +1053,7 @@ import type {
   LabelTypeQueryVariables,
   LabelTypesQuery,
   LabelTypesQueryVariables,
+  LinearAppIntegrationQuery,
   LinearIssueThreadLinkFieldsFragment,
   LinearIssueThreadLinkStateTransitionedEntryFieldsFragment,
   LockThreadMutation,
@@ -1014,6 +1074,8 @@ import type {
   MarkThreadAsTodoMutationVariables,
   MarkThreadDiscussionAsResolvedMutation,
   MarkThreadDiscussionAsResolvedMutationVariables,
+  MarkThreadDiscussionReadMutation,
+  MarkThreadDiscussionReadMutationVariables,
   MergedThreadMessageEntryFieldsFragment,
   MeteredFeatureEntitlementFieldsFragment,
   MintEmbedTokenMutation,
@@ -1064,10 +1126,15 @@ import type {
   PreviewBillingPlanChangeMutationVariables,
   PublicEventRequestBodyQuery,
   PublicEventRequestBodyQueryVariables,
+  PurchaseCreditsMutation,
+  PurchaseCreditsMutationVariables,
+  QueuedAgentSessionMessageFieldsFragment,
   RefreshConnectedDiscordChannelsMutation,
   RefreshConnectedDiscordChannelsMutationVariables,
   RefreshWorkspaceSlackChannelIntegrationMutation,
   RefreshWorkspaceSlackChannelIntegrationMutationVariables,
+  RefreshWorkspaceSlackSidekickIntegrationMutation,
+  RefreshWorkspaceSlackSidekickIntegrationMutationVariables,
   RegenerateWorkspaceHmacMutation,
   ReindexKnowledgeSourceMutation,
   ReindexKnowledgeSourceMutationVariables,
@@ -1162,20 +1229,31 @@ import type {
   ServiceLevelAgreementStatusTransitionedEntryFieldsFragment,
   SetCustomerTenantsMutation,
   SetCustomerTenantsMutationVariables,
+  SetSlackAutoJoinRulesMutation,
+  SetSlackAutoJoinRulesMutationVariables,
   SettingQuery,
   SettingQueryVariables,
   SetupTenantFieldSchemaMappingMutation,
   SetupTenantFieldSchemaMappingMutationVariables,
   ShareThreadToUserInSlackMutation,
   ShareThreadToUserInSlackMutationVariables,
+  SidekickCreditUsageByDayQuery,
+  SidekickCreditUsageByDayQueryVariables,
   SidekickGithubAccessibleReposQuery,
   SidekickGithubAccessibleReposQueryVariables,
   SidekickGithubServiceConfigFieldsFragment,
   SidekickGithubServiceConfigQuery,
   SidekickGithubServiceConfigQueryVariables,
+  SidekickPosthogServiceConfigQuery,
+  SidekickPosthogServiceConfigQueryVariables,
+  SidekickServiceConfigQuery,
+  SidekickServiceConfigQueryVariables,
   SidekickSettingsQuery,
   SingleValueMetricQuery,
   SingleValueMetricQueryVariables,
+  SlackAutoJoinRuleFieldsFragment,
+  SlackAutoJoinRulesQuery,
+  SlackAutoJoinRulesQueryVariables,
   SlackCustomerIdentityFieldsFragment,
   SlackMessageEntryFieldsFragment,
   SlackReplyEntryFieldsFragment,
@@ -1191,15 +1269,11 @@ import type {
   SnippetsQueryVariables,
   SnoozeThreadMutation,
   SnoozeThreadMutationVariables,
-  StartAgentToolIntegrationMutation,
-  StartAgentToolIntegrationMutationVariables,
   StartServiceAuthorizationMutation,
   StartServiceAuthorizationMutationVariables,
   StringArraySettingFieldsFragment,
   StringSettingFieldsFragment,
   SubscriptionEventTypesQuery,
-  SyncAgentToolIntegrationMutation,
-  SyncAgentToolIntegrationMutationVariables,
   SyncBusinessHoursSlotsMutation,
   SyncBusinessHoursSlotsMutationVariables,
   SyncUserWorkingHoursMutation,
@@ -1273,6 +1347,9 @@ import type {
   ThreadFieldSchemasQuery,
   ThreadFieldSchemasQueryVariables,
   ThreadFieldsFragment,
+  ThreadHeatmapMetricFieldsFragment,
+  ThreadHeatmapMetricQuery,
+  ThreadHeatmapMetricQueryVariables,
   ThreadLinkCandidateFieldsFragment,
   ThreadLinkGroupFieldsFragment,
   ThreadLinkGroupsQuery,
@@ -1282,6 +1359,8 @@ import type {
   ThreadPriorityChangedEntryFieldsFragment,
   ThreadQuery,
   ThreadQueryVariables,
+  ThreadSingleValueMetricQuery,
+  ThreadSingleValueMetricQueryVariables,
   ThreadSlackUserQuery,
   ThreadSlackUserQueryVariables,
   ThreadStatusDetailCreatedFieldsFragment,
@@ -1294,7 +1373,11 @@ import type {
   ThreadStatusDetailThreadLinkUpdatedFieldsFragment,
   ThreadStatusDetailWaitingForCustomerFieldsFragment,
   ThreadStatusDetailWaitingForDurationFieldsFragment,
+  ThreadStatusDetailWaitingIndefinitelyFieldsFragment,
   ThreadStatusTransitionedEntryFieldsFragment,
+  ThreadTimeSeriesMetricFieldsFragment,
+  ThreadTimeSeriesMetricQuery,
+  ThreadTimeSeriesMetricQueryVariables,
   ThreadTimelineEntriesQuery,
   ThreadTimelineEntriesQueryVariables,
   ThreadWithDistanceFieldsFragment,
@@ -1332,8 +1415,8 @@ import type {
   UnmarkCustomerAsSpamMutationVariables,
   UpdateActiveBillingRotaMutation,
   UpdateActiveBillingRotaMutationVariables,
-  UpdateAgentToolIntegrationOperatingPromptMutation,
-  UpdateAgentToolIntegrationOperatingPromptMutationVariables,
+  UpdateAgentSandboxToolPolicyMutation,
+  UpdateAgentSandboxToolPolicyMutationVariables,
   UpdateAiToneRulesMutation,
   UpdateAiToneRulesMutationVariables,
   UpdateApiKeyMutation,
@@ -1390,8 +1473,14 @@ import type {
   UpdateSettingMutationVariables,
   UpdateSidekickGithubConfigMutation,
   UpdateSidekickGithubConfigMutationVariables,
+  UpdateSidekickPosthogConfigMutation,
+  UpdateSidekickPosthogConfigMutationVariables,
+  UpdateSidekickServiceConfigMutation,
+  UpdateSidekickServiceConfigMutationVariables,
   UpdateSidekickSettingsMutation,
   UpdateSidekickSettingsMutationVariables,
+  UpdateSidekickSlackConfigMutation,
+  UpdateSidekickSlackConfigMutationVariables,
   UpdateSnippetMutation,
   UpdateSnippetMutationVariables,
   UpdateTaskMutation,
@@ -1402,6 +1491,8 @@ import type {
   UpdateThreadAgentStatusMutationVariables,
   UpdateThreadEscalationPathMutation,
   UpdateThreadEscalationPathMutationVariables,
+  UpdateThreadExternalIdMutation,
+  UpdateThreadExternalIdMutationVariables,
   UpdateThreadFieldSchemaMutation,
   UpdateThreadFieldSchemaMutationVariables,
   UpdateThreadSuggestedActionStatusMutation,
@@ -1545,6 +1636,9 @@ import type {
   WorkspaceInviteFieldsFragment,
   WorkspaceInvitesQuery,
   WorkspaceInvitesQueryVariables,
+  WorkspaceLinearInstallationInfoQuery,
+  WorkspaceLinearInstallationInfoQueryVariables,
+  WorkspaceLinearIntegrationFieldsFragment,
   WorkspaceMsTeamsInstallationInfoQuery,
   WorkspaceMsTeamsInstallationInfoQueryVariables,
   WorkspaceMsTeamsIntegrationFieldsFragment,
@@ -1565,6 +1659,10 @@ import type {
   WorkspaceSlackIntegrationQueryVariables,
   WorkspaceSlackIntegrationsQuery,
   WorkspaceSlackIntegrationsQueryVariables,
+  WorkspaceSlackSidekickInstallationInfoQuery,
+  WorkspaceSlackSidekickInstallationInfoQueryVariables,
+  WorkspaceSlackSidekickIntegrationFieldsFragment,
+  WorkspaceSlackSidekickIntegrationQuery,
 } from "./_generated_documents.js";
 
 export class AgentStatusDetailHandedOffModel {
@@ -1608,56 +1706,6 @@ export class AgentStatusDetailInProgressModel {
     this._client = client;
     this._data = data;
     this.type = data.type;
-  }
-}
-
-export class AgentToolIntegrationModel {
-  protected _client: PlainGraphQLClient;
-  protected _data: AgentToolIntegrationFieldsFragment;
-  public readonly __typename = "AgentToolIntegration" as const;
-
-  public readonly connectedAccountId: AgentToolIntegrationFieldsFragment["connectedAccountId"];
-  public readonly createdAt: AgentToolIntegrationFieldsFragment["createdAt"];
-  public readonly id: AgentToolIntegrationFieldsFragment["id"];
-  public readonly linkExpiresAt: AgentToolIntegrationFieldsFragment["linkExpiresAt"];
-  public readonly operatingPrompt: AgentToolIntegrationFieldsFragment["operatingPrompt"];
-  public readonly provider: AgentToolIntegrationFieldsFragment["provider"];
-  public readonly status: AgentToolIntegrationFieldsFragment["status"];
-  public readonly statusReason: AgentToolIntegrationFieldsFragment["statusReason"];
-  public readonly toolkitSlug: AgentToolIntegrationFieldsFragment["toolkitSlug"];
-  public readonly updatedAt: AgentToolIntegrationFieldsFragment["updatedAt"];
-  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
-
-  constructor(client: PlainGraphQLClient, data: AgentToolIntegrationFieldsFragment) {
-    this._client = client;
-    this._data = data;
-    this.connectedAccountId = data.connectedAccountId;
-    this.createdAt = data.createdAt;
-    this.id = data.id;
-    this.linkExpiresAt = data.linkExpiresAt;
-    this.operatingPrompt = data.operatingPrompt;
-    this.provider = data.provider;
-    this.status = data.status;
-    this.statusReason = data.statusReason;
-    this.toolkitSlug = data.toolkitSlug;
-    this.updatedAt = data.updatedAt;
-    this.createdBy = (() => {
-    switch ((data.createdBy as any).__typename) {
-      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
-      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
-      case "UserActor": return new UserActorModel(client, data.createdBy as any);
-      default: return data.createdBy as any;
-    }
-  })();
-    this.updatedBy = (() => {
-    switch ((data.updatedBy as any).__typename) {
-      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
-      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
-      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
-      default: return data.updatedBy as any;
-    }
-  })();
   }
 }
 
@@ -1981,6 +2029,30 @@ export class BeforeBreachActionModel {
   }
 }
 
+export class BillingMonthlyAllowanceCreditBalanceModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BillingMonthlyAllowanceCreditBalanceFieldsFragment;
+  public readonly __typename = "BillingMonthlyAllowanceCreditBalance" as const;
+
+  public readonly allowance: BillingMonthlyAllowanceCreditBalanceFieldsFragment["allowance"];
+  public readonly lowBalanceThreshold: BillingMonthlyAllowanceCreditBalanceFieldsFragment["lowBalanceThreshold"];
+  public readonly periodEndsAt: BillingMonthlyAllowanceCreditBalanceFieldsFragment["periodEndsAt"];
+  public readonly remaining: BillingMonthlyAllowanceCreditBalanceFieldsFragment["remaining"];
+  public readonly type: BillingMonthlyAllowanceCreditBalanceFieldsFragment["type"];
+  public readonly used: BillingMonthlyAllowanceCreditBalanceFieldsFragment["used"];
+
+  constructor(client: PlainGraphQLClient, data: BillingMonthlyAllowanceCreditBalanceFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.allowance = data.allowance;
+    this.lowBalanceThreshold = data.lowBalanceThreshold;
+    this.periodEndsAt = data.periodEndsAt;
+    this.remaining = data.remaining;
+    this.type = data.type;
+    this.used = data.used;
+  }
+}
+
 export class BillingPlanModel {
   protected _client: PlainGraphQLClient;
   protected _data: BillingPlanFieldsFragment;
@@ -2043,6 +2115,7 @@ export class BillingSubscriptionModel {
   public readonly planName: BillingSubscriptionFieldsFragment["planName"];
   public readonly status: BillingSubscriptionFieldsFragment["status"];
   public readonly trialEndsAt: BillingSubscriptionFieldsFragment["trialEndsAt"];
+  public readonly creditBalances: (BillingMonthlyAllowanceCreditBalanceModel | BillingTopupCreditBalanceModel)[];
   public readonly entitlements: (MeteredFeatureEntitlementModel | ToggleFeatureEntitlementModel)[];
 
   constructor(client: PlainGraphQLClient, data: BillingSubscriptionFieldsFragment) {
@@ -2057,6 +2130,13 @@ export class BillingSubscriptionModel {
     this.planName = data.planName;
     this.status = data.status;
     this.trialEndsAt = data.trialEndsAt;
+    this.creditBalances = ((data.creditBalances as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "BillingMonthlyAllowanceCreditBalance": return new BillingMonthlyAllowanceCreditBalanceModel(client, item as any);
+      case "BillingTopupCreditBalance": return new BillingTopupCreditBalanceModel(client, item as any);
+      default: return item as any;
+    }
+  })());
     this.entitlements = ((data.entitlements as any[]) ?? []).map((item: any) => (() => {
     switch ((item as any).__typename) {
       case "MeteredFeatureEntitlement": return new MeteredFeatureEntitlementModel(client, item as any);
@@ -2064,6 +2144,22 @@ export class BillingSubscriptionModel {
       default: return item as any;
     }
   })());
+  }
+}
+
+export class BillingTopupCreditBalanceModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BillingTopupCreditBalanceFieldsFragment;
+  public readonly __typename = "BillingTopupCreditBalance" as const;
+
+  public readonly remaining: BillingTopupCreditBalanceFieldsFragment["remaining"];
+  public readonly type: BillingTopupCreditBalanceFieldsFragment["type"];
+
+  constructor(client: PlainGraphQLClient, data: BillingTopupCreditBalanceFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.remaining = data.remaining;
+    this.type = data.type;
   }
 }
 
@@ -2082,6 +2178,29 @@ export class BooleanSettingModel {
     this.booleanValue = data.booleanValue;
     this.code = data.code;
     this.scope = data.scope;
+  }
+}
+
+export class BulkUpdateConnectedSlackChannelResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BulkUpdateConnectedSlackChannelResultFieldsFragment;
+  public readonly __typename = "BulkUpdateConnectedSlackChannelResult" as const;
+
+  public readonly connectedSlackChannelId: BulkUpdateConnectedSlackChannelResultFieldsFragment["connectedSlackChannelId"];
+
+  constructor(client: PlainGraphQLClient, data: BulkUpdateConnectedSlackChannelResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.connectedSlackChannelId = data.connectedSlackChannelId;
+  }
+
+  public get connectedSlackChannel(): Promise<ConnectedSlackChannelModel | undefined> {
+    const id = this._data.connectedSlackChannel?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<ConnectedSlackChannelQuery, ConnectedSlackChannelQueryVariables>(
+      ConnectedSlackChannelDocument,
+      { connectedSlackChannelId: id } as ConnectedSlackChannelQueryVariables
+    ).then(r => r.connectedSlackChannel ? new ConnectedSlackChannelModel(this._client, r.connectedSlackChannel) : undefined);
   }
 }
 
@@ -3012,6 +3131,312 @@ export class CustomerCardConfigModel {
   }
 }
 
+export class CustomerCardInstanceCardTooBigErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceCardTooBigErrorDetail" as const;
+
+  public readonly cardKey: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment["cardKey"];
+  public readonly maxSizeBytes: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment["maxSizeBytes"];
+  public readonly message: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment["message"];
+  public readonly sizeBytes: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment["sizeBytes"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.cardKey = data.cardKey;
+    this.maxSizeBytes = data.maxSizeBytes;
+    this.message = data.message;
+    this.sizeBytes = data.sizeBytes;
+  }
+}
+
+export class CustomerCardInstanceErrorModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceErrorFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceError" as const;
+
+  public readonly createdAt: CustomerCardInstanceErrorFieldsFragment["createdAt"];
+  public readonly customerId: CustomerCardInstanceErrorFieldsFragment["customerId"];
+  public readonly id: CustomerCardInstanceErrorFieldsFragment["id"];
+  public readonly threadId: CustomerCardInstanceErrorFieldsFragment["threadId"];
+  public readonly updatedAt: CustomerCardInstanceErrorFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly errorDetail: CustomerCardInstanceCardTooBigErrorDetailModel | CustomerCardInstanceMissingCardErrorDetailModel | CustomerCardInstanceRequestErrorDetailModel | CustomerCardInstanceResponseBodyErrorDetailModel | CustomerCardInstanceStatusCodeErrorDetailModel | CustomerCardInstanceTimeoutErrorDetailModel | CustomerCardInstanceUnknownErrorDetailModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceErrorFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.customerId = data.customerId;
+    this.id = data.id;
+    this.threadId = data.threadId;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.errorDetail = (() => {
+    switch ((data.errorDetail as any).__typename) {
+      case "CustomerCardInstanceCardTooBigErrorDetail": return new CustomerCardInstanceCardTooBigErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceMissingCardErrorDetail": return new CustomerCardInstanceMissingCardErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceRequestErrorDetail": return new CustomerCardInstanceRequestErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceResponseBodyErrorDetail": return new CustomerCardInstanceResponseBodyErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceStatusCodeErrorDetail": return new CustomerCardInstanceStatusCodeErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceTimeoutErrorDetail": return new CustomerCardInstanceTimeoutErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceUnknownErrorDetail": return new CustomerCardInstanceUnknownErrorDetailModel(client, data.errorDetail as any);
+      default: return data.errorDetail as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+
+  public get customerCardConfig(): Promise<CustomerCardConfigModel | undefined> {
+    const id = this._data.customerCardConfig?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CustomerCardConfigQuery, CustomerCardConfigQueryVariables>(
+      CustomerCardConfigDocument,
+      { customerCardConfigId: id } as CustomerCardConfigQueryVariables
+    ).then(r => r.customerCardConfig ? new CustomerCardConfigModel(this._client, r.customerCardConfig) : undefined);
+  }
+}
+
+export class CustomerCardInstanceLoadedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceLoadedFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceLoaded" as const;
+
+  public readonly createdAt: CustomerCardInstanceLoadedFieldsFragment["createdAt"];
+  public readonly customerId: CustomerCardInstanceLoadedFieldsFragment["customerId"];
+  public readonly expiresAt: CustomerCardInstanceLoadedFieldsFragment["expiresAt"];
+  public readonly id: CustomerCardInstanceLoadedFieldsFragment["id"];
+  public readonly loadedAt: CustomerCardInstanceLoadedFieldsFragment["loadedAt"];
+  public readonly threadId: CustomerCardInstanceLoadedFieldsFragment["threadId"];
+  public readonly updatedAt: CustomerCardInstanceLoadedFieldsFragment["updatedAt"];
+  public readonly components: (ComponentBadgeModel | { __typename: "ComponentContainer" } | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceLoadedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.customerId = data.customerId;
+    this.expiresAt = data.expiresAt;
+    this.id = data.id;
+    this.loadedAt = data.loadedAt;
+    this.threadId = data.threadId;
+    this.updatedAt = data.updatedAt;
+    this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentContainer": return item as any;
+      case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
+      case "ComponentDateTime": return new ComponentDateTimeModel(client, item as any);
+      case "ComponentDivider": return new ComponentDividerModel(client, item as any);
+      case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
+      case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
+      case "ComponentRow": return item as any;
+      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
+      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentUser": return item as any;
+      case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+
+  public get customerCardConfig(): Promise<CustomerCardConfigModel | undefined> {
+    const id = this._data.customerCardConfig?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CustomerCardConfigQuery, CustomerCardConfigQueryVariables>(
+      CustomerCardConfigDocument,
+      { customerCardConfigId: id } as CustomerCardConfigQueryVariables
+    ).then(r => r.customerCardConfig ? new CustomerCardConfigModel(this._client, r.customerCardConfig) : undefined);
+  }
+}
+
+export class CustomerCardInstanceLoadingModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceLoadingFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceLoading" as const;
+
+  public readonly createdAt: CustomerCardInstanceLoadingFieldsFragment["createdAt"];
+  public readonly customerId: CustomerCardInstanceLoadingFieldsFragment["customerId"];
+  public readonly id: CustomerCardInstanceLoadingFieldsFragment["id"];
+  public readonly threadId: CustomerCardInstanceLoadingFieldsFragment["threadId"];
+  public readonly updatedAt: CustomerCardInstanceLoadingFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceLoadingFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.customerId = data.customerId;
+    this.id = data.id;
+    this.threadId = data.threadId;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+
+  public get customerCardConfig(): Promise<CustomerCardConfigModel | undefined> {
+    const id = this._data.customerCardConfig?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CustomerCardConfigQuery, CustomerCardConfigQueryVariables>(
+      CustomerCardConfigDocument,
+      { customerCardConfigId: id } as CustomerCardConfigQueryVariables
+    ).then(r => r.customerCardConfig ? new CustomerCardConfigModel(this._client, r.customerCardConfig) : undefined);
+  }
+}
+
+export class CustomerCardInstanceMissingCardErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceMissingCardErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceMissingCardErrorDetail" as const;
+
+  public readonly cardKey: CustomerCardInstanceMissingCardErrorDetailFieldsFragment["cardKey"];
+  public readonly message: CustomerCardInstanceMissingCardErrorDetailFieldsFragment["message"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceMissingCardErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.cardKey = data.cardKey;
+    this.message = data.message;
+  }
+}
+
+export class CustomerCardInstanceRequestErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceRequestErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceRequestErrorDetail" as const;
+
+  public readonly errorCode: CustomerCardInstanceRequestErrorDetailFieldsFragment["errorCode"];
+  public readonly message: CustomerCardInstanceRequestErrorDetailFieldsFragment["message"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceRequestErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.errorCode = data.errorCode;
+    this.message = data.message;
+  }
+}
+
+export class CustomerCardInstanceResponseBodyErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceResponseBodyErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceResponseBodyErrorDetail" as const;
+
+  public readonly message: CustomerCardInstanceResponseBodyErrorDetailFieldsFragment["message"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceResponseBodyErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.message = data.message;
+  }
+}
+
+export class CustomerCardInstanceStatusCodeErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceStatusCodeErrorDetail" as const;
+
+  public readonly message: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment["message"];
+  public readonly statusCode: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment["statusCode"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.message = data.message;
+    this.statusCode = data.statusCode;
+  }
+}
+
+export class CustomerCardInstanceTimeoutErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceTimeoutErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceTimeoutErrorDetail" as const;
+
+  public readonly message: CustomerCardInstanceTimeoutErrorDetailFieldsFragment["message"];
+  public readonly timeoutSeconds: CustomerCardInstanceTimeoutErrorDetailFieldsFragment["timeoutSeconds"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceTimeoutErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.message = data.message;
+    this.timeoutSeconds = data.timeoutSeconds;
+  }
+}
+
+export class CustomerCardInstanceUnknownErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceUnknownErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceUnknownErrorDetail" as const;
+
+  public readonly message: CustomerCardInstanceUnknownErrorDetailFieldsFragment["message"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceUnknownErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.message = data.message;
+  }
+}
+
 export class CustomerEventModel {
   protected _client: PlainGraphQLClient;
   protected _data: CustomerEventFieldsFragment;
@@ -3020,9 +3445,10 @@ export class CustomerEventModel {
   public readonly createdAt: CustomerEventFieldsFragment["createdAt"];
   public readonly customerId: CustomerEventFieldsFragment["customerId"];
   public readonly id: CustomerEventFieldsFragment["id"];
+  public readonly isCollapsed: CustomerEventFieldsFragment["isCollapsed"];
   public readonly title: CustomerEventFieldsFragment["title"];
   public readonly updatedAt: CustomerEventFieldsFragment["updatedAt"];
-  public readonly components: (ComponentBadgeModel | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
+  public readonly components: (ComponentBadgeModel | { __typename: "ComponentContainer" } | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
@@ -3032,11 +3458,13 @@ export class CustomerEventModel {
     this.createdAt = data.createdAt;
     this.customerId = data.customerId;
     this.id = data.id;
+    this.isCollapsed = data.isCollapsed;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
     this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
     switch ((item as any).__typename) {
       case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentContainer": return item as any;
       case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
       case "ComponentDateTime": return new ComponentDateTimeModel(client, item as any);
       case "ComponentDivider": return new ComponentDividerModel(client, item as any);
@@ -3080,20 +3508,23 @@ export class CustomerEventEntryModel {
 
   public readonly customerId: CustomerEventEntryFieldsFragment["customerId"];
   public readonly externalId: CustomerEventEntryFieldsFragment["externalId"];
+  public readonly isCollapsed: CustomerEventEntryFieldsFragment["isCollapsed"];
   public readonly timelineEventId: CustomerEventEntryFieldsFragment["timelineEventId"];
   public readonly title: CustomerEventEntryFieldsFragment["title"];
-  public readonly components: (ComponentBadgeModel | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
+  public readonly components: (ComponentBadgeModel | { __typename: "ComponentContainer" } | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
 
   constructor(client: PlainGraphQLClient, data: CustomerEventEntryFieldsFragment) {
     this._client = client;
     this._data = data;
     this.customerId = data.customerId;
     this.externalId = data.externalId;
+    this.isCollapsed = data.isCollapsed;
     this.timelineEventId = data.timelineEventId;
     this.title = data.title;
     this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
     switch ((item as any).__typename) {
       case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentContainer": return item as any;
       case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
       case "ComponentDateTime": return new ComponentDateTimeModel(client, item as any);
       case "ComponentDivider": return new ComponentDividerModel(client, item as any);
@@ -4405,6 +4836,38 @@ export class HelpCenterArticleGroupModel {
   }
 }
 
+export class HelpCenterArticleSearchResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: HelpCenterArticleSearchResultFieldsFragment;
+  public readonly __typename = "HelpCenterArticleSearchResult" as const;
+
+  public readonly content: HelpCenterArticleSearchResultFieldsFragment["content"];
+
+  constructor(client: PlainGraphQLClient, data: HelpCenterArticleSearchResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.content = data.content;
+  }
+
+  public get helpCenter(): Promise<HelpCenterModel | undefined> {
+    const id = this._data.helpCenter?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<HelpCenterQuery, HelpCenterQueryVariables>(
+      HelpCenterDocument,
+      { id: id } as HelpCenterQueryVariables
+    ).then(r => r.helpCenter ? new HelpCenterModel(this._client, r.helpCenter) : undefined);
+  }
+
+  public get helpCenterArticle(): Promise<HelpCenterArticleModel | undefined> {
+    const id = this._data.helpCenterArticle?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<HelpCenterArticleQuery, HelpCenterArticleQueryVariables>(
+      HelpCenterArticleDocument,
+      { id: id } as HelpCenterArticleQueryVariables
+    ).then(r => r.helpCenterArticle ? new HelpCenterArticleModel(this._client, r.helpCenterArticle) : undefined);
+  }
+}
+
 export class HelpCenterAuthMechanismWorkosAuthkitModel {
   protected _client: PlainGraphQLClient;
   protected _data: HelpCenterAuthMechanismWorkosAuthkitFieldsFragment;
@@ -4557,6 +5020,28 @@ export class ImportThreadChannelDetailsModel {
   }
 }
 
+export class ImportThreadMessageResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ImportThreadMessageResultFieldsFragment;
+  public readonly __typename = "ImportThreadMessageResult" as const;
+
+  public readonly result: ImportThreadMessageResultFieldsFragment["result"];
+  public readonly threadMessage: (NoteModel | TimelineEntryModel) | null;
+
+  constructor(client: PlainGraphQLClient, data: ImportThreadMessageResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.result = data.result;
+    this.threadMessage = data.threadMessage ? (() => {
+    switch ((data.threadMessage as any).__typename) {
+      case "Note": return new NoteModel(client, data.threadMessage as any);
+      case "TimelineEntry": return new TimelineEntryModel(client, data.threadMessage as any);
+      default: return data.threadMessage as any;
+    }
+  })() : null;
+  }
+}
+
 export class IndexedDocumentModel {
   protected _client: PlainGraphQLClient;
   protected _data: IndexedDocumentFieldsFragment;
@@ -4601,6 +5086,22 @@ export class IndexedDocumentModel {
       default: return data.updatedBy as any;
     }
   })();
+  }
+}
+
+export class IndexedDocumentSearchResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexedDocumentSearchResultFieldsFragment;
+  public readonly __typename = "IndexedDocumentSearchResult" as const;
+
+  public readonly content: IndexedDocumentSearchResultFieldsFragment["content"];
+  public readonly indexedDocument: IndexedDocumentSearchResultFieldsFragment["indexedDocument"];
+
+  constructor(client: PlainGraphQLClient, data: IndexedDocumentSearchResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.content = data.content;
+    this.indexedDocument = data.indexedDocument;
   }
 }
 
@@ -4651,6 +5152,59 @@ export class IndexedDocumentStatusPendingModel {
   public readonly startedAt: IndexedDocumentStatusPendingFieldsFragment["startedAt"];
 
   constructor(client: PlainGraphQLClient, data: IndexedDocumentStatusPendingFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.startedAt = data.startedAt;
+  }
+}
+
+export class IndexingStatusFailedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexingStatusFailedFieldsFragment;
+  public readonly __typename = "IndexingStatusFailed" as const;
+
+  public readonly failedAt: IndexingStatusFailedFieldsFragment["failedAt"];
+  public readonly reason: IndexingStatusFailedFieldsFragment["reason"];
+
+  constructor(client: PlainGraphQLClient, data: IndexingStatusFailedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.failedAt = data.failedAt;
+    this.reason = data.reason;
+  }
+}
+
+export class IndexingStatusIndexedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexingStatusIndexedFieldsFragment;
+  public readonly __typename = "IndexingStatusIndexed" as const;
+
+  public readonly indexedAt: IndexingStatusIndexedFieldsFragment["indexedAt"];
+  public readonly indexedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+
+  constructor(client: PlainGraphQLClient, data: IndexingStatusIndexedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.indexedAt = data.indexedAt;
+    this.indexedBy = data.indexedBy ? (() => {
+    switch ((data.indexedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.indexedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.indexedBy as any);
+      case "UserActor": return new UserActorModel(client, data.indexedBy as any);
+      default: return data.indexedBy as any;
+    }
+  })() : null;
+  }
+}
+
+export class IndexingStatusPendingModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexingStatusPendingFieldsFragment;
+  public readonly __typename = "IndexingStatusPending" as const;
+
+  public readonly startedAt: IndexingStatusPendingFieldsFragment["startedAt"];
+
+  constructor(client: PlainGraphQLClient, data: IndexingStatusPendingFieldsFragment) {
     this._client = client;
     this._data = data;
     this.startedAt = data.startedAt;
@@ -4909,6 +5463,104 @@ export class KnowledgeGapFeedbackDetailsModel {
     this.knowledgeGapId = data.knowledgeGapId;
     this.reason = data.reason;
     this.sentiment = data.sentiment;
+  }
+}
+
+export class KnowledgeSourceSitemapModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: KnowledgeSourceSitemapFieldsFragment;
+  public readonly __typename = "KnowledgeSourceSitemap" as const;
+
+  public readonly createdAt: KnowledgeSourceSitemapFieldsFragment["createdAt"];
+  public readonly id: KnowledgeSourceSitemapFieldsFragment["id"];
+  public readonly type: KnowledgeSourceSitemapFieldsFragment["type"];
+  public readonly updatedAt: KnowledgeSourceSitemapFieldsFragment["updatedAt"];
+  public readonly url: KnowledgeSourceSitemapFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly status: IndexingStatusFailedModel | IndexingStatusIndexedModel | IndexingStatusPendingModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: KnowledgeSourceSitemapFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.type = data.type;
+    this.updatedAt = data.updatedAt;
+    this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.status = (() => {
+    switch ((data.status as any).__typename) {
+      case "IndexingStatusFailed": return new IndexingStatusFailedModel(client, data.status as any);
+      case "IndexingStatusIndexed": return new IndexingStatusIndexedModel(client, data.status as any);
+      case "IndexingStatusPending": return new IndexingStatusPendingModel(client, data.status as any);
+      default: return data.status as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class KnowledgeSourceUrlModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: KnowledgeSourceUrlFieldsFragment;
+  public readonly __typename = "KnowledgeSourceUrl" as const;
+
+  public readonly createdAt: KnowledgeSourceUrlFieldsFragment["createdAt"];
+  public readonly id: KnowledgeSourceUrlFieldsFragment["id"];
+  public readonly type: KnowledgeSourceUrlFieldsFragment["type"];
+  public readonly updatedAt: KnowledgeSourceUrlFieldsFragment["updatedAt"];
+  public readonly url: KnowledgeSourceUrlFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly status: IndexingStatusFailedModel | IndexingStatusIndexedModel | IndexingStatusPendingModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: KnowledgeSourceUrlFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.type = data.type;
+    this.updatedAt = data.updatedAt;
+    this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.status = (() => {
+    switch ((data.status as any).__typename) {
+      case "IndexingStatusFailed": return new IndexingStatusFailedModel(client, data.status as any);
+      case "IndexingStatusIndexed": return new IndexingStatusIndexedModel(client, data.status as any);
+      case "IndexingStatusPending": return new IndexingStatusPendingModel(client, data.status as any);
+      default: return data.status as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
@@ -5444,6 +6096,7 @@ export class NoteModel {
   public readonly createdAt: NoteFieldsFragment["createdAt"];
   public readonly deletedAt: NoteFieldsFragment["deletedAt"];
   public readonly editedAt: NoteFieldsFragment["editedAt"];
+  public readonly externalId: NoteFieldsFragment["externalId"];
   public readonly id: NoteFieldsFragment["id"];
   public readonly isDeleted: NoteFieldsFragment["isDeleted"];
   public readonly isEdited: NoteFieldsFragment["isEdited"];
@@ -5461,6 +6114,7 @@ export class NoteModel {
     this.createdAt = data.createdAt;
     this.deletedAt = data.deletedAt;
     this.editedAt = data.editedAt;
+    this.externalId = data.externalId;
     this.id = data.id;
     this.isDeleted = data.isDeleted;
     this.isEdited = data.isEdited;
@@ -5715,6 +6369,48 @@ export class PlainThreadThreadLinkModel {
   }
 }
 
+export class QueuedAgentSessionMessageModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: QueuedAgentSessionMessageFieldsFragment;
+  public readonly __typename = "QueuedAgentSessionMessage" as const;
+
+  public readonly createdAt: QueuedAgentSessionMessageFieldsFragment["createdAt"];
+  public readonly id: QueuedAgentSessionMessageFieldsFragment["id"];
+  public readonly text: QueuedAgentSessionMessageFieldsFragment["text"];
+  public readonly updatedAt: QueuedAgentSessionMessageFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: QueuedAgentSessionMessageFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.text = data.text;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
 export class RoleModel {
   protected _client: PlainGraphQLClient;
   protected _data: RoleFieldsFragment;
@@ -5925,6 +6621,28 @@ export class SidekickGithubServiceConfigModel {
   }
 }
 
+export class SlackAutoJoinRuleModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SlackAutoJoinRuleFieldsFragment;
+  public readonly __typename = "SlackAutoJoinRule" as const;
+
+  public readonly channelNamePrefix: SlackAutoJoinRuleFieldsFragment["channelNamePrefix"];
+  public readonly channelNameSuffix: SlackAutoJoinRuleFieldsFragment["channelNameSuffix"];
+  public readonly defaultChannelMode: SlackAutoJoinRuleFieldsFragment["defaultChannelMode"];
+  public readonly id: SlackAutoJoinRuleFieldsFragment["id"];
+  public readonly integrationId: SlackAutoJoinRuleFieldsFragment["integrationId"];
+
+  constructor(client: PlainGraphQLClient, data: SlackAutoJoinRuleFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.channelNamePrefix = data.channelNamePrefix;
+    this.channelNameSuffix = data.channelNameSuffix;
+    this.defaultChannelMode = data.defaultChannelMode;
+    this.id = data.id;
+    this.integrationId = data.integrationId;
+  }
+}
+
 export class SlackCustomerIdentityModel {
   protected _client: PlainGraphQLClient;
   protected _data: SlackCustomerIdentityFieldsFragment;
@@ -5998,6 +6716,7 @@ export class SlackThreadChannelAssociationModel {
   public readonly connectedSlackChannelId: SlackThreadChannelAssociationFieldsFragment["connectedSlackChannelId"];
   public readonly createdAt: SlackThreadChannelAssociationFieldsFragment["createdAt"];
   public readonly id: SlackThreadChannelAssociationFieldsFragment["id"];
+  public readonly tenantId: SlackThreadChannelAssociationFieldsFragment["tenantId"];
   public readonly updatedAt: SlackThreadChannelAssociationFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -6009,6 +6728,7 @@ export class SlackThreadChannelAssociationModel {
     this.connectedSlackChannelId = data.connectedSlackChannelId;
     this.createdAt = data.createdAt;
     this.id = data.id;
+    this.tenantId = data.tenantId;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
@@ -6363,6 +7083,7 @@ export class TenantModel {
   public readonly updatedAt: TenantFieldsFragment["updatedAt"];
   public readonly url: TenantFieldsFragment["url"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly threadChannelAssociations: (SlackThreadChannelAssociationModel)[];
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: TenantFieldsFragment) {
@@ -6383,6 +7104,12 @@ export class TenantModel {
       default: return data.createdBy as any;
     }
   })();
+    this.threadChannelAssociations = ((data.threadChannelAssociations as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "SlackThreadChannelAssociation": return new SlackThreadChannelAssociationModel(client, item as any);
+      default: return item as any;
+    }
+  })());
     this.updatedBy = (() => {
     switch ((data.updatedBy as any).__typename) {
       case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
@@ -6659,7 +7386,7 @@ export class ThreadModel {
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly lockedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
   public readonly statusChangedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly statusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel) | null;
+  public readonly statusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: ThreadFieldsFragment) {
@@ -6766,6 +7493,7 @@ export class ThreadModel {
       case "ThreadStatusDetailThreadLinkUpdated": return new ThreadStatusDetailThreadLinkUpdatedModel(client, data.statusDetail as any);
       case "ThreadStatusDetailWaitingForCustomer": return new ThreadStatusDetailWaitingForCustomerModel(client, data.statusDetail as any);
       case "ThreadStatusDetailWaitingForDuration": return new ThreadStatusDetailWaitingForDurationModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailWaitingIndefinitely": return new ThreadStatusDetailWaitingIndefinitelyModel(client, data.statusDetail as any);
       default: return data.statusDetail as any;
     }
   })() : null;
@@ -6948,14 +7676,17 @@ export class ThreadDiscussionModel {
 
   public readonly createdAt: ThreadDiscussionFieldsFragment["createdAt"];
   public readonly id: ThreadDiscussionFieldsFragment["id"];
+  public readonly isUnread: ThreadDiscussionFieldsFragment["isUnread"];
   public readonly lastActivityAt: ThreadDiscussionFieldsFragment["lastActivityAt"];
   public readonly resolvedAt: ThreadDiscussionFieldsFragment["resolvedAt"];
   public readonly sourceEntityId: ThreadDiscussionFieldsFragment["sourceEntityId"];
   public readonly sourceEntityType: ThreadDiscussionFieldsFragment["sourceEntityType"];
+  public readonly sourcePageLink: ThreadDiscussionFieldsFragment["sourcePageLink"];
   public readonly status: ThreadDiscussionFieldsFragment["status"];
   public readonly threadId: ThreadDiscussionFieldsFragment["threadId"];
   public readonly title: ThreadDiscussionFieldsFragment["title"];
   public readonly updatedAt: ThreadDiscussionFieldsFragment["updatedAt"];
+  public readonly visibility: ThreadDiscussionFieldsFragment["visibility"];
   public readonly channelDetails: (ThreadDiscussionAgentSessionChannelDetailsModel | ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel | ThreadDiscussionEmailChannelDetailsModel | ThreadDiscussionSlackChannelDetailsModel) | null;
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -6965,14 +7696,17 @@ export class ThreadDiscussionModel {
     this._data = data;
     this.createdAt = data.createdAt;
     this.id = data.id;
+    this.isUnread = data.isUnread;
     this.lastActivityAt = data.lastActivityAt;
     this.resolvedAt = data.resolvedAt;
     this.sourceEntityId = data.sourceEntityId;
     this.sourceEntityType = data.sourceEntityType;
+    this.sourcePageLink = data.sourcePageLink;
     this.status = data.status;
     this.threadId = data.threadId;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
+    this.visibility = data.visibility;
     this.channelDetails = data.channelDetails ? (() => {
     switch ((data.channelDetails as any).__typename) {
       case "ThreadDiscussionAgentSessionChannelDetails": return new ThreadDiscussionAgentSessionChannelDetailsModel(client, data.channelDetails as any);
@@ -7140,6 +7874,7 @@ export class ThreadDiscussionMessageModel {
   public readonly createdAt: ThreadDiscussionMessageFieldsFragment["createdAt"];
   public readonly deletedOnSlackAt: ThreadDiscussionMessageFieldsFragment["deletedOnSlackAt"];
   public readonly entryType: ThreadDiscussionMessageFieldsFragment["entryType"];
+  public readonly hasUnprocessedAttachments: ThreadDiscussionMessageFieldsFragment["hasUnprocessedAttachments"];
   public readonly id: ThreadDiscussionMessageFieldsFragment["id"];
   public readonly lastEditedOnSlackAt: ThreadDiscussionMessageFieldsFragment["lastEditedOnSlackAt"];
   public readonly slackMessageLink: ThreadDiscussionMessageFieldsFragment["slackMessageLink"];
@@ -7157,6 +7892,7 @@ export class ThreadDiscussionMessageModel {
     this.createdAt = data.createdAt;
     this.deletedOnSlackAt = data.deletedOnSlackAt;
     this.entryType = data.entryType;
+    this.hasUnprocessedAttachments = data.hasUnprocessedAttachments;
     this.id = data.id;
     this.lastEditedOnSlackAt = data.lastEditedOnSlackAt;
     this.slackMessageLink = data.slackMessageLink;
@@ -7331,10 +8067,11 @@ export class ThreadEventModel {
   public readonly createdAt: ThreadEventFieldsFragment["createdAt"];
   public readonly customerId: ThreadEventFieldsFragment["customerId"];
   public readonly id: ThreadEventFieldsFragment["id"];
+  public readonly isCollapsed: ThreadEventFieldsFragment["isCollapsed"];
   public readonly threadId: ThreadEventFieldsFragment["threadId"];
   public readonly title: ThreadEventFieldsFragment["title"];
   public readonly updatedAt: ThreadEventFieldsFragment["updatedAt"];
-  public readonly components: (ComponentBadgeModel | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
+  public readonly components: (ComponentBadgeModel | { __typename: "ComponentContainer" } | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
@@ -7344,12 +8081,14 @@ export class ThreadEventModel {
     this.createdAt = data.createdAt;
     this.customerId = data.customerId;
     this.id = data.id;
+    this.isCollapsed = data.isCollapsed;
     this.threadId = data.threadId;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
     this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
     switch ((item as any).__typename) {
       case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentContainer": return item as any;
       case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
       case "ComponentDateTime": return new ComponentDateTimeModel(client, item as any);
       case "ComponentDivider": return new ComponentDividerModel(client, item as any);
@@ -7393,20 +8132,23 @@ export class ThreadEventEntryModel {
 
   public readonly customerId: ThreadEventEntryFieldsFragment["customerId"];
   public readonly externalId: ThreadEventEntryFieldsFragment["externalId"];
+  public readonly isCollapsed: ThreadEventEntryFieldsFragment["isCollapsed"];
   public readonly timelineEventId: ThreadEventEntryFieldsFragment["timelineEventId"];
   public readonly title: ThreadEventEntryFieldsFragment["title"];
-  public readonly components: (ComponentBadgeModel | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
+  public readonly components: (ComponentBadgeModel | { __typename: "ComponentContainer" } | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
 
   constructor(client: PlainGraphQLClient, data: ThreadEventEntryFieldsFragment) {
     this._client = client;
     this._data = data;
     this.customerId = data.customerId;
     this.externalId = data.externalId;
+    this.isCollapsed = data.isCollapsed;
     this.timelineEventId = data.timelineEventId;
     this.title = data.title;
     this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
     switch ((item as any).__typename) {
       case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentContainer": return item as any;
       case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
       case "ComponentDateTime": return new ComponentDateTimeModel(client, item as any);
       case "ComponentDivider": return new ComponentDividerModel(client, item as any);
@@ -7542,6 +8284,20 @@ export class ThreadFieldSchemaModel {
       default: return data.updatedBy as any;
     }
   })();
+  }
+}
+
+export class ThreadHeatmapMetricModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadHeatmapMetricFieldsFragment;
+  public readonly __typename = "ThreadHeatmapMetric" as const;
+
+  public readonly days: ThreadHeatmapMetricFieldsFragment["days"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadHeatmapMetricFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.days = data.days;
   }
 }
 
@@ -7805,6 +8561,20 @@ export class ThreadStatusDetailWaitingForDurationModel {
   }
 }
 
+export class ThreadStatusDetailWaitingIndefinitelyModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailWaitingIndefinitelyFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailWaitingIndefinitely" as const;
+
+  public readonly statusChangedAt: ThreadStatusDetailWaitingIndefinitelyFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailWaitingIndefinitelyFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
 export class ThreadStatusTransitionedEntryModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadStatusTransitionedEntryFieldsFragment;
@@ -7812,8 +8582,8 @@ export class ThreadStatusTransitionedEntryModel {
 
   public readonly nextStatus: ThreadStatusTransitionedEntryFieldsFragment["nextStatus"];
   public readonly previousStatus: ThreadStatusTransitionedEntryFieldsFragment["previousStatus"];
-  public readonly nextStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel) | null;
-  public readonly previousStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel) | null;
+  public readonly nextStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
+  public readonly previousStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
 
   constructor(client: PlainGraphQLClient, data: ThreadStatusTransitionedEntryFieldsFragment) {
     this._client = client;
@@ -7832,6 +8602,7 @@ export class ThreadStatusTransitionedEntryModel {
       case "ThreadStatusDetailThreadLinkUpdated": return new ThreadStatusDetailThreadLinkUpdatedModel(client, data.nextStatusDetail as any);
       case "ThreadStatusDetailWaitingForCustomer": return new ThreadStatusDetailWaitingForCustomerModel(client, data.nextStatusDetail as any);
       case "ThreadStatusDetailWaitingForDuration": return new ThreadStatusDetailWaitingForDurationModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailWaitingIndefinitely": return new ThreadStatusDetailWaitingIndefinitelyModel(client, data.nextStatusDetail as any);
       default: return data.nextStatusDetail as any;
     }
   })() : null;
@@ -7847,9 +8618,24 @@ export class ThreadStatusTransitionedEntryModel {
       case "ThreadStatusDetailThreadLinkUpdated": return new ThreadStatusDetailThreadLinkUpdatedModel(client, data.previousStatusDetail as any);
       case "ThreadStatusDetailWaitingForCustomer": return new ThreadStatusDetailWaitingForCustomerModel(client, data.previousStatusDetail as any);
       case "ThreadStatusDetailWaitingForDuration": return new ThreadStatusDetailWaitingForDurationModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailWaitingIndefinitely": return new ThreadStatusDetailWaitingIndefinitelyModel(client, data.previousStatusDetail as any);
       default: return data.previousStatusDetail as any;
     }
   })() : null;
+  }
+}
+
+export class ThreadTimeSeriesMetricModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadTimeSeriesMetricFieldsFragment;
+  public readonly __typename = "ThreadTimeSeriesMetric" as const;
+
+  public readonly timestamps: ThreadTimeSeriesMetricFieldsFragment["timestamps"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadTimeSeriesMetricFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.timestamps = data.timestamps;
   }
 }
 
@@ -9129,6 +9915,46 @@ export class WorkspaceInviteModel {
   }
 }
 
+export class WorkspaceLinearIntegrationModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WorkspaceLinearIntegrationFieldsFragment;
+  public readonly __typename = "WorkspaceLinearIntegration" as const;
+
+  public readonly createdAt: WorkspaceLinearIntegrationFieldsFragment["createdAt"];
+  public readonly integrationId: WorkspaceLinearIntegrationFieldsFragment["integrationId"];
+  public readonly linearOrganisationId: WorkspaceLinearIntegrationFieldsFragment["linearOrganisationId"];
+  public readonly linearOrganisationName: WorkspaceLinearIntegrationFieldsFragment["linearOrganisationName"];
+  public readonly updatedAt: WorkspaceLinearIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: WorkspaceLinearIntegrationFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.integrationId = data.integrationId;
+    this.linearOrganisationId = data.linearOrganisationId;
+    this.linearOrganisationName = data.linearOrganisationName;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
 export class WorkspaceMSTeamsIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkspaceMsTeamsIntegrationFieldsFragment;
@@ -9259,9 +10085,57 @@ export class WorkspaceSlackIntegrationModel {
   }
 }
 
+export class WorkspaceSlackSidekickIntegrationModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WorkspaceSlackSidekickIntegrationFieldsFragment;
+  public readonly __typename = "WorkspaceSlackSidekickIntegration" as const;
+
+  public readonly askSidekickSlackChannelId: WorkspaceSlackSidekickIntegrationFieldsFragment["askSidekickSlackChannelId"];
+  public readonly askSidekickSlackChannelName: WorkspaceSlackSidekickIntegrationFieldsFragment["askSidekickSlackChannelName"];
+  public readonly createdAt: WorkspaceSlackSidekickIntegrationFieldsFragment["createdAt"];
+  public readonly integrationId: WorkspaceSlackSidekickIntegrationFieldsFragment["integrationId"];
+  public readonly isReinstallRequired: WorkspaceSlackSidekickIntegrationFieldsFragment["isReinstallRequired"];
+  public readonly operatingInstructions: WorkspaceSlackSidekickIntegrationFieldsFragment["operatingInstructions"];
+  public readonly slackTeamId: WorkspaceSlackSidekickIntegrationFieldsFragment["slackTeamId"];
+  public readonly slackTeamName: WorkspaceSlackSidekickIntegrationFieldsFragment["slackTeamName"];
+  public readonly updatedAt: WorkspaceSlackSidekickIntegrationFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: WorkspaceSlackSidekickIntegrationFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.askSidekickSlackChannelId = data.askSidekickSlackChannelId;
+    this.askSidekickSlackChannelName = data.askSidekickSlackChannelName;
+    this.createdAt = data.createdAt;
+    this.integrationId = data.integrationId;
+    this.isReinstallRequired = data.isReinstallRequired;
+    this.operatingInstructions = data.operatingInstructions;
+    this.slackTeamId = data.slackTeamId;
+    this.slackTeamName = data.slackTeamName;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
 export interface PlainSdkQueries {
   activeThreadCluster(variables: ActiveThreadClusterQueryVariables): Promise<ThreadClusterModel>;
-  agentToolIntegration(variables: AgentToolIntegrationQueryVariables): Promise<AgentToolIntegrationModel>;
+  agentSandboxToolPolicies(variables: AgentSandboxToolPoliciesQueryVariables): Promise<AgentSandboxToolPoliciesQuery["agentSandboxToolPolicies"]>;
   aiToneRules(variables: AiToneRulesQueryVariables): Promise<PlainConnection<AiToneRuleModel>>;
   autoresponder(variables: AutoresponderQueryVariables): Promise<AutoresponderModel>;
   autoresponders(variables: AutorespondersQueryVariables): Promise<PlainConnection<AutoresponderModel>>;
@@ -9320,6 +10194,7 @@ export interface PlainSdkQueries {
   labelType(variables: LabelTypeQueryVariables): Promise<LabelTypeModel>;
   labelTypeByExternalId(variables: LabelTypeByExternalIdQueryVariables): Promise<LabelTypeModel>;
   labelTypes(variables: LabelTypesQueryVariables): Promise<PlainConnection<LabelTypeModel>>;
+  linearAppIntegration(): Promise<WorkspaceLinearIntegrationModel>;
   machineUser(variables: MachineUserQueryVariables): Promise<MachineUserModel>;
   machineUsers(variables: MachineUsersQueryVariables): Promise<PlainConnection<MachineUserModel>>;
   myBillingRota(): Promise<NonNullable<MyBillingRotaQuery["myBillingRota"]>>;
@@ -9359,10 +10234,14 @@ export interface PlainSdkQueries {
   serviceAuthorization(variables: ServiceAuthorizationQueryVariables): Promise<ServiceAuthorizationModel>;
   serviceAuthorizations(variables: ServiceAuthorizationsQueryVariables): Promise<PlainConnection<ServiceAuthorizationModel>>;
   setting(variables: SettingQueryVariables): Promise<NonNullable<SettingQuery["setting"]>>;
+  sidekickCreditUsageByDay(variables: SidekickCreditUsageByDayQueryVariables): Promise<SidekickCreditUsageByDayQuery["sidekickCreditUsageByDay"]>;
   sidekickGithubAccessibleRepos(variables: SidekickGithubAccessibleReposQueryVariables): Promise<SidekickGithubAccessibleReposQuery["sidekickGithubAccessibleRepos"]>;
   sidekickGithubServiceConfig(variables: SidekickGithubServiceConfigQueryVariables): Promise<SidekickGithubServiceConfigModel>;
+  sidekickPosthogServiceConfig(variables: SidekickPosthogServiceConfigQueryVariables): Promise<NonNullable<SidekickPosthogServiceConfigQuery["sidekickPosthogServiceConfig"]>>;
+  sidekickServiceConfig(variables: SidekickServiceConfigQueryVariables): Promise<NonNullable<SidekickServiceConfigQuery["sidekickServiceConfig"]>>;
   sidekickSettings(): Promise<SidekickSettingsQuery["sidekickSettings"]>;
   singleValueMetric(variables: SingleValueMetricQueryVariables): Promise<NonNullable<SingleValueMetricQuery["singleValueMetric"]>>;
+  slackAutoJoinRules(variables: SlackAutoJoinRulesQueryVariables): Promise<SlackAutoJoinRuleModel[]>;
   slackUser(variables: SlackUserQueryVariables): Promise<SlackUserModel>;
   snippet(variables: SnippetQueryVariables): Promise<SnippetModel>;
   snippets(variables: SnippetsQueryVariables): Promise<PlainConnection<SnippetModel>>;
@@ -9384,8 +10263,11 @@ export interface PlainSdkQueries {
   threadDiscussion(variables: ThreadDiscussionQueryVariables): Promise<ThreadDiscussionModel>;
   threadFieldSchema(variables: ThreadFieldSchemaQueryVariables): Promise<ThreadFieldSchemaModel>;
   threadFieldSchemas(variables: ThreadFieldSchemasQueryVariables): Promise<PlainConnection<ThreadFieldSchemaModel>>;
+  threadHeatmapMetric(variables: ThreadHeatmapMetricQueryVariables): Promise<ThreadHeatmapMetricModel>;
   threadLinkGroups(variables: ThreadLinkGroupsQueryVariables): Promise<PlainConnection<ThreadLinkGroupModel>>;
+  threadSingleValueMetric(variables: ThreadSingleValueMetricQueryVariables): Promise<ThreadSingleValueMetricQuery["threadSingleValueMetric"]>;
   threadSlackUser(variables: ThreadSlackUserQueryVariables): Promise<SlackUserModel>;
+  threadTimeSeriesMetric(variables: ThreadTimeSeriesMetricQueryVariables): Promise<ThreadTimeSeriesMetricModel>;
   threads(variables: ThreadsQueryVariables): Promise<PlainConnection<ThreadModel>>;
   tier(variables: TierQueryVariables): Promise<TierModel>;
   tiers(variables: TiersQueryVariables): Promise<PlainConnection<TierModel>>;
@@ -9425,6 +10307,7 @@ export interface PlainSdkQueries {
   workspaceEmailSettings(): Promise<WorkspaceEmailSettingsModel>;
   workspaceHmac(): Promise<WorkspaceHmacModel>;
   workspaceInvites(variables: WorkspaceInvitesQueryVariables): Promise<PlainConnection<WorkspaceInviteModel>>;
+  workspaceLinearInstallationInfo(variables: WorkspaceLinearInstallationInfoQueryVariables): Promise<WorkspaceLinearInstallationInfoQuery["workspaceLinearInstallationInfo"]>;
   workspaceMSTeamsInstallationInfo(variables: WorkspaceMsTeamsInstallationInfoQueryVariables): Promise<WorkspaceMsTeamsInstallationInfoQuery["workspaceMSTeamsInstallationInfo"]>;
   workspaceMSTeamsIntegration(): Promise<WorkspaceMSTeamsIntegrationModel>;
   workspaceSlackChannelInstallationInfo(variables: WorkspaceSlackChannelInstallationInfoQueryVariables): Promise<WorkspaceSlackChannelInstallationInfoQuery["workspaceSlackChannelInstallationInfo"]>;
@@ -9433,6 +10316,8 @@ export interface PlainSdkQueries {
   workspaceSlackInstallationInfo(variables: WorkspaceSlackInstallationInfoQueryVariables): Promise<WorkspaceSlackInstallationInfoQuery["workspaceSlackInstallationInfo"]>;
   workspaceSlackIntegration(variables: WorkspaceSlackIntegrationQueryVariables): Promise<WorkspaceSlackIntegrationModel>;
   workspaceSlackIntegrations(variables: WorkspaceSlackIntegrationsQueryVariables): Promise<PlainConnection<WorkspaceSlackIntegrationModel>>;
+  workspaceSlackSidekickInstallationInfo(variables: WorkspaceSlackSidekickInstallationInfoQueryVariables): Promise<WorkspaceSlackSidekickInstallationInfoQuery["workspaceSlackSidekickInstallationInfo"]>;
+  workspaceSlackSidekickIntegration(): Promise<WorkspaceSlackSidekickIntegrationModel>;
 }
 
 export interface PlainSdkMutations {
@@ -9450,6 +10335,7 @@ export interface PlainSdkMutations {
   assignRolesToUser(variables: AssignRolesToUserMutationVariables): Promise<AssignRolesToUserMutation["assignRolesToUser"]>;
   assignThread(variables: AssignThreadMutationVariables): Promise<AssignThreadMutation["assignThread"]>;
   bulkJoinSlackChannels(variables: BulkJoinSlackChannelsMutationVariables): Promise<BulkJoinSlackChannelsMutation["bulkJoinSlackChannels"]>;
+  bulkUpdateConnectedSlackChannels(variables: BulkUpdateConnectedSlackChannelsMutationVariables): Promise<BulkUpdateConnectedSlackChannelsMutation["bulkUpdateConnectedSlackChannels"]>;
   bulkUpdateSlackChannelSettings(variables: BulkUpdateSlackChannelSettingsMutationVariables): Promise<BulkUpdateSlackChannelSettingsMutation["bulkUpdateSlackChannelSettings"]>;
   bulkUpsertThreadFields(variables: BulkUpsertThreadFieldsMutationVariables): Promise<BulkUpsertThreadFieldsMutation["bulkUpsertThreadFields"]>;
   bulkUpsertWorkflowSteps(variables: BulkUpsertWorkflowStepsMutationVariables): Promise<BulkUpsertWorkflowStepsMutation["bulkUpsertWorkflowSteps"]>;
@@ -9489,6 +10375,7 @@ export interface PlainSdkMutations {
   createIssueTrackerIssue(variables: CreateIssueTrackerIssueMutationVariables): Promise<CreateIssueTrackerIssueMutation["createIssueTrackerIssue"]>;
   createKnowledgeSource(variables: CreateKnowledgeSourceMutationVariables): Promise<CreateKnowledgeSourceMutation["createKnowledgeSource"]>;
   createLabelType(variables: CreateLabelTypeMutationVariables): Promise<CreateLabelTypeMutation["createLabelType"]>;
+  createLinearAppIntegration(variables: CreateLinearAppIntegrationMutationVariables): Promise<CreateLinearAppIntegrationMutation["createLinearAppIntegration"]>;
   createMachineUser(variables: CreateMachineUserMutationVariables): Promise<CreateMachineUserMutation["createMachineUser"]>;
   createMyFavoritePage(variables: CreateMyFavoritePageMutationVariables): Promise<CreateMyFavoritePageMutation["createMyFavoritePage"]>;
   createMyLinearIntegration(variables: CreateMyLinearIntegrationMutationVariables): Promise<CreateMyLinearIntegrationMutation["createMyLinearIntegration"]>;
@@ -9523,6 +10410,7 @@ export interface PlainSdkMutations {
   createWorkspaceMSTeamsIntegration(variables: CreateWorkspaceMsTeamsIntegrationMutationVariables): Promise<CreateWorkspaceMsTeamsIntegrationMutation["createWorkspaceMSTeamsIntegration"]>;
   createWorkspaceSlackChannelIntegration(variables: CreateWorkspaceSlackChannelIntegrationMutationVariables): Promise<CreateWorkspaceSlackChannelIntegrationMutation["createWorkspaceSlackChannelIntegration"]>;
   createWorkspaceSlackIntegration(variables: CreateWorkspaceSlackIntegrationMutationVariables): Promise<CreateWorkspaceSlackIntegrationMutation["createWorkspaceSlackIntegration"]>;
+  createWorkspaceSlackSidekickIntegration(variables: CreateWorkspaceSlackSidekickIntegrationMutationVariables): Promise<CreateWorkspaceSlackSidekickIntegrationMutation["createWorkspaceSlackSidekickIntegration"]>;
   deleteAiToneRules(variables: DeleteAiToneRulesMutationVariables): Promise<DeleteAiToneRulesMutation["deleteAiToneRules"]>;
   deleteApiKey(variables: DeleteApiKeyMutationVariables): Promise<DeleteApiKeyMutation["deleteApiKey"]>;
   deleteAutoresponder(variables: DeleteAutoresponderMutationVariables): Promise<DeleteAutoresponderMutation["deleteAutoresponder"]>;
@@ -9541,6 +10429,7 @@ export interface PlainSdkMutations {
   deleteHelpCenterArticle(variables: DeleteHelpCenterArticleMutationVariables): Promise<DeleteHelpCenterArticleMutation["deleteHelpCenterArticle"]>;
   deleteHelpCenterArticleGroup(variables: DeleteHelpCenterArticleGroupMutationVariables): Promise<DeleteHelpCenterArticleGroupMutation["deleteHelpCenterArticleGroup"]>;
   deleteKnowledgeSource(variables: DeleteKnowledgeSourceMutationVariables): Promise<DeleteKnowledgeSourceMutation["deleteKnowledgeSource"]>;
+  deleteLinearAppIntegration(): Promise<DeleteLinearAppIntegrationMutation["deleteLinearAppIntegration"]>;
   deleteMachineUser(variables: DeleteMachineUserMutationVariables): Promise<DeleteMachineUserMutation["deleteMachineUser"]>;
   deleteMyFavoritePage(variables: DeleteMyFavoritePageMutationVariables): Promise<DeleteMyFavoritePageMutation["deleteMyFavoritePage"]>;
   deleteMyLinearIntegration(): Promise<DeleteMyLinearIntegrationMutation["deleteMyLinearIntegration"]>;
@@ -9548,6 +10437,7 @@ export interface PlainSdkMutations {
   deleteMyServiceAuthorization(variables: DeleteMyServiceAuthorizationMutationVariables): Promise<DeleteMyServiceAuthorizationMutation["deleteMyServiceAuthorization"]>;
   deleteMySlackIntegration(): Promise<DeleteMySlackIntegrationMutation["deleteMySlackIntegration"]>;
   deleteNote(variables: DeleteNoteMutationVariables): Promise<DeleteNoteMutation["deleteNote"]>;
+  deleteQueuedAgentSessionMessage(variables: DeleteQueuedAgentSessionMessageMutationVariables): Promise<DeleteQueuedAgentSessionMessageMutation["deleteQueuedAgentSessionMessage"]>;
   deleteSavedThreadsView(variables: DeleteSavedThreadsViewMutationVariables): Promise<DeleteSavedThreadsViewMutation["deleteSavedThreadsView"]>;
   deleteServiceAuthorization(variables: DeleteServiceAuthorizationMutationVariables): Promise<DeleteServiceAuthorizationMutation["deleteServiceAuthorization"]>;
   deleteServiceLevelAgreement(variables: DeleteServiceLevelAgreementMutationVariables): Promise<DeleteServiceLevelAgreementMutation["deleteServiceLevelAgreement"]>;
@@ -9580,7 +10470,8 @@ export interface PlainSdkMutations {
   deleteWorkspaceMSTeamsIntegration(variables: DeleteWorkspaceMsTeamsIntegrationMutationVariables): Promise<DeleteWorkspaceMsTeamsIntegrationMutation["deleteWorkspaceMSTeamsIntegration"]>;
   deleteWorkspaceSlackChannelIntegration(variables: DeleteWorkspaceSlackChannelIntegrationMutationVariables): Promise<DeleteWorkspaceSlackChannelIntegrationMutation["deleteWorkspaceSlackChannelIntegration"]>;
   deleteWorkspaceSlackIntegration(variables: DeleteWorkspaceSlackIntegrationMutationVariables): Promise<DeleteWorkspaceSlackIntegrationMutation["deleteWorkspaceSlackIntegration"]>;
-  disconnectAgentToolIntegration(variables: DisconnectAgentToolIntegrationMutationVariables): Promise<DisconnectAgentToolIntegrationMutation["disconnectAgentToolIntegration"]>;
+  deleteWorkspaceSlackSidekickIntegration(): Promise<DeleteWorkspaceSlackSidekickIntegrationMutation["deleteWorkspaceSlackSidekickIntegration"]>;
+  editQueuedAgentSessionMessage(variables: EditQueuedAgentSessionMessageMutationVariables): Promise<EditQueuedAgentSessionMessageMutation["editQueuedAgentSessionMessage"]>;
   escalateThread(variables: EscalateThreadMutationVariables): Promise<EscalateThreadMutation["escalateThread"]>;
   forkThread(variables: ForkThreadMutationVariables): Promise<ForkThreadMutation["forkThread"]>;
   generateAiToneRulesFromDescription(variables: GenerateAiToneRulesFromDescriptionMutationVariables): Promise<GenerateAiToneRulesFromDescriptionMutation["generateAiToneRulesFromDescription"]>;
@@ -9589,18 +10480,23 @@ export interface PlainSdkMutations {
   importTenantFieldSchemas(variables: ImportTenantFieldSchemasMutationVariables): Promise<ImportTenantFieldSchemasMutation["importTenantFieldSchemas"]>;
   importTenantFieldSchemasFromService(variables: ImportTenantFieldSchemasFromServiceMutationVariables): Promise<ImportTenantFieldSchemasFromServiceMutation["importTenantFieldSchemasFromService"]>;
   importTenants(variables: ImportTenantsMutationVariables): Promise<ImportTenantsMutation["importTenants"]>;
+  importThread(variables: ImportThreadMutationVariables): Promise<ImportThreadMutation["importThread"]>;
   importThreadDiscussion(variables: ImportThreadDiscussionMutationVariables): Promise<ImportThreadDiscussionMutation["importThreadDiscussion"]>;
+  importThreadMessages(variables: ImportThreadMessagesMutationVariables): Promise<ImportThreadMessagesMutation["importThreadMessages"]>;
   inviteUserToWorkspace(variables: InviteUserToWorkspaceMutationVariables): Promise<InviteUserToWorkspaceMutation["inviteUserToWorkspace"]>;
   lockThread(variables: LockThreadMutationVariables): Promise<LockThreadMutation["lockThread"]>;
   markCustomerAsSpam(variables: MarkCustomerAsSpamMutationVariables): Promise<MarkCustomerAsSpamMutation["markCustomerAsSpam"]>;
   markThreadAsDone(variables: MarkThreadAsDoneMutationVariables): Promise<MarkThreadAsDoneMutation["markThreadAsDone"]>;
   markThreadAsTodo(variables: MarkThreadAsTodoMutationVariables): Promise<MarkThreadAsTodoMutation["markThreadAsTodo"]>;
   markThreadDiscussionAsResolved(variables: MarkThreadDiscussionAsResolvedMutationVariables): Promise<MarkThreadDiscussionAsResolvedMutation["markThreadDiscussionAsResolved"]>;
+  markThreadDiscussionRead(variables: MarkThreadDiscussionReadMutationVariables): Promise<MarkThreadDiscussionReadMutation["markThreadDiscussionRead"]>;
   mintEmbedToken(variables: MintEmbedTokenMutationVariables): Promise<MintEmbedTokenMutation["mintEmbedToken"]>;
   moveLabelType(variables: MoveLabelTypeMutationVariables): Promise<MoveLabelTypeMutation["moveLabelType"]>;
   previewBillingPlanChange(variables: PreviewBillingPlanChangeMutationVariables): Promise<PreviewBillingPlanChangeMutation["previewBillingPlanChange"]>;
+  purchaseCredits(variables: PurchaseCreditsMutationVariables): Promise<PurchaseCreditsMutation["purchaseCredits"]>;
   refreshConnectedDiscordChannels(variables: RefreshConnectedDiscordChannelsMutationVariables): Promise<RefreshConnectedDiscordChannelsMutation["refreshConnectedDiscordChannels"]>;
   refreshWorkspaceSlackChannelIntegration(variables: RefreshWorkspaceSlackChannelIntegrationMutationVariables): Promise<RefreshWorkspaceSlackChannelIntegrationMutation["refreshWorkspaceSlackChannelIntegration"]>;
+  refreshWorkspaceSlackSidekickIntegration(variables: RefreshWorkspaceSlackSidekickIntegrationMutationVariables): Promise<RefreshWorkspaceSlackSidekickIntegrationMutation["refreshWorkspaceSlackSidekickIntegration"]>;
   regenerateWorkspaceHmac(): Promise<RegenerateWorkspaceHmacMutation["regenerateWorkspaceHmac"]>;
   reindexKnowledgeSource(variables: ReindexKnowledgeSourceMutationVariables): Promise<ReindexKnowledgeSourceMutation["reindexKnowledgeSource"]>;
   reloadCustomerCardInstance(variables: ReloadCustomerCardInstanceMutationVariables): Promise<ReloadCustomerCardInstanceMutation["reloadCustomerCardInstance"]>;
@@ -9632,12 +10528,11 @@ export interface PlainSdkMutations {
   sendSlackMessage(variables: SendSlackMessageMutationVariables): Promise<SendSlackMessageMutation["sendSlackMessage"]>;
   sendThreadDiscussionMessage(variables: SendThreadDiscussionMessageMutationVariables): Promise<SendThreadDiscussionMessageMutation["sendThreadDiscussionMessage"]>;
   setCustomerTenants(variables: SetCustomerTenantsMutationVariables): Promise<SetCustomerTenantsMutation["setCustomerTenants"]>;
+  setSlackAutoJoinRules(variables: SetSlackAutoJoinRulesMutationVariables): Promise<SetSlackAutoJoinRulesMutation["setSlackAutoJoinRules"]>;
   setupTenantFieldSchemaMapping(variables: SetupTenantFieldSchemaMappingMutationVariables): Promise<SetupTenantFieldSchemaMappingMutation["setupTenantFieldSchemaMapping"]>;
   shareThreadToUserInSlack(variables: ShareThreadToUserInSlackMutationVariables): Promise<ShareThreadToUserInSlackMutation["shareThreadToUserInSlack"]>;
   snoozeThread(variables: SnoozeThreadMutationVariables): Promise<SnoozeThreadMutation["snoozeThread"]>;
-  startAgentToolIntegration(variables: StartAgentToolIntegrationMutationVariables): Promise<StartAgentToolIntegrationMutation["startAgentToolIntegration"]>;
   startServiceAuthorization(variables: StartServiceAuthorizationMutationVariables): Promise<StartServiceAuthorizationMutation["startServiceAuthorization"]>;
-  syncAgentToolIntegration(variables: SyncAgentToolIntegrationMutationVariables): Promise<SyncAgentToolIntegrationMutation["syncAgentToolIntegration"]>;
   syncBusinessHoursSlots(variables: SyncBusinessHoursSlotsMutationVariables): Promise<SyncBusinessHoursSlotsMutation["syncBusinessHoursSlots"]>;
   syncUserWorkingHours(variables: SyncUserWorkingHoursMutationVariables): Promise<SyncUserWorkingHoursMutation["syncUserWorkingHours"]>;
   toggleSlackMessageReaction(variables: ToggleSlackMessageReactionMutationVariables): Promise<ToggleSlackMessageReactionMutation["toggleSlackMessageReaction"]>;
@@ -9648,7 +10543,7 @@ export interface PlainSdkMutations {
   unassignThread(variables: UnassignThreadMutationVariables): Promise<UnassignThreadMutation["unassignThread"]>;
   unmarkCustomerAsSpam(variables: UnmarkCustomerAsSpamMutationVariables): Promise<UnmarkCustomerAsSpamMutation["unmarkCustomerAsSpam"]>;
   updateActiveBillingRota(variables: UpdateActiveBillingRotaMutationVariables): Promise<UpdateActiveBillingRotaMutation["updateActiveBillingRota"]>;
-  updateAgentToolIntegrationOperatingPrompt(variables: UpdateAgentToolIntegrationOperatingPromptMutationVariables): Promise<UpdateAgentToolIntegrationOperatingPromptMutation["updateAgentToolIntegrationOperatingPrompt"]>;
+  updateAgentSandboxToolPolicy(variables: UpdateAgentSandboxToolPolicyMutationVariables): Promise<UpdateAgentSandboxToolPolicyMutation["updateAgentSandboxToolPolicy"]>;
   updateAiToneRules(variables: UpdateAiToneRulesMutationVariables): Promise<UpdateAiToneRulesMutation["updateAiToneRules"]>;
   updateApiKey(variables: UpdateApiKeyMutationVariables): Promise<UpdateApiKeyMutation["updateApiKey"]>;
   updateAutoresponder(variables: UpdateAutoresponderMutationVariables): Promise<UpdateAutoresponderMutation["updateAutoresponder"]>;
@@ -9677,12 +10572,16 @@ export interface PlainSdkMutations {
   updateServiceLevelAgreement(variables: UpdateServiceLevelAgreementMutationVariables): Promise<UpdateServiceLevelAgreementMutation["updateServiceLevelAgreement"]>;
   updateSetting(variables: UpdateSettingMutationVariables): Promise<UpdateSettingMutation["updateSetting"]>;
   updateSidekickGithubConfig(variables: UpdateSidekickGithubConfigMutationVariables): Promise<UpdateSidekickGithubConfigMutation["updateSidekickGithubConfig"]>;
+  updateSidekickPosthogConfig(variables: UpdateSidekickPosthogConfigMutationVariables): Promise<UpdateSidekickPosthogConfigMutation["updateSidekickPosthogConfig"]>;
+  updateSidekickServiceConfig(variables: UpdateSidekickServiceConfigMutationVariables): Promise<UpdateSidekickServiceConfigMutation["updateSidekickServiceConfig"]>;
   updateSidekickSettings(variables: UpdateSidekickSettingsMutationVariables): Promise<UpdateSidekickSettingsMutation["updateSidekickSettings"]>;
+  updateSidekickSlackConfig(variables: UpdateSidekickSlackConfigMutationVariables): Promise<UpdateSidekickSlackConfigMutation["updateSidekickSlackConfig"]>;
   updateSnippet(variables: UpdateSnippetMutationVariables): Promise<UpdateSnippetMutation["updateSnippet"]>;
   updateTask(variables: UpdateTaskMutationVariables): Promise<UpdateTaskMutation["updateTask"]>;
   updateTenantTier(variables: UpdateTenantTierMutationVariables): Promise<UpdateTenantTierMutation["updateTenantTier"]>;
   updateThreadAgentStatus(variables: UpdateThreadAgentStatusMutationVariables): Promise<UpdateThreadAgentStatusMutation["updateThreadAgentStatus"]>;
   updateThreadEscalationPath(variables: UpdateThreadEscalationPathMutationVariables): Promise<UpdateThreadEscalationPathMutation["updateThreadEscalationPath"]>;
+  updateThreadExternalId(variables: UpdateThreadExternalIdMutationVariables): Promise<UpdateThreadExternalIdMutation["updateThreadExternalId"]>;
   updateThreadFieldSchema(variables: UpdateThreadFieldSchemaMutationVariables): Promise<UpdateThreadFieldSchemaMutation["updateThreadFieldSchema"]>;
   updateThreadSuggestedActionStatus(variables: UpdateThreadSuggestedActionStatusMutationVariables): Promise<UpdateThreadSuggestedActionStatusMutation["updateThreadSuggestedActionStatus"]>;
   updateThreadTenant(variables: UpdateThreadTenantMutationVariables): Promise<UpdateThreadTenantMutation["updateThreadTenant"]>;
@@ -9731,14 +10630,11 @@ export class PlainSdk {
       return new ThreadClusterModel(_client, response.activeThreadCluster);
     },
 
-    async agentToolIntegration(variables: AgentToolIntegrationQueryVariables): Promise<AgentToolIntegrationModel> {
-      const response = await _client.request<AgentToolIntegrationQuery, AgentToolIntegrationQueryVariables>(
-        AgentToolIntegrationDocument, variables
+    async agentSandboxToolPolicies(variables: AgentSandboxToolPoliciesQueryVariables): Promise<AgentSandboxToolPoliciesQuery["agentSandboxToolPolicies"]> {
+      const response = await _client.request<AgentSandboxToolPoliciesQuery, AgentSandboxToolPoliciesQueryVariables>(
+        AgentSandboxToolPoliciesDocument, variables
       );
-      if (!response.agentToolIntegration) {
-        throw new Error("agentToolIntegration not found");
-      }
-      return new AgentToolIntegrationModel(_client, response.agentToolIntegration);
+      return response.agentSandboxToolPolicies;
     },
 
     async aiToneRules(variables: AiToneRulesQueryVariables): Promise<PlainConnection<AiToneRuleModel>> {
@@ -10338,6 +11234,16 @@ export class PlainSdk {
       });
     },
 
+    async linearAppIntegration(): Promise<WorkspaceLinearIntegrationModel> {
+      const response = await _client.request<LinearAppIntegrationQuery, Record<string, never>>(
+        LinearAppIntegrationDocument
+      );
+      if (!response.linearAppIntegration) {
+        throw new Error("linearAppIntegration not found");
+      }
+      return new WorkspaceLinearIntegrationModel(_client, response.linearAppIntegration);
+    },
+
     async machineUser(variables: MachineUserQueryVariables): Promise<MachineUserModel> {
       const response = await _client.request<MachineUserQuery, MachineUserQueryVariables>(
         MachineUserDocument, variables
@@ -10723,6 +11629,13 @@ export class PlainSdk {
       return response.setting;
     },
 
+    async sidekickCreditUsageByDay(variables: SidekickCreditUsageByDayQueryVariables): Promise<SidekickCreditUsageByDayQuery["sidekickCreditUsageByDay"]> {
+      const response = await _client.request<SidekickCreditUsageByDayQuery, SidekickCreditUsageByDayQueryVariables>(
+        SidekickCreditUsageByDayDocument, variables
+      );
+      return response.sidekickCreditUsageByDay;
+    },
+
     async sidekickGithubAccessibleRepos(variables: SidekickGithubAccessibleReposQueryVariables): Promise<SidekickGithubAccessibleReposQuery["sidekickGithubAccessibleRepos"]> {
       const response = await _client.request<SidekickGithubAccessibleReposQuery, SidekickGithubAccessibleReposQueryVariables>(
         SidekickGithubAccessibleReposDocument, variables
@@ -10740,6 +11653,26 @@ export class PlainSdk {
       return new SidekickGithubServiceConfigModel(_client, response.sidekickGithubServiceConfig);
     },
 
+    async sidekickPosthogServiceConfig(variables: SidekickPosthogServiceConfigQueryVariables): Promise<NonNullable<SidekickPosthogServiceConfigQuery["sidekickPosthogServiceConfig"]>> {
+      const response = await _client.request<SidekickPosthogServiceConfigQuery, SidekickPosthogServiceConfigQueryVariables>(
+        SidekickPosthogServiceConfigDocument, variables
+      );
+      if (!response.sidekickPosthogServiceConfig) {
+        throw new Error("sidekickPosthogServiceConfig not found");
+      }
+      return response.sidekickPosthogServiceConfig;
+    },
+
+    async sidekickServiceConfig(variables: SidekickServiceConfigQueryVariables): Promise<NonNullable<SidekickServiceConfigQuery["sidekickServiceConfig"]>> {
+      const response = await _client.request<SidekickServiceConfigQuery, SidekickServiceConfigQueryVariables>(
+        SidekickServiceConfigDocument, variables
+      );
+      if (!response.sidekickServiceConfig) {
+        throw new Error("sidekickServiceConfig not found");
+      }
+      return response.sidekickServiceConfig;
+    },
+
     async sidekickSettings(): Promise<SidekickSettingsQuery["sidekickSettings"]> {
       const response = await _client.request<SidekickSettingsQuery, Record<string, never>>(
         SidekickSettingsDocument
@@ -10755,6 +11688,13 @@ export class PlainSdk {
         throw new Error("singleValueMetric not found");
       }
       return response.singleValueMetric;
+    },
+
+    async slackAutoJoinRules(variables: SlackAutoJoinRulesQueryVariables): Promise<SlackAutoJoinRuleModel[]> {
+      const response = await _client.request<SlackAutoJoinRulesQuery, SlackAutoJoinRulesQueryVariables>(
+        SlackAutoJoinRulesDocument, variables
+      );
+      return (response.slackAutoJoinRules ?? []).map(d => new SlackAutoJoinRuleModel(_client, d));
     },
 
     async slackUser(variables: SlackUserQueryVariables): Promise<SlackUserModel> {
@@ -10974,6 +11914,13 @@ export class PlainSdk {
       });
     },
 
+    async threadHeatmapMetric(variables: ThreadHeatmapMetricQueryVariables): Promise<ThreadHeatmapMetricModel> {
+      const response = await _client.request<ThreadHeatmapMetricQuery, ThreadHeatmapMetricQueryVariables>(
+        ThreadHeatmapMetricDocument, variables
+      );
+      return new ThreadHeatmapMetricModel(_client, response.threadHeatmapMetric);
+    },
+
     async threadLinkGroups(variables: ThreadLinkGroupsQueryVariables): Promise<PlainConnection<ThreadLinkGroupModel>> {
       const response = await _client.request<ThreadLinkGroupsQuery, ThreadLinkGroupsQueryVariables>(
         ThreadLinkGroupsDocument, variables
@@ -10986,6 +11933,13 @@ export class PlainSdk {
       });
     },
 
+    async threadSingleValueMetric(variables: ThreadSingleValueMetricQueryVariables): Promise<ThreadSingleValueMetricQuery["threadSingleValueMetric"]> {
+      const response = await _client.request<ThreadSingleValueMetricQuery, ThreadSingleValueMetricQueryVariables>(
+        ThreadSingleValueMetricDocument, variables
+      );
+      return response.threadSingleValueMetric;
+    },
+
     async threadSlackUser(variables: ThreadSlackUserQueryVariables): Promise<SlackUserModel> {
       const response = await _client.request<ThreadSlackUserQuery, ThreadSlackUserQueryVariables>(
         ThreadSlackUserDocument, variables
@@ -10994,6 +11948,13 @@ export class PlainSdk {
         throw new Error("threadSlackUser not found");
       }
       return new SlackUserModel(_client, response.threadSlackUser);
+    },
+
+    async threadTimeSeriesMetric(variables: ThreadTimeSeriesMetricQueryVariables): Promise<ThreadTimeSeriesMetricModel> {
+      const response = await _client.request<ThreadTimeSeriesMetricQuery, ThreadTimeSeriesMetricQueryVariables>(
+        ThreadTimeSeriesMetricDocument, variables
+      );
+      return new ThreadTimeSeriesMetricModel(_client, response.threadTimeSeriesMetric);
     },
 
     async threads(variables: ThreadsQueryVariables): Promise<PlainConnection<ThreadModel>> {
@@ -11394,6 +12355,13 @@ export class PlainSdk {
       });
     },
 
+    async workspaceLinearInstallationInfo(variables: WorkspaceLinearInstallationInfoQueryVariables): Promise<WorkspaceLinearInstallationInfoQuery["workspaceLinearInstallationInfo"]> {
+      const response = await _client.request<WorkspaceLinearInstallationInfoQuery, WorkspaceLinearInstallationInfoQueryVariables>(
+        WorkspaceLinearInstallationInfoDocument, variables
+      );
+      return response.workspaceLinearInstallationInfo;
+    },
+
     async workspaceMSTeamsInstallationInfo(variables: WorkspaceMsTeamsInstallationInfoQueryVariables): Promise<WorkspaceMsTeamsInstallationInfoQuery["workspaceMSTeamsInstallationInfo"]> {
       const response = await _client.request<WorkspaceMsTeamsInstallationInfoQuery, WorkspaceMsTeamsInstallationInfoQueryVariables>(
         WorkspaceMsTeamsInstallationInfoDocument, variables
@@ -11467,6 +12435,23 @@ export class PlainSdk {
         pageInfo: conn.pageInfo,
         fetch: (cursor) => query.workspaceSlackIntegrations({ ...variables, ...cursor } as WorkspaceSlackIntegrationsQueryVariables),
       });
+    },
+
+    async workspaceSlackSidekickInstallationInfo(variables: WorkspaceSlackSidekickInstallationInfoQueryVariables): Promise<WorkspaceSlackSidekickInstallationInfoQuery["workspaceSlackSidekickInstallationInfo"]> {
+      const response = await _client.request<WorkspaceSlackSidekickInstallationInfoQuery, WorkspaceSlackSidekickInstallationInfoQueryVariables>(
+        WorkspaceSlackSidekickInstallationInfoDocument, variables
+      );
+      return response.workspaceSlackSidekickInstallationInfo;
+    },
+
+    async workspaceSlackSidekickIntegration(): Promise<WorkspaceSlackSidekickIntegrationModel> {
+      const response = await _client.request<WorkspaceSlackSidekickIntegrationQuery, Record<string, never>>(
+        WorkspaceSlackSidekickIntegrationDocument
+      );
+      if (!response.workspaceSlackSidekickIntegration) {
+        throw new Error("workspaceSlackSidekickIntegration not found");
+      }
+      return new WorkspaceSlackSidekickIntegrationModel(_client, response.workspaceSlackSidekickIntegration);
     }
     };
     this.query = query;
@@ -11568,6 +12553,13 @@ export class PlainSdk {
         BulkJoinSlackChannelsDocument, variables
       );
       return response.bulkJoinSlackChannels;
+    },
+
+    async bulkUpdateConnectedSlackChannels(variables: BulkUpdateConnectedSlackChannelsMutationVariables): Promise<BulkUpdateConnectedSlackChannelsMutation["bulkUpdateConnectedSlackChannels"]> {
+      const response = await _client.request<BulkUpdateConnectedSlackChannelsMutation, BulkUpdateConnectedSlackChannelsMutationVariables>(
+        BulkUpdateConnectedSlackChannelsDocument, variables
+      );
+      return response.bulkUpdateConnectedSlackChannels;
     },
 
     async bulkUpdateSlackChannelSettings(variables: BulkUpdateSlackChannelSettingsMutationVariables): Promise<BulkUpdateSlackChannelSettingsMutation["bulkUpdateSlackChannelSettings"]> {
@@ -11843,6 +12835,13 @@ export class PlainSdk {
       return response.createLabelType;
     },
 
+    async createLinearAppIntegration(variables: CreateLinearAppIntegrationMutationVariables): Promise<CreateLinearAppIntegrationMutation["createLinearAppIntegration"]> {
+      const response = await _client.request<CreateLinearAppIntegrationMutation, CreateLinearAppIntegrationMutationVariables>(
+        CreateLinearAppIntegrationDocument, variables
+      );
+      return response.createLinearAppIntegration;
+    },
+
     async createMachineUser(variables: CreateMachineUserMutationVariables): Promise<CreateMachineUserMutation["createMachineUser"]> {
       const response = await _client.request<CreateMachineUserMutation, CreateMachineUserMutationVariables>(
         CreateMachineUserDocument, variables
@@ -12081,6 +13080,13 @@ export class PlainSdk {
       return response.createWorkspaceSlackIntegration;
     },
 
+    async createWorkspaceSlackSidekickIntegration(variables: CreateWorkspaceSlackSidekickIntegrationMutationVariables): Promise<CreateWorkspaceSlackSidekickIntegrationMutation["createWorkspaceSlackSidekickIntegration"]> {
+      const response = await _client.request<CreateWorkspaceSlackSidekickIntegrationMutation, CreateWorkspaceSlackSidekickIntegrationMutationVariables>(
+        CreateWorkspaceSlackSidekickIntegrationDocument, variables
+      );
+      return response.createWorkspaceSlackSidekickIntegration;
+    },
+
     async deleteAiToneRules(variables: DeleteAiToneRulesMutationVariables): Promise<DeleteAiToneRulesMutation["deleteAiToneRules"]> {
       const response = await _client.request<DeleteAiToneRulesMutation, DeleteAiToneRulesMutationVariables>(
         DeleteAiToneRulesDocument, variables
@@ -12207,6 +13213,13 @@ export class PlainSdk {
       return response.deleteKnowledgeSource;
     },
 
+    async deleteLinearAppIntegration(): Promise<DeleteLinearAppIntegrationMutation["deleteLinearAppIntegration"]> {
+      const response = await _client.request<DeleteLinearAppIntegrationMutation, Record<string, never>>(
+        DeleteLinearAppIntegrationDocument
+      );
+      return response.deleteLinearAppIntegration;
+    },
+
     async deleteMachineUser(variables: DeleteMachineUserMutationVariables): Promise<DeleteMachineUserMutation["deleteMachineUser"]> {
       const response = await _client.request<DeleteMachineUserMutation, DeleteMachineUserMutationVariables>(
         DeleteMachineUserDocument, variables
@@ -12254,6 +13267,13 @@ export class PlainSdk {
         DeleteNoteDocument, variables
       );
       return response.deleteNote;
+    },
+
+    async deleteQueuedAgentSessionMessage(variables: DeleteQueuedAgentSessionMessageMutationVariables): Promise<DeleteQueuedAgentSessionMessageMutation["deleteQueuedAgentSessionMessage"]> {
+      const response = await _client.request<DeleteQueuedAgentSessionMessageMutation, DeleteQueuedAgentSessionMessageMutationVariables>(
+        DeleteQueuedAgentSessionMessageDocument, variables
+      );
+      return response.deleteQueuedAgentSessionMessage;
     },
 
     async deleteSavedThreadsView(variables: DeleteSavedThreadsViewMutationVariables): Promise<DeleteSavedThreadsViewMutation["deleteSavedThreadsView"]> {
@@ -12480,11 +13500,18 @@ export class PlainSdk {
       return response.deleteWorkspaceSlackIntegration;
     },
 
-    async disconnectAgentToolIntegration(variables: DisconnectAgentToolIntegrationMutationVariables): Promise<DisconnectAgentToolIntegrationMutation["disconnectAgentToolIntegration"]> {
-      const response = await _client.request<DisconnectAgentToolIntegrationMutation, DisconnectAgentToolIntegrationMutationVariables>(
-        DisconnectAgentToolIntegrationDocument, variables
+    async deleteWorkspaceSlackSidekickIntegration(): Promise<DeleteWorkspaceSlackSidekickIntegrationMutation["deleteWorkspaceSlackSidekickIntegration"]> {
+      const response = await _client.request<DeleteWorkspaceSlackSidekickIntegrationMutation, Record<string, never>>(
+        DeleteWorkspaceSlackSidekickIntegrationDocument
       );
-      return response.disconnectAgentToolIntegration;
+      return response.deleteWorkspaceSlackSidekickIntegration;
+    },
+
+    async editQueuedAgentSessionMessage(variables: EditQueuedAgentSessionMessageMutationVariables): Promise<EditQueuedAgentSessionMessageMutation["editQueuedAgentSessionMessage"]> {
+      const response = await _client.request<EditQueuedAgentSessionMessageMutation, EditQueuedAgentSessionMessageMutationVariables>(
+        EditQueuedAgentSessionMessageDocument, variables
+      );
+      return response.editQueuedAgentSessionMessage;
     },
 
     async escalateThread(variables: EscalateThreadMutationVariables): Promise<EscalateThreadMutation["escalateThread"]> {
@@ -12543,11 +13570,25 @@ export class PlainSdk {
       return response.importTenants;
     },
 
+    async importThread(variables: ImportThreadMutationVariables): Promise<ImportThreadMutation["importThread"]> {
+      const response = await _client.request<ImportThreadMutation, ImportThreadMutationVariables>(
+        ImportThreadDocument, variables
+      );
+      return response.importThread;
+    },
+
     async importThreadDiscussion(variables: ImportThreadDiscussionMutationVariables): Promise<ImportThreadDiscussionMutation["importThreadDiscussion"]> {
       const response = await _client.request<ImportThreadDiscussionMutation, ImportThreadDiscussionMutationVariables>(
         ImportThreadDiscussionDocument, variables
       );
       return response.importThreadDiscussion;
+    },
+
+    async importThreadMessages(variables: ImportThreadMessagesMutationVariables): Promise<ImportThreadMessagesMutation["importThreadMessages"]> {
+      const response = await _client.request<ImportThreadMessagesMutation, ImportThreadMessagesMutationVariables>(
+        ImportThreadMessagesDocument, variables
+      );
+      return response.importThreadMessages;
     },
 
     async inviteUserToWorkspace(variables: InviteUserToWorkspaceMutationVariables): Promise<InviteUserToWorkspaceMutation["inviteUserToWorkspace"]> {
@@ -12592,6 +13633,13 @@ export class PlainSdk {
       return response.markThreadDiscussionAsResolved;
     },
 
+    async markThreadDiscussionRead(variables: MarkThreadDiscussionReadMutationVariables): Promise<MarkThreadDiscussionReadMutation["markThreadDiscussionRead"]> {
+      const response = await _client.request<MarkThreadDiscussionReadMutation, MarkThreadDiscussionReadMutationVariables>(
+        MarkThreadDiscussionReadDocument, variables
+      );
+      return response.markThreadDiscussionRead;
+    },
+
     async mintEmbedToken(variables: MintEmbedTokenMutationVariables): Promise<MintEmbedTokenMutation["mintEmbedToken"]> {
       const response = await _client.request<MintEmbedTokenMutation, MintEmbedTokenMutationVariables>(
         MintEmbedTokenDocument, variables
@@ -12613,6 +13661,13 @@ export class PlainSdk {
       return response.previewBillingPlanChange;
     },
 
+    async purchaseCredits(variables: PurchaseCreditsMutationVariables): Promise<PurchaseCreditsMutation["purchaseCredits"]> {
+      const response = await _client.request<PurchaseCreditsMutation, PurchaseCreditsMutationVariables>(
+        PurchaseCreditsDocument, variables
+      );
+      return response.purchaseCredits;
+    },
+
     async refreshConnectedDiscordChannels(variables: RefreshConnectedDiscordChannelsMutationVariables): Promise<RefreshConnectedDiscordChannelsMutation["refreshConnectedDiscordChannels"]> {
       const response = await _client.request<RefreshConnectedDiscordChannelsMutation, RefreshConnectedDiscordChannelsMutationVariables>(
         RefreshConnectedDiscordChannelsDocument, variables
@@ -12625,6 +13680,13 @@ export class PlainSdk {
         RefreshWorkspaceSlackChannelIntegrationDocument, variables
       );
       return response.refreshWorkspaceSlackChannelIntegration;
+    },
+
+    async refreshWorkspaceSlackSidekickIntegration(variables: RefreshWorkspaceSlackSidekickIntegrationMutationVariables): Promise<RefreshWorkspaceSlackSidekickIntegrationMutation["refreshWorkspaceSlackSidekickIntegration"]> {
+      const response = await _client.request<RefreshWorkspaceSlackSidekickIntegrationMutation, RefreshWorkspaceSlackSidekickIntegrationMutationVariables>(
+        RefreshWorkspaceSlackSidekickIntegrationDocument, variables
+      );
+      return response.refreshWorkspaceSlackSidekickIntegration;
     },
 
     async regenerateWorkspaceHmac(): Promise<RegenerateWorkspaceHmacMutation["regenerateWorkspaceHmac"]> {
@@ -12844,6 +13906,13 @@ export class PlainSdk {
       return response.setCustomerTenants;
     },
 
+    async setSlackAutoJoinRules(variables: SetSlackAutoJoinRulesMutationVariables): Promise<SetSlackAutoJoinRulesMutation["setSlackAutoJoinRules"]> {
+      const response = await _client.request<SetSlackAutoJoinRulesMutation, SetSlackAutoJoinRulesMutationVariables>(
+        SetSlackAutoJoinRulesDocument, variables
+      );
+      return response.setSlackAutoJoinRules;
+    },
+
     async setupTenantFieldSchemaMapping(variables: SetupTenantFieldSchemaMappingMutationVariables): Promise<SetupTenantFieldSchemaMappingMutation["setupTenantFieldSchemaMapping"]> {
       const response = await _client.request<SetupTenantFieldSchemaMappingMutation, SetupTenantFieldSchemaMappingMutationVariables>(
         SetupTenantFieldSchemaMappingDocument, variables
@@ -12865,25 +13934,11 @@ export class PlainSdk {
       return response.snoozeThread;
     },
 
-    async startAgentToolIntegration(variables: StartAgentToolIntegrationMutationVariables): Promise<StartAgentToolIntegrationMutation["startAgentToolIntegration"]> {
-      const response = await _client.request<StartAgentToolIntegrationMutation, StartAgentToolIntegrationMutationVariables>(
-        StartAgentToolIntegrationDocument, variables
-      );
-      return response.startAgentToolIntegration;
-    },
-
     async startServiceAuthorization(variables: StartServiceAuthorizationMutationVariables): Promise<StartServiceAuthorizationMutation["startServiceAuthorization"]> {
       const response = await _client.request<StartServiceAuthorizationMutation, StartServiceAuthorizationMutationVariables>(
         StartServiceAuthorizationDocument, variables
       );
       return response.startServiceAuthorization;
-    },
-
-    async syncAgentToolIntegration(variables: SyncAgentToolIntegrationMutationVariables): Promise<SyncAgentToolIntegrationMutation["syncAgentToolIntegration"]> {
-      const response = await _client.request<SyncAgentToolIntegrationMutation, SyncAgentToolIntegrationMutationVariables>(
-        SyncAgentToolIntegrationDocument, variables
-      );
-      return response.syncAgentToolIntegration;
     },
 
     async syncBusinessHoursSlots(variables: SyncBusinessHoursSlotsMutationVariables): Promise<SyncBusinessHoursSlotsMutation["syncBusinessHoursSlots"]> {
@@ -12956,11 +14011,11 @@ export class PlainSdk {
       return response.updateActiveBillingRota;
     },
 
-    async updateAgentToolIntegrationOperatingPrompt(variables: UpdateAgentToolIntegrationOperatingPromptMutationVariables): Promise<UpdateAgentToolIntegrationOperatingPromptMutation["updateAgentToolIntegrationOperatingPrompt"]> {
-      const response = await _client.request<UpdateAgentToolIntegrationOperatingPromptMutation, UpdateAgentToolIntegrationOperatingPromptMutationVariables>(
-        UpdateAgentToolIntegrationOperatingPromptDocument, variables
+    async updateAgentSandboxToolPolicy(variables: UpdateAgentSandboxToolPolicyMutationVariables): Promise<UpdateAgentSandboxToolPolicyMutation["updateAgentSandboxToolPolicy"]> {
+      const response = await _client.request<UpdateAgentSandboxToolPolicyMutation, UpdateAgentSandboxToolPolicyMutationVariables>(
+        UpdateAgentSandboxToolPolicyDocument, variables
       );
-      return response.updateAgentToolIntegrationOperatingPrompt;
+      return response.updateAgentSandboxToolPolicy;
     },
 
     async updateAiToneRules(variables: UpdateAiToneRulesMutationVariables): Promise<UpdateAiToneRulesMutation["updateAiToneRules"]> {
@@ -13159,11 +14214,32 @@ export class PlainSdk {
       return response.updateSidekickGithubConfig;
     },
 
+    async updateSidekickPosthogConfig(variables: UpdateSidekickPosthogConfigMutationVariables): Promise<UpdateSidekickPosthogConfigMutation["updateSidekickPosthogConfig"]> {
+      const response = await _client.request<UpdateSidekickPosthogConfigMutation, UpdateSidekickPosthogConfigMutationVariables>(
+        UpdateSidekickPosthogConfigDocument, variables
+      );
+      return response.updateSidekickPosthogConfig;
+    },
+
+    async updateSidekickServiceConfig(variables: UpdateSidekickServiceConfigMutationVariables): Promise<UpdateSidekickServiceConfigMutation["updateSidekickServiceConfig"]> {
+      const response = await _client.request<UpdateSidekickServiceConfigMutation, UpdateSidekickServiceConfigMutationVariables>(
+        UpdateSidekickServiceConfigDocument, variables
+      );
+      return response.updateSidekickServiceConfig;
+    },
+
     async updateSidekickSettings(variables: UpdateSidekickSettingsMutationVariables): Promise<UpdateSidekickSettingsMutation["updateSidekickSettings"]> {
       const response = await _client.request<UpdateSidekickSettingsMutation, UpdateSidekickSettingsMutationVariables>(
         UpdateSidekickSettingsDocument, variables
       );
       return response.updateSidekickSettings;
+    },
+
+    async updateSidekickSlackConfig(variables: UpdateSidekickSlackConfigMutationVariables): Promise<UpdateSidekickSlackConfigMutation["updateSidekickSlackConfig"]> {
+      const response = await _client.request<UpdateSidekickSlackConfigMutation, UpdateSidekickSlackConfigMutationVariables>(
+        UpdateSidekickSlackConfigDocument, variables
+      );
+      return response.updateSidekickSlackConfig;
     },
 
     async updateSnippet(variables: UpdateSnippetMutationVariables): Promise<UpdateSnippetMutation["updateSnippet"]> {
@@ -13199,6 +14275,13 @@ export class PlainSdk {
         UpdateThreadEscalationPathDocument, variables
       );
       return response.updateThreadEscalationPath;
+    },
+
+    async updateThreadExternalId(variables: UpdateThreadExternalIdMutationVariables): Promise<UpdateThreadExternalIdMutation["updateThreadExternalId"]> {
+      const response = await _client.request<UpdateThreadExternalIdMutation, UpdateThreadExternalIdMutationVariables>(
+        UpdateThreadExternalIdDocument, variables
+      );
+      return response.updateThreadExternalId;
     },
 
     async updateThreadFieldSchema(variables: UpdateThreadFieldSchemaMutationVariables): Promise<UpdateThreadFieldSchemaMutation["updateThreadFieldSchema"]> {
