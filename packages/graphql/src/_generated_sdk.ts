@@ -725,6 +725,16 @@ import type {
   CustomerCardConfigQuery,
   CustomerCardConfigQueryVariables,
   CustomerCardConfigsQuery,
+  CustomerCardInstanceCardTooBigErrorDetailFieldsFragment,
+  CustomerCardInstanceErrorFieldsFragment,
+  CustomerCardInstanceLoadedFieldsFragment,
+  CustomerCardInstanceLoadingFieldsFragment,
+  CustomerCardInstanceMissingCardErrorDetailFieldsFragment,
+  CustomerCardInstanceRequestErrorDetailFieldsFragment,
+  CustomerCardInstanceResponseBodyErrorDetailFieldsFragment,
+  CustomerCardInstanceStatusCodeErrorDetailFieldsFragment,
+  CustomerCardInstanceTimeoutErrorDetailFieldsFragment,
+  CustomerCardInstanceUnknownErrorDetailFieldsFragment,
   CustomerCardInstancesQuery,
   CustomerCardInstancesQueryVariables,
   CustomerCustomerGroupMembershipsQuery,
@@ -930,6 +940,7 @@ import type {
   HelpCenterArticleGroupsQueryVariables,
   HelpCenterArticleQuery,
   HelpCenterArticleQueryVariables,
+  HelpCenterArticleSearchResultFieldsFragment,
   HelpCenterArticlesQuery,
   HelpCenterArticlesQueryVariables,
   HelpCenterAuthMechanismWorkosAuthkitFieldsFragment,
@@ -962,11 +973,15 @@ import type {
   ImporterTenantListsQuery,
   ImporterTenantListsQueryVariables,
   IndexedDocumentFieldsFragment,
+  IndexedDocumentSearchResultFieldsFragment,
   IndexedDocumentStatusFailedFieldsFragment,
   IndexedDocumentStatusIndexedFieldsFragment,
   IndexedDocumentStatusPendingFieldsFragment,
   IndexedDocumentsQuery,
   IndexedDocumentsQueryVariables,
+  IndexingStatusFailedFieldsFragment,
+  IndexingStatusIndexedFieldsFragment,
+  IndexingStatusPendingFieldsFragment,
   InternalNotificationFieldsFragment,
   InviteUserToWorkspaceMutation,
   InviteUserToWorkspaceMutationVariables,
@@ -984,6 +999,8 @@ import type {
   KnowledgeGapsQueryVariables,
   KnowledgeSourceQuery,
   KnowledgeSourceQueryVariables,
+  KnowledgeSourceSitemapFieldsFragment,
+  KnowledgeSourceUrlFieldsFragment,
   KnowledgeSourcesQuery,
   KnowledgeSourcesQueryVariables,
   LabelFieldsFragment,
@@ -3012,6 +3029,312 @@ export class CustomerCardConfigModel {
   }
 }
 
+export class CustomerCardInstanceCardTooBigErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceCardTooBigErrorDetail" as const;
+
+  public readonly cardKey: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment["cardKey"];
+  public readonly maxSizeBytes: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment["maxSizeBytes"];
+  public readonly message: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment["message"];
+  public readonly sizeBytes: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment["sizeBytes"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceCardTooBigErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.cardKey = data.cardKey;
+    this.maxSizeBytes = data.maxSizeBytes;
+    this.message = data.message;
+    this.sizeBytes = data.sizeBytes;
+  }
+}
+
+export class CustomerCardInstanceErrorModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceErrorFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceError" as const;
+
+  public readonly createdAt: CustomerCardInstanceErrorFieldsFragment["createdAt"];
+  public readonly customerId: CustomerCardInstanceErrorFieldsFragment["customerId"];
+  public readonly id: CustomerCardInstanceErrorFieldsFragment["id"];
+  public readonly threadId: CustomerCardInstanceErrorFieldsFragment["threadId"];
+  public readonly updatedAt: CustomerCardInstanceErrorFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly errorDetail: CustomerCardInstanceCardTooBigErrorDetailModel | CustomerCardInstanceMissingCardErrorDetailModel | CustomerCardInstanceRequestErrorDetailModel | CustomerCardInstanceResponseBodyErrorDetailModel | CustomerCardInstanceStatusCodeErrorDetailModel | CustomerCardInstanceTimeoutErrorDetailModel | CustomerCardInstanceUnknownErrorDetailModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceErrorFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.customerId = data.customerId;
+    this.id = data.id;
+    this.threadId = data.threadId;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.errorDetail = (() => {
+    switch ((data.errorDetail as any).__typename) {
+      case "CustomerCardInstanceCardTooBigErrorDetail": return new CustomerCardInstanceCardTooBigErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceMissingCardErrorDetail": return new CustomerCardInstanceMissingCardErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceRequestErrorDetail": return new CustomerCardInstanceRequestErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceResponseBodyErrorDetail": return new CustomerCardInstanceResponseBodyErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceStatusCodeErrorDetail": return new CustomerCardInstanceStatusCodeErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceTimeoutErrorDetail": return new CustomerCardInstanceTimeoutErrorDetailModel(client, data.errorDetail as any);
+      case "CustomerCardInstanceUnknownErrorDetail": return new CustomerCardInstanceUnknownErrorDetailModel(client, data.errorDetail as any);
+      default: return data.errorDetail as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+
+  public get customerCardConfig(): Promise<CustomerCardConfigModel | undefined> {
+    const id = this._data.customerCardConfig?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CustomerCardConfigQuery, CustomerCardConfigQueryVariables>(
+      CustomerCardConfigDocument,
+      { customerCardConfigId: id } as CustomerCardConfigQueryVariables
+    ).then(r => r.customerCardConfig ? new CustomerCardConfigModel(this._client, r.customerCardConfig) : undefined);
+  }
+}
+
+export class CustomerCardInstanceLoadedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceLoadedFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceLoaded" as const;
+
+  public readonly createdAt: CustomerCardInstanceLoadedFieldsFragment["createdAt"];
+  public readonly customerId: CustomerCardInstanceLoadedFieldsFragment["customerId"];
+  public readonly expiresAt: CustomerCardInstanceLoadedFieldsFragment["expiresAt"];
+  public readonly id: CustomerCardInstanceLoadedFieldsFragment["id"];
+  public readonly loadedAt: CustomerCardInstanceLoadedFieldsFragment["loadedAt"];
+  public readonly threadId: CustomerCardInstanceLoadedFieldsFragment["threadId"];
+  public readonly updatedAt: CustomerCardInstanceLoadedFieldsFragment["updatedAt"];
+  public readonly components: (ComponentBadgeModel | { __typename: "ComponentContainer" } | ComponentCopyButtonModel | ComponentDateTimeModel | ComponentDividerModel | ComponentLinkButtonModel | ComponentPlainTextModel | { __typename: "ComponentRow" } | ComponentSpacerModel | ComponentTextModel | { __typename: "ComponentUser" } | ComponentWorkflowButtonModel)[];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceLoadedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.customerId = data.customerId;
+    this.expiresAt = data.expiresAt;
+    this.id = data.id;
+    this.loadedAt = data.loadedAt;
+    this.threadId = data.threadId;
+    this.updatedAt = data.updatedAt;
+    this.components = ((data.components as any[]) ?? []).map((item: any) => (() => {
+    switch ((item as any).__typename) {
+      case "ComponentBadge": return new ComponentBadgeModel(client, item as any);
+      case "ComponentContainer": return item as any;
+      case "ComponentCopyButton": return new ComponentCopyButtonModel(client, item as any);
+      case "ComponentDateTime": return new ComponentDateTimeModel(client, item as any);
+      case "ComponentDivider": return new ComponentDividerModel(client, item as any);
+      case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
+      case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
+      case "ComponentRow": return item as any;
+      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
+      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentUser": return item as any;
+      case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
+      default: return item as any;
+    }
+  })());
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+
+  public get customerCardConfig(): Promise<CustomerCardConfigModel | undefined> {
+    const id = this._data.customerCardConfig?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CustomerCardConfigQuery, CustomerCardConfigQueryVariables>(
+      CustomerCardConfigDocument,
+      { customerCardConfigId: id } as CustomerCardConfigQueryVariables
+    ).then(r => r.customerCardConfig ? new CustomerCardConfigModel(this._client, r.customerCardConfig) : undefined);
+  }
+}
+
+export class CustomerCardInstanceLoadingModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceLoadingFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceLoading" as const;
+
+  public readonly createdAt: CustomerCardInstanceLoadingFieldsFragment["createdAt"];
+  public readonly customerId: CustomerCardInstanceLoadingFieldsFragment["customerId"];
+  public readonly id: CustomerCardInstanceLoadingFieldsFragment["id"];
+  public readonly threadId: CustomerCardInstanceLoadingFieldsFragment["threadId"];
+  public readonly updatedAt: CustomerCardInstanceLoadingFieldsFragment["updatedAt"];
+  public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceLoadingFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.customerId = data.customerId;
+    this.id = data.id;
+    this.threadId = data.threadId;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.createdBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.createdBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "CustomerActor": return new CustomerActorModel(client, data.updatedBy as any);
+      case "DeletedCustomerActor": return new DeletedCustomerActorModel(client, data.updatedBy as any);
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+
+  public get customerCardConfig(): Promise<CustomerCardConfigModel | undefined> {
+    const id = this._data.customerCardConfig?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CustomerCardConfigQuery, CustomerCardConfigQueryVariables>(
+      CustomerCardConfigDocument,
+      { customerCardConfigId: id } as CustomerCardConfigQueryVariables
+    ).then(r => r.customerCardConfig ? new CustomerCardConfigModel(this._client, r.customerCardConfig) : undefined);
+  }
+}
+
+export class CustomerCardInstanceMissingCardErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceMissingCardErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceMissingCardErrorDetail" as const;
+
+  public readonly cardKey: CustomerCardInstanceMissingCardErrorDetailFieldsFragment["cardKey"];
+  public readonly message: CustomerCardInstanceMissingCardErrorDetailFieldsFragment["message"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceMissingCardErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.cardKey = data.cardKey;
+    this.message = data.message;
+  }
+}
+
+export class CustomerCardInstanceRequestErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceRequestErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceRequestErrorDetail" as const;
+
+  public readonly errorCode: CustomerCardInstanceRequestErrorDetailFieldsFragment["errorCode"];
+  public readonly message: CustomerCardInstanceRequestErrorDetailFieldsFragment["message"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceRequestErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.errorCode = data.errorCode;
+    this.message = data.message;
+  }
+}
+
+export class CustomerCardInstanceResponseBodyErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceResponseBodyErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceResponseBodyErrorDetail" as const;
+
+  public readonly message: CustomerCardInstanceResponseBodyErrorDetailFieldsFragment["message"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceResponseBodyErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.message = data.message;
+  }
+}
+
+export class CustomerCardInstanceStatusCodeErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceStatusCodeErrorDetail" as const;
+
+  public readonly message: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment["message"];
+  public readonly statusCode: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment["statusCode"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.message = data.message;
+    this.statusCode = data.statusCode;
+  }
+}
+
+export class CustomerCardInstanceTimeoutErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceTimeoutErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceTimeoutErrorDetail" as const;
+
+  public readonly message: CustomerCardInstanceTimeoutErrorDetailFieldsFragment["message"];
+  public readonly timeoutSeconds: CustomerCardInstanceTimeoutErrorDetailFieldsFragment["timeoutSeconds"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceTimeoutErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.message = data.message;
+    this.timeoutSeconds = data.timeoutSeconds;
+  }
+}
+
+export class CustomerCardInstanceUnknownErrorDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: CustomerCardInstanceUnknownErrorDetailFieldsFragment;
+  public readonly __typename = "CustomerCardInstanceUnknownErrorDetail" as const;
+
+  public readonly message: CustomerCardInstanceUnknownErrorDetailFieldsFragment["message"];
+
+  constructor(client: PlainGraphQLClient, data: CustomerCardInstanceUnknownErrorDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.message = data.message;
+  }
+}
+
 export class CustomerEventModel {
   protected _client: PlainGraphQLClient;
   protected _data: CustomerEventFieldsFragment;
@@ -4405,6 +4728,38 @@ export class HelpCenterArticleGroupModel {
   }
 }
 
+export class HelpCenterArticleSearchResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: HelpCenterArticleSearchResultFieldsFragment;
+  public readonly __typename = "HelpCenterArticleSearchResult" as const;
+
+  public readonly content: HelpCenterArticleSearchResultFieldsFragment["content"];
+
+  constructor(client: PlainGraphQLClient, data: HelpCenterArticleSearchResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.content = data.content;
+  }
+
+  public get helpCenter(): Promise<HelpCenterModel | undefined> {
+    const id = this._data.helpCenter?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<HelpCenterQuery, HelpCenterQueryVariables>(
+      HelpCenterDocument,
+      { id: id } as HelpCenterQueryVariables
+    ).then(r => r.helpCenter ? new HelpCenterModel(this._client, r.helpCenter) : undefined);
+  }
+
+  public get helpCenterArticle(): Promise<HelpCenterArticleModel | undefined> {
+    const id = this._data.helpCenterArticle?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<HelpCenterArticleQuery, HelpCenterArticleQueryVariables>(
+      HelpCenterArticleDocument,
+      { id: id } as HelpCenterArticleQueryVariables
+    ).then(r => r.helpCenterArticle ? new HelpCenterArticleModel(this._client, r.helpCenterArticle) : undefined);
+  }
+}
+
 export class HelpCenterAuthMechanismWorkosAuthkitModel {
   protected _client: PlainGraphQLClient;
   protected _data: HelpCenterAuthMechanismWorkosAuthkitFieldsFragment;
@@ -4604,6 +4959,22 @@ export class IndexedDocumentModel {
   }
 }
 
+export class IndexedDocumentSearchResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexedDocumentSearchResultFieldsFragment;
+  public readonly __typename = "IndexedDocumentSearchResult" as const;
+
+  public readonly content: IndexedDocumentSearchResultFieldsFragment["content"];
+  public readonly indexedDocument: IndexedDocumentSearchResultFieldsFragment["indexedDocument"];
+
+  constructor(client: PlainGraphQLClient, data: IndexedDocumentSearchResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.content = data.content;
+    this.indexedDocument = data.indexedDocument;
+  }
+}
+
 export class IndexedDocumentStatusFailedModel {
   protected _client: PlainGraphQLClient;
   protected _data: IndexedDocumentStatusFailedFieldsFragment;
@@ -4651,6 +5022,59 @@ export class IndexedDocumentStatusPendingModel {
   public readonly startedAt: IndexedDocumentStatusPendingFieldsFragment["startedAt"];
 
   constructor(client: PlainGraphQLClient, data: IndexedDocumentStatusPendingFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.startedAt = data.startedAt;
+  }
+}
+
+export class IndexingStatusFailedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexingStatusFailedFieldsFragment;
+  public readonly __typename = "IndexingStatusFailed" as const;
+
+  public readonly failedAt: IndexingStatusFailedFieldsFragment["failedAt"];
+  public readonly reason: IndexingStatusFailedFieldsFragment["reason"];
+
+  constructor(client: PlainGraphQLClient, data: IndexingStatusFailedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.failedAt = data.failedAt;
+    this.reason = data.reason;
+  }
+}
+
+export class IndexingStatusIndexedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexingStatusIndexedFieldsFragment;
+  public readonly __typename = "IndexingStatusIndexed" as const;
+
+  public readonly indexedAt: IndexingStatusIndexedFieldsFragment["indexedAt"];
+  public readonly indexedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+
+  constructor(client: PlainGraphQLClient, data: IndexingStatusIndexedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.indexedAt = data.indexedAt;
+    this.indexedBy = data.indexedBy ? (() => {
+    switch ((data.indexedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.indexedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.indexedBy as any);
+      case "UserActor": return new UserActorModel(client, data.indexedBy as any);
+      default: return data.indexedBy as any;
+    }
+  })() : null;
+  }
+}
+
+export class IndexingStatusPendingModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IndexingStatusPendingFieldsFragment;
+  public readonly __typename = "IndexingStatusPending" as const;
+
+  public readonly startedAt: IndexingStatusPendingFieldsFragment["startedAt"];
+
+  constructor(client: PlainGraphQLClient, data: IndexingStatusPendingFieldsFragment) {
     this._client = client;
     this._data = data;
     this.startedAt = data.startedAt;
@@ -4909,6 +5333,104 @@ export class KnowledgeGapFeedbackDetailsModel {
     this.knowledgeGapId = data.knowledgeGapId;
     this.reason = data.reason;
     this.sentiment = data.sentiment;
+  }
+}
+
+export class KnowledgeSourceSitemapModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: KnowledgeSourceSitemapFieldsFragment;
+  public readonly __typename = "KnowledgeSourceSitemap" as const;
+
+  public readonly createdAt: KnowledgeSourceSitemapFieldsFragment["createdAt"];
+  public readonly id: KnowledgeSourceSitemapFieldsFragment["id"];
+  public readonly type: KnowledgeSourceSitemapFieldsFragment["type"];
+  public readonly updatedAt: KnowledgeSourceSitemapFieldsFragment["updatedAt"];
+  public readonly url: KnowledgeSourceSitemapFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly status: IndexingStatusFailedModel | IndexingStatusIndexedModel | IndexingStatusPendingModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: KnowledgeSourceSitemapFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.type = data.type;
+    this.updatedAt = data.updatedAt;
+    this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.status = (() => {
+    switch ((data.status as any).__typename) {
+      case "IndexingStatusFailed": return new IndexingStatusFailedModel(client, data.status as any);
+      case "IndexingStatusIndexed": return new IndexingStatusIndexedModel(client, data.status as any);
+      case "IndexingStatusPending": return new IndexingStatusPendingModel(client, data.status as any);
+      default: return data.status as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class KnowledgeSourceUrlModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: KnowledgeSourceUrlFieldsFragment;
+  public readonly __typename = "KnowledgeSourceUrl" as const;
+
+  public readonly createdAt: KnowledgeSourceUrlFieldsFragment["createdAt"];
+  public readonly id: KnowledgeSourceUrlFieldsFragment["id"];
+  public readonly type: KnowledgeSourceUrlFieldsFragment["type"];
+  public readonly updatedAt: KnowledgeSourceUrlFieldsFragment["updatedAt"];
+  public readonly url: KnowledgeSourceUrlFieldsFragment["url"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly status: IndexingStatusFailedModel | IndexingStatusIndexedModel | IndexingStatusPendingModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: KnowledgeSourceUrlFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.type = data.type;
+    this.updatedAt = data.updatedAt;
+    this.url = data.url;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.status = (() => {
+    switch ((data.status as any).__typename) {
+      case "IndexingStatusFailed": return new IndexingStatusFailedModel(client, data.status as any);
+      case "IndexingStatusIndexed": return new IndexingStatusIndexedModel(client, data.status as any);
+      case "IndexingStatusPending": return new IndexingStatusPendingModel(client, data.status as any);
+      default: return data.status as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
