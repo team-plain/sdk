@@ -18,7 +18,7 @@ import {
 } from "graphql";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const generatedPath = resolve(__dirname, "_generated_documents.graphql");
+const generatedPath = resolve(__dirname, "../src/_generated_documents.graphql");
 
 // ─── Load documents ──────────────────────────────────────────────────────────
 
