@@ -5,5 +5,5 @@
     "rootDir": "./src"
   },
   "include": ["src"],
-  "exclude": ["src/generate-documents.ts", "src/__tests__"]
+  "exclude": ["src/generate-documents.ts", "src/check-no-regression.ts", "src/__tests__"]
 }

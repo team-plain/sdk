@@ -31,7 +31,11 @@ try {
     stdio: ["pipe", "pipe", "pipe"],
   }).toString();
 } catch {
-  console.log(`Could not read ${baseRef} — skipping regression check.`);
+  if (process.env.CI) {
+    console.error(`Could not read ${baseRef} in CI — failing.`);
+    process.exit(1);
+  }
+  console.log(`Could not read ${baseRef} locally — skipping.`);
   process.exit(0);
 }
 
