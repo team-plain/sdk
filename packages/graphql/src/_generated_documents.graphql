@@ -2001,6 +2001,623 @@ fragment CustomerCardConfigFields on CustomerCardConfig {
   }
 }
 
+fragment CustomerCardInstanceCardTooBigErrorDetailFields on CustomerCardInstanceCardTooBigErrorDetail {
+  message
+  cardKey
+  sizeBytes
+  maxSizeBytes
+}
+
+fragment CustomerCardInstanceErrorFields on CustomerCardInstanceError {
+  id
+  customerId
+  threadId
+  customerCardConfig {
+    id
+  }
+  errorDetail {
+    __typename
+    ... on CustomerCardInstanceMissingCardErrorDetail {
+      message
+      cardKey
+    }
+    ... on CustomerCardInstanceResponseBodyErrorDetail {
+      message
+    }
+    ... on CustomerCardInstanceStatusCodeErrorDetail {
+      message
+      statusCode
+    }
+    ... on CustomerCardInstanceRequestErrorDetail {
+      message
+      errorCode
+    }
+    ... on CustomerCardInstanceUnknownErrorDetail {
+      message
+    }
+    ... on CustomerCardInstanceTimeoutErrorDetail {
+      message
+      timeoutSeconds
+    }
+    ... on CustomerCardInstanceCardTooBigErrorDetail {
+      message
+      cardKey
+      sizeBytes
+      maxSizeBytes
+    }
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on CustomerActor {
+      customerId
+      customer {
+        id
+      }
+    }
+    ... on DeletedCustomerActor {
+      customerId
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on CustomerActor {
+      customerId
+      customer {
+        id
+      }
+    }
+    ... on DeletedCustomerActor {
+      customerId
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
+fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
+  id
+  customerId
+  threadId
+  customerCardConfig {
+    id
+  }
+  components {
+    __typename
+    ... on ComponentText {
+      textSize
+      textColor
+      text
+    }
+    ... on ComponentPlainText {
+      plainTextSize
+      plainTextColor
+      plainText
+    }
+    ... on ComponentSpacer {
+      spacerSize
+    }
+    ... on ComponentDivider {
+      dividerSpacingSize
+    }
+    ... on ComponentLinkButton {
+      linkButtonUrl
+      linkButtonLabel
+    }
+    ... on ComponentWorkflowButton {
+      workflowButtonWorkflowIdentifier {
+        workflowId
+        workflowKey
+      }
+      workflowButtonLabel
+    }
+    ... on ComponentRow {
+      rowMainContent {
+        __typename
+        ... on ComponentText {
+          textSize
+          textColor
+          text
+        }
+        ... on ComponentPlainText {
+          plainTextSize
+          plainTextColor
+          plainText
+        }
+        ... on ComponentSpacer {
+          spacerSize
+        }
+        ... on ComponentDivider {
+          dividerSpacingSize
+        }
+        ... on ComponentLinkButton {
+          linkButtonUrl
+          linkButtonLabel
+        }
+        ... on ComponentWorkflowButton {
+          workflowButtonWorkflowIdentifier {
+            workflowId
+            workflowKey
+          }
+          workflowButtonLabel
+        }
+        ... on ComponentBadge {
+          badgeLabel
+          badgeColor
+        }
+        ... on ComponentCopyButton {
+          copyButtonValue
+          copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
+      }
+      rowAsideContent {
+        __typename
+        ... on ComponentText {
+          textSize
+          textColor
+          text
+        }
+        ... on ComponentPlainText {
+          plainTextSize
+          plainTextColor
+          plainText
+        }
+        ... on ComponentSpacer {
+          spacerSize
+        }
+        ... on ComponentDivider {
+          dividerSpacingSize
+        }
+        ... on ComponentLinkButton {
+          linkButtonUrl
+          linkButtonLabel
+        }
+        ... on ComponentWorkflowButton {
+          workflowButtonWorkflowIdentifier {
+            workflowId
+            workflowKey
+          }
+          workflowButtonLabel
+        }
+        ... on ComponentBadge {
+          badgeLabel
+          badgeColor
+        }
+        ... on ComponentCopyButton {
+          copyButtonValue
+          copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
+      }
+    }
+    ... on ComponentContainer {
+      containerContent {
+        __typename
+        ... on ComponentText {
+          textSize
+          textColor
+          text
+        }
+        ... on ComponentPlainText {
+          plainTextSize
+          plainTextColor
+          plainText
+        }
+        ... on ComponentSpacer {
+          spacerSize
+        }
+        ... on ComponentDivider {
+          dividerSpacingSize
+        }
+        ... on ComponentLinkButton {
+          linkButtonUrl
+          linkButtonLabel
+        }
+        ... on ComponentWorkflowButton {
+          workflowButtonWorkflowIdentifier {
+            workflowId
+            workflowKey
+          }
+          workflowButtonLabel
+        }
+        ... on ComponentBadge {
+          badgeLabel
+          badgeColor
+        }
+        ... on ComponentCopyButton {
+          copyButtonValue
+          copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+        }
+        ... on ComponentRow {
+          rowMainContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+            }
+          }
+          rowAsideContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+    ... on ComponentBadge {
+      badgeLabel
+      badgeColor
+    }
+    ... on ComponentCopyButton {
+      copyButtonValue
+      copyButtonTooltipLabel
+    }
+    ... on ComponentDateTime {
+      dateTimeIso8601 {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ComponentUser {
+      user {
+        id
+      }
+    }
+  }
+  loadedAt {
+    unixTimestamp
+    iso8601
+  }
+  expiresAt {
+    unixTimestamp
+    iso8601
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on CustomerActor {
+      customerId
+      customer {
+        id
+      }
+    }
+    ... on DeletedCustomerActor {
+      customerId
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on CustomerActor {
+      customerId
+      customer {
+        id
+      }
+    }
+    ... on DeletedCustomerActor {
+      customerId
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
+fragment CustomerCardInstanceLoadingFields on CustomerCardInstanceLoading {
+  id
+  customerId
+  threadId
+  customerCardConfig {
+    id
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on CustomerActor {
+      customerId
+      customer {
+        id
+      }
+    }
+    ... on DeletedCustomerActor {
+      customerId
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on CustomerActor {
+      customerId
+      customer {
+        id
+      }
+    }
+    ... on DeletedCustomerActor {
+      customerId
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
+fragment CustomerCardInstanceMissingCardErrorDetailFields on CustomerCardInstanceMissingCardErrorDetail {
+  message
+  cardKey
+}
+
+fragment CustomerCardInstanceRequestErrorDetailFields on CustomerCardInstanceRequestErrorDetail {
+  message
+  errorCode
+}
+
+fragment CustomerCardInstanceResponseBodyErrorDetailFields on CustomerCardInstanceResponseBodyErrorDetail {
+  message
+}
+
+fragment CustomerCardInstanceStatusCodeErrorDetailFields on CustomerCardInstanceStatusCodeErrorDetail {
+  message
+  statusCode
+}
+
+fragment CustomerCardInstanceTimeoutErrorDetailFields on CustomerCardInstanceTimeoutErrorDetail {
+  message
+  timeoutSeconds
+}
+
+fragment CustomerCardInstanceUnknownErrorDetailFields on CustomerCardInstanceUnknownErrorDetail {
+  message
+}
+
 fragment CustomerEventFields on CustomerEvent {
   id
   customerId
@@ -3857,6 +4474,16 @@ fragment HelpCenterArticleGroupFields on HelpCenterArticleGroup {
   slug
 }
 
+fragment HelpCenterArticleSearchResultFields on HelpCenterArticleSearchResult {
+  content
+  helpCenterArticle {
+    id
+  }
+  helpCenter {
+    id
+  }
+}
+
 fragment HelpCenterAuthMechanismWorkosAuthkitFields on HelpCenterAuthMechanismWorkosAuthkit {
   type
 }
@@ -4129,6 +4756,13 @@ fragment IndexedDocumentFields on IndexedDocument {
   }
 }
 
+fragment IndexedDocumentSearchResultFields on IndexedDocumentSearchResult {
+  content
+  indexedDocument {
+    ...IndexedDocumentFields
+  }
+}
+
 fragment IndexedDocumentStatusFailedFields on IndexedDocumentStatusFailed {
   reason
   failedAt {
@@ -4168,6 +4802,51 @@ fragment IndexedDocumentStatusIndexedFields on IndexedDocumentStatusIndexed {
 }
 
 fragment IndexedDocumentStatusPendingFields on IndexedDocumentStatusPending {
+  startedAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
+fragment IndexingStatusFailedFields on IndexingStatusFailed {
+  reason
+  failedAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
+fragment IndexingStatusIndexedFields on IndexingStatusIndexed {
+  indexedAt {
+    unixTimestamp
+    iso8601
+  }
+  indexedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
+fragment IndexingStatusPendingFields on IndexingStatusPending {
   startedAt {
     unixTimestamp
     iso8601
@@ -4528,6 +5207,216 @@ fragment KnowledgeGapFeedbackDetailsFields on KnowledgeGapFeedbackDetails {
   comment
   sentiment
   knowledgeGapId
+}
+
+fragment KnowledgeSourceSitemapFields on KnowledgeSourceSitemap {
+  id
+  type
+  url
+  status {
+    __typename
+    ... on IndexingStatusPending {
+      startedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on IndexingStatusIndexed {
+      indexedAt {
+        unixTimestamp
+        iso8601
+      }
+      indexedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+    }
+    ... on IndexingStatusFailed {
+      reason
+      failedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
+fragment KnowledgeSourceUrlFields on KnowledgeSourceUrl {
+  id
+  type
+  url
+  status {
+    __typename
+    ... on IndexingStatusPending {
+      startedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on IndexingStatusIndexed {
+      indexedAt {
+        unixTimestamp
+        iso8601
+      }
+      indexedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+    }
+    ... on IndexingStatusFailed {
+      reason
+      failedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
 }
 
 fragment LabelFields on Label {
@@ -16834,51 +17723,13 @@ query CustomerCardInstances($customerId: ID!, $threadId: ID) {
   customerCardInstances(customerId: $customerId, threadId: $threadId) {
     __typename
     ... on CustomerCardInstanceLoading {
-      id
-      customerId
-      threadId
-      createdAt {
-        unixTimestamp
-        iso8601
-      }
-      updatedAt {
-        unixTimestamp
-        iso8601
-      }
+      ...CustomerCardInstanceLoadingFields
     }
     ... on CustomerCardInstanceLoaded {
-      id
-      customerId
-      threadId
-      loadedAt {
-        unixTimestamp
-        iso8601
-      }
-      expiresAt {
-        unixTimestamp
-        iso8601
-      }
-      createdAt {
-        unixTimestamp
-        iso8601
-      }
-      updatedAt {
-        unixTimestamp
-        iso8601
-      }
+      ...CustomerCardInstanceLoadedFields
     }
     ... on CustomerCardInstanceError {
-      id
-      customerId
-      threadId
-      createdAt {
-        unixTimestamp
-        iso8601
-      }
-      updatedAt {
-        unixTimestamp
-        iso8601
-      }
+      ...CustomerCardInstanceErrorFields
     }
   }
 }
@@ -17921,10 +18772,10 @@ query SearchKnowledgeSources($searchQuery: String!, $pageSize: Int, $options: Se
   searchKnowledgeSources(searchQuery: $searchQuery, pageSize: $pageSize, options: $options) {
     __typename
     ... on IndexedDocumentSearchResult {
-      content
+      ...IndexedDocumentSearchResultFields
     }
     ... on HelpCenterArticleSearchResult {
-      content
+      ...HelpCenterArticleSearchResultFields
     }
   }
 }
@@ -17991,30 +18842,10 @@ query KnowledgeSource($knowledgeSourceId: ID!) {
   knowledgeSource(knowledgeSourceId: $knowledgeSourceId) {
     __typename
     ... on KnowledgeSourceSitemap {
-      id
-      type
-      url
-      createdAt {
-        unixTimestamp
-        iso8601
-      }
-      updatedAt {
-        unixTimestamp
-        iso8601
-      }
+      ...KnowledgeSourceSitemapFields
     }
     ... on KnowledgeSourceUrl {
-      id
-      type
-      url
-      createdAt {
-        unixTimestamp
-        iso8601
-      }
-      updatedAt {
-        unixTimestamp
-        iso8601
-      }
+      ...KnowledgeSourceUrlFields
     }
   }
 }
@@ -18025,30 +18856,10 @@ query KnowledgeSources($first: Int, $after: String, $last: Int, $before: String,
       node {
         __typename
         ... on KnowledgeSourceSitemap {
-          id
-          type
-          url
-          createdAt {
-            unixTimestamp
-            iso8601
-          }
-          updatedAt {
-            unixTimestamp
-            iso8601
-          }
+          ...KnowledgeSourceSitemapFields
         }
         ... on KnowledgeSourceUrl {
-          id
-          type
-          url
-          createdAt {
-            unixTimestamp
-            iso8601
-          }
-          updatedAt {
-            unixTimestamp
-            iso8601
-          }
+          ...KnowledgeSourceUrlFields
         }
       }
       cursor
@@ -20924,51 +21735,13 @@ mutation ReloadCustomerCardInstance($input: ReloadCustomerCardInstanceInput!) {
     customerCardInstance {
       __typename
       ... on CustomerCardInstanceLoading {
-        id
-        customerId
-        threadId
-        createdAt {
-          unixTimestamp
-          iso8601
-        }
-        updatedAt {
-          unixTimestamp
-          iso8601
-        }
+        ...CustomerCardInstanceLoadingFields
       }
       ... on CustomerCardInstanceLoaded {
-        id
-        customerId
-        threadId
-        loadedAt {
-          unixTimestamp
-          iso8601
-        }
-        expiresAt {
-          unixTimestamp
-          iso8601
-        }
-        createdAt {
-          unixTimestamp
-          iso8601
-        }
-        updatedAt {
-          unixTimestamp
-          iso8601
-        }
+        ...CustomerCardInstanceLoadedFields
       }
       ... on CustomerCardInstanceError {
-        id
-        customerId
-        threadId
-        createdAt {
-          unixTimestamp
-          iso8601
-        }
-        updatedAt {
-          unixTimestamp
-          iso8601
-        }
+        ...CustomerCardInstanceErrorFields
       }
     }
     error {
@@ -22521,30 +23294,10 @@ mutation CreateKnowledgeSource($input: CreateKnowledgeSourceInput!) {
     knowledgeSource {
       __typename
       ... on KnowledgeSourceSitemap {
-        id
-        type
-        url
-        createdAt {
-          unixTimestamp
-          iso8601
-        }
-        updatedAt {
-          unixTimestamp
-          iso8601
-        }
+        ...KnowledgeSourceSitemapFields
       }
       ... on KnowledgeSourceUrl {
-        id
-        type
-        url
-        createdAt {
-          unixTimestamp
-          iso8601
-        }
-        updatedAt {
-          unixTimestamp
-          iso8601
-        }
+        ...KnowledgeSourceUrlFields
       }
     }
     error {
@@ -22580,30 +23333,10 @@ mutation ReindexKnowledgeSource($input: ReindexKnowledgeSourceInput!) {
     knowledgeSource {
       __typename
       ... on KnowledgeSourceSitemap {
-        id
-        type
-        url
-        createdAt {
-          unixTimestamp
-          iso8601
-        }
-        updatedAt {
-          unixTimestamp
-          iso8601
-        }
+        ...KnowledgeSourceSitemapFields
       }
       ... on KnowledgeSourceUrl {
-        id
-        type
-        url
-        createdAt {
-          unixTimestamp
-          iso8601
-        }
-        updatedAt {
-          unixTimestamp
-          iso8601
-        }
+        ...KnowledgeSourceUrlFields
       }
     }
     error {

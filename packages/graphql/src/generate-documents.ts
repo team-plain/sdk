@@ -209,6 +209,8 @@ if (queryType) {
       if (nodeType) registerFragmentType(nodeType);
     } else if (isObjectType(namedType)) {
       registerFragmentType(namedType);
+    } else if (isUnionType(namedType) || isInterfaceType(namedType)) {
+      registerUnionMembers(namedType);
     }
   }
 }
