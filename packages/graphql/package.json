@@ -44,7 +44,6 @@
     "dist"
   ],
   "scripts": {
-    "check:no-regression": "tsx scripts/check-no-regression.ts",
     "generate-documents": "tsx src/generate-documents.ts",
     "download-schema": "tsx scripts/download-schema.ts",
     "codegen": "pnpm download-schema && tsx src/generate-documents.ts && graphql-codegen --config codegen.yml",
