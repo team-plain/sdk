@@ -1,5 +1,11 @@
 # @team-plain/graphql
 
+## 1.2.1
+
+### Patch Changes
+
+- c177ae9: Fix searchKnowledgeSources missing helpCenterArticle, helpCenter, and indexedDocument fields
+
 ## 1.2.0
 
 ### Minor Changes
