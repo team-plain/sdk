@@ -1,5 +1,11 @@
 # @team-plain/webhooks
 
+## 1.4.0
+
+### Minor Changes
+
+- edef4d2: Update webhook schema to 2026-07-07.
+
 ## 1.3.0
 
 ### Minor Changes
