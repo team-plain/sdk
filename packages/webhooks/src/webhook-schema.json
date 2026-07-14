@@ -1291,7 +1291,14 @@
         "user": {
           "anyOf": [
             {
-              "$ref": "#/definitions/user"
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/user"
+                },
+                {
+                  "$ref": "#/definitions/machineUser"
+                }
+              ]
             },
             {
               "type": "null"
@@ -1783,6 +1790,17 @@
           "properties": {
             "type": {
               "type": "string",
+              "const": "WAITING_INDEFINITELY"
+            }
+          },
+          "required": ["type"],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
               "const": "WAITING_FOR_DURATION"
             },
             "waitingUntil": {
@@ -2130,14 +2148,12 @@
         },
         "text": {
           "type": "string",
-          "minLength": 1,
           "maxLength": 10000
         },
         "markdown": {
           "anyOf": [
             {
               "type": "string",
-              "minLength": 1,
               "maxLength": 10000
             },
             {
@@ -2955,7 +2971,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-05-06"
+          "const": "2026-07-07"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
@@ -3288,14 +3304,12 @@
             },
             "text": {
               "type": "string",
-              "minLength": 1,
               "maxLength": 10000
             },
             "markdown": {
               "anyOf": [
                 {
                   "type": "string",
-                  "minLength": 1,
                   "maxLength": 10000
                 },
                 {
@@ -3609,7 +3623,14 @@
                 },
                 "source": {
                   "type": "string",
-                  "enum": ["api", "salesforce", "hubspot", "UNKNOWN_TENANT_SOURCE"],
+                  "enum": [
+                    "api",
+                    "salesforce",
+                    "hubspot",
+                    "attio",
+                    "email_domain",
+                    "UNKNOWN_TENANT_SOURCE"
+                  ],
                   "default": "api"
                 },
                 "createdAt": {
