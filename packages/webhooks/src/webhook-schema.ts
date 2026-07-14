@@ -170,6 +170,10 @@ export type ThreadStatusDetail =
       [k: string]: unknown;
     }
   | {
+      type: "WAITING_INDEFINITELY";
+      [k: string]: unknown;
+    }
+  | {
       type: "WAITING_FOR_DURATION";
       waitingUntil: Datetime;
       durationSeconds: number;
@@ -605,7 +609,7 @@ export interface ComponentDateTime {
 }
 export interface ComponentUser {
   type: "user";
-  user: User | null;
+  user: (User | MachineUser) | null;
   [k: string]: unknown;
 }
 export interface User {
@@ -615,6 +619,19 @@ export interface User {
   publicName: string;
   status: "ONLINE" | "OFFLINE" | "BREAK" | "AWAY" | "UNKNOWN_USER_STATUS";
   statusChangedAt: Datetime;
+  createdAt: Datetime;
+  createdBy: InternalActor;
+  updatedAt: Datetime;
+  updatedBy: InternalActor;
+  deletedAt: NullableDatetime;
+  deletedBy: NullableInternalActor;
+  [k: string]: unknown;
+}
+export interface MachineUser {
+  id: Id;
+  fullName: string;
+  publicName: string;
+  description: string | null;
   createdAt: Datetime;
   createdBy: InternalActor;
   updatedAt: Datetime;
@@ -676,19 +693,6 @@ export interface Thread {
   createdBy: Actor;
   updatedAt: Datetime;
   updatedBy: Actor;
-  [k: string]: unknown;
-}
-export interface MachineUser {
-  id: Id;
-  fullName: string;
-  publicName: string;
-  description: string | null;
-  createdAt: Datetime;
-  createdBy: InternalActor;
-  updatedAt: Datetime;
-  updatedBy: InternalActor;
-  deletedAt: NullableDatetime;
-  deletedBy: NullableInternalActor;
   [k: string]: unknown;
 }
 export interface Label {
@@ -1058,7 +1062,7 @@ export interface ThreadTenantUpdatedPublicEventPayload {
     name: string;
     externalId: string;
     url: string | null;
-    source?: "api" | "salesforce" | "hubspot" | "UNKNOWN_TENANT_SOURCE";
+    source?: "api" | "salesforce" | "hubspot" | "attio" | "email_domain" | "UNKNOWN_TENANT_SOURCE";
     createdAt: Datetime;
     createdBy: Actor;
     updatedAt: Datetime;
@@ -1071,7 +1075,7 @@ export interface ThreadTenantUpdatedPublicEventPayload {
     name: string;
     externalId: string;
     url: string | null;
-    source?: "api" | "salesforce" | "hubspot" | "UNKNOWN_TENANT_SOURCE";
+    source?: "api" | "salesforce" | "hubspot" | "attio" | "email_domain" | "UNKNOWN_TENANT_SOURCE";
     createdAt: Datetime;
     createdBy: Actor;
     updatedAt: Datetime;
@@ -1082,7 +1086,7 @@ export interface ThreadTenantUpdatedPublicEventPayload {
 }
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-05-06";
+  webhookTargetVersion: "2026-07-07";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;
