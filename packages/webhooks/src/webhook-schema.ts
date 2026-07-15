@@ -319,6 +319,7 @@ export interface WebhooksSchemaDefinition {
     | CustomerUpdatedPublicEventPayload
     | CustomerDeletedPublicEventPayload
     | ThreadNoteCreatedEventPayload
+    | ThreadNoteMentionCreatedPublicEventPayload
     | ThreadChatReceivedPublicEventPayload
     | ThreadSlackMessageUpdatedEventPayload
     | ThreadDiscordMessageReceivedEventPayload
@@ -343,6 +344,7 @@ export interface WebhooksSchemaDefinition {
     | "thread.chat_sent"
     | "thread.chat_received"
     | "thread.note_created"
+    | "thread.note_mention_created"
     | "thread.thread_labels_changed"
     | "thread.thread_priority_changed"
     | "thread.thread_field_created"
@@ -978,19 +980,27 @@ export interface CustomerDeletedPublicEventPayload {
 export interface ThreadNoteCreatedEventPayload {
   eventType: "thread.note_created";
   thread: Thread;
-  note: {
-    timelineEntryId: Id;
-    id: Id;
-    text: string;
-    markdown: string | null;
-    createdAt: Datetime;
-    createdBy: InternalActor;
-    updatedAt: Datetime;
-    updatedBy: InternalActor;
-    deletedAt: NullableDatetime;
-    deletedBy: NullableInternalActor;
-    [k: string]: unknown;
-  };
+  note: Note;
+  [k: string]: unknown;
+}
+export interface Note {
+  timelineEntryId: Id;
+  id: Id;
+  text: string;
+  markdown: string | null;
+  createdAt: Datetime;
+  createdBy: InternalActor;
+  updatedAt: Datetime;
+  updatedBy: InternalActor;
+  deletedAt: NullableDatetime;
+  deletedBy: NullableInternalActor;
+  [k: string]: unknown;
+}
+export interface ThreadNoteMentionCreatedPublicEventPayload {
+  eventType: "thread.note_mention_created";
+  thread: Thread;
+  note: Note;
+  mentions: MachineUser[];
   [k: string]: unknown;
 }
 export interface ThreadChatReceivedPublicEventPayload {
@@ -1086,7 +1096,7 @@ export interface ThreadTenantUpdatedPublicEventPayload {
 }
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-07-07";
+  webhookTargetVersion: "2026-07-14";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

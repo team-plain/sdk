@@ -83,6 +83,9 @@
           "$ref": "#/definitions/threadNoteCreatedEventPayload"
         },
         {
+          "$ref": "#/definitions/threadNoteMentionCreatedPublicEventPayload"
+        },
+        {
           "$ref": "#/definitions/threadChatReceivedPublicEventPayload"
         },
         {
@@ -124,6 +127,7 @@
         "thread.chat_sent",
         "thread.chat_received",
         "thread.note_created",
+        "thread.note_mention_created",
         "thread.thread_labels_changed",
         "thread.thread_priority_changed",
         "thread.thread_field_created",
@@ -2971,7 +2975,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-07-07"
+          "const": "2026-07-14"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
@@ -3352,6 +3356,29 @@
         }
       },
       "required": ["eventType", "thread", "note"],
+      "additionalProperties": true
+    },
+    "threadNoteMentionCreatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.note_mention_created"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        },
+        "note": {
+          "$ref": "#/definitions/threadNoteCreatedEventPayload/properties/note"
+        },
+        "mentions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/machineUser"
+          }
+        }
+      },
+      "required": ["eventType", "thread", "note", "mentions"],
       "additionalProperties": true
     },
     "threadServiceLevelAgreementStatusTransitionedPayload": {
