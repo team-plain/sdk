@@ -1,5 +1,11 @@
 # @team-plain/webhooks
 
+## 1.5.0
+
+### Minor Changes
+
+- 0a0de6d: Update webhook schema to 2026-07-14. Adds the `thread.note_mention_created` event.
+
 ## 1.4.0
 
 ### Minor Changes
