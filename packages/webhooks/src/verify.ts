@@ -88,7 +88,20 @@ function verifyWebhookSignature(
     .update(payload, "utf8")
     .digest("hex");
 
-  if (signature !== expectedSignature) {
+  // timingSafeEqual requires both buffers to be the same length; a length
+  // mismatch definitively means the signature is wrong and leaks no secret.
+  if (signature.length !== expectedSignature.length) {
+    return {
+      error: new PlainWebhookSignatureVerificationError("The signature provided is invalid."),
+    };
+  }
+
+  const signaturesMatch = crypto.timingSafeEqual(
+    Buffer.from(signature, "utf8"),
+    Buffer.from(expectedSignature, "utf8"),
+  );
+
+  if (!signaturesMatch) {
     return {
       error: new PlainWebhookSignatureVerificationError("The signature provided is invalid."),
     };
