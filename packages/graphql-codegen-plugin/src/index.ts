@@ -41,6 +41,13 @@ function toPascalCase(str: string): string {
 interface TypeQueryMapping {
   queryFieldName: string;
   idArgName: string;
+  /**
+   * Whether the root query is satisfiable from an id alone (exactly one required
+   * arg). When false — e.g. `timelineEntry(customerId: ID!, timelineEntryId: ID!)` —
+   * a relation carrying only `{ id }` cannot be resolved, so no lazy-loading getter
+   * is emitted and the relation is inlined in the fragment instead.
+   */
+  isLazyLoadable: boolean;
 }
 
 function unwrapType(type: GraphQLOutputType): {
@@ -94,9 +101,8 @@ function buildTypeQueryMap(schema: GraphQLSchema): Map<string, TypeQueryMapping>
     if (!isObjectType(namedType)) continue;
     if (isConnectionType(namedType.name)) continue;
 
-    const idArg = field.args.find(
-      (a) => isNonNullType(a.type) && getNamedType(a.type)?.name === "ID",
-    );
+    const requiredArgs = field.args.filter((a) => isNonNullType(a.type));
+    const idArg = requiredArgs.find((a) => getNamedType(a.type)?.name === "ID");
     if (!idArg) continue;
 
     const canonicalFieldName = namedType.name[0].toLowerCase() + namedType.name.slice(1);
@@ -105,6 +111,7 @@ function buildTypeQueryMap(schema: GraphQLSchema): Map<string, TypeQueryMapping>
       map.set(namedType.name, {
         queryFieldName: fieldName,
         idArgName: idArg.name,
+        isLazyLoadable: requiredArgs.length === 1,
       });
     }
   }
@@ -278,7 +285,10 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       // Object relation — check if we can lazy-load it
       const hasId = "id" in namedType.getFields();
       const mapping = typeQueryMap.get(namedType.name);
-      if (hasId && mapping) {
+      // Only a root query satisfiable from an id alone supports lazy loading. Anything
+      // else is inlined by the document generator, so expose it as a materialised
+      // property rather than a getter that could never resolve.
+      if (hasId && mapping?.isLazyLoadable) {
         return {
           name,
           kind: "objectRelation",

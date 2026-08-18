@@ -9861,7 +9861,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             title
           }
           childTimelineEntry {
-            id
+            ...TimelineEntryBaseFields
           }
         }
       }
@@ -11319,7 +11319,7 @@ fragment MergedThreadMessageEntryFields on MergedThreadMessageEntry {
     title
   }
   childTimelineEntry {
-    id
+    ...TimelineEntryFields
   }
 }
 
@@ -22131,7 +22131,7 @@ fragment TimelineEntryFields on TimelineEntry {
         title
       }
       childTimelineEntry {
-        id
+        ...TimelineEntryBaseFields
       }
     }
   }
@@ -23886,6 +23886,4853 @@ fragment WorkspaceSlackSidekickIntegrationFields on WorkspaceSlackSidekickIntegr
       }
     }
   }
+}
+
+fragment TimelineEntryBaseFields on TimelineEntry {
+  id
+  customerId
+  threadId
+  timestamp {
+    unixTimestamp
+    iso8601
+  }
+  entry {
+    __typename
+    ... on NoteEntry {
+      noteId
+      noteEntryText: text
+      noteEntryMarkdown: markdown
+      isEdited
+      editedAt {
+        unixTimestamp
+        iso8601
+      }
+      editedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+    }
+    ... on ChatEntry {
+      chatId
+      chatEntryText: text
+      customerReadAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on EmailEntry {
+      emailId
+      to {
+        name
+        email
+      }
+      from {
+        name
+        email
+      }
+      subject
+      textContent
+      hasMoreTextContent
+      fullTextContent
+      markdownContent
+      hasMoreMarkdownContent
+      fullMarkdownContent
+      authenticity
+      sentAt {
+        unixTimestamp
+        iso8601
+      }
+      sendStatus
+      receivedAt {
+        unixTimestamp
+        iso8601
+      }
+      isStartOfThread
+      category
+    }
+    ... on CustomEntry {
+      externalId
+      title
+      customEntryType: type
+      customEntryComponents: components {
+        __typename
+        ... on ComponentText {
+          textSize
+          textColor
+          text
+        }
+        ... on ComponentPlainText {
+          plainTextSize
+          plainTextColor
+          plainText
+        }
+        ... on ComponentSpacer {
+          spacerSize
+        }
+        ... on ComponentDivider {
+          dividerSpacingSize
+        }
+        ... on ComponentLinkButton {
+          linkButtonUrl
+          linkButtonLabel
+        }
+        ... on ComponentWorkflowButton {
+          workflowButtonWorkflowIdentifier {
+            workflowId
+            workflowKey
+          }
+          workflowButtonLabel
+        }
+        ... on ComponentRow {
+          rowMainContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+              userMachineUser {
+                id
+              }
+            }
+          }
+          rowAsideContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+              userMachineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on ComponentContainer {
+          containerContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+              userMachineUser {
+                id
+              }
+            }
+            ... on ComponentRow {
+              rowMainContent {
+                __typename
+                ... on ComponentText {
+                  textSize
+                  textColor
+                  text
+                }
+                ... on ComponentPlainText {
+                  plainTextSize
+                  plainTextColor
+                  plainText
+                }
+                ... on ComponentSpacer {
+                  spacerSize
+                }
+                ... on ComponentDivider {
+                  dividerSpacingSize
+                }
+                ... on ComponentLinkButton {
+                  linkButtonUrl
+                  linkButtonLabel
+                }
+                ... on ComponentWorkflowButton {
+                  workflowButtonWorkflowIdentifier {
+                    workflowId
+                    workflowKey
+                  }
+                  workflowButtonLabel
+                }
+                ... on ComponentBadge {
+                  badgeLabel
+                  badgeColor
+                }
+                ... on ComponentCopyButton {
+                  copyButtonValue
+                  copyButtonTooltipLabel
+                }
+                ... on ComponentDateTime {
+                  dateTimeIso8601 {
+                    unixTimestamp
+                    iso8601
+                  }
+                }
+                ... on ComponentUser {
+                  user {
+                    id
+                  }
+                  userMachineUser {
+                    id
+                  }
+                }
+              }
+              rowAsideContent {
+                __typename
+                ... on ComponentText {
+                  textSize
+                  textColor
+                  text
+                }
+                ... on ComponentPlainText {
+                  plainTextSize
+                  plainTextColor
+                  plainText
+                }
+                ... on ComponentSpacer {
+                  spacerSize
+                }
+                ... on ComponentDivider {
+                  dividerSpacingSize
+                }
+                ... on ComponentLinkButton {
+                  linkButtonUrl
+                  linkButtonLabel
+                }
+                ... on ComponentWorkflowButton {
+                  workflowButtonWorkflowIdentifier {
+                    workflowId
+                    workflowKey
+                  }
+                  workflowButtonLabel
+                }
+                ... on ComponentBadge {
+                  badgeLabel
+                  badgeColor
+                }
+                ... on ComponentCopyButton {
+                  copyButtonValue
+                  copyButtonTooltipLabel
+                }
+                ... on ComponentDateTime {
+                  dateTimeIso8601 {
+                    unixTimestamp
+                    iso8601
+                  }
+                }
+                ... on ComponentUser {
+                  user {
+                    id
+                  }
+                  userMachineUser {
+                    id
+                  }
+                }
+              }
+            }
+          }
+        }
+        ... on ComponentBadge {
+          badgeLabel
+          badgeColor
+        }
+        ... on ComponentCopyButton {
+          copyButtonValue
+          copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+          userMachineUser {
+            id
+          }
+        }
+      }
+    }
+    ... on LinearIssueThreadLinkStateTransitionedEntry {
+      linearIssueId
+      previousLinearStateId
+      nextLinearStateId
+    }
+    ... on ThreadAssignmentTransitionedEntry {
+      previousAssignee {
+        __typename
+        ... on User {
+          id
+          fullName
+          publicName
+          avatarUrl
+          avatar {
+            id
+            fileName
+            fileSize {
+              bytes
+              kiloBytes
+              megaBytes
+            }
+            fileExtension
+            fileMimeType
+            visibility
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
+          }
+          email
+          role {
+            ...RoleFields
+          }
+          slackIdentities {
+            slackTeamId
+            slackUserId
+          }
+          defaultSavedThreadsView {
+            id
+          }
+          status
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          workingHours {
+            ...UserWorkingHoursFields
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          isDeleted
+          deletedAt {
+            unixTimestamp
+            iso8601
+          }
+          deletedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on CustomerActor {
+              customerId
+              customer {
+                id
+              }
+            }
+            ... on DeletedCustomerActor {
+              customerId
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on MachineUser {
+          id
+          fullName
+          publicName
+          description
+          type
+          avatar {
+            id
+            fileName
+            fileSize {
+              bytes
+              kiloBytes
+              megaBytes
+            }
+            fileExtension
+            fileMimeType
+            visibility
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          isDeleted
+          deletedAt {
+            unixTimestamp
+            iso8601
+          }
+          deletedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on CustomerActor {
+              customerId
+              customer {
+                id
+              }
+            }
+            ... on DeletedCustomerActor {
+              customerId
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on System {
+          id
+        }
+      }
+      nextAssignee {
+        __typename
+        ... on User {
+          id
+          fullName
+          publicName
+          avatarUrl
+          avatar {
+            id
+            fileName
+            fileSize {
+              bytes
+              kiloBytes
+              megaBytes
+            }
+            fileExtension
+            fileMimeType
+            visibility
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
+          }
+          email
+          role {
+            ...RoleFields
+          }
+          slackIdentities {
+            slackTeamId
+            slackUserId
+          }
+          defaultSavedThreadsView {
+            id
+          }
+          status
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          workingHours {
+            ...UserWorkingHoursFields
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          isDeleted
+          deletedAt {
+            unixTimestamp
+            iso8601
+          }
+          deletedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on CustomerActor {
+              customerId
+              customer {
+                id
+              }
+            }
+            ... on DeletedCustomerActor {
+              customerId
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on MachineUser {
+          id
+          fullName
+          publicName
+          description
+          type
+          avatar {
+            id
+            fileName
+            fileSize {
+              bytes
+              kiloBytes
+              megaBytes
+            }
+            fileExtension
+            fileMimeType
+            visibility
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          isDeleted
+          deletedAt {
+            unixTimestamp
+            iso8601
+          }
+          deletedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on CustomerActor {
+              customerId
+              customer {
+                id
+              }
+            }
+            ... on DeletedCustomerActor {
+              customerId
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on System {
+          id
+        }
+      }
+    }
+    ... on ThreadAdditionalAssigneesTransitionedEntry {
+      previousAssignees {
+        __typename
+        ... on User {
+          id
+          fullName
+          publicName
+          avatarUrl
+          avatar {
+            id
+            fileName
+            fileSize {
+              bytes
+              kiloBytes
+              megaBytes
+            }
+            fileExtension
+            fileMimeType
+            visibility
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
+          }
+          email
+          role {
+            ...RoleFields
+          }
+          slackIdentities {
+            slackTeamId
+            slackUserId
+          }
+          defaultSavedThreadsView {
+            id
+          }
+          status
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          workingHours {
+            ...UserWorkingHoursFields
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          isDeleted
+          deletedAt {
+            unixTimestamp
+            iso8601
+          }
+          deletedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on CustomerActor {
+              customerId
+              customer {
+                id
+              }
+            }
+            ... on DeletedCustomerActor {
+              customerId
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on MachineUser {
+          id
+          fullName
+          publicName
+          description
+          type
+          avatar {
+            id
+            fileName
+            fileSize {
+              bytes
+              kiloBytes
+              megaBytes
+            }
+            fileExtension
+            fileMimeType
+            visibility
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          isDeleted
+          deletedAt {
+            unixTimestamp
+            iso8601
+          }
+          deletedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on CustomerActor {
+              customerId
+              customer {
+                id
+              }
+            }
+            ... on DeletedCustomerActor {
+              customerId
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on System {
+          id
+        }
+      }
+      nextAssignees {
+        __typename
+        ... on User {
+          id
+          fullName
+          publicName
+          avatarUrl
+          avatar {
+            id
+            fileName
+            fileSize {
+              bytes
+              kiloBytes
+              megaBytes
+            }
+            fileExtension
+            fileMimeType
+            visibility
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
+          }
+          email
+          role {
+            ...RoleFields
+          }
+          slackIdentities {
+            slackTeamId
+            slackUserId
+          }
+          defaultSavedThreadsView {
+            id
+          }
+          status
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          workingHours {
+            ...UserWorkingHoursFields
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          isDeleted
+          deletedAt {
+            unixTimestamp
+            iso8601
+          }
+          deletedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on CustomerActor {
+              customerId
+              customer {
+                id
+              }
+            }
+            ... on DeletedCustomerActor {
+              customerId
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on MachineUser {
+          id
+          fullName
+          publicName
+          description
+          type
+          avatar {
+            id
+            fileName
+            fileSize {
+              bytes
+              kiloBytes
+              megaBytes
+            }
+            fileExtension
+            fileMimeType
+            visibility
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          isDeleted
+          deletedAt {
+            unixTimestamp
+            iso8601
+          }
+          deletedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on CustomerActor {
+              customerId
+              customer {
+                id
+              }
+            }
+            ... on DeletedCustomerActor {
+              customerId
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on System {
+          id
+        }
+      }
+    }
+    ... on ThreadStatusTransitionedEntry {
+      threadStatusTransitionedEntryPreviousStatus: previousStatus
+      previousStatusDetail {
+        __typename
+        ... on ThreadStatusDetailCreated {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailNewReply {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailInProgress {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailWaitingForCustomer {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailWaitingForDuration {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          waitingUntil {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailWaitingIndefinitely {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailThreadLinkUpdated {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          linearIssueId
+        }
+        ... on ThreadStatusDetailIgnored {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailDoneManuallySet {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailDoneAutomaticallySet {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          afterSeconds
+        }
+        ... on ThreadStatusDetailThreadDiscussionResolved {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          threadDiscussionId
+        }
+      }
+      threadStatusTransitionedEntryNextStatus: nextStatus
+      nextStatusDetail {
+        __typename
+        ... on ThreadStatusDetailCreated {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailNewReply {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailInProgress {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailWaitingForCustomer {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailWaitingForDuration {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          waitingUntil {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailWaitingIndefinitely {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailThreadLinkUpdated {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          linearIssueId
+        }
+        ... on ThreadStatusDetailIgnored {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailDoneManuallySet {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailDoneAutomaticallySet {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          afterSeconds
+        }
+        ... on ThreadStatusDetailThreadDiscussionResolved {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          threadDiscussionId
+        }
+      }
+    }
+    ... on ThreadPriorityChangedEntry {
+      previousPriority
+      nextPriority
+    }
+    ... on ThreadEventEntry {
+      timelineEventId
+      title
+      threadEventEntryComponents: components {
+        __typename
+        ... on ComponentText {
+          textSize
+          textColor
+          text
+        }
+        ... on ComponentPlainText {
+          plainTextSize
+          plainTextColor
+          plainText
+        }
+        ... on ComponentSpacer {
+          spacerSize
+        }
+        ... on ComponentDivider {
+          dividerSpacingSize
+        }
+        ... on ComponentLinkButton {
+          linkButtonUrl
+          linkButtonLabel
+        }
+        ... on ComponentWorkflowButton {
+          workflowButtonWorkflowIdentifier {
+            workflowId
+            workflowKey
+          }
+          workflowButtonLabel
+        }
+        ... on ComponentRow {
+          rowMainContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+              userMachineUser {
+                id
+              }
+            }
+          }
+          rowAsideContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+              userMachineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on ComponentContainer {
+          containerContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+              userMachineUser {
+                id
+              }
+            }
+            ... on ComponentRow {
+              rowMainContent {
+                __typename
+                ... on ComponentText {
+                  textSize
+                  textColor
+                  text
+                }
+                ... on ComponentPlainText {
+                  plainTextSize
+                  plainTextColor
+                  plainText
+                }
+                ... on ComponentSpacer {
+                  spacerSize
+                }
+                ... on ComponentDivider {
+                  dividerSpacingSize
+                }
+                ... on ComponentLinkButton {
+                  linkButtonUrl
+                  linkButtonLabel
+                }
+                ... on ComponentWorkflowButton {
+                  workflowButtonWorkflowIdentifier {
+                    workflowId
+                    workflowKey
+                  }
+                  workflowButtonLabel
+                }
+                ... on ComponentBadge {
+                  badgeLabel
+                  badgeColor
+                }
+                ... on ComponentCopyButton {
+                  copyButtonValue
+                  copyButtonTooltipLabel
+                }
+                ... on ComponentDateTime {
+                  dateTimeIso8601 {
+                    unixTimestamp
+                    iso8601
+                  }
+                }
+                ... on ComponentUser {
+                  user {
+                    id
+                  }
+                  userMachineUser {
+                    id
+                  }
+                }
+              }
+              rowAsideContent {
+                __typename
+                ... on ComponentText {
+                  textSize
+                  textColor
+                  text
+                }
+                ... on ComponentPlainText {
+                  plainTextSize
+                  plainTextColor
+                  plainText
+                }
+                ... on ComponentSpacer {
+                  spacerSize
+                }
+                ... on ComponentDivider {
+                  dividerSpacingSize
+                }
+                ... on ComponentLinkButton {
+                  linkButtonUrl
+                  linkButtonLabel
+                }
+                ... on ComponentWorkflowButton {
+                  workflowButtonWorkflowIdentifier {
+                    workflowId
+                    workflowKey
+                  }
+                  workflowButtonLabel
+                }
+                ... on ComponentBadge {
+                  badgeLabel
+                  badgeColor
+                }
+                ... on ComponentCopyButton {
+                  copyButtonValue
+                  copyButtonTooltipLabel
+                }
+                ... on ComponentDateTime {
+                  dateTimeIso8601 {
+                    unixTimestamp
+                    iso8601
+                  }
+                }
+                ... on ComponentUser {
+                  user {
+                    id
+                  }
+                  userMachineUser {
+                    id
+                  }
+                }
+              }
+            }
+          }
+        }
+        ... on ComponentBadge {
+          badgeLabel
+          badgeColor
+        }
+        ... on ComponentCopyButton {
+          copyButtonValue
+          copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+          userMachineUser {
+            id
+          }
+        }
+      }
+      customerId
+      externalId
+      isCollapsed
+    }
+    ... on CustomerEventEntry {
+      timelineEventId
+      title
+      customerEventEntryComponents: components {
+        __typename
+        ... on ComponentText {
+          textSize
+          textColor
+          text
+        }
+        ... on ComponentPlainText {
+          plainTextSize
+          plainTextColor
+          plainText
+        }
+        ... on ComponentSpacer {
+          spacerSize
+        }
+        ... on ComponentDivider {
+          dividerSpacingSize
+        }
+        ... on ComponentLinkButton {
+          linkButtonUrl
+          linkButtonLabel
+        }
+        ... on ComponentWorkflowButton {
+          workflowButtonWorkflowIdentifier {
+            workflowId
+            workflowKey
+          }
+          workflowButtonLabel
+        }
+        ... on ComponentRow {
+          rowMainContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+              userMachineUser {
+                id
+              }
+            }
+          }
+          rowAsideContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+              userMachineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on ComponentContainer {
+          containerContent {
+            __typename
+            ... on ComponentText {
+              textSize
+              textColor
+              text
+            }
+            ... on ComponentPlainText {
+              plainTextSize
+              plainTextColor
+              plainText
+            }
+            ... on ComponentSpacer {
+              spacerSize
+            }
+            ... on ComponentDivider {
+              dividerSpacingSize
+            }
+            ... on ComponentLinkButton {
+              linkButtonUrl
+              linkButtonLabel
+            }
+            ... on ComponentWorkflowButton {
+              workflowButtonWorkflowIdentifier {
+                workflowId
+                workflowKey
+              }
+              workflowButtonLabel
+            }
+            ... on ComponentBadge {
+              badgeLabel
+              badgeColor
+            }
+            ... on ComponentCopyButton {
+              copyButtonValue
+              copyButtonTooltipLabel
+            }
+            ... on ComponentDateTime {
+              dateTimeIso8601 {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ComponentUser {
+              user {
+                id
+              }
+              userMachineUser {
+                id
+              }
+            }
+            ... on ComponentRow {
+              rowMainContent {
+                __typename
+                ... on ComponentText {
+                  textSize
+                  textColor
+                  text
+                }
+                ... on ComponentPlainText {
+                  plainTextSize
+                  plainTextColor
+                  plainText
+                }
+                ... on ComponentSpacer {
+                  spacerSize
+                }
+                ... on ComponentDivider {
+                  dividerSpacingSize
+                }
+                ... on ComponentLinkButton {
+                  linkButtonUrl
+                  linkButtonLabel
+                }
+                ... on ComponentWorkflowButton {
+                  workflowButtonWorkflowIdentifier {
+                    workflowId
+                    workflowKey
+                  }
+                  workflowButtonLabel
+                }
+                ... on ComponentBadge {
+                  badgeLabel
+                  badgeColor
+                }
+                ... on ComponentCopyButton {
+                  copyButtonValue
+                  copyButtonTooltipLabel
+                }
+                ... on ComponentDateTime {
+                  dateTimeIso8601 {
+                    unixTimestamp
+                    iso8601
+                  }
+                }
+                ... on ComponentUser {
+                  user {
+                    id
+                  }
+                  userMachineUser {
+                    id
+                  }
+                }
+              }
+              rowAsideContent {
+                __typename
+                ... on ComponentText {
+                  textSize
+                  textColor
+                  text
+                }
+                ... on ComponentPlainText {
+                  plainTextSize
+                  plainTextColor
+                  plainText
+                }
+                ... on ComponentSpacer {
+                  spacerSize
+                }
+                ... on ComponentDivider {
+                  dividerSpacingSize
+                }
+                ... on ComponentLinkButton {
+                  linkButtonUrl
+                  linkButtonLabel
+                }
+                ... on ComponentWorkflowButton {
+                  workflowButtonWorkflowIdentifier {
+                    workflowId
+                    workflowKey
+                  }
+                  workflowButtonLabel
+                }
+                ... on ComponentBadge {
+                  badgeLabel
+                  badgeColor
+                }
+                ... on ComponentCopyButton {
+                  copyButtonValue
+                  copyButtonTooltipLabel
+                }
+                ... on ComponentDateTime {
+                  dateTimeIso8601 {
+                    unixTimestamp
+                    iso8601
+                  }
+                }
+                ... on ComponentUser {
+                  user {
+                    id
+                  }
+                  userMachineUser {
+                    id
+                  }
+                }
+              }
+            }
+          }
+        }
+        ... on ComponentBadge {
+          badgeLabel
+          badgeColor
+        }
+        ... on ComponentCopyButton {
+          copyButtonValue
+          copyButtonTooltipLabel
+        }
+        ... on ComponentDateTime {
+          dateTimeIso8601 {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ComponentUser {
+          user {
+            id
+          }
+          userMachineUser {
+            id
+          }
+        }
+      }
+      customerId
+      externalId
+      isCollapsed
+    }
+    ... on SlackMessageEntry {
+      slackMessageLink
+      slackWebMessageLink
+      slackMessageEntryText: text
+      customerId
+      relatedThread {
+        threadId
+      }
+      lastEditedOnSlackAt {
+        unixTimestamp
+        iso8601
+      }
+      deletedOnSlackAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on SlackReplyEntry {
+      slackMessageLink
+      slackWebMessageLink
+      customerId
+      slackReplyEntryText: text
+      lastEditedOnSlackAt {
+        unixTimestamp
+        iso8601
+      }
+      deletedOnSlackAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadLabelsChangedEntry {
+      __typename
+    }
+    ... on ThreadDiscussionEntry {
+      customerId
+      threadDiscussionId
+      discussionType
+      emailRecipients
+      slackChannelName
+      slackMessageLink
+    }
+    ... on ThreadDiscussionMessageEntry {
+      customerId
+      threadDiscussionId
+      threadDiscussionMessageId
+      discussionType
+      threadDiscussionMessageEntryText: text
+      resolvedText
+      threadDiscussionMessageEntryType: type
+      slackMessageLink
+      slackMessageTimestamp
+      hasUnprocessedAttachments
+      lastEditedOnSlackAt {
+        unixTimestamp
+        iso8601
+      }
+      deletedOnSlackAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadDiscussionResolvedEntry {
+      customerId
+      threadDiscussionId
+      discussionType
+      emailRecipients
+      slackChannelName
+      slackMessageLink
+      resolvedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ServiceLevelAgreementStatusTransitionedEntry {
+      serviceLevelAgreementStatusTransitionedEntryPreviousStatus: previousStatus
+      serviceLevelAgreementStatusTransitionedEntryNextStatus: nextStatus
+      serviceLevelAgreement {
+        __typename
+        ... on FirstResponseTimeServiceLevelAgreement {
+          id
+          firstResponseTimeMinutes
+          useBusinessHoursOnly
+          threadPriorityFilter
+          threadLabelTypeIdFilter {
+            labelTypeIds
+            requireAll
+          }
+          breachActions {
+            __typename
+            ... on BeforeBreachAction {
+              beforeBreachMinutes
+              createdAt {
+                unixTimestamp
+                iso8601
+              }
+              createdBy {
+                __typename
+                ... on UserActor {
+                  userId
+                  user {
+                    id
+                  }
+                }
+                ... on SystemActor {
+                  systemId
+                  workflowExecutionId
+                  workflow {
+                    id
+                    name
+                  }
+                }
+                ... on MachineUserActor {
+                  machineUserId
+                  machineUser {
+                    id
+                  }
+                }
+              }
+              updatedAt {
+                unixTimestamp
+                iso8601
+              }
+              updatedBy {
+                __typename
+                ... on UserActor {
+                  userId
+                  user {
+                    id
+                  }
+                }
+                ... on SystemActor {
+                  systemId
+                  workflowExecutionId
+                  workflow {
+                    id
+                    name
+                  }
+                }
+                ... on MachineUserActor {
+                  machineUserId
+                  machineUser {
+                    id
+                  }
+                }
+              }
+            }
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+        ... on NextResponseTimeServiceLevelAgreement {
+          id
+          nextResponseTimeMinutes
+          useBusinessHoursOnly
+          threadPriorityFilter
+          threadLabelTypeIdFilter {
+            labelTypeIds
+            requireAll
+          }
+          breachActions {
+            __typename
+            ... on BeforeBreachAction {
+              beforeBreachMinutes
+              createdAt {
+                unixTimestamp
+                iso8601
+              }
+              createdBy {
+                __typename
+                ... on UserActor {
+                  userId
+                  user {
+                    id
+                  }
+                }
+                ... on SystemActor {
+                  systemId
+                  workflowExecutionId
+                  workflow {
+                    id
+                    name
+                  }
+                }
+                ... on MachineUserActor {
+                  machineUserId
+                  machineUser {
+                    id
+                  }
+                }
+              }
+              updatedAt {
+                unixTimestamp
+                iso8601
+              }
+              updatedBy {
+                __typename
+                ... on UserActor {
+                  userId
+                  user {
+                    id
+                  }
+                }
+                ... on SystemActor {
+                  systemId
+                  workflowExecutionId
+                  workflow {
+                    id
+                    name
+                  }
+                }
+                ... on MachineUserActor {
+                  machineUserId
+                  machineUser {
+                    id
+                  }
+                }
+              }
+            }
+          }
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+    ... on MSTeamsMessageEntry {
+      mSTeamsMessageEntryText: text
+      customerId
+      markdownContent
+      msTeamsMessageId
+      msTeamsMessageLink
+      hasUnprocessedAttachments
+      lastEditedOnMsTeamsAt {
+        unixTimestamp
+        iso8601
+      }
+      deletedOnMsTeamsAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on DiscordMessageEntry {
+      customerId
+      discordMessageId
+      markdownContent
+      lastEditedOnDiscordAt {
+        unixTimestamp
+        iso8601
+      }
+      deletedOnDiscordAt {
+        unixTimestamp
+        iso8601
+      }
+      discordMessageLink
+    }
+    ... on ThreadLinkCreatedEntry {
+      threadLink {
+        __typename
+        ... on LinearIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          linkType
+          threadId
+          sourceId
+          sourceType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          linearIssueId
+          linearIssueIdentifier
+          linearIssueState {
+            type
+            label
+            color
+          }
+          linearIssueCreatedAt {
+            unixTimestamp
+            iso8601
+          }
+          linearIssueUpdatedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on JiraIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          jiraIssueId
+          jiraIssueKey
+          jiraIssueType {
+            name
+            iconUrl
+          }
+        }
+        ... on PlainThreadThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainThreadId
+          plainThreadStatusDetailType
+        }
+        ... on PlainTaskThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainTaskId
+        }
+        ... on GenericThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          sourceStatus {
+            key
+            label
+            color
+            icon
+          }
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+    ... on ThreadLinkUpdatedEntry {
+      threadLink {
+        __typename
+        ... on LinearIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          linkType
+          threadId
+          sourceId
+          sourceType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          linearIssueId
+          linearIssueIdentifier
+          linearIssueState {
+            type
+            label
+            color
+          }
+          linearIssueCreatedAt {
+            unixTimestamp
+            iso8601
+          }
+          linearIssueUpdatedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on JiraIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          jiraIssueId
+          jiraIssueKey
+          jiraIssueType {
+            name
+            iconUrl
+          }
+        }
+        ... on PlainThreadThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainThreadId
+          plainThreadStatusDetailType
+        }
+        ... on PlainTaskThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainTaskId
+        }
+        ... on GenericThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          sourceStatus {
+            key
+            label
+            color
+            icon
+          }
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+      }
+      previousThreadLink {
+        __typename
+        ... on LinearIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          linkType
+          threadId
+          sourceId
+          sourceType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          linearIssueId
+          linearIssueIdentifier
+          linearIssueState {
+            type
+            label
+            color
+          }
+          linearIssueCreatedAt {
+            unixTimestamp
+            iso8601
+          }
+          linearIssueUpdatedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on JiraIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          jiraIssueId
+          jiraIssueKey
+          jiraIssueType {
+            name
+            iconUrl
+          }
+        }
+        ... on PlainThreadThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainThreadId
+          plainThreadStatusDetailType
+        }
+        ... on PlainTaskThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainTaskId
+        }
+        ... on GenericThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          sourceStatus {
+            key
+            label
+            color
+            icon
+          }
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+    ... on ThreadLinkDeletedEntry {
+      threadLink {
+        __typename
+        ... on LinearIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          linkType
+          threadId
+          sourceId
+          sourceType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          linearIssueId
+          linearIssueIdentifier
+          linearIssueState {
+            type
+            label
+            color
+          }
+          linearIssueCreatedAt {
+            unixTimestamp
+            iso8601
+          }
+          linearIssueUpdatedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on JiraIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          jiraIssueId
+          jiraIssueKey
+          jiraIssueType {
+            name
+            iconUrl
+          }
+        }
+        ... on PlainThreadThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainThreadId
+          plainThreadStatusDetailType
+        }
+        ... on PlainTaskThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainTaskId
+        }
+        ... on GenericThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          sourceStatus {
+            key
+            label
+            color
+            icon
+          }
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+    ... on ThreadLinkTargetCreatedEntry {
+      threadLink {
+        __typename
+        ... on LinearIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          linkType
+          threadId
+          sourceId
+          sourceType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          linearIssueId
+          linearIssueIdentifier
+          linearIssueState {
+            type
+            label
+            color
+          }
+          linearIssueCreatedAt {
+            unixTimestamp
+            iso8601
+          }
+          linearIssueUpdatedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on JiraIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          jiraIssueId
+          jiraIssueKey
+          jiraIssueType {
+            name
+            iconUrl
+          }
+        }
+        ... on PlainThreadThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainThreadId
+          plainThreadStatusDetailType
+        }
+        ... on PlainTaskThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainTaskId
+        }
+        ... on GenericThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          sourceStatus {
+            key
+            label
+            color
+            icon
+          }
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+      }
+      sourceThread {
+        id
+        ref
+        title
+      }
+    }
+    ... on ThreadLinkTargetDeletedEntry {
+      threadLink {
+        __typename
+        ... on LinearIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          linkType
+          threadId
+          sourceId
+          sourceType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          linearIssueId
+          linearIssueIdentifier
+          linearIssueState {
+            type
+            label
+            color
+          }
+          linearIssueCreatedAt {
+            unixTimestamp
+            iso8601
+          }
+          linearIssueUpdatedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on JiraIssueThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          jiraIssueId
+          jiraIssueKey
+          jiraIssueType {
+            name
+            iconUrl
+          }
+        }
+        ... on PlainThreadThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainThreadId
+          plainThreadStatusDetailType
+        }
+        ... on PlainTaskThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          plainTaskId
+        }
+        ... on GenericThreadLink {
+          id
+          title
+          description
+          url
+          status
+          threadId
+          sourceId
+          sourceType
+          sourceStatus {
+            key
+            label
+            color
+            icon
+          }
+          linkType
+          createdAt {
+            unixTimestamp
+            iso8601
+          }
+          createdBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedBy {
+            __typename
+            ... on UserActor {
+              userId
+              user {
+                id
+              }
+            }
+            ... on SystemActor {
+              systemId
+              workflowExecutionId
+              workflow {
+                id
+                name
+              }
+            }
+            ... on MachineUserActor {
+              machineUserId
+              machineUser {
+                id
+              }
+            }
+          }
+        }
+      }
+      sourceThread {
+        id
+        ref
+        title
+      }
+    }
+    ... on HelpCenterAiConversationMessageEntry {
+      helpCenterId
+      helpCenterAiConversationId
+      messageId
+      helpCenterAiConversationMessageEntryMarkdown: markdown
+    }
+    ... on CustomerSurveyRequestedEntry {
+      customerId
+      threadId
+      customerSurveyId
+      surveyResponseId
+      surveyResponsePublicId
+    }
+  }
+  actor {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on CustomerActor {
+      customerId
+      customer {
+        id
+      }
+    }
+    ... on DeletedCustomerActor {
+      customerId
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  llmText
 }
 
 # ─── Queries ─────────────────────────────────────────────────────────────────

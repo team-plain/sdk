@@ -1450,7 +1450,7 @@ import type {
   TimeSeriesMetricQueryVariables,
   TimelineEntriesQuery,
   TimelineEntriesQueryVariables,
-  TimelineEntryFieldsFragment,
+  TimelineEntryBaseFieldsFragment,
   TimelineEntryQuery,
   TimelineEntryQueryVariables,
   ToggleFeatureEntitlementFieldsFragment,
@@ -6018,22 +6018,15 @@ export class MergedThreadMessageEntryModel {
   public readonly __typename = "MergedThreadMessageEntry" as const;
 
   public readonly childThreadDetails: MergedThreadMessageEntryFieldsFragment["childThreadDetails"];
+  public readonly childTimelineEntry: MergedThreadMessageEntryFieldsFragment["childTimelineEntry"];
   public readonly threadLinkId: MergedThreadMessageEntryFieldsFragment["threadLinkId"];
 
   constructor(client: PlainGraphQLClient, data: MergedThreadMessageEntryFieldsFragment) {
     this._client = client;
     this._data = data;
     this.childThreadDetails = data.childThreadDetails;
+    this.childTimelineEntry = data.childTimelineEntry;
     this.threadLinkId = data.threadLinkId;
-  }
-
-  public get childTimelineEntry(): Promise<TimelineEntryModel | undefined> {
-    const id = this._data.childTimelineEntry?.id;
-    if (!id) return Promise.resolve(undefined);
-    return this._client.request<TimelineEntryQuery, TimelineEntryQueryVariables>(
-      TimelineEntryDocument,
-      { customerId: id } as TimelineEntryQueryVariables
-    ).then(r => r.timelineEntry ? new TimelineEntryModel(this._client, r.timelineEntry) : undefined);
   }
 }
 
@@ -8964,18 +8957,18 @@ export class TieredRecurringPriceModel {
 
 export class TimelineEntryModel {
   protected _client: PlainGraphQLClient;
-  protected _data: TimelineEntryFieldsFragment;
+  protected _data: TimelineEntryBaseFieldsFragment;
   public readonly __typename = "TimelineEntry" as const;
 
-  public readonly customerId: TimelineEntryFieldsFragment["customerId"];
-  public readonly id: TimelineEntryFieldsFragment["id"];
-  public readonly llmText: TimelineEntryFieldsFragment["llmText"];
-  public readonly threadId: TimelineEntryFieldsFragment["threadId"];
-  public readonly timestamp: TimelineEntryFieldsFragment["timestamp"];
+  public readonly customerId: TimelineEntryBaseFieldsFragment["customerId"];
+  public readonly id: TimelineEntryBaseFieldsFragment["id"];
+  public readonly llmText: TimelineEntryBaseFieldsFragment["llmText"];
+  public readonly threadId: TimelineEntryBaseFieldsFragment["threadId"];
+  public readonly timestamp: TimelineEntryBaseFieldsFragment["timestamp"];
   public readonly actor: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly entry: ChatEntryModel | CustomEntryModel | CustomerEventEntryModel | CustomerSurveyRequestedEntryModel | DiscordMessageEntryModel | EmailEntryModel | HelpCenterAiConversationMessageEntryModel | LinearIssueThreadLinkStateTransitionedEntryModel | MSTeamsMessageEntryModel | MergedThreadMessageEntryModel | NoteEntryModel | ServiceLevelAgreementStatusTransitionedEntryModel | SlackMessageEntryModel | SlackReplyEntryModel | { __typename: "ThreadAdditionalAssigneesTransitionedEntry" } | { __typename: "ThreadAssignmentTransitionedEntry" } | ThreadDiscussionEntryModel | ThreadDiscussionMessageEntryModel | ThreadDiscussionResolvedEntryModel | ThreadEventEntryModel | { __typename: "ThreadLabelsChangedEntry" } | { __typename: "ThreadLinkCreatedEntry" } | { __typename: "ThreadLinkDeletedEntry" } | ThreadLinkTargetCreatedEntryModel | ThreadLinkTargetDeletedEntryModel | { __typename: "ThreadLinkUpdatedEntry" } | ThreadPriorityChangedEntryModel | ThreadStatusTransitionedEntryModel;
 
-  constructor(client: PlainGraphQLClient, data: TimelineEntryFieldsFragment) {
+  constructor(client: PlainGraphQLClient, data: TimelineEntryBaseFieldsFragment) {
     this._client = client;
     this._data = data;
     this.customerId = data.customerId;

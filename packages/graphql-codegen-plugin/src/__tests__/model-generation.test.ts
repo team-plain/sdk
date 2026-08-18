@@ -215,6 +215,66 @@ describe("model generation", () => {
     expect(code).toContain("new CustomerModel(this._client");
   });
 
+  it("does not lazy-load a relation whose root query needs more than an id", () => {
+    // Regression: `timelineEntry(customerId: ID!, timelineEntryId: ID!)` cannot be
+    // satisfied from an id alone. The plugin used to emit a getter that passed the
+    // relation's id as `customerId` and omitted the required `timelineEntryId`, so
+    // the call could never resolve and the data was unreachable. Such relations are
+    // inlined by the document generator and exposed as plain properties instead.
+    const schema = buildSchema(`
+      type Query {
+        timelineEntry(customerId: ID!, timelineEntryId: ID!): TimelineEntry
+        thread(threadId: ID!): Thread
+      }
+      type DateTime {
+        iso8601: String!
+      }
+      type TimelineEntry {
+        id: ID!
+        customerId: ID!
+        text: String!
+        timestamp: DateTime!
+      }
+      type Thread {
+        id: ID!
+        title: String!
+        childTimelineEntry: TimelineEntry
+      }
+    `);
+    const docs = createDocuments(`
+      fragment TimelineEntryFields on TimelineEntry {
+        id
+        customerId
+        text
+        timestamp { iso8601 }
+      }
+      fragment ThreadFields on Thread {
+        id
+        title
+        childTimelineEntry { ...TimelineEntryFields }
+      }
+      query Thread($threadId: ID!) {
+        thread(threadId: $threadId) {
+          ...ThreadFields
+        }
+      }
+    `);
+
+    const output = plugin(schema, docs, {});
+    const code = typeof output === "string" ? output : output.content;
+
+    // No unsatisfiable getter, and specifically not one stuffing the id into customerId.
+    expect(code).not.toContain(
+      "public get childTimelineEntry(): Promise<TimelineEntryModel | undefined>",
+    );
+    expect(code).not.toContain("{ customerId: id } as TimelineEntryQueryVariables");
+
+    // Exposed as a materialised property carrying the inlined data instead.
+    expect(code).toContain(
+      'public readonly childTimelineEntry: ThreadFieldsFragment["childTimelineEntry"]',
+    );
+  });
+
   it("skips object relation field when there is no root query for the related type", () => {
     const schema = buildSchema(`
       type Query {

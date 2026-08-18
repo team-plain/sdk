@@ -99,10 +99,20 @@ function getConnectionNodeType(connType: GraphQLObjectType): GraphQLNamedType | 
 
 /**
  * Build a set of type names that can be fetched by a root query with an ID arg.
- * Used to decide whether an object relation can be lazy-loaded ({ id } only)
- * or must be inlined (full data) in fragments.
+ * Used to decide which root query documents to generate.
  */
 const queryableTypes = new Set<string>();
+
+/**
+ * Types that can actually be lazy-loaded from a relation that only carries `{ id }`.
+ *
+ * This is narrower than `queryableTypes`: it also requires the root query to take
+ * exactly one required argument. A root query with several required args (e.g.
+ * `timelineEntry(customerId: ID!, timelineEntryId: ID!)`) cannot be satisfied from
+ * an id alone, so selecting `{ id }` for such a relation strands the consumer —
+ * the data is unreachable from the parent. Those relations are inlined instead.
+ */
+const lazyLoadableTypes = new Set<string>();
 
 const queryType = schema.getQueryType();
 if (queryType) {
@@ -123,11 +133,13 @@ if (queryType) {
     if (fieldIsList) continue;
     if (!isObjectType(namedType)) continue;
     if (isConnectionType(namedType)) continue;
-    const idArg = field.args.find(
-      (a) => isNonNullType(a.type) && getNamedType(a.type)?.name === "ID",
-    );
+    const requiredArgs = field.args.filter((a) => isNonNullType(a.type));
+    const idArg = requiredArgs.find((a) => getNamedType(a.type)?.name === "ID");
     if (idArg) {
       queryableTypes.add(namedType.name);
+      if (requiredArgs.length === 1) {
+        lazyLoadableTypes.add(namedType.name);
+      }
     }
   }
 }
@@ -296,6 +308,35 @@ function findConflictingUnionFields(members: readonly GraphQLObjectType[]): Set<
 }
 
 /**
+ * Types currently being expanded, innermost last. Guards against cycles such as
+ * TimelineEntry → entry → MergedThreadMessageEntry → childTimelineEntry → TimelineEntry,
+ * which would otherwise recurse forever (or emit a self-spreading fragment, which
+ * GraphQL rejects).
+ */
+const expansionStack: string[] = [];
+
+function isExpanding(typeName: string): boolean {
+  return expansionStack.includes(typeName);
+}
+
+/**
+ * Cyclic types that need a companion `{Type}BaseFields` fragment, mapped to the
+ * union members that must be omitted from it to break the cycle. Emitting one
+ * shared base fragment keeps the document small — inlining a full copy at every
+ * cycle point roughly doubles it.
+ */
+const baseFragmentsNeeded = new Map<string, Set<string>>();
+
+function requestBaseFragment(typeName: string): string {
+  const excluded = baseFragmentsNeeded.get(typeName) ?? new Set<string>();
+  for (const onStack of expansionStack) {
+    if (onStack !== typeName) excluded.add(onStack);
+  }
+  baseFragmentsNeeded.set(typeName, excluded);
+  return `${typeName}BaseFields`;
+}
+
+/**
  * Generate an inline selection of all fields for a type, matching what its
  * standalone fragment would contain: scalars, enums, value objects, object
  * relations ({ id } for queryable, full inline for non-queryable), and
@@ -309,6 +350,7 @@ function generateMemberInlineSelection(
   indent: string,
   conflictingFields?: Set<string>,
 ): string {
+  expansionStack.push(type.name);
   const fields = type.getFields();
   const lines: string[] = [];
 
@@ -333,10 +375,17 @@ function generateMemberInlineSelection(
       );
     } else if (isObjectType(namedType) && !isConnectionType(namedType) && !isList(field.type)) {
       const relatedFields = namedType.getFields();
-      if (queryableTypes.has(namedType.name) && "id" in relatedFields) {
+      if (lazyLoadableTypes.has(namedType.name) && "id" in relatedFields) {
         lines.push(`${indent}${fieldRef} {\n${indent}  id\n${indent}}`);
-      } else if (fragmentTypes.has(namedType.name)) {
+      } else if (fragmentTypes.has(namedType.name) && !isExpanding(namedType.name)) {
         lines.push(`${indent}${fieldRef} {\n${indent}  ...${namedType.name}Fields\n${indent}}`);
+      } else if (isExpanding(namedType.name) && fragmentTypes.has(namedType.name)) {
+        // Cycle: this type is already being expanded further up the stack, so
+        // spreading its own fragment would be self-referential. Spread the base
+        // variant, which omits the members that close the cycle.
+        lines.push(
+          `${indent}${fieldRef} {\n${indent}  ...${requestBaseFragment(namedType.name)}\n${indent}}`,
+        );
       } else {
         const nested = generateInlineScalarSelection(namedType, `${indent}  `);
         if (nested) {
@@ -349,6 +398,7 @@ function generateMemberInlineSelection(
     }
   }
 
+  expansionStack.pop();
   return lines.join("\n");
 }
 
@@ -377,6 +427,11 @@ function generateUnionSelectionInner(
   for (const member of members) {
     // Skip members where all fields are deprecated
     if (!Object.values(member.getFields()).some((f) => f.deprecationReason == null)) continue;
+    // Skip members already being expanded further up the stack. This is what bounds
+    // the TimelineEntry ↔ MergedThreadMessageEntry cycle: the nested copy of
+    // TimelineEntry omits the merged-entry member, mirroring the "base fragment"
+    // split used elsewhere for the same reason.
+    if (isExpanding(member.name)) continue;
     const memberFields = generateMemberInlineSelection(member, `${indent}    `, conflictingFields);
     if (memberFields) {
       lines.push(`${indent}  ... on ${member.name} {\n${memberFields}\n${indent}  }`);
@@ -405,6 +460,7 @@ function generateUnionSelection(fieldName: string, type: GraphQLNamedType, inden
 function generateFragment(type: GraphQLObjectType): string {
   const fields = type.getFields();
   const selections: string[] = [];
+  expansionStack.push(type.name);
 
   for (const [fieldName, field] of Object.entries(fields)) {
     if (field.deprecationReason != null) continue;
@@ -422,10 +478,13 @@ function generateFragment(type: GraphQLObjectType): string {
       // Object relation: include { id } for lazy loading if queryable,
       // or inline full data if not queryable
       const relatedFields = namedType.getFields();
-      if (queryableTypes.has(namedType.name) && "id" in relatedFields) {
+      if (lazyLoadableTypes.has(namedType.name) && "id" in relatedFields) {
         selections.push(`  ${fieldName} {\n    id\n  }`);
-      } else if (fragmentTypes.has(namedType.name)) {
+      } else if (fragmentTypes.has(namedType.name) && !isExpanding(namedType.name)) {
         selections.push(`  ${fieldName} {\n    ...${namedType.name}Fields\n  }`);
+      } else if (isExpanding(namedType.name) && fragmentTypes.has(namedType.name)) {
+        // Cycle: see generateMemberInlineSelection.
+        selections.push(`  ${fieldName} {\n    ...${requestBaseFragment(namedType.name)}\n  }`);
       } else {
         const inlineFields = generateInlineScalarSelection(namedType, "    ");
         if (inlineFields) {
@@ -442,6 +501,7 @@ function generateFragment(type: GraphQLObjectType): string {
     // Skip connections and lists of plain objects
   }
 
+  expansionStack.pop();
   return `fragment ${type.name}Fields on ${type.name} {\n${selections.join("\n")}\n}`;
 }
 
@@ -826,10 +886,32 @@ const sortedFragmentTypes = [...fragmentTypes.values()].sort((a, b) =>
   a.name.localeCompare(b.name),
 );
 
+const fragmentParts: string[] = [];
 for (const type of sortedFragmentTypes) {
-  outputParts.push(generateFragment(type));
-  outputParts.push("");
+  fragmentParts.push(generateFragment(type));
+  fragmentParts.push("");
 }
+
+// Base variants for cyclic types, discovered while generating the fragments above.
+// Seeding the expansion stack with the excluded members makes generateFragment skip
+// them, which is what breaks the cycle.
+for (const [typeName, excluded] of [...baseFragmentsNeeded.entries()].sort(([a], [b]) =>
+  a.localeCompare(b),
+)) {
+  const type = fragmentTypes.get(typeName);
+  if (!type) continue;
+  const seeded = [...excluded];
+  expansionStack.push(...seeded);
+  const body = generateFragment(type).replace(
+    `fragment ${typeName}Fields on ${typeName} {`,
+    `fragment ${typeName}BaseFields on ${typeName} {`,
+  );
+  expansionStack.splice(expansionStack.length - seeded.length, seeded.length);
+  fragmentParts.push(body);
+  fragmentParts.push("");
+}
+
+outputParts.push(...fragmentParts);
 
 // Generate queries
 if (queryType) {
