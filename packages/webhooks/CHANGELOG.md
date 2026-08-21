@@ -1,5 +1,11 @@
 # @team-plain/webhooks
 
+## 1.7.1
+
+### Patch Changes
+
+- d1726e2: Compare webhook signatures with `timingSafeEqual` instead of `!==`, so verification no longer leaks how many leading bytes of a guess were correct.
+
 ## 1.7.0
 
 ### Minor Changes
