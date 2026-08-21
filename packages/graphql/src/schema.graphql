@@ -277,6 +277,37 @@ type LabelType {
   updatedBy: InternalActor!
 }
 
+"""How a suggested label type was produced."""
+enum SuggestedLabelTypeSource {
+  AI
+  FALLBACK
+}
+
+enum SuggestedLabelTypeStatus {
+  PENDING
+  ACCEPTED
+  DISMISSED
+}
+
+"""
+An AI-proposed label type awaiting human review. Once accepted, a real LabelType is created and this record moves to ACCEPTED; dismissing it moves it to DISMISSED without creating a label type.
+"""
+type SuggestedLabelType {
+  id: ID!
+  name: String!
+  icon: String
+  color: String
+  type: LabelTypeType!
+  description: String
+  isExcludedFromAi: Boolean!
+  source: SuggestedLabelTypeSource!
+  status: SuggestedLabelTypeStatus!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
 """
 A label applied to a thread or user. Each label is an instance of a LabelType and records who applied it and when.
 """
@@ -569,10 +600,14 @@ Defines the shape and behaviour of a custom field that can be attached to thread
 """
 type ThreadFieldSchema {
   id: ID!
+
+  """
+  The human-readable name of the field. Must be unique across all thread field schemas in the workspace; reusing a label fails with `cannot_create_thread_field_schema`.
+  """
   label: String!
 
   """
-  A stable, URL-safe identifier for the field used when reading and writing values. Set at creation and immutable thereafter.
+  A stable identifier for the field used when reading and writing values. Must be lowercase and contain only letters, numbers, and underscores (it is validated against `^[a-z0-9_]+$`), so camelCase and hyphens are rejected. Set at creation and immutable thereafter — correcting a mistyped key means deleting and recreating the field, which discards any stored values.
   """
   key: String!
   description: String!
@@ -611,7 +646,7 @@ type ThreadFieldSchema {
   isClientReadonly: Boolean!
 
   """
-  If set, this field is only shown when the referenced sibling field has a specific value.
+  If set, this field is only shown when the referenced sibling field has a specific value. Nesting is capped at one level: the referenced parent field must not itself depend on another thread field, otherwise creation fails with `cannot_create_thread_field_schema` (the dependent nesting level is too deep).
   """
   dependsOnThreadField: DependsOnThreadFieldType
 
@@ -667,7 +702,10 @@ type ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails {
 }
 
 type ThreadDiscussionAgentSessionChannelDetails {
-  agentSessionId: ID!
+  """
+  Null when a customer's own agent drives the discussion: Plain runs no session for one.
+  """
+  agentSessionId: ID @deprecated(reason: "Use ThreadDiscussion.agentSessionId instead. A discussion's session does not depend on its channel, so reading it here forces a narrow by channel type. This field still resolves.")
 }
 
 enum ThreadDiscussionVisibility {
@@ -680,16 +718,32 @@ enum ThreadDiscussionVisibility {
 
 enum ThreadDiscussionStatus {
   """
-  The agent is actively running (only applies to AGENT_SESSION discussions).
+  The discussion is open. What the agent is doing is reported by agentStatus.
   """
-  IN_PROGRESS
-
-  """The discussion is open but no agent is currently running."""
-  IDLE
+  OPEN
 
   """The discussion has been marked as resolved."""
   RESOLVED
-  APPROVAL_REQUESTED
+}
+
+"""
+The state of the agent working on a discussion, independent of whether the discussion itself is open or resolved.
+"""
+enum ThreadDiscussionAgentStatus {
+  """
+  No agent turn has been observed on this discussion. Usually means no agent is involved at all;
+  it also covers the window between an agent being addressed and its first turn being recorded.
+  """
+  UNKNOWN
+
+  """An agent is attached to the discussion but is not currently working."""
+  IDLE
+
+  """The agent is working."""
+  IN_PROGRESS
+
+  """The agent has stopped and is waiting on a human, e.g. for an approval."""
+  NEEDS_INPUT
 }
 
 type ThreadDiscussion {
@@ -708,13 +762,19 @@ type ThreadDiscussion {
   messages(first: Int, after: String, last: Int, before: String): ThreadDiscussionMessageConnection!
 
   """
-  High-level status of the discussion. RESOLVED when resolvedAt is set.
-  For agent session discussions, IN_PROGRESS while the agent is running;
-  APPROVAL_REQUESTED when the agent has finished working but is blocked on an
-  unresolved approval request; otherwise IDLE.
-  Non-agent-session discussions are IDLE until resolved.
+  Lifecycle of the discussion: OPEN until it is resolved, RESOLVED when resolvedAt is set.
+  What the agent is doing is reported separately by agentStatus.
   """
   status: ThreadDiscussionStatus!
+
+  """
+  What the agent working on this discussion is doing. UNKNOWN when no agent is involved.
+  Prefer this over status for anything agent-related: status is narrowing to OPEN / RESOLVED.
+  """
+  agentStatus: ThreadDiscussionAgentStatus!
+
+  """The agent that was asked. Null means Plain's Sidekick."""
+  agent: MachineUser
   resolvedAt: DateTime
 
   """
@@ -738,6 +798,14 @@ type ThreadDiscussion {
   channelDetails: ThreadDiscussionChannelDetails
 
   """
+  The Sidekick agent session backing this discussion, when it has one. Set for
+  AGENT_SESSION discussions and for SLACK discussions started by a Sidekick
+  mention, whose session is linked to the discussion rather than carried in
+  channelDetails. Null for discussions with no agent session.
+  """
+  agentSessionId: ID
+
+  """
   Who can see this discussion. WORKSPACE means visible to all workspace members, USER means visible only to the creator. Null when not yet set.
   """
   visibility: ThreadDiscussionVisibility
@@ -753,10 +821,22 @@ type ThreadDiscussion {
   sourceEntityType: DiscussionSourceEntityType
 
   """
+  What kind of source this discussion was started from (THREAD | PAGE | ENTITY | CHART). Null for older rows with no source.
+  """
+  sourceType: DiscussionSourceType
+
+  """
   The page path where this discussion was started (e.g. '/workspace/ws_xxx/insights').
-  Null when not set (older rows, or thread/entity-only context).
+  Set for PAGE and CHART sources; null otherwise (older rows, or thread/entity-only context).
   """
   sourcePageLink: String
+
+  """
+  The page-fragment anchor (no '#') identifying the element the discussion was started from,
+  e.g. a specific reporting chart. Kept separate from sourcePageLink, which is matched exactly
+  as a page-scope key and must stay hash-free. Set only for PAGE and CHART sources; null otherwise.
+  """
+  sourcePageAnchor: String
   type: ThreadDiscussionType! @deprecated(reason: "Use channelDetails instead")
   slackTeamId: String @deprecated(reason: "Use channelDetails.slackTeamId instead")
   slackChannelId: String @deprecated(reason: "Use channelDetails.slackChannelId instead")
@@ -826,6 +906,14 @@ type ThreadDiscussionConnection {
 
 input DiscussionsFilter {
   createdByUserIds: [ID!]
+
+  """
+  Only return discussions in which one of the provided users has authored a message. Independent of
+  who created the discussion: combine it with createdByUserIds via or to get everything a user
+  either started or took part in. A Sidekick reply that is still queued behind the agent's current
+  turn already counts, so a session appears the moment the user sends into it.
+  """
+  participatedByUserIds: [ID!]
   discussionTypes: [DiscussionType!]
   threadIds: [ID!]
 
@@ -854,8 +942,18 @@ input DiscussionsFilter {
   """
   lastActivityAtBefore: String
 
-  """Only return discussions whose status is one of the provided values."""
+  """
+  Only return discussions whose status is one of the provided values.
+  This is the discussion's own lifecycle; filter on agentStatuses for what the agent is doing.
+  """
   statuses: [ThreadDiscussionStatus!]
+
+  """
+  Only return discussions whose agent status is one of the provided values.
+  This does not filter by whether the discussion is open: a resolved discussion keeps the agent
+  status it had when it was resolved. Combine with statuses: [OPEN] to exclude resolved ones.
+  """
+  agentStatuses: [ThreadDiscussionAgentStatus!]
 
   """
   When true, only return discussions that are unread (have an unread agent response). When false, only return read discussions. Can be combined with statuses.
@@ -866,6 +964,19 @@ input DiscussionsFilter {
   When true, only return discussions created by a system actor (e.g. workflow-driven Sidekick sessions). When false, only return discussions created by a non-system actor.
   """
   createdBySystem: Boolean
+
+  """
+  Only return discussions run by one of the provided kinds of agent. Discussions with no agent at
+  all, such as a Slack channel or email discussion, match none of them; use
+  not: { agentTypes: [...] } for those.
+  """
+  agentTypes: [DiscussionAgentType!]
+
+  """
+  Only return discussions bound to one of the provided custom agent machine users. Use this to ask
+  for the discussions belonging to a specific agent the workspace built.
+  """
+  agentMachineUserIds: [ID!]
 
   """
   Match discussions that satisfy all of the nested filters. Combined with the other fields on this filter using AND.
@@ -954,7 +1065,7 @@ type ThreadDiscussionMessage {
   updatedBy: Actor!
 }
 
-union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionApprovalRequestEntryPayload
+union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionApprovalRequestEntryPayload | ThreadDiscussionConnectRequestEntryPayload
 
 type ThreadDiscussionMessageEntryPayload {
   text: String!
@@ -1010,6 +1121,40 @@ type ThreadDiscussionApprovalRequestEntryPayload {
   calls: String!
 }
 
+enum SidekickConnectRequestStatus {
+  PENDING
+  CONNECTED
+}
+
+type SidekickConnectRequestTool {
+  """
+  Sidekick integration slug, e.g. `linear`. Matches the settings deep-link segment.
+  """
+  slug: String!
+  name: String!
+
+  """True once the workspace has authorized this integration."""
+  isConnected: Boolean!
+}
+
+"""
+Sidekick asked the workspace to connect one or more of its tools. Rendered as a
+card in the Sidekick transcript. Only produced for in-app sessions.
+"""
+type ThreadDiscussionConnectRequestEntryPayload {
+  connectRequestId: ID!
+
+  """Why Sidekick needs these tools, in its own words."""
+  justification: String!
+  tools: [SidekickConnectRequestTool!]!
+  status: SidekickConnectRequestStatus!
+
+  """
+  When every requested tool became connected. Null while the request is pending.
+  """
+  resolvedAt: DateTime
+}
+
 type WorkflowRule {
   id: ID!
   name: String!
@@ -1046,10 +1191,18 @@ type Workflow {
   id: ID!
   name: String!
 
-  """JSON-encoded trigger configuration."""
+  """
+  JSON-encoded trigger configuration, shaped as `{ "type": <triggerType>, ... }`. Valid types and their required fields:
+  - `manual` — no extra fields; the workflow runs only via the `triggerWorkflow` mutation or a UI button.
+  - `events` — `events: string[]` (at least one); runs on the listed domain events, e.g. `thread.thread_created`, `thread.message_added`, `thread.thread_field_updated`, `thread.thread_labels_changed`, `thread.thread_status_transitioned`.
+  - `schedule` — `cron: string`; runs on a recurring cron schedule evaluated in UTC.
+  Example: `{"type":"events","events":["thread.thread_field_updated"]}`.
+  """
   trigger: String!
 
-  """The ID of the first step to execute, or null if workflow has no steps."""
+  """
+  The ID of the first step to execute, or null if the workflow has no steps. This cannot be cleared to null on a published workflow (`Cannot clear startStepId on a published workflow`); to restructure a published workflow's steps, unpublish it first (`updateWorkflow` with `isPublished: false`), restructure, then republish.
+  """
   startStepId: ID
 
   """The steps in this workflow."""
@@ -1064,6 +1217,11 @@ type Workflow {
   Display order of this workflow relative to other workflows. Lower values appear first.
   """
   order: Int!
+
+  """
+  The gallery template this workflow was created from, if any. Provenance only: the template may since have changed or been retired, and the workflow diverges as soon as it is edited.
+  """
+  sourceTemplateId: ID
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -1151,7 +1309,14 @@ type WorkflowStep {
   """Optional name for the step."""
   name: String
 
-  """JSON-encoded payload containing the action or condition configuration."""
+  """
+  JSON-encoded step configuration. Every payload is an object with `version: 1` and a `type` discriminator. The payload shape depends on the step `type`:
+  - CONDITION: a condition. `type` is either a leaf check (e.g. `contains_label`, `thread_field_equals`, `thread_field_is_set`, `priority_equals`, `assigned_to`, `customer_equals`, `ai_workflow_rule_condition`) or a combinator (`and`, `or`, `not`, `else_if`) that nests other conditions under `conditions`/`condition`.
+  - ACTION: an action, e.g. `apply_labels`, `remove_labels`, `set_priority`, `set_status`, `set_tier`, `assign_to_user`, `assign_to_team`, `add_note`, `send_message`, `send_slack_notification`, `send_http_request`, `set_thread_field`, `snooze_thread`, `escalate_thread`.
+  - WAIT: `{ "duration": <seconds>, "cancelCondition"?: <condition> }`.
+  Examples: `{"version":1,"type":"apply_labels","labelTypeIds":["lt_..."]}`, `{"version":1,"type":"else_if","conditions":[...]}`.
+  Payloads embed workspace-specific IDs (label type IDs, user IDs, tier IDs, etc.), which are not portable: copying a payload into another workspace references IDs that do not exist there and the step silently applies nothing.
+  """
   payload: String!
 
   """
@@ -1291,6 +1456,23 @@ type WorkflowExecutionEdge {
 type WorkflowExecutionConnection {
   edges: [WorkflowExecutionEdge!]!
   pageInfo: PageInfo!
+}
+
+"""
+Optional narrowing for `workflowExecutionsForWorkspace`. Every field is independent; omit them all to list the whole workspace.
+"""
+input WorkflowExecutionsFilter {
+  """Only executions of this workflow."""
+  workflowId: ID
+
+  """
+  Only executions that ran against this entity — a thread id for event and manual workflows, or the
+  workspace's own id for scheduled ones. Ids carry their type, so no entity type is needed.
+  """
+  entityId: ID
+
+  """Only executions in this state."""
+  executionStatus: WorkflowExecutionStatus
 }
 
 input WorkflowExecutionByEntityFilter {
@@ -1451,6 +1633,7 @@ type ThreadsDisplayOptions {
   hasServiceLevelAgreements: Boolean!
   hasChannels: Boolean!
   hasLastUpdated: Boolean!
+  hasCreatedAt: Boolean!
   hasAssignees: Boolean!
   hasRef: Boolean!
   hasIssueTrackerIssues: Boolean!
@@ -1613,6 +1796,444 @@ type FavoritePageEdge {
   node: FavoritePage!
 }
 
+"""
+The channel a broadcast is authored for. Content is written against a specific
+channel's rendering rules, so it is not portable between channels.
+"""
+enum BroadcastType {
+  """The broadcast is authored to be sent over Slack."""
+  SLACK
+}
+
+"""
+Who a broadcast is sent as. Which sender a broadcast carries is decided by the
+channel it is authored for, so each channel contributes its own variant.
+"""
+union BroadcastSender = SlackBroadcastSender | PlainWorkspaceBroadcastSender
+
+type SlackBroadcastSender {
+  """
+  The user the broadcast is posted as. Its name and avatar are applied to the Slack message.
+  """
+  user: UserActor!
+}
+
+"""
+The workspace itself, rather than any one person. Its name and logo are applied to the Slack
+message, so the broadcast arrives from the company rather than from Plain.
+"""
+type PlainWorkspaceBroadcastSender {
+  """
+  The workspace the broadcast is posted as. Its name and logo are what recipients see.
+  """
+  workspace: Workspace!
+}
+
+"""
+Who a broadcast is sent as. Set alongside the matching id on input: `PLAIN_USER` requires
+`senderUserId`, `PLAIN_WORKSPACE` takes none.
+"""
+enum BroadcastSenderType {
+  """
+  The workspace itself. Nobody is impersonated, so the message goes out under the workspace's own
+  name and logo.
+  """
+  PLAIN_WORKSPACE
+
+  """
+  A Plain user in this workspace, whose name and avatar are applied to the message.
+  """
+  PLAIN_USER
+}
+
+"""How the `content` of a broadcast is encoded."""
+enum BroadcastContentFormat {
+  """`content` is a serialised Tiptap document."""
+  TIPTAP
+}
+
+"""
+Where a broadcast is in its lifecycle. Derived from the broadcast's latest real send, so it is
+never stored on the broadcast itself. Test sends do not affect it.
+"""
+enum BroadcastStatus {
+  """The broadcast has never been scheduled. It is fully editable."""
+  DRAFT
+
+  """
+  A send is queued for a future time, or for as soon as possible. Still editable until it starts.
+  """
+  SCHEDULED
+
+  """
+  The send has started and is working out which recipients it applies to.
+  """
+  RESOLVING
+
+  """The send is delivering to its recipients."""
+  SENDING
+
+  """Every recipient in the send received the message."""
+  SENT
+
+  """
+  The send finished, but the message reached some recipients and not others.
+  """
+  PARTIALLY_SENT
+
+  """The send finished without reaching any recipient."""
+  FAILED
+
+  """The send was cancelled before it completed."""
+  CANCELLED
+}
+
+"""
+Where one run of a broadcast is in its lifecycle. The same values `BroadcastStatus` carries apart
+from `DRAFT`, which describes a broadcast with no send rather than a send.
+"""
+enum BroadcastSendStatus {
+  SCHEDULED
+  RESOLVING
+  SENDING
+  SENT
+  PARTIALLY_SENT
+  FAILED
+  CANCELLED
+}
+
+"""Where one recipient's copy of a broadcast is in its lifecycle."""
+enum BroadcastSendDeliveryStatus {
+  """Resolved as a recipient and waiting to be posted."""
+  PENDING
+
+  """
+  Being posted right now. A delivery left here by an invocation that died mid-post is picked up by
+  the recovery sweep, so this is not always a delivery actively in flight.
+  """
+  SENDING
+
+  """The message reached this recipient."""
+  SENT
+
+  """
+  The message did not reach this recipient and will not be retried. `failureReason` says why.
+  """
+  FAILED
+}
+
+"""
+Why a delivery failed. Terminal in every case — a failure that was worth retrying was retried before
+the delivery reached `FAILED`.
+"""
+enum BroadcastSendDeliveryFailureReason {
+  """
+  Plain is not connected to this Slack channel, so there is no token to post with.
+  """
+  CHANNEL_NOT_CONNECTED
+
+  """The send this delivery belongs to no longer exists."""
+  SEND_MISSING
+
+  """The broadcast was deleted after the send started."""
+  BROADCAST_DELETED
+
+  """The broadcast's content is empty, so there is nothing to post."""
+  EMPTY_CONTENT
+
+  """The broadcast's content could not be converted into a Slack message."""
+  INVALID_CONTENT
+
+  """
+  The broadcast has no notification title, which recipients see before opening anything.
+  """
+  NOTIFICATION_TITLE_NOT_SET
+
+  """
+  The workspace's Slack integration for this recipient's team is missing.
+  """
+  SLACK_INTEGRATION_NOT_FOUND
+
+  """The broadcast has no sender set."""
+  SENDER_NOT_SET
+
+  """The user the broadcast sends as no longer exists."""
+  SENDER_USER_MISSING
+
+  """
+  The user the broadcast sends as cannot be sent as any more, for example after being deactivated.
+  """
+  SENDER_UNAVAILABLE
+
+  """
+  The recipient is an email address, which broadcasts cannot yet be delivered to.
+  """
+  EMAIL_DELIVERY_NOT_SUPPORTED
+
+  """
+  Plain's Slack app is missing a scope it needs to post. Reconnecting the integration fixes this.
+  """
+  MISSING_SLACK_SCOPES
+
+  """
+  Slack rejected the message's formatting. Retrying the same content cannot succeed.
+  """
+  INVALID_SLACK_BLOCKS
+
+  """Slack rejected the post for a reason that will not change on a retry."""
+  SLACK_UNRECOVERABLE
+
+  """Slack kept failing and the delivery ran out of attempts."""
+  MAX_ATTEMPTS
+
+  """
+  The delivery failed for a reason this version of the API does not know how to name. Treat it as an
+  unspecified failure rather than a stable value to branch on.
+  """
+  UNKNOWN
+}
+
+"""
+How many of a send's recipients are in each state. Read as one snapshot: the counts are taken by a
+single query, so they always sum to `total`.
+"""
+type BroadcastSendDeliveryCounts {
+  pending: Int!
+  sending: Int!
+  sent: Int!
+  failed: Int!
+
+  """
+  Every recipient this send resolved to. Zero until the send has resolved its recipients, including
+  while it is still `SCHEDULED`.
+  """
+  total: Int!
+}
+
+"""
+Who one delivery was addressed to. The variant matches the channel the broadcast was authored for.
+Slack channels are identified rather than named — resolve the name through `connectedSlackChannels`,
+bearing in mind that a `CHANNEL_NOT_CONNECTED` failure means there is no channel there to name.
+"""
+union BroadcastSendDeliveryRecipient = SlackBroadcastSendDeliveryRecipient | EmailBroadcastSendDeliveryRecipient
+
+type SlackBroadcastSendDeliveryRecipient {
+  """
+  A channel id is only unique within its Slack team, so the two together identify the channel.
+  """
+  slackTeamId: ID!
+  slackChannelId: ID!
+}
+
+type EmailBroadcastSendDeliveryRecipient {
+  emailAddress: String!
+}
+
+"""One recipient's copy of a broadcast, and what became of it."""
+type BroadcastSendDelivery {
+  id: ID!
+  recipient: BroadcastSendDeliveryRecipient!
+  status: BroadcastSendDeliveryStatus!
+
+  """Why the delivery failed. Null unless `status` is `FAILED`."""
+  failureReason: BroadcastSendDeliveryFailureReason
+
+  """
+  How many times posting this delivery has been attempted. Zero for a delivery that never reached Slack.
+  """
+  attempts: Int!
+
+  """When the last attempt started, or null if there has not been one."""
+  lastAttemptedAt: DateTime
+}
+
+type BroadcastSendDeliveryEdge {
+  cursor: String!
+  node: BroadcastSendDelivery!
+}
+
+type BroadcastSendDeliveryConnection {
+  edges: [BroadcastSendDeliveryEdge!]!
+  pageInfo: PageInfo!
+
+  """How many deliveries match the query, ignoring pagination."""
+  totalCount: Int!
+}
+
+"""
+Narrows a send's delivery list. Omit a field to leave that dimension unconstrained.
+"""
+input BroadcastSendDeliveriesFilter {
+  """Filters deliveries to those whose status is one of the given statuses."""
+  statuses: [BroadcastSendDeliveryStatus!]
+}
+
+"""
+Narrows a broadcast's send list. Omit a field to leave that dimension unconstrained.
+"""
+input BroadcastSendsFilter {
+  """Filters sends to those whose status is one of the given statuses."""
+  statuses: [BroadcastSendStatus!]
+
+  """
+  `false` for real sends only, `true` for test sends only. Omit for both, which is a broadcast's
+  whole history.
+  """
+  isTest: Boolean
+}
+
+type BroadcastSendEdge {
+  cursor: String!
+  node: BroadcastSend!
+}
+
+type BroadcastSendConnection {
+  edges: [BroadcastSendEdge!]!
+  pageInfo: PageInfo!
+
+  """How many sends match the query, ignoring pagination."""
+  totalCount: Int!
+}
+
+"""
+One run of a broadcast: the recipients it resolved to and what became of each of them. A broadcast's
+`status`, `scheduledAt`, `startedAt` and `completedAt` come from its most recent send, which is why
+they read as null or `DRAFT` on a broadcast that has none.
+"""
+type BroadcastSend {
+  id: ID!
+  status: BroadcastSendStatus!
+
+  """
+  Whether this was a test send. A test send posts real messages to real channels and collects real
+  deliveries, so it is only distinguishable by this field — but it never contributes to the
+  broadcast's own `status`.
+  """
+  isTest: Boolean!
+
+  """When the send is due, or when it was due if it has already run."""
+  scheduledAt: DateTime!
+
+  """
+  When the send began, as opposed to when it was due. Null until it starts.
+  """
+  startedAt: DateTime
+
+  """
+  When the send reached a terminal state, whatever that state was. Null until it finishes.
+  """
+  completedAt: DateTime
+
+  """
+  Progress across the send's recipients. Prefer this over counting `deliveries` — it is one query
+  regardless of how many recipients the send has.
+  """
+  deliveryCounts: BroadcastSendDeliveryCounts!
+
+  """
+  The send's recipients, one edge per recipient, newest first. Empty until the send has resolved who
+  it applies to. Requires the `broadcast:read` permission.
+  """
+  deliveries(filters: BroadcastSendDeliveriesFilter, first: Int, after: String, last: Int, before: String): BroadcastSendDeliveryConnection!
+}
+
+"""The authored content of a broadcast, before it is sent to any channel."""
+type Broadcast {
+  id: ID!
+
+  """
+  Human-readable name used to identify the broadcast. Internal only — it is never shown to recipients. This is what `searchBroadcasts` matches on.
+  """
+  name: String!
+
+  """
+  The title recipients see in the notification the broadcast arrives as. Unlike `name` this does leave Plain, and a broadcast cannot be sent until it is set. Null until then.
+  """
+  notificationTitle: String
+
+  """The body of the broadcast, encoded as described by `contentFormat`."""
+  content: String!
+
+  """How `content` is encoded, as declared when the broadcast was created."""
+  contentFormat: BroadcastContentFormat!
+
+  """
+  The channel this broadcast is authored for. Fixed at creation — content is written against this channel's rendering rules, so a broadcast cannot be moved to another channel.
+  """
+  type: BroadcastType!
+
+  """
+  Who the broadcast is sent as. The variant matches the broadcast's `type`. Null until a sender is set.
+  """
+  sender: BroadcastSender
+
+  """
+  Who the broadcast is sent to. Resolved to concrete recipients at send time, not when scheduled. Empty until a target is set.
+  """
+  sendTarget: BroadcastSendTarget!
+
+  """Where the broadcast is in its lifecycle."""
+  status: BroadcastStatus!
+
+  """
+  The broadcast's send history, newest first, and where per-recipient progress lives. Empty while the
+  broadcast is a draft.
+  
+  Unfiltered this includes test sends, which post real messages and collect real deliveries — check
+  `isTest`, or narrow with `filters`, before presenting an entry as a real send. Because of that the
+  first edge is not necessarily the send `status` describes; use `latestSend` for that.
+  
+  Ordered by `scheduledAt` descending — a send's place in the history is when it was due to go out.
+  Rescheduling therefore moves a send within the list, but only a `SCHEDULED` send can be
+  rescheduled and it already sorts first, so the settled part of the history does not shift.
+  """
+  sends(filters: BroadcastSendsFilter, first: Int, after: String, last: Int, before: String): BroadcastSendConnection!
+
+  """
+  The send the broadcast's lifecycle fields are derived from: the most recent one that is not a test
+  send, which is the same row `status`, `scheduledAt`, `startedAt` and `completedAt` come from. Null
+  while the broadcast is a draft.
+  
+  Equivalent to the first edge of `sends(filters: { isTest: false })`, but batched across a list of
+  broadcasts where the connection is not — so prefer this in a list view and `sends` on a detail view.
+  """
+  latestSend: BroadcastSend
+
+  """
+  When the broadcast's send is due, or when it started if it is already underway. Null while the broadcast is a draft.
+  """
+  scheduledAt: DateTime
+
+  """
+  When the send actually began, as opposed to when it was due. Null until it starts.
+  """
+  startedAt: DateTime
+
+  """
+  When the send reached a terminal state, whatever that state was. Null until it finishes.
+  """
+  completedAt: DateTime
+
+  """
+  Whether the broadcast has been soft-deleted. Soft-deleted broadcasts are excluded from lists and search but remain queryable by ID.
+  """
+  isDeleted: Boolean!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+
+  """
+  The timestamp at which the broadcast was soft-deleted, or null if it has not been deleted.
+  """
+  deletedAt: DateTime
+
+  """
+  The user or machine user that deleted the broadcast, or null if it has not been deleted.
+  """
+  deletedBy: InternalActor
+}
+
 type Snippet {
   id: ID!
   name: String!
@@ -1685,6 +2306,9 @@ enum TaskStatus {
 
   """The task has been completed."""
   DONE
+
+  """The task has been cancelled and no longer needs to be done."""
+  CANCELLED
 }
 
 union TaskAssignee = User | MachineUser | System
@@ -1727,6 +2351,11 @@ type Task {
 
   """Paginated list of threads linked to this task."""
   threadLinks(first: Int, after: String, last: Int, before: String): ThreadLinkConnection!
+
+  """
+  Paginated list of the entities that raised this task. Empty for tasks created by any other means.
+  """
+  sourceLinks(first: Int, after: String, last: Int, before: String): TaskLinkConnection!
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -1753,6 +2382,49 @@ type TaskConnection {
 type TaskEdge {
   cursor: String!
   node: Task!
+}
+
+"""A link from a task back to the entity that caused it to be raised."""
+interface TaskLink {
+  id: ID!
+  taskId: ID!
+
+  """The identifier of the entity that raised this task."""
+  sourceId: ID!
+
+  """The type of entity that raised this task (e.g. `knowledge_gap`)."""
+  sourceType: String!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+type KnowledgeGapTaskLink implements TaskLink {
+  id: ID!
+  taskId: ID!
+  sourceId: ID!
+  sourceType: String!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+
+  """
+  The knowledge gap this task was raised for. Null, with an error on this field, when the caller may not read knowledge gaps.
+  """
+  knowledgeGap: KnowledgeGap
+}
+
+type TaskLinkEdge {
+  cursor: String!
+  node: TaskLink!
+}
+
+type TaskLinkConnection {
+  edges: [TaskLinkEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type EmailSignature {
@@ -1810,7 +2482,17 @@ type DiscussionResolvedNotificationDetail {
   threadDiscussionId: ID!
 }
 
-union InternalNotificationDetail = NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | EmailBounceNotificationDetail | DiscussionResolvedNotificationDetail
+"""
+An integration's stored credentials can no longer be refreshed, so it must be reconnected
+before it will work again.
+"""
+type IntegrationReauthRequiredNotificationDetail {
+  """The service integration key, e.g. 'salesforce'."""
+  serviceIntegrationKey: String!
+  serviceAuthorizationId: ID!
+}
+
+union InternalNotificationDetail = NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | EmailBounceNotificationDetail | DiscussionResolvedNotificationDetail | IntegrationReauthRequiredNotificationDetail
 
 """
 An internal notification displayed to workspace members in the Plain app.
@@ -2070,6 +2752,117 @@ type SnippetEdge {
 
 type SnippetConnection {
   edges: [SnippetEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Matches a tenant field against one value. Exactly one value field must be set.
+"""
+type BroadcastAudienceTenantFieldFilter {
+  """The external ID of the tenant field schema being filtered on."""
+  externalFieldId: ID!
+  stringValue: String
+  booleanValue: Boolean
+  numberValue: Float
+  stringArrayValue: [String!]!
+
+  """IDs of users matched when filtering on a user-reference tenant field."""
+  userReferenceValues: [ID!]!
+}
+
+"""
+A Slack channel. A channel id is only unique within its team, so both are needed to name one.
+"""
+type BroadcastSlackChannelRef {
+  slackTeamId: ID!
+  slackChannelId: ID!
+}
+
+input BroadcastSlackChannelRefInput {
+  slackTeamId: ID!
+  slackChannelId: ID!
+}
+
+"""
+What a saved audience selects, and what a broadcast send target reaches. A tree: `and`, `or` and
+`not` hold more of this same type, ANDed with the dimensions beside them. Dimensions on one node AND
+together, values within a dimension OR. An empty dimension does not constrain the audience and cannot be
+written — omit it instead.
+"""
+type BroadcastAudienceFilter {
+  tenantIds: [ID!]!
+  tierIds: [ID!]!
+  tenantFields: [BroadcastAudienceTenantFieldFilter!]!
+
+  """
+  Specific channels, pinned by id. Nothing re-resolves these, so an audience holding only these is a saved channel list.
+  """
+  slackChannels: [BroadcastSlackChannelRef!]!
+
+  """
+  Unanchored channel-name substrings, matched case-insensitively and ORed with each other. Resolved at send time, so channels created or renamed after the audience was saved are picked up.
+  """
+  slackChannelNameContains: [String!]!
+
+  """
+  Saved audiences, resolved to channels at send time. Values OR, so naming two means either of them; naming both means two ANDed branches. Always empty on an audience's own filter: an audience cannot be defined in terms of another audience.
+  """
+  audienceIds: [ID!]!
+  and: [BroadcastAudienceFilter!]!
+  or: [BroadcastAudienceFilter!]!
+  not: BroadcastAudienceFilter
+}
+
+"""
+A named, reusable set of broadcast recipients, resolved to concrete channels at send time.
+"""
+type BroadcastAudience {
+  id: ID!
+
+  """
+  Human-readable name used to identify the audience. Internal only — it is never shown to recipients.
+  """
+  name: String!
+
+  """
+  The channel this audience is written for. Must match the `type` of any broadcast it is attached to.
+  """
+  type: BroadcastType!
+
+  """
+  What the audience selects. Resolved to concrete recipients at send time, not when saved.
+  """
+  filters: BroadcastAudienceFilter!
+
+  """
+  Whether the audience has been soft-deleted. Soft-deleted audiences are excluded from lists but stay queryable by ID, so the record of what a past broadcast was sent to survives.
+  """
+  isDeleted: Boolean!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+  deletedAt: DateTime
+  deletedBy: InternalActor
+}
+
+type BroadcastAudienceEdge {
+  cursor: String!
+  node: BroadcastAudience!
+}
+
+type BroadcastAudienceConnection {
+  edges: [BroadcastAudienceEdge!]!
+  pageInfo: PageInfo!
+}
+
+type BroadcastEdge {
+  cursor: String!
+  node: Broadcast!
+}
+
+type BroadcastConnection {
+  edges: [BroadcastEdge!]!
   pageInfo: PageInfo!
 }
 
@@ -2859,6 +3652,11 @@ type MachineUser {
   The type of machine user. Defaults to API_USER if not specified during creation.
   """
   type: MachineUserType!
+
+  """
+  True when this machine user is an agent the workspace built itself, rather than an ordinary API integration.
+  """
+  isCustomAgent: Boolean!
   avatar: WorkspaceFile
 
   """Fetches a single API key belonging to this machine user by its ID."""
@@ -3138,7 +3936,7 @@ type WorkspaceSlackSidekickIntegration {
   slackTeamName: String!
 
   """
-  The Slack channel ID of the #ask-plain channel that Sidekick monitors for user questions.
+  The Slack channel ID of the channel that Sidekick monitors for user questions.
   """
   askSidekickSlackChannelId: ID!
 
@@ -3864,6 +4662,11 @@ type Query {
   sidekickCreditUsageByDay(input: SidekickCreditUsageByDayInput!): SidekickCreditUsageByDay!
 
   """
+  The workspace's current Sidekick (Plain) credit balance: the monthly allowance grant/used/remaining and when it resets, plus any purchased top-up remaining. Use it to answer how many credits are left. Requires the `billing:read` permission.
+  """
+  sidekickCreditBalance: SidekickCreditBalance!
+
+  """
   Returns short-lived WorkOS admin portal URLs and an embeddable widget token so workspace admins can configure SSO, directory sync, and domain verification.
   Each URL is a single-use link generated on the fly by WorkOS; fetch this query immediately before redirecting the user.
   Requires the `workspace:edit` permission and an active SSO entitlement (Frontier plan or above).
@@ -3885,6 +4688,11 @@ type Query {
   Returns a label type by its external ID. Returns null if no match is found. External IDs are unique within a workspace and are set when creating or updating a label type. Requires the `labelType:read` permission.
   """
   labelTypeByExternalId(externalId: ID!): LabelType
+
+  """
+  Returns the PENDING AI-suggested label types awaiting review, most recently created first. Requires the `suggestedLabelType:read` permission.
+  """
+  suggestedLabelTypes: [SuggestedLabelType!]!
 
   """
   Returns all roles available in the workspace, including both built-in roles (Owner, Admin, Support, Viewer, None) and any custom roles. Supports cursor-based pagination. Requires the `roles:read` permission.
@@ -3974,12 +4782,12 @@ type Query {
   customerGroups(filters: CustomerGroupsFilter, first: Int, after: String, last: Int, before: String): CustomerGroupConnection!
 
   """
-  Returns all thread field schemas defined in the workspace, paginated. Use this to discover which custom fields exist and their configuration before reading or writing thread field values.
+  Returns all thread field schemas defined in the workspace, paginated. Use this to discover which custom fields exist and their configuration before reading or writing thread field values. Selecting the `createdBy`/`updatedBy` actor down to its `user` additionally requires the `user:read` permission; a token without it can query an empty workspace but starts failing once a schema exists and that selection is present.
   """
   threadFieldSchemas(first: Int, after: String, last: Int, before: String): ThreadFieldSchemaConnection!
 
   """
-  Fetches a single thread field schema by its ID. Returns null if no schema with the given ID exists.
+  Fetches a single thread field schema by its ID. Returns null if no schema with the given ID exists. Selecting the `createdBy`/`updatedBy` actor down to its `user` additionally requires the `user:read` permission.
   """
   threadFieldSchema(threadFieldSchemaId: ID!): ThreadFieldSchema
 
@@ -4014,9 +4822,47 @@ type Query {
   snippet(snippetId: ID!): Snippet
 
   """
+  Returns a paginated list of the workspace's broadcasts, newest first. Soft-deleted
+  broadcasts are excluded. Optionally narrow the results with `filters` (status). Supports standard
+  forward and backward cursor pagination. Requires the `broadcast:read` permission.
+  """
+  broadcasts(filters: BroadcastsFilter, first: Int, after: String, last: Int, before: String): BroadcastConnection!
+
+  """
+  Searches broadcasts by name (case-insensitive partial match). Soft-deleted broadcasts
+  are excluded. Optionally narrow the results with `filters` (status), which applies on top of the
+  name match. Requires the `broadcast:read` permission.
+  """
+  searchBroadcasts(searchQuery: BroadcastsSearchQuery!, filters: BroadcastsFilter, first: Int, after: String, last: Int, before: String): BroadcastConnection!
+
+  """
+  Fetches a single broadcast by its ID, or null if no broadcast with that ID exists.
+  Returns soft-deleted broadcasts (where `isDeleted` is true). Requires the
+  `broadcast:read` permission.
+  """
+  broadcast(broadcastId: ID!): Broadcast
+
+  """
+  Returns a paginated list of the workspace's broadcast audiences, newest first. Soft-deleted
+  audiences are excluded. Requires the `broadcastAudience:read` permission.
+  """
+  broadcastAudiences(first: Int, after: String, last: Int, before: String): BroadcastAudienceConnection!
+
+  """
+  Fetches a single broadcast audience by its ID, or null if no audience with that ID exists.
+  Requires the `broadcastAudience:read` permission.
+  """
+  broadcastAudience(broadcastAudienceId: ID!): BroadcastAudience
+
+  """
   Returns the workspace's email settings, including whether email is enabled, any custom domain configuration, and BCC addresses.
   """
   workspaceEmailSettings: WorkspaceEmailSettings!
+
+  """
+  Returns the suppression for a specific email address, or null when the address is not suppressed.
+  """
+  emailSuppression(emailAddress: String!): EmailSuppression
 
   """
   Returns the workspace-level chat settings, including whether the live-chat channel is enabled for this workspace.
@@ -4152,6 +4998,17 @@ type Query {
   The search term can be part of either the slack's handle or full name.
   """
   searchSlackUsers(slackTeamId: String!, slackChannelId: String!, searchQuery: String!, first: Int, after: String, last: Int, before: String): SlackUserConnection!
+
+  """
+  Suggests teammates to invite to Plain, sourced from the members of the
+  workspace's connected Slack discussion channels. Only members of the
+  workspace's own Slack team are included (Slack Connect guests are excluded),
+  and anyone (matched by email, case-insensitive) who is already a member of
+  this workspace or has a pending invite to it is excluded. Returns an empty
+  list when there are no connected, enabled discussion channels for the
+  given slackTeamId (e.g. a Slack Connect channel integration).
+  """
+  suggestedSlackTeammates(slackTeamId: String!): [SuggestedSlackTeammate!]!
 
   """
   Gets all slack channels for this workspace, which match the specified filters.
@@ -4308,6 +5165,13 @@ type Query {
   workflowExecutions(workflowId: ID!, first: Int, after: String, last: Int, before: String): WorkflowExecutionConnection!
 
   """
+  List executions across every workflow in the workspace, newest first, paginated. Use this for a
+  workspace-wide view of what automation has been doing, or narrow it with `filters` — by workflow,
+  by the entity a run fired against, or by state. Executions that have not started yet sort to the top.
+  """
+  workflowExecutionsForWorkspace(filters: WorkflowExecutionsFilter, first: Int, after: String, last: Int, before: String): WorkflowExecutionConnection!
+
+  """
   List workflow executions filtered by the entity they ran against (e.g. a specific thread), paginated.
   Useful for showing all automation that has fired on a given thread. Optionally narrow further by workflow ID or execution status.
   """
@@ -4317,6 +5181,21 @@ type Query {
   Fetch a workflow share link by its token. Returns null if no share link with the given token exists.
   """
   workflowShareLink(token: String!): WorkflowShareLink
+
+  """
+  Published templates for the gallery, metadata only — deprecated ones are already absent because the
+  templates repo omits them. Use `workflowTemplate` for one with its workflows.
+  Needs an authenticated caller and nothing more: templates are one published document, identical
+  for every workspace, so there is nothing to scope by permission.
+  """
+  workflowTemplateGallery: [WorkflowTemplateGalleryItem!]!
+
+  """
+  Null if no template with that ID is published. Deprecated templates still resolve here, which is
+  what keeps existing install links working.
+  Needs an authenticated caller and nothing more.
+  """
+  workflowTemplate(templateId: ID!): WorkflowTemplate
 
   """
   Fetch a single chat app by its ID. Returns null if no chat app with that ID exists in the workspace.
@@ -4362,6 +5241,12 @@ type Query {
   List threads with optional filtering and sorting, returned as a paginated connection. Supports rich filters (status, assignee, customer, label, priority, date ranges, tenant, tier, thread fields, and more) and multiple sort orders. Use this query to build inbox-style views or to export threads in bulk. Requires the `thread:read` permission.
   """
   threads(filters: ThreadsFilter, sortBy: ThreadsSort, first: Int, after: String, last: Int, before: String): ThreadConnection!
+
+  """
+  The signed-in user's own test threads, oldest first. They are excluded from `threads`, so this
+  is the only query that lists them. Requires the `thread:read` permission.
+  """
+  testThreads: [Thread!]!
 
   """
   Full-text search across thread titles, message contents, and customer names/emails. Accepts optional `ThreadsFilter` to narrow results further. For exact lookups by ID, ref, or external ID use the dedicated queries instead. Requires the `thread:read` permission.
@@ -4674,7 +5559,7 @@ type Query {
 
   """
   This API is in beta and may change without notice.
-  Returns the current AI-suggested reply candidates for a thread, scoped to the most recent customer message. Returns an empty list if Plain AI suggested responses are disabled for the workspace, if no customer message exists on the thread, or if no suggestion has been generated yet. Requires the `generatedReply:read` permission.
+  Returns the current suggested reply candidates for a thread, scoped to the most recent customer message. Suggestions submitted via `addGeneratedReply` are always included. Suggestions generated by Plain AI are excluded when suggested responses are disabled or not available for the workspace, or when an externally submitted suggestion exists for the same message. Returns an empty list if no customer message exists on the thread or no suggestion is available. Requires the `generatedReply:read` permission.
   """
   generatedReplies(threadId: ID!, options: [GenerateReplyOption!]): [GeneratedReply!]
 
@@ -4694,7 +5579,7 @@ type Query {
   knowledgeSources(first: Int, after: String, last: Int, before: String, filters: KnowledgeSourcesFilter): KnowledgeSourceConnection!
 
   """
-  Returns the knowledge sources cited by AI agent replies across a thread, each linked to the message it was cited in. Returns an empty list when the thread has no citations or is not visible to the caller. Requires the `thread:read` permission.
+  Returns the knowledge sources cited by AI agent replies across a thread, each linked to the timeline entry it was cited in and carrying a snapshot title (and best-effort url) plus the live cited document when it still exists. Returns an empty list when the thread has no citations or is not visible to the caller. Requires the `thread:read` and `timeline:read` permissions.
   """
   knowledgeSourceCitationsByThread(threadId: ID!): [KnowledgeSourceCitation!]!
 
@@ -4730,6 +5615,20 @@ type Query {
 
   """Fetch a single help center by ID. Returns null if not found."""
   helpCenter(id: ID!): HelpCenter
+
+  """
+  Lists AI conversations customers have had across the workspace's help centers.
+  Defaults to sorting by last message time in descending order.
+  Requires the `helpCenter:read` permission. Not available to machine users.
+  """
+  helpCenterAiConversations(first: Int, after: String, last: Int, before: String, filters: HelpCenterAiConversationsFilter, sortBy: HelpCenterAiConversationsSort): HelpCenterAiConversationConnection!
+
+  """
+  Fetches a help center AI conversation by its internal ID.
+  Returns null when the conversation does not exist in the current workspace.
+  Requires the `helpCenter:read` permission. Not available to machine users.
+  """
+  helpCenterAiConversation(id: ID!): HelpCenterAiConversation
 
   """Fetch a single help center article by ID. Returns null if not found."""
   helpCenterArticle(id: ID!): HelpCenterArticle
@@ -4794,9 +5693,9 @@ type Query {
   knowledgeGap(knowledgeGapId: ID!): KnowledgeGap
 
   """
-  Paginated list of knowledge gaps detected in the workspace. Optionally filter by status (OPEN, RESOLVED, IGNORED) and sort by signal count or recency. Defaults to descending signal count order. Requires the `knowledgeGap:read` permission.
+  Paginated list of knowledge gaps detected in the workspace. Sort by signal count or recency. Defaults to descending signal count order. Requires the `knowledgeGap:read` permission.
   """
-  knowledgeGaps(filters: KnowledgeGapsFilter, sortBy: KnowledgeGapsSort, first: Int, after: String, last: Int, before: String): KnowledgeGapConnection!
+  knowledgeGaps(sortBy: KnowledgeGapsSort, first: Int, after: String, last: Int, before: String): KnowledgeGapConnection!
 }
 
 type EscalationPath {
@@ -5434,52 +6333,76 @@ type TimeSeriesMetricDimension {
 enum SingleValueMetricName {
   service_level_agreement_compliance_frt
   service_level_agreement_compliance_nrt
-  threads_first_response_time_median
-  threads_resolution_time_median
+  threads_first_response_time_median @deprecated(reason: "Use `threads_first_response_time` (percentile defaults to 50).")
+  threads_resolution_time_median @deprecated(reason: "Use `threads_resolution_time` (percentile defaults to 50).")
   threads_all_time_count_done
-  threads_time_between_follow_up_responses_median
-  threads_time_customer_waiting_median
+  threads_time_between_follow_up_responses_median @deprecated(reason: "Use `threads_time_between_follow_up_responses` (percentile defaults to 50).")
+  threads_time_customer_waiting_median @deprecated(reason: "Use `threads_time_customer_waiting` (percentile defaults to 50).")
   threads_csat__percentage
   threads_csat__count
-  agent_threads_first_response_time_median
-  agent_threads_time_between_follow_up_responses_median
-  agent_threads_resolution_time_median
-  agent_threads_time_customer_waiting_median
+  agent_threads_first_response_time_median @deprecated(reason: "Use `agent_threads_first_response_time` (percentile defaults to 50).")
+  agent_threads_time_between_follow_up_responses_median @deprecated(reason: "Use `agent_threads_time_between_follow_up_responses` (percentile defaults to 50).")
+  agent_threads_resolution_time_median @deprecated(reason: "Use `agent_threads_resolution_time` (percentile defaults to 50).")
+  agent_threads_time_customer_waiting_median @deprecated(reason: "Use `agent_threads_time_customer_waiting` (percentile defaults to 50).")
   agent_service_level_agreement_compliance_frt
   agent_service_level_agreement_compliance_nrt
+
+  """
+  Duration metrics whose percentile is chosen at request time via the `percentile` input field (default P50). These replace the deprecated `*_median` variants above.
+  """
+  threads_first_response_time
+  threads_resolution_time
+  threads_time_between_follow_up_responses
+  threads_time_customer_waiting
+  agent_threads_first_response_time
+  agent_threads_time_between_follow_up_responses
+  agent_threads_resolution_time
+  agent_threads_time_customer_waiting
 }
 
 enum TimeSeriesMetricName {
   threads_created_count
-  threads_first_response_time__p50
-  threads_first_response_time__p90
+  threads_first_response_time__p50 @deprecated(reason: "Use `threads_first_response_time` (percentile defaults to 50).")
+  threads_first_response_time__p90 @deprecated(reason: "Use `threads_first_response_time` with `percentile: 90`.")
   threads_status_count__todo
   threads_status_count__done
   threads_status_count__snoozed
-  threads_resolution_time__p50
-  threads_resolution_time__p90
-  threads_time_customer_waiting__p50
-  threads_time_customer_waiting__p90
+  threads_resolution_time__p50 @deprecated(reason: "Use `threads_resolution_time` (percentile defaults to 50).")
+  threads_resolution_time__p90 @deprecated(reason: "Use `threads_resolution_time` with `percentile: 90`.")
+  threads_time_customer_waiting__p50 @deprecated(reason: "Use `threads_time_customer_waiting` (percentile defaults to 50).")
+  threads_time_customer_waiting__p90 @deprecated(reason: "Use `threads_time_customer_waiting` with `percentile: 90`.")
   threads_status_transitions_count__todo
   threads_status_transitions_count__todo_with_created
   threads_status_transitions_count__done
   threads_status_transitions_count__snoozed
-  threads_time_between_follow_up_responses__p50
-  threads_time_between_follow_up_responses__p90
-  threads_time_between_all_responses__p50
-  threads_time_between_all_responses__p90
+  threads_time_between_follow_up_responses__p50 @deprecated(reason: "Use `threads_time_between_follow_up_responses` (percentile defaults to 50).")
+  threads_time_between_follow_up_responses__p90 @deprecated(reason: "Use `threads_time_between_follow_up_responses` with `percentile: 90`.")
+  threads_time_between_all_responses__p50 @deprecated(reason: "Use `threads_time_between_all_responses` (percentile defaults to 50).")
+  threads_time_between_all_responses__p90 @deprecated(reason: "Use `threads_time_between_all_responses` with `percentile: 90`.")
   threads_csat__percentage
   threads_csat__count
   agent_messages_sent_count
-  agent_threads_first_response_time__p50
-  agent_threads_time_between_follow_up_responses__p50
-  agent_threads_resolution_time__p50
+  agent_threads_first_response_time__p50 @deprecated(reason: "Use `agent_threads_first_response_time` (percentile defaults to 50).")
+  agent_threads_time_between_follow_up_responses__p50 @deprecated(reason: "Use `agent_threads_time_between_follow_up_responses` (percentile defaults to 50).")
+  agent_threads_resolution_time__p50 @deprecated(reason: "Use `agent_threads_resolution_time` (percentile defaults to 50).")
   agent_threads_assignment_transitions_count
   agent_threads_status_transitions_count__todo
   agent_threads_status_transitions_count__done
   agent_threads_status_transitions_count__snoozed
   agent_threads_csat__percentage
   agent_threads_csat__count
+
+  """
+  Duration metrics whose percentile is chosen at request time via the `percentile` input field (default P50). These replace the deprecated `__p50`/`__p90` variants above.
+  """
+  threads_first_response_time
+  threads_resolution_time
+  threads_time_customer_waiting
+  threads_time_between_follow_up_responses
+  threads_time_between_all_responses
+  agent_threads_first_response_time
+  agent_threads_time_between_follow_up_responses
+  agent_threads_resolution_time
 }
 
 enum HeatmapMetricName {
@@ -5548,7 +6471,7 @@ input ThreadMetricFilters {
   customerGroupIdentifiers: [CustomerGroupIdentifier!]
 
   """
-  Scopes to who the thread is *currently* assigned to (primary or additional/secondary assignee) — not who performed any measured action. For per-agent action metrics (agent_* metrics) use `userId` instead. Referencing any user other than the caller requires `metricsAgent:read`.
+  Scopes to who the thread is *currently* assigned to (primary or additional/secondary assignee) — not who performed any measured action. For per-agent action metrics (agent_* metrics) use `userIds` instead. Referencing any user other than the caller requires `metricsAgent:read`.
   """
   assignedToUser: [ID!]
   priorities: [Int!]
@@ -5558,9 +6481,9 @@ input ThreadMetricFilters {
   surveyResponse: SurveyResponseFilter
 
   """
-  Scopes to who *performed the measured action* (the event actor — e.g. who sent the message, resolved the thread, or made the transition). This is the correct field for agent_* metrics. Distinct from `assignedToUser`, which is the thread's current assignee: the two diverge once a thread is reassigned after the measured event. Referencing any user other than the caller requires `metricsAgent:read`.
+  Scopes to who *performed the measured action* (the event actors — e.g. who sent the message, resolved the thread, or made the transition). This is the correct field for agent_* metrics. Use with `groupBy: ASSIGNEE`.
   """
-  userId: ID
+  userIds: [ID!]
   and: [ThreadMetricFilters!]
   or: [ThreadMetricFilters!]
   not: ThreadMetricFilters
@@ -5577,6 +6500,11 @@ input ThreadTimeSeriesMetricInput {
   interval: ThreadMetricInterval!
   groupBy: [ThreadMetricGroupByInput!]
   filters: ThreadMetricFilters
+
+  """
+  Percentile (integer 1-99, e.g. 90 for P90) for the configurable-percentile duration metrics (threads_first_response_time, threads_resolution_time, threads_time_customer_waiting, threads_time_between_follow_up_responses, threads_time_between_all_responses, and their agent_ variants). Defaults to 50 (median). Rejected for any other metric.
+  """
+  percentile: Int
 
   """
   The return mode. Either METRIC - the values of the metric. Or THREAD_IDS - the distinct thread ids behind the values. Use filters and to/from to narrow search if looking for threadsIds for a specific subset
@@ -5598,6 +6526,11 @@ input ThreadSingleValueMetricInput {
   to: String
   groupBy: [ThreadMetricGroupByInput!]
   filters: ThreadMetricFilters
+
+  """
+  Percentile (integer 1-99, e.g. 90 for P90) for the configurable-percentile duration metrics (threads_first_response_time, threads_resolution_time, threads_time_customer_waiting, threads_time_between_follow_up_responses, and their agent_ variants). Defaults to 50 (median). Rejected for any other metric.
+  """
+  percentile: Int
 
   """
   The return mode. Either METRIC - the values of the metric. Or THREAD_IDS - the distinct thread ids behind the values. Use filters and to/from to narrow search if looking for threadsIds for a specific subset
@@ -6323,6 +7256,9 @@ type RemoveLabelsFromUserOutput {
   error: MutationError
 }
 
+"""
+Makes a thread field conditional on a sibling field's value. Nesting is capped at one level: `threadFieldSchemaId` must reference a field that does not itself depend on another thread field, otherwise the mutation fails with `cannot_create_thread_field_schema` (the dependent nesting level is too deep).
+"""
 input DependsOnThreadFieldInput {
   threadFieldSchemaId: ID!
   threadFieldSchemaValue: String!
@@ -6333,7 +7269,14 @@ input OptionalDependsOnThreadFieldInput {
 }
 
 input CreateThreadFieldSchemaInput {
+  """
+  The human-readable name of the field. Must be unique across all thread field schemas in the workspace.
+  """
   label: String!
+
+  """
+  A stable identifier used when reading and writing values. Must be lowercase and contain only letters, numbers, and underscores (validated against `^[a-z0-9_]+$`); camelCase and hyphens are rejected. Immutable after creation.
+  """
   key: String!
   description: String!
   order: Int!
@@ -6362,6 +7305,10 @@ input OptionalDateTimeInput {
 
 input UpdateThreadFieldSchemaInput {
   threadFieldSchemaId: ID!
+
+  """
+  The human-readable name of the field. Must be unique across all thread field schemas in the workspace. The `key` cannot be changed after creation, so renaming a field means changing only its label here.
+  """
   label: StringInput
   description: StringInput
   order: Int
@@ -6565,8 +7512,15 @@ type TriggerWorkflowRuleOutput {
 input CreateWorkflowInput {
   name: String!
 
-  """JSON-encoded trigger configuration."""
+  """
+  JSON-encoded trigger configuration. See `Workflow.trigger` for the valid `type` values and their required fields.
+  """
   trigger: String!
+
+  """
+  The gallery template this workflow was created from, if any. Recorded once and never updated — the workflow diverges as soon as it is edited.
+  """
+  sourceTemplateId: ID
 }
 
 type CreateWorkflowOutput {
@@ -6578,8 +7532,14 @@ input UpdateWorkflowInput {
   workflowId: ID!
   name: StringInput
 
-  """JSON-encoded trigger configuration."""
+  """
+  JSON-encoded trigger configuration. See `Workflow.trigger` for the valid `type` values and their required fields.
+  """
   trigger: StringInput
+
+  """
+  The ID of the first step to execute. Cannot be cleared to null on a published workflow; unpublish (`isPublished: false`) before restructuring steps, then republish.
+  """
   startStepId: StringInput
   order: IntInput
   isPublished: BooleanInput
@@ -6630,7 +7590,9 @@ type WorkflowShareLinkStep {
   """Optional name for the step."""
   name: String
 
-  """JSON-encoded payload containing the action or condition configuration."""
+  """
+  JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs.
+  """
   payload: String!
 
   """Array of next step IDs, mirroring WorkflowStep.transitions."""
@@ -6652,6 +7614,121 @@ type CreateWorkflowShareLinkOutput {
   error: MutationError
 }
 
+type WorkflowTemplate {
+  """
+  Stable, human-readable identifier. Also the template's public URL, so it never changes.
+  """
+  id: ID!
+  title: String!
+
+  """
+  The template's description, as ordered blocks. The first block doubles as the gallery summary.
+  """
+  content: [WorkflowTemplateContentBlock!]!
+  tags: [String!]!
+
+  """
+  Whether the gallery should highlight this template. Editorial, so it carries no meaning to the workflow engine.
+  """
+  isFeatured: Boolean!
+
+  """The author's brand name, as it should be displayed."""
+  author: String!
+
+  """The author's domain, for rendering their logo."""
+  authorDomain: String!
+  dependencies: WorkflowTemplateDependencies!
+  workflows: [WorkflowTemplateWorkflow!]!
+}
+
+"""
+A workflow a template installs. Deliberately mirrors the shape the workflow editor parses.
+"""
+type WorkflowTemplateWorkflow {
+  name: String!
+
+  """JSON-encoded trigger configuration."""
+  trigger: String!
+
+  """
+  The ID of the first step to execute, or null if the workflow has no steps.
+  """
+  startStepId: ID
+  steps: [WorkflowTemplateStep!]!
+}
+
+type WorkflowTemplateStep {
+  id: ID!
+  type: WorkflowStepType!
+  name: String
+
+  """
+  JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs.
+  """
+  payload: String!
+
+  """Array of next step IDs, mirroring WorkflowStep.transitions."""
+  transitions: [ID]!
+  positionX: Float!
+  positionY: Float!
+}
+
+type WorkflowTemplateGalleryItem {
+  id: ID!
+  title: String!
+  content: [WorkflowTemplateContentBlock!]!
+  tags: [String!]!
+
+  """
+  Whether the gallery should highlight this template. Editorial, so it carries no meaning to the workflow engine.
+  """
+  isFeatured: Boolean!
+
+  """The author's brand name, as it should be displayed."""
+  author: String!
+
+  """The author's domain, for rendering their logo."""
+  authorDomain: String!
+  dependencies: WorkflowTemplateDependencies!
+}
+
+type WorkflowTemplateContentBlock {
+  type: String!
+  value: String!
+}
+
+type WorkflowTemplateDependencies {
+  """Integration keys the workspace needs connected, e.g. `slack`."""
+  integrations: [String!]!
+
+  """
+  Plain features the workspace needs switched on, e.g. `sidekick`. Distinct from integrations:
+  these are enabled by a plan rather than connected to a third party, so a template can declare one
+  the caller cannot use.
+  """
+  features: [String!]!
+}
+
+input ExportWorkflowTemplateInput {
+  workflowId: ID!
+}
+
+type ExportWorkflowTemplateOutput {
+  """
+  The template's workflows. Everything else a template needs is authored in Notion. Empty when `error` is set.
+  """
+  files: [WorkflowTemplateFile!]!
+  error: MutationError
+}
+
+type WorkflowTemplateFile {
+  """
+  Path relative to the template's directory in the workflow-templates repo.
+  """
+  path: String!
+  content: String!
+}
+
 input CreateWorkflowStepInput {
   workflowId: ID!
 
@@ -6661,7 +7738,9 @@ input CreateWorkflowStepInput {
   """Optional name for the step."""
   name: String
 
-  """JSON-encoded payload containing the action or condition configuration."""
+  """
+  JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs.
+  """
   payload: String!
 
   """
@@ -6728,7 +7807,9 @@ input BulkUpsertWorkflowStepInput {
   """Optional name for the step."""
   name: String
 
-  """JSON-encoded payload containing the action or condition configuration."""
+  """
+  JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs.
+  """
   payload: String!
 
   """
@@ -6752,12 +7833,12 @@ input BulkUpsertWorkflowStepsInput {
   steps: [BulkUpsertWorkflowStepInput!]!
 
   """
-  Optional: Set this as the workflow's startStepId. Use null to clear. If not provided, startStepId is unchanged.
+  Optional: Set this as the workflow's startStepId. Use null to clear. If not provided, startStepId is unchanged. Clearing to null fails on a published workflow — unpublish before restructuring, then republish.
   """
   startStepId: ID
 
   """
-  Optional: JSON-encoded trigger configuration. If not provided, trigger is unchanged.
+  Optional: JSON-encoded trigger configuration. If not provided, trigger is unchanged. See `Workflow.trigger` for the valid `type` values and their required fields.
   """
   trigger: StringInput
 }
@@ -7072,6 +8153,61 @@ type CreateThreadLinkOutput {
   error: MutationError
 }
 
+input BulkCreateThreadLinksInput {
+  """The threads to link to the same target entity. Between 1 and 25 IDs."""
+  threadIds: [ID!]!
+  sourceId: String
+  sourceType: String
+  linearIssue: LinearIssueThreadLinkInput
+  plainThread: PlainThreadLinkInput
+  plainTask: PlainTaskThreadLinkInput
+  jiraIssue: JiraIssueThreadLinkInput
+}
+
+type BulkCreateThreadLinkResult {
+  threadId: ID!
+
+  """The created link, or null when this thread failed (see `error`)."""
+  threadLink: ThreadLink
+
+  """The reason this thread failed, or null when it succeeded."""
+  error: MutationError
+}
+
+type BulkCreateThreadLinksOutput {
+  """Per-thread results, in the same order as the input `threadIds`."""
+  results: [BulkCreateThreadLinkResult!]!
+
+  """
+  Set to a `bulk_partial_failure` error whenever any thread failed. Null only when every thread succeeded.
+  """
+  error: MutationError
+}
+
+input BulkDeleteThreadLinksInput {
+  """
+  The thread link IDs to delete. Between 1 and 100 IDs. Duplicate IDs are collapsed to a single deletion.
+  """
+  threadLinkIds: [ID!]!
+}
+
+type BulkDeleteThreadLinkResult {
+  threadLinkId: ID!
+
+  """The reason this deletion failed, or null when it succeeded."""
+  error: MutationError
+}
+
+type BulkDeleteThreadLinksOutput {
+  """Per-link results, in first-seen order of the input `threadLinkIds`."""
+  results: [BulkDeleteThreadLinkResult!]!
+
+  """
+  Set to a `bulk_partial_failure` error whenever any link failed to delete. Null only when every deletion succeeded.
+  """
+  error: MutationError
+}
+
 input DeleteThreadLinkInput {
   threadLinkId: ID!
 }
@@ -7105,6 +8241,11 @@ type ThreadLinkGroupSingleCompanyMetrics {
   metrics: ThreadLinkGroupAggregateMetrics!
 }
 
+type ThreadLinkGroupSingleTenantMetrics {
+  tenant: Tenant!
+  metrics: ThreadLinkGroupAggregateMetrics!
+}
+
 type ThreadLinkGroupTierMetrics {
   byTier: [ThreadLinkGroupSingleTierMetrics!]!
 
@@ -7117,6 +8258,13 @@ type ThreadLinkGroupCompanyMetrics {
 
   """Metrics when the thread is not associated with any company."""
   noCompany: ThreadLinkGroupAggregateMetrics!
+}
+
+type ThreadLinkGroupTenantMetrics {
+  byTenant: [ThreadLinkGroupSingleTenantMetrics!]!
+
+  """Metrics when the thread is not associated with any tenant."""
+  noTenant: ThreadLinkGroupAggregateMetrics!
 }
 
 type ThreadLinkGroup {
@@ -7137,6 +8285,14 @@ type ThreadLinkGroup {
   Breakdown of linked thread counts by company, including threads with no company.
   """
   companyMetrics: ThreadLinkGroupCompanyMetrics!
+
+  """
+  Breakdown of linked thread counts by tenant, including threads with no tenant.
+  A thread is matched to its own tenant and to any EMAIL_DOMAIN tenant its customer
+  is a member of. The thread will be counted once per tenant, so total counts for
+  tenant metrics may sum to more than the group's total thread links.
+  """
+  tenantMetrics: ThreadLinkGroupTenantMetrics!
 
   """
   The default rank of the thread link group which takes into account
@@ -7167,6 +8323,7 @@ input ThreadLinkGroupFilter {
   threadLinkGroupIds: [ID!]
   companyIds: [ID!]
   tierIds: [ID!]
+  tenantIds: [ID!]
 }
 
 input CreateNoteInput {
@@ -7217,6 +8374,7 @@ input ThreadsDisplayOptionsInput {
   hasServiceLevelAgreements: Boolean!
   hasChannels: Boolean!
   hasLastUpdated: Boolean!
+  hasCreatedAt: Boolean
   hasAssignees: Boolean!
   hasRef: Boolean!
   hasIssueTrackerIssues: Boolean
@@ -7343,6 +8501,259 @@ input UpdateSnippetInput {
 
 type UpdateSnippetOutput {
   snippet: Snippet
+  error: MutationError
+}
+
+input BroadcastContentFormatInput {
+  value: BroadcastContentFormat!
+}
+
+"""
+Nullable, unlike `BroadcastContentFormatInput`: clearing the sender is how a broadcast goes back to having none.
+"""
+input BroadcastSenderTypeInput {
+  value: BroadcastSenderType
+}
+
+"""
+The channel a recipient is reached on. A broadcast's own `type` decides which of these its target may name.
+"""
+enum BroadcastRecipientType {
+  SLACK
+}
+
+"""
+Someone a broadcast is aimed at by name rather than by filter.
+
+Flat with a `type` rather than a union, because GraphQL has no input unions and the input and output
+shapes should not diverge. The per-channel fields are nullable for the same reason: an email recipient
+will carry an address and no channel, and making them nullable now is what keeps that from being a
+breaking change later. Read `type` first.
+"""
+type BroadcastSendTargetRecipient {
+  type: BroadcastRecipientType!
+
+  """
+  Set when `type` is `SLACK`. A channel id is only unique within its team, so both are needed to name one.
+  """
+  slackTeamId: ID
+  slackChannelId: ID
+}
+
+enum BroadcastSendTargetScope {
+  """
+  Every tenant with a connected channel. Resolves at the channel layer, so a tenant with no connected channel contributes nothing rather than erroring.
+  """
+  ALL_TENANTS
+
+  """Only the tenants the target's `filters` match."""
+  MATCHING
+}
+
+type BroadcastSendTarget {
+  """
+  Whether the broadcast reaches every tenant or only the ones `filters` matches. Null until the author has chosen.
+  """
+  scope: BroadcastSendTargetScope
+
+  """Recipients named outright, independent of any audience."""
+  recipients: [BroadcastSendTargetRecipient!]!
+
+  """
+  Everyone the broadcast goes to besides the recipients above: audiences, tiers, tenants and channels are all dimensions of this one filter. Set when `scope` is `MATCHING`, and null otherwise.
+  """
+  filters: BroadcastAudienceFilter
+
+  """
+  Recipients subtracted from whatever the rest of the target resolves to, so a broadcast can drop one without editing the audience that pulled it in.
+  """
+  excludeRecipients: [BroadcastSendTargetRecipient!]!
+}
+
+"""
+Mirrors `BroadcastSendTargetRecipient`. Supply the fields belonging to the `type` given.
+"""
+input BroadcastSendTargetRecipientInput {
+  type: BroadcastRecipientType!
+  slackTeamId: ID
+  slackChannelId: ID
+}
+
+input BroadcastSendTargetInput {
+  """
+  Omit to leave the broadcast targeting nobody. `MATCHING` requires `filters`; `ALL_TENANTS` rejects it.
+  """
+  scope: BroadcastSendTargetScope
+  recipients: [BroadcastSendTargetRecipientInput!]!
+
+  """
+  Everyone the broadcast goes to besides the recipients above. Every audience it names must be of the same type as the broadcast. Every node must constrain at least one dimension — an empty node is rejected rather than treated as everyone, which is what `ALL_TENANTS` is for.
+  """
+  filters: BroadcastAudienceFilterInput
+  excludeRecipients: [BroadcastSendTargetRecipientInput!]
+}
+
+input CreateBroadcastInput {
+  name: String!
+
+  """
+  The title recipients see in the notification. Can be set later, but is required before the broadcast can be sent.
+  """
+  notificationTitle: String
+
+  """The body of the broadcast, encoded as declared by `contentFormat`."""
+  content: String!
+
+  """How `content` is encoded."""
+  contentFormat: BroadcastContentFormat!
+  type: BroadcastType!
+
+  """
+  Which kind of sender `senderUserId` describes. Required alongside `senderUserId`, and rejected with it when `PLAIN`.
+  """
+  senderType: BroadcastSenderType
+  senderUserId: ID
+  senderEmailAddress: String
+  sendTarget: BroadcastSendTargetInput
+}
+
+type CreateBroadcastOutput {
+  broadcast: Broadcast
+  error: MutationError
+}
+
+input UpdateBroadcastInput {
+  broadcastId: ID!
+  name: StringInput
+
+  """
+  The title recipients see in the notification. Pass null to clear it; a broadcast with none cannot be sent.
+  """
+  notificationTitle: OptionalStringInput
+
+  """
+  Set alongside `contentFormat` whenever the encoding of the new body differs from the stored one.
+  """
+  content: StringInput
+  contentFormat: BroadcastContentFormatInput
+
+  """
+  Which kind of sender `senderUserId` describes. Validated against the state the broadcast will
+  hold, so either half can be set on its own as long as the result is coherent: `PLAIN_USER`
+  needs a `senderUserId`, `PLAIN` must not have one.
+  """
+  senderType: BroadcastSenderTypeInput
+  senderUserId: OptionalStringInput
+  senderEmailAddress: OptionalStringInput
+
+  """
+  Pass a target to replace the current one, or an empty `channels` list to clear it. Omit to leave
+  it unchanged. Clearing the target — or the sender — of a broadcast that is already scheduled is
+  rejected, because a scheduled broadcast has to stay sendable.
+  """
+  sendTarget: BroadcastSendTargetInput
+}
+
+type UpdateBroadcastOutput {
+  broadcast: Broadcast
+  error: MutationError
+}
+
+input DeleteBroadcastInput {
+  broadcastId: ID!
+}
+
+type DeleteBroadcastOutput {
+  broadcast: Broadcast
+  error: MutationError
+}
+
+input BroadcastAudienceTenantFieldFilterInput {
+  externalFieldId: ID!
+  stringValue: String
+  booleanValue: Boolean
+  numberValue: Float
+  stringArrayValue: [String!]
+  userReferenceValues: [String!]
+}
+
+input BroadcastAudienceFilterInput {
+  tenantIds: [ID!]
+  tierIds: [ID!]
+  tenantFields: [BroadcastAudienceTenantFieldFilterInput!]
+  slackChannels: [BroadcastSlackChannelRefInput!]
+  slackChannelNameContains: [String!]
+
+  """
+  Saved audiences. Values OR, like every other dimension. Rejected on an audience's own filter, which is what
+  keeps an audience from being defined in terms of another one; on a broadcast's it may sit anywhere in the
+  tree, including under a `not` to exclude the audience.
+  """
+  audienceIds: [ID!]
+  and: [BroadcastAudienceFilterInput!]
+  or: [BroadcastAudienceFilterInput!]
+  not: BroadcastAudienceFilterInput
+}
+
+input CreateBroadcastAudienceInput {
+  name: String!
+
+  """
+  Fixed at creation. An audience can only be attached to a broadcast of the same type.
+  """
+  type: BroadcastType!
+
+  """
+  What the audience selects. Every node must constrain at least one dimension.
+  """
+  filters: BroadcastAudienceFilterInput!
+}
+
+type CreateBroadcastAudienceOutput {
+  broadcastAudience: BroadcastAudience
+  error: MutationError
+}
+
+input UpdateBroadcastAudienceInput {
+  broadcastAudienceId: ID!
+  name: StringInput
+
+  """
+  Replaces the stored filters wholesale. Validated against the audience's existing `type`, which cannot be changed.
+  """
+  filters: BroadcastAudienceFilterInput
+}
+
+type UpdateBroadcastAudienceOutput {
+  broadcastAudience: BroadcastAudience
+  error: MutationError
+}
+
+input DeleteBroadcastAudienceInput {
+  broadcastAudienceId: ID!
+}
+
+type DeleteBroadcastAudienceOutput {
+  broadcastAudience: BroadcastAudience
+  error: MutationError
+}
+
+input ScheduleBroadcastInput {
+  broadcastId: ID!
+
+  """
+  When the broadcast should be sent. Either the literal string `now` to send as soon as possible,
+  or an ISO-8601 timestamp in UTC (e.g. `2026-08-10T14:30:00Z`). A timestamp that has already
+  passed is treated as `now`; one more than a minute in the past is rejected.
+  
+  Null clears the schedule instead, returning the broadcast to `DRAFT`. Only a send that has not
+  been picked up can be cleared; from `RESOLVING` onwards the call is rejected.
+  """
+  scheduledAt: String
+}
+
+type ScheduleBroadcastOutput {
+  broadcast: Broadcast
   error: MutationError
 }
 
@@ -7558,6 +8969,31 @@ type WorkspaceEmailSettings {
   Email addresses that are automatically BCC'd on every outbound email sent from this workspace.
   """
   bccEmailAddresses: [String!]!
+}
+
+enum EmailSuppressionReason {
+  HARD_BOUNCE
+  SPAM_COMPLAINT
+  MANUAL_SUPPRESSION
+}
+
+type EmailSuppression {
+  emailAddress: String!
+  reason: EmailSuppressionReason!
+  createdAt: DateTime!
+
+  """
+  Whether this suppression can be removed. False for spam complaints, which the email provider refuses to delete.
+  """
+  isRemovable: Boolean!
+}
+
+input DeleteEmailSuppressionInput {
+  emailAddress: String!
+}
+
+type DeleteEmailSuppressionOutput {
+  error: MutationError
 }
 
 input AddWorkspaceAlternateSupportEmailAddressInput {
@@ -8031,6 +9467,11 @@ input CreateMachineUserInput {
 
   """The type of machine user. Defaults to API_USER if not specified."""
   type: MachineUserType
+
+  """
+  Mark this machine user as an agent the workspace built itself. Defaults to false. Cannot be combined with the AI_AGENT type.
+  """
+  isCustomAgent: Boolean
   avatar: WorkspaceFileInput
 }
 
@@ -8052,10 +9493,15 @@ input UpdateMachineUserInput {
   machineUserId: ID!
   fullName: StringInput
   publicName: StringInput
-  description: StringInput
+  description: OptionalStringInput
 
   """The type of machine user. Defaults to API_USER if not specified."""
   type: MachineUserType
+
+  """
+  Mark this machine user as an agent the workspace built itself. Cannot be set on an AI_AGENT machine user.
+  """
+  isCustomAgent: BooleanInput
   avatar: WorkspaceFileInput
 }
 
@@ -8113,6 +9559,35 @@ input DeleteThreadInput {
 }
 
 type DeleteThreadOutput {
+  error: MutationError
+}
+
+type CreateTestThreadOutput {
+  thread: Thread
+  error: MutationError
+}
+
+type CreateAllTestThreadsOutput {
+  """
+  The threads this call created. Scenarios the caller already had a thread for are skipped and do not appear here.
+  """
+  threads: [Thread!]!
+
+  """
+  Set to a `bulk_partial_failure` error whenever any scenario failed. Null when every scenario was created or skipped.
+  """
+  error: MutationError
+}
+
+input DeleteTestThreadInput {
+  threadId: ID!
+}
+
+type DeleteTestThreadOutput {
+  error: MutationError
+}
+
+type DeleteAllTestThreadsOutput {
   error: MutationError
 }
 
@@ -8644,6 +10119,16 @@ type Mutation {
   moveLabelType(input: MoveLabelTypeInput!): MoveLabelTypeOutput!
 
   """
+  Accepts one or more pending suggested label types, creating a real label type for each and marking the suggestions as ACCEPTED. All ids must currently be PENDING. Fails the whole batch with error code `label_type_name_already_exists` if a suggestion's name matches an existing label type or another suggestion in the same batch. Requires the `labelType:create` and `labelType:read` permissions.
+  """
+  acceptSuggestedLabelTypes(input: AcceptSuggestedLabelTypesInput!): AcceptSuggestedLabelTypesOutput!
+
+  """
+  Dismisses one or more pending suggested label types without creating label types. All ids must currently be PENDING. Requires the `labelType:create` permission.
+  """
+  dismissSuggestedLabelTypes(input: DismissSuggestedLabelTypesInput!): DismissSuggestedLabelTypesOutput!
+
+  """
   Add one or more labels to a thread. Labels that are already present on the thread are silently skipped. Archived label types are rejected with error code `cannot_add_label_using_archived_label_type`. Requires the `label:create` permission.
   """
   addLabels(input: AddLabelsInput!): AddLabelsOutput!
@@ -8667,6 +10152,16 @@ type Mutation {
   Links a thread to an external entity such as a Linear issue, Jira ticket, another Plain thread, or a Plain task. Provide exactly one of `linearIssue`, `jiraIssue`, `plainThread`, `plainTask`, or `sourceId`/`sourceType` for generic issue trackers. Returns an error with code `thread_link_already_exists` if the same link already exists for the thread.
   """
   createThreadLink(input: CreateThreadLinkInput!): CreateThreadLinkOutput!
+
+  """
+  Links many threads to a single target entity (a Linear issue, Jira ticket, another Plain thread, a Plain task, or a generic issue tracker) in one request. Provide exactly one of `linearIssue`, `jiraIssue`, `plainThread`, `plainTask`, or `sourceId`/`sourceType`, plus the list of `threadIds` to link to it. Each thread is linked independently: the returned `results` carry a per-thread `threadLink` or `error` (e.g. `thread_link_already_exists`), and the top-level `error` is set to `bulk_partial_failure` if any thread failed. Requires the `threadLink:create` permission.
+  """
+  bulkCreateThreadLinks(input: BulkCreateThreadLinksInput!): BulkCreateThreadLinksOutput!
+
+  """
+  Deletes multiple thread links by their IDs. Non-existent IDs are silently ignored (idempotent). Requires the `threadLink:delete` permission.
+  """
+  bulkDeleteThreadLinks(input: BulkDeleteThreadLinksInput!): BulkDeleteThreadLinksOutput!
 
   """
   Removes an existing thread link by its ID. If the link type was `MERGED_INTO`, the previously merged thread will be marked as done automatically.
@@ -8730,6 +10225,56 @@ type Mutation {
   Updates one or more fields of an existing snippet. Each field uses a wrapper input — pass `{ value: "..." }` to set it or omit it entirely to leave it unchanged. To remove the snippet's `path` (un-group it) pass `{ value: null }`. Requires the `snippet:edit` permission.
   """
   updateSnippet(input: UpdateSnippetInput!): UpdateSnippetOutput!
+
+  """
+  Creates a new broadcast in the workspace. The `content` is encoded as declared by
+  `contentFormat` and authored against the rendering rules of the given `type`.
+  Requires the `broadcast:create` permission.
+  """
+  createBroadcast(input: CreateBroadcastInput!): CreateBroadcastOutput!
+
+  """
+  Updates one or more fields of an existing broadcast. Each field uses a wrapper input —
+  pass `{ value: ... }` to set it or omit it entirely to leave it unchanged. `type` is
+  not updatable. Requires the `broadcast:edit` permission.
+  """
+  updateBroadcast(input: UpdateBroadcastInput!): UpdateBroadcastOutput!
+
+  """
+  Soft-deletes a broadcast. Deleted broadcasts are excluded from `broadcasts`
+  and `searchBroadcasts` but remain fetchable by ID with `isDeleted: true`. Requires
+  the `broadcast:delete` permission.
+  """
+  deleteBroadcast(input: DeleteBroadcastInput!): DeleteBroadcastOutput!
+
+  """
+  Creates a reusable broadcast audience. `filters` is validated against `type`, so a filter naming a
+  dimension that type cannot resolve is rejected here rather than resolving to nobody at send time.
+  Requires the `broadcastAudience:create` permission.
+  """
+  createBroadcastAudience(input: CreateBroadcastAudienceInput!): CreateBroadcastAudienceOutput!
+
+  """
+  Updates a broadcast audience's name, filters, or both. Editing an audience changes who every
+  broadcast using it will reach on its next send. Requires the `broadcastAudience:edit` permission.
+  """
+  updateBroadcastAudience(input: UpdateBroadcastAudienceInput!): UpdateBroadcastAudienceOutput!
+
+  """
+  Soft-deletes a broadcast audience. Rejected with `cannot_delete_broadcast_audience` while a
+  broadcast targeting it is scheduled or being sent, since past `SCHEDULED` its author can no longer
+  edit the reference away. Requires the `broadcastAudience:delete` permission.
+  """
+  deleteBroadcastAudience(input: DeleteBroadcastAudienceInput!): DeleteBroadcastAudienceOutput!
+
+  """
+  Queues a broadcast to be sent, moving it from `DRAFT` to `SCHEDULED`. Calling this again on a
+  broadcast that has not started sending changes when it will go out; once the send has started it
+  is rejected. The broadcast must have a sender and at least one channel. A null `scheduledAt`
+  clears the schedule instead, returning the broadcast to `DRAFT`. Requires the
+  `broadcast:send` and `broadcast:read` permissions.
+  """
+  scheduleBroadcast(input: ScheduleBroadcastInput!): ScheduleBroadcastOutput!
 
   """
   Create or update the settings for a team (label type of kind TEAM). If settings do not yet exist for the given team, they are created with defaults (round-robin disabled, max capacity 5); otherwise the existing settings are updated with the supplied values. The labelTypeId must refer to a label type of type TEAM — passing any other label type ID returns a validation error. Requires the `labelType:edit` permission.
@@ -8922,6 +10467,12 @@ type Mutation {
   createWorkflowShareLink(input: CreateWorkflowShareLinkInput!): CreateWorkflowShareLinkOutput!
 
   """
+  Build the files for publishing a workflow as a template; writes nothing. Requires the
+  `workflowRule:create` permission.
+  """
+  exportWorkflowTemplate(input: ExportWorkflowTemplateInput!): ExportWorkflowTemplateOutput!
+
+  """
   Add a single step to a workflow. For bulk changes to a workflow's step graph, prefer `bulkUpsertWorkflowSteps`.
   """
   createWorkflowStep(input: CreateWorkflowStepInput!): CreateWorkflowStepOutput!
@@ -9079,6 +10630,11 @@ type Mutation {
   deleteWorkspaceEmailDomainSettings: DeleteWorkspaceEmailDomainSettingsOutput!
 
   """
+  Removes a hard-bounce or manual suppression for one email address. Spam-complaint suppressions cannot be removed.
+  """
+  deleteEmailSuppression(input: DeleteEmailSuppressionInput!): DeleteEmailSuppressionOutput!
+
+  """
   Marks whether email forwarding has been configured on the custom domain. Call this after setting up the forwarding rule in your DNS/email provider to update Plain's record of the forwarding status.
   """
   verifyWorkspaceEmailForwardingSettings(input: VerifyWorkspaceEmailForwardingSettingsInput!): VerifyWorkspaceEmailForwardingSettingsOutput!
@@ -9217,7 +10773,7 @@ type Mutation {
   deleteWorkspaceSlackChannelIntegration(input: DeleteWorkspaceSlackChannelIntegrationInput!): DeleteWorkspaceSlackChannelIntegrationOutput!
 
   """
-  Installs Plain's Sidekick AI agent into the workspace's Slack. Exchanges the OAuth authorization code (obtained by sending the user through the URL from workspaceSlackSidekickInstallationInfo) for a bot token, creates or reuses the #ask-plain Slack channel, and persists the integration. Only one Sidekick integration is allowed per workspace and per Slack team; calling this when one already exists returns an error. Requires the workspaceSlackSidekickIntegration:create permission and the ai_agent billing entitlement.
+  Installs Plain's Sidekick AI agent into the workspace's Slack. Exchanges the OAuth authorization code (obtained by sending the user through the URL from workspaceSlackSidekickInstallationInfo) for a bot token, creates the #ask-plain Slack channel, and persists the integration. Fails if a channel named #ask-plain already exists, since Slack offers no way to resolve an existing channel by name. Only one Sidekick integration is allowed per workspace and per Slack team; calling this when one already exists returns an error. Requires the workspaceSlackSidekickIntegration:create permission and the ai_agent billing entitlement.
   """
   createWorkspaceSlackSidekickIntegration(input: CreateWorkspaceSlackSidekickIntegrationInput!): CreateWorkspaceSlackSidekickIntegrationOutput!
 
@@ -9506,6 +11062,32 @@ type Mutation {
   deleteThread(input: DeleteThreadInput!): DeleteThreadOutput!
 
   """
+  Create a test thread for the signed-in user. Test threads come from a synthetic customer rather
+  than a real one. The scenario is picked for you and fixes the thread's title; its opening
+  message is written shortly after this returns. They are listed by `testThreads` rather than
+  `threads`, and only for the user who created them. Requires the `thread:create` permission.
+  """
+  createTestThread: CreateTestThreadOutput!
+
+  """
+  Create one test thread per scenario for the signed-in user, so they get a populated inbox in a
+  single call rather than one `createTestThread` per scenario. Each thread comes from that
+  scenario's own synthetic customer, and its opening message is written shortly after this
+  returns. Scenarios the caller already has a test thread for are skipped, so calling this again
+  tops the set up rather than duplicating it, and a scenario that fails does not stop the rest.
+  Use `testThreads` for the caller's full set. Requires the `thread:create` permission.
+  """
+  createAllTestThreads: CreateAllTestThreadsOutput!
+
+  """
+  Permanently delete one of the signed-in user's own test threads. Other threads are reported as not found.
+  """
+  deleteTestThread(input: DeleteTestThreadInput!): DeleteTestThreadOutput!
+
+  """Permanently delete every test thread belonging to the signed-in user."""
+  deleteAllTestThreads: DeleteAllTestThreadsOutput!
+
+  """
   Start a new discussion on a Plain thread. Supports Slack (posts a new thread in a connected Slack channel),
   Email (sends an outbound email chain), and Cursor workspace background agent discussions.
   The markdownContent field is sent as the opening message; for Slack discussions you may also supply
@@ -9548,6 +11130,13 @@ type Mutation {
   The message is delivered to the underlying channel (Slack thread reply, email reply, or agent session).
   """
   sendDiscussionMessage(input: SendDiscussionMessageInput!): SendDiscussionMessageOutput!
+
+  """
+  Report what an agent the workspace built is doing on a discussion. Only that agent may call this:
+  Plain runs no session for it, so without a report the discussion looks permanently idle. Plain
+  sets agentStatus itself for Sidekick discussions, which this mutation rejects.
+  """
+  updateDiscussionAgentStatus(input: UpdateDiscussionAgentStatusInput!): UpdateDiscussionAgentStatusOutput!
 
   """
   Mark a discussion as resolved, setting its status to RESOLVED and recording the resolution timestamp.
@@ -9973,6 +11562,11 @@ type Mutation {
   createThreadChannelAssociation(input: CreateThreadChannelAssociationInput!): CreateThreadChannelAssociationOutput!
 
   """
+  Changes how tenants are assigned for an existing thread channel association. Requires the `threadChannelAssociation:edit` permission.
+  """
+  updateThreadChannelAssociationTenantMembershipPolicy(input: UpdateThreadChannelAssociationTenantMembershipPolicyInput!): UpdateThreadChannelAssociationTenantMembershipPolicyOutput!
+
+  """
   Removes a thread channel association, unlinking the connected Slack channel from its associated company or tenant. Requires the `threadChannelAssociation:delete` permission.
   """
   deleteThreadChannelAssociation(input: DeleteThreadChannelAssociationInput!): DeleteThreadChannelAssociationOutput!
@@ -10159,11 +11753,6 @@ type Mutation {
   Upsert up to 25 customers from an external system using their externalId for idempotency. Each customer can include an optional list of tenants to associate with. Returns an ImportResult with added, updated, and skipped counts.
   """
   importCustomers(input: ImportCustomersInput!): ImportCustomersOutput!
-
-  """
-  Update the status of a knowledge gap to OPEN, RESOLVED, or IGNORED. This operation is idempotent: if the gap already has the requested status, it is returned without modification and no event is emitted. Requires the `knowledgeGap:edit` permission.
-  """
-  changeKnowledgeGapStatus(input: ChangeKnowledgeGapStatusInput!): ChangeKnowledgeGapStatusOutput!
 }
 
 input CreateAiFeatureFeedbackInput {
@@ -10365,6 +11954,24 @@ input MoveLabelTypeInput {
 
 type MoveLabelTypeOutput {
   labelType: LabelType
+  error: MutationError
+}
+
+input AcceptSuggestedLabelTypesInput {
+  suggestedLabelTypeIds: [ID!]!
+}
+
+type AcceptSuggestedLabelTypesOutput {
+  labelTypes: [LabelType!]!
+  error: MutationError
+}
+
+input DismissSuggestedLabelTypesInput {
+  suggestedLabelTypeIds: [ID!]!
+}
+
+type DismissSuggestedLabelTypesOutput {
+  suggestedLabelTypes: [SuggestedLabelType!]!
   error: MutationError
 }
 
@@ -10674,21 +12281,45 @@ type HelpCenterArticleDocument {
   article: HelpCenterArticle!
 }
 
+"""The kind of knowledge source an AI agent citation points at."""
+enum KnowledgeSourceCitationType {
+  """A help center article."""
+  HELP_CENTER_ARTICLE
+
+  """An indexed (crawled) document, such as a public documentation page."""
+  INDEXED_DOCUMENT
+}
+
 """
-A knowledge document that an AI agent reply cited, linked to the message it was cited in. One
-reply can produce multiple citations; each is returned as its own entry.
+A knowledge document that an AI agent reply cited, linked to the timeline entry it was cited in.
+One reply can produce multiple citations; each is returned as its own entry.
 """
 type KnowledgeSourceCitation {
-  """
-  The id of the channel message (chat, email, etc.) this citation belongs to.
-  """
-  messageId: ID!
-
-  """The id of the thread the citing message belongs to."""
+  """The id of the thread the citing reply belongs to."""
   threadId: ID!
 
   """
-  The cited knowledge document. Null if it has since been deleted or is not visible to the caller.
+  The id of the timeline entry the citing reply is rendered as. The frontend correlates citations to entries on this id.
+  """
+  timelineEntryId: ID!
+
+  """
+  The kind of source that was cited. Snapshotted, so it survives deletion of the source (unlike `document`) and lets the caller pick an icon or affordance even once the live document is gone.
+  """
+  sourceType: KnowledgeSourceCitationType!
+
+  """
+  Snapshot of the cited source's title at the time it was cited. Always present, so a since-deleted source still shows what was cited.
+  """
+  title: String!
+
+  """
+  Snapshot of the cited source's URL when it has one, otherwise null. Best-effort; prefer building links from `document` when it is present.
+  """
+  url: String
+
+  """
+  The live cited knowledge document. Null if it has since been deleted or is not visible to the caller.
   """
   document: KnowledgeDocument
 }
@@ -10803,6 +12434,21 @@ enum DiscussionType {
   AGENT_SESSION
 }
 
+"""
+Which kind of agent is working on a discussion. This is about who runs the agent, not which
+channel the discussion is on: a Sidekick session can run in Plain, in a workflow or in Slack.
+"""
+enum DiscussionAgentType {
+  """Plain's own Sidekick, which Plain runs and bills for."""
+  PLAIN_SIDEKICK
+
+  """
+  An agent the workspace built, which runs on the customer's own compute. Plain records the
+  conversation and starts nothing.
+  """
+  CUSTOM_AGENT
+}
+
 enum DiscussionSourceEntityType {
   COMPANY
   TENANT
@@ -10811,6 +12457,16 @@ enum DiscussionSourceEntityType {
   TIER
   CUSTOMER_GROUP
   CUSTOMER
+}
+
+"""
+What kind of source a discussion was started from. CHART is a reporting chart/page (carries sourcePageLink, no sourceEntityId); ENTITY carries sourceEntityId + sourceEntityType; PAGE carries just sourcePageLink; THREAD is thread-scoped.
+"""
+enum DiscussionSourceType {
+  THREAD
+  PAGE
+  ENTITY
+  CHART
 }
 
 enum ThreadDiscussionMessageType {
@@ -10879,14 +12535,39 @@ input CreateDiscussionInput {
   sourceEntityType: DiscussionSourceEntityType
 
   """
+  Which agent to ask on an AGENT_SESSION discussion. Omit for Plain's Sidekick. Must reference a
+  machine user marked as a custom agent; Plain starts nothing for one, so the agent is expected to
+  reply over the API.
+  """
+  agentMachineUserId: ID
+
+  """
   The page path where this discussion was started (e.g. '/insights', '/settings').
   Used to provide context when the user is on a page without a specific entity.
+  Also carries the reporting page link for a CHART source.
   """
   sourcePageLink: String
 
   """
+  The page-fragment anchor (no '#') identifying the element the discussion was started from,
+  e.g. a specific reporting chart. Kept separate from sourcePageLink, which is matched exactly
+  as a page-scope key and must stay hash-free. Only meaningful for PAGE and CHART sources.
+  """
+  sourcePageAnchor: String
+
+  """
+  The kind of source. Pass CHART (with sourcePageLink) to start a discussion from a reporting
+  chart. THREAD/PAGE/ENTITY are otherwise inferred from threadId / sourcePageLink / sourceEntityId.
+  """
+  sourceType: DiscussionSourceType
+
+  """
   Free-form context from the UI (e.g. active filters on the current page) injected
   into the agent's prompt, so it knows what data the user is currently looking at.
+  
+  Ignored when agentMachineUserId is set. Plain builds the prompt only for its own Sidekick;
+  an agent the workspace built receives the message over the discussion webhook, which does
+  not carry this field. Passing it is accepted but has no effect.
   """
   additionalContext: String
 }
@@ -10986,6 +12667,22 @@ input SendDiscussionMessageInput {
 
 type SendDiscussionMessageOutput {
   discussionMessage: ThreadDiscussionMessage
+  error: MutationError
+}
+
+input UpdateDiscussionAgentStatusInput {
+  discussionId: ID!
+
+  """
+  IN_PROGRESS while the agent works, NEEDS_INPUT when it has stopped and is waiting on a person,
+  IDLE when it has finished. Settling on IDLE also marks the discussion unread, so the reply
+  surfaces. UNKNOWN is not accepted: it means no agent turn has been observed.
+  """
+  agentStatus: ThreadDiscussionAgentStatus!
+}
+
+type UpdateDiscussionAgentStatusOutput {
+  discussion: ThreadDiscussion
   error: MutationError
 }
 
@@ -11414,9 +13111,14 @@ input TenantFieldSchemasFilter {
 }
 
 input TenantFieldSchemaInput {
+  """New schemas can only have source: 'api'."""
   source: String!
   externalFieldId: ID!
   label: String!
+
+  """
+  The field type. Set when the schema is first created and immutable thereafter: for an existing schema (matched on `source` and `externalFieldId`) the type must match the stored value, otherwise the upsert is rejected. The label, options, visibility and order can still be updated.
+  """
   type: TenantFieldType!
   options: [String!]
   isVisible: Boolean!
@@ -11429,7 +13131,12 @@ input UpsertTenantFieldSchemaInput {
 
 type UpsertTenantFieldSchemaOutput {
   tenantFieldSchemas: [TenantFieldSchema!]!
-  result: UpsertResult
+  result: UpsertResult @deprecated(reason: "Use results instead.")
+
+  """
+  The outcome per input schema, ordered to match input.tenantFieldSchemas.
+  """
+  results: [UpsertResult!]
   error: MutationError
 }
 
@@ -11523,6 +13230,11 @@ type TenantField {
   id: ID!
 
   """
+  The origin of this field value, matching the `source` of the corresponding `TenantFieldSchema`. Null for values stored before sources were recorded.
+  """
+  source: String
+
+  """
   References the `externalFieldId` of the corresponding `TenantFieldSchema`.
   """
   externalFieldId: ID!
@@ -11558,14 +13270,18 @@ input UpsertTenantInput {
   externalId: String!
   url: OptionalStringInput
 
-  """The primary domain name associated with this tenant (e.g. `acme.com`)."""
+  """
+  The primary domain name associated with this tenant (e.g. `acme.com`). This field is in beta and may not be available to you by default.
+  """
   primaryDomain: OptionalStringInput
 
-  """Alternate domain names associated with this tenant."""
+  """
+  Alternate domain names associated with this tenant. This field is in beta and may not be available to you by default.
+  """
   alternateDomains: StringArrayInput
 
   """
-  Whether customers whose email domain matches this tenant's primary or alternate domains are automatically added to it.
+  Whether customers whose email domain matches this tenant's primary or alternate domains are automatically added to it. This field is in beta and may not be available to you by default.
   """
   isDomainAutoJoinEnabled: BooleanInput
 }
@@ -12073,6 +13789,26 @@ The entity a thread is assigned to: a human user, a machine user (bot), or the P
 union ThreadAssignee = User | MachineUser | System
 
 """
+Controls how tenants are assigned when a message from an associated channel is received.
+"""
+enum TenantMembershipPolicy {
+  """
+  Do not add the customer to the tenant or assign the tenant to the thread
+  """
+  DO_NOT_ADD
+
+  """
+  Add the customer to the tenant and assign the tenant to the thread if the user has no email domain available
+  """
+  IF_DOMAIN_NOT_AVAILABLE
+
+  """
+  Always add the customer to the tenant and assign the tenant to the thread
+  """
+  ALWAYS_ADD
+}
+
+"""
 A link between a connected messaging channel and a company or tenant. When a message arrives in the associated channel, Plain uses this association to route threads to the correct customer context. Implemented by SlackThreadChannelAssociation.
 """
 interface ThreadChannelAssociation {
@@ -12087,6 +13823,9 @@ interface ThreadChannelAssociation {
   The ID of the tenant this channel is associated with. Null if the association targets a company instead.
   """
   tenantId: ID
+
+  """How tenants are assigned when a message from this channel is received."""
+  tenantMembershipPolicy: TenantMembershipPolicy!
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -12098,6 +13837,7 @@ type SlackThreadChannelAssociation implements ThreadChannelAssociation {
   id: ID!
   companyId: ID
   tenantId: ID
+  tenantMembershipPolicy: TenantMembershipPolicy!
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -12113,9 +13853,24 @@ input CreateThreadChannelAssociationInput {
   companyIdentifier: CompanyIdentifierInput
   tenantIdentifier: TenantIdentifierInput
   connectedSlackChannelId: ID
+
+  """
+  How tenants are assigned when a message from this channel is received. Defaults to ALWAYS_ADD.
+  """
+  tenantMembershipPolicy: TenantMembershipPolicy
 }
 
 type CreateThreadChannelAssociationOutput {
+  threadChannelAssociation: ThreadChannelAssociation
+  error: MutationError
+}
+
+input UpdateThreadChannelAssociationTenantMembershipPolicyInput {
+  threadChannelAssociationId: ID!
+  tenantMembershipPolicy: TenantMembershipPolicy!
+}
+
+type UpdateThreadChannelAssociationTenantMembershipPolicyOutput {
   threadChannelAssociation: ThreadChannelAssociation
   error: MutationError
 }
@@ -12285,6 +14040,11 @@ type Thread {
   """
   externalId: ID
 
+  """
+  Whether this is a test thread, created for a user to try Plain out against a synthetic customer rather than a real one.
+  """
+  isTestThread: Boolean!
+
   """The status of this thread."""
   status: ThreadStatus!
 
@@ -12424,6 +14184,16 @@ type Thread {
   The user or machine user who locked the thread. Null if the thread is currently unlocked.
   """
   lockedBy: InternalActor
+
+  """
+  The datetime when the thread was imported into Plain. Null if the thread was not created by importThread.
+  """
+  importedAt: DateTime
+
+  """
+  The machine user who imported the thread. Null if the thread was not created by importThread.
+  """
+  importedBy: InternalActor
 }
 
 type ThreadEscalationDetails {
@@ -12441,7 +14211,14 @@ type ThreadCatchupDetail {
   suggestedActions: [ThreadCatchupSuggestedAction!]!
   completedActions: [ThreadCatchupUserEvent]!
   customerEvents: [ThreadCatchupCustomerEvent]!
+  suggestedSidekickPrompts: [ThreadCatchupSuggestedSidekickPrompt!]!
   generatedAt: DateTime
+}
+
+type ThreadCatchupSuggestedSidekickPrompt {
+  label: String!
+  prompt: String!
+  category: String!
 }
 
 union ThreadCatchupSuggestedAction = ThreadCatchupSuggestedInternalAction | ThreadCatchupSuggestedCustomerAction
@@ -12755,6 +14532,11 @@ input ImportThreadMessageInput {
 
   """An array of attachments for the message."""
   attachmentIds: [ID!]
+
+  """
+  The value of the RFC 5322 Message-ID email header of the original message, with or without angle brackets. When set, subsequent email replies that reference this Message-ID are threaded onto the imported thread.
+  """
+  emailMessageId: String
 }
 
 input ImportThreadMessagesInput {
@@ -13414,6 +15196,24 @@ type SlackUser {
   updatedBy: InternalActor!
 }
 
+"""
+A teammate from the workspace's connected Slack workspace who can be invited
+to Plain. Distinct from SlackUser, which is used in customer-facing channel
+contexts and does not expose email.
+"""
+type SuggestedSlackTeammate {
+  """The user's ID as provided by Slack."""
+  slackUserId: ID!
+
+  """The teammate's email address, used to send the Plain invite."""
+  email: String!
+  fullName: String!
+
+  """The user's Slack handle (username without the @ prefix)."""
+  slackHandle: String!
+  slackAvatarUrl72px: String
+}
+
 type SlackChannelMembership {
   """The Slack channel ID the current user is a member of."""
   slackChannelId: ID!
@@ -14019,6 +15819,15 @@ type UserChange {
   user: User!
 }
 
+"""
+A change to a workflow. Refetch `workflow(workflowId)` to re-render the current graph; `workflowUpdatedAt` is the workflow's `updatedAt` — a monotonic change token you can use to dedupe. It is null when the workflow was removed.
+"""
+type WorkflowChange {
+  changeType: ChangeType!
+  workflowId: ID!
+  workflowUpdatedAt: DateTime
+}
+
 type CustomerCardInstanceChange {
   changeType: ChangeType!
   customerCardInstance: CustomerCardInstance!
@@ -14112,6 +15921,11 @@ type Subscription {
   Workspace-scoped subscription that fires whenever a thread field schema is created, updated, or deleted. Use `changeType` on the result to distinguish the operation. Requires the `threadFieldSchema:read` permission.
   """
   threadFieldSchemaChanges: ThreadFieldSchemaChange!
+
+  """
+  Real-time subscription that fires whenever the given workflow is created, updated (its steps, trigger, order, or publish state), or deleted. Each event carries a `changeType` and the `workflowId`; refetch `workflow(workflowId)` to re-render. Requires the `workflowRule:read` permission.
+  """
+  workflowChanges(workflowId: ID!): WorkflowChange!
 
   """
   Real-time subscription that fires whenever an internal notification is created or updated for the currently authenticated user.
@@ -14228,6 +16042,27 @@ type CompanySearchResultEdge {
 type CompanySearchResultConnection {
   edges: [CompanySearchResultEdge!]!
   pageInfo: PageInfo!
+}
+
+"""Query to search for broadcasts."""
+input BroadcastsSearchQuery {
+  """
+  The name to search for. It must be at least 2 characters long. The search is case-insensitive,
+  matches on any part of the name, and ignores accents.
+  """
+  name: String!
+}
+
+"""
+Narrows a list of broadcasts. Omit a field to leave that dimension unconstrained.
+"""
+input BroadcastsFilter {
+  """
+  Filters broadcasts to those whose status is one of the given statuses. A broadcast's status comes
+  from its latest real send, so `DRAFT` matches broadcasts that have never been scheduled and no
+  status reflects a test send. Must not be empty.
+  """
+  statuses: [BroadcastStatus!]
 }
 
 """Query to search for tenants."""
@@ -14750,6 +16585,15 @@ type SidekickMcpTool {
 }
 
 """
+An icon a custom MCP server declares in its serverInfo, captured at discovery. src is an https or data: URI.
+"""
+type SidekickMcpIcon {
+  src: String!
+  mimeType: String
+  sizes: [String!]!
+}
+
+"""
 How a custom MCP server authenticates: brokered OAuth, or a static API key attached in configurable headers and/or URL query params.
 """
 enum SidekickMcpServerAuthType {
@@ -14793,8 +16637,18 @@ type SidekickMcpServer {
   authParams: [SidekickMcpAuthParam!]!
   operatingInstructions: String
 
+  """
+  False until completeSidekickMcpServerConnection succeeds. Sidekick ignores a server that is not connected.
+  """
+  isConnected: Boolean!
+
   """Served from the cached discovery snapshot, never a live MCP call."""
   tools: [SidekickMcpTool!]!
+
+  """
+  The server's own icons, captured from its serverInfo at discovery. Empty if it declares none.
+  """
+  icons: [SidekickMcpIcon!]!
 }
 
 """
@@ -15133,7 +16987,7 @@ input UserWorkingHoursSlotInput {
 
 input SyncUserWorkingHoursInput {
   """
-  The user to configure working hours for. Required for admins setting other users' hours.
+  The user to configure working hours for. Optional for human callers (defaults to the acting user), but required when calling with a machine user (API key) token.
   """
   userId: ID
 
@@ -15575,6 +17429,67 @@ type SidekickCreditUsageDay {
   sessionCount: Int!
 }
 
+"""Whether metered Sidekick credits apply to the workspace."""
+enum SidekickCreditBalanceStatus {
+  """
+  The workspace has a metered credit account; `allowance`/`topup` reflect real balances.
+  """
+  TRACKED
+
+  """
+  Sidekick is free and unmetered for this workspace — e.g. during a trial, or on a plan without Sidekick credits — so there is no balance to count down and `allowance`/`topup` are null.
+  """
+  UNMETERED
+}
+
+"""The workspace's current Sidekick (Plain) credit balance."""
+type SidekickCreditBalance {
+  """
+  Whether metered credits apply. When UNMETERED (e.g. a trial), Sidekick is free and there is no balance — both buckets are null.
+  """
+  status: SidekickCreditBalanceStatus!
+
+  """
+  The recurring monthly allowance bucket. Null when the workspace has no allowance credit product attached (e.g. a plan without credits, or pre-onboarding).
+  """
+  allowance: SidekickCreditAllowanceBalance
+
+  """
+  The purchased top-up bucket, consumed after the monthly allowance is exhausted. Null when the workspace has no top-up balance.
+  """
+  topup: SidekickCreditTopupBalance
+}
+
+"""The monthly allowance credit bucket."""
+type SidekickCreditAllowanceBalance {
+  """
+  Credits granted for the current period. Null when the subscription line item is unavailable — grant/used can't be determined, but remaining still holds.
+  """
+  grant: Int
+
+  """
+  Credits consumed this period, best-effort as max(0, grant - remaining). Null when grant is unavailable.
+  """
+  used: Int
+
+  """Credits still available in the monthly allowance."""
+  remaining: Int!
+
+  """
+  End of the current billing period in ISO 8601, when the allowance resets. Null when unavailable.
+  """
+  periodEndsAt: String
+
+  """The low-balance warning threshold, if one is configured."""
+  lowBalanceThreshold: Int
+}
+
+"""The purchased top-up credit bucket."""
+type SidekickCreditTopupBalance {
+  """Credits still available from purchased top-ups."""
+  remaining: Int!
+}
+
 type HyperlineCheckoutSession {
   id: ID!
   status: HyperlineCheckoutSessionStatus!
@@ -15683,6 +17598,11 @@ enum RoleKey {
 
 input MachineUsersFilter {
   type: MachineUserType
+
+  """
+  Filter to only the machine users the workspace has marked as its own agents, or only those it has not.
+  """
+  isCustomAgent: Boolean
 }
 
 enum MachineUserType {
@@ -15870,6 +17790,182 @@ type ResolveCustomerForMSTeamsChannelOutput {
 
 input HelpCentersFilter {
   isCustomerFacingAiEnabled: Boolean
+}
+
+"""Filters applied when listing help center AI conversations."""
+input HelpCenterAiConversationsFilter {
+  """Only return conversations belonging to one of these help centers."""
+  helpCenterIds: [ID!]
+
+  """
+  Only return conversations where at least one message has one of these feedback types.
+  """
+  feedbackTypes: [HelpCenterAiMessageFeedbackType!]
+}
+
+"""Controls how help center AI conversations are ordered."""
+input HelpCenterAiConversationsSort {
+  """The conversation field used for ordering."""
+  field: HelpCenterAiConversationsSortField!
+
+  """The direction in which conversations are ordered."""
+  direction: SortDirection!
+}
+
+"""Fields by which help center AI conversations can be ordered."""
+enum HelpCenterAiConversationsSortField {
+  """Order by when the conversation was created."""
+  CREATED_AT
+
+  """Order by when the most recent message was created."""
+  LAST_MESSAGE_AT
+}
+
+"""
+A conversation between a customer and the AI assistant on a help center.
+"""
+type HelpCenterAiConversation {
+  """The internal ID of the conversation."""
+  id: ID!
+
+  """The AI-generated title, or null when no title is available."""
+  title: String
+
+  """The help center where the conversation took place."""
+  helpCenter: HelpCenter!
+
+  """
+  The customer linked to the conversation, or null while the conversation is anonymous.
+  """
+  customer: Customer
+
+  """
+  The support thread created from the conversation, or null if it has not been escalated.
+  """
+  thread: Thread
+
+  """When the conversation was created."""
+  createdAt: DateTime!
+
+  """When the conversation metadata was last updated."""
+  updatedAt: DateTime!
+
+  """When the most recent message in the conversation was created."""
+  lastMessageAt: DateTime!
+
+  """
+  The total number of customer and assistant messages in the conversation.
+  """
+  messageCount: Int!
+
+  """
+  Messages in the conversation, ordered from oldest to newest by default.
+  """
+  messages(first: Int, after: String, last: Int, before: String): HelpCenterAiMessageConnection!
+}
+
+"""A cursor-paginated list of help center AI conversations."""
+type HelpCenterAiConversationConnection {
+  """The conversations and their pagination cursors."""
+  edges: [HelpCenterAiConversationEdge!]!
+
+  """Information needed to request adjacent pages."""
+  pageInfo: PageInfo!
+}
+
+"""A help center AI conversation and its pagination cursor."""
+type HelpCenterAiConversationEdge {
+  """The opaque pagination cursor for this conversation."""
+  cursor: String!
+
+  """The conversation at this edge."""
+  node: HelpCenterAiConversation!
+}
+
+"""A message sent by a customer or generated by the AI assistant."""
+type HelpCenterAiMessage {
+  """The internal ID of the message."""
+  id: ID!
+
+  """The message body as Markdown."""
+  markdown: String!
+
+  """The role of the participant that authored the message."""
+  role: HelpCenterAiMessageRole!
+
+  """The help center articles cited by the assistant in this message."""
+  references: [HelpCenterAiMessageReference!]!
+
+  """
+  Customer feedback on this message. Only populated for assistant messages.
+  """
+  feedback: HelpCenterAiMessageFeedback
+
+  """When the message was created."""
+  createdAt: DateTime!
+
+  """When the message was last updated."""
+  updatedAt: DateTime!
+}
+
+"""The role of a participant in a help center AI conversation."""
+enum HelpCenterAiMessageRole {
+  """A customer asking for help."""
+  CUSTOMER
+
+  """The AI assistant responding to the customer."""
+  ASSISTANT
+}
+
+"""A snapshot of a help center article cited in an assistant message."""
+type HelpCenterAiMessageReference {
+  """The one-based citation number used by markers in the message Markdown."""
+  citationIndex: Int!
+
+  """The internal ID of the cited help center article."""
+  helpCenterArticleId: ID!
+
+  """The article title when the message was generated."""
+  title: String!
+}
+
+"""Feedback a customer left on an assistant message."""
+type HelpCenterAiMessageFeedback {
+  """Whether the customer found the message helpful."""
+  type: HelpCenterAiMessageFeedbackType!
+
+  """An optional comment supplied with the feedback."""
+  comment: String
+
+  """When the feedback was submitted."""
+  createdAt: DateTime!
+}
+
+"""The sentiment of customer feedback on an assistant message."""
+enum HelpCenterAiMessageFeedbackType {
+  """The customer found the message helpful."""
+  POSITIVE
+
+  """The customer did not find the message helpful."""
+  NEGATIVE
+}
+
+"""A cursor-paginated list of help center AI messages."""
+type HelpCenterAiMessageConnection {
+  """The messages and their pagination cursors."""
+  edges: [HelpCenterAiMessageEdge!]!
+
+  """Information needed to request adjacent pages."""
+  pageInfo: PageInfo!
+}
+
+"""A help center AI message and its pagination cursor."""
+type HelpCenterAiMessageEdge {
+  """The opaque pagination cursor for this message."""
+  cursor: String!
+
+  """The message at this edge."""
+  node: HelpCenterAiMessage!
 }
 
 type HelpCenterConnection {
@@ -16714,19 +18810,6 @@ type ImportCustomersOutput {
   error: MutationError
 }
 
-enum KnowledgeGapStatus {
-  """The gap is active and has not yet been addressed."""
-  OPEN
-
-  """
-  The gap has been resolved, typically by adding documentation that covers the topic.
-  """
-  RESOLVED
-
-  """The gap has been dismissed and will not be acted on."""
-  IGNORED
-}
-
 enum KnowledgeGapSignalType {
   ARI
 }
@@ -16743,12 +18826,6 @@ type KnowledgeGap {
   AI-generated description providing more detail about the knowledge gap.
   """
   description: String!
-  status: KnowledgeGapStatus!
-
-  """
-  Timestamp of the most recent status change. Updated automatically whenever `changeKnowledgeGapStatus` transitions the gap to a new status.
-  """
-  statusChangedAt: DateTime!
 
   """
   Timestamp of the most recently linked signal. Monotonically increasing — it only advances forward as new signals are attached to this gap.
@@ -16758,6 +18835,11 @@ type KnowledgeGap {
   createdBy: Actor!
   updatedAt: DateTime!
   updatedBy: Actor!
+
+  """
+  The task raised for this knowledge gap, or null if none has been linked yet.
+  """
+  task: Task
 
   """Paginated list of signals linked to this knowledge gap."""
   signals(first: Int, after: String, last: Int, before: String): KnowledgeGapSignalConnection!
@@ -16799,10 +18881,6 @@ type KnowledgeGapSignalConnection {
   totalCount: Int!
 }
 
-input KnowledgeGapsFilter {
-  statuses: [KnowledgeGapStatus!]
-}
-
 input KnowledgeGapsSort {
   field: KnowledgeGapsSortField!
   direction: SortDirection!
@@ -16814,14 +18892,4 @@ enum KnowledgeGapsSortField {
 
   """Sort by when the most recent signal was linked."""
   LAST_SEEN_AT
-}
-
-input ChangeKnowledgeGapStatusInput {
-  knowledgeGapId: ID!
-  status: KnowledgeGapStatus!
-}
-
-type ChangeKnowledgeGapStatusOutput {
-  knowledgeGap: KnowledgeGap
-  error: MutationError
 }

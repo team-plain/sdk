@@ -1,6 +1,7 @@
 import type { PlainGraphQLClient } from "./graphql-client.js";
 import { PlainConnection } from "./connection.js";
 import {
+  AcceptSuggestedLabelTypesDocument,
   AcceptWorkspaceInviteDocument,
   ActiveThreadClusterDocument,
   AddAdditionalAssigneesDocument,
@@ -20,6 +21,12 @@ import {
   AutoresponderDocument,
   AutorespondersDocument,
   BillingPlansDocument,
+  BroadcastAudienceDocument,
+  BroadcastAudiencesDocument,
+  BroadcastDocument,
+  BroadcastsDocument,
+  BulkCreateThreadLinksDocument,
+  BulkDeleteThreadLinksDocument,
   BulkJoinSlackChannelsDocument,
   BulkUpdateConnectedSlackChannelsDocument,
   BulkUpdateSlackChannelSettingsDocument,
@@ -30,7 +37,6 @@ import {
   CalculateRoleChangeCostDocument,
   CancelHyperlineSubscriptionDocument,
   ChangeBillingPlanDocument,
-  ChangeKnowledgeGapStatusDocument,
   ChangeThreadCustomerDocument,
   ChangeThreadPriorityDocument,
   ChangeUserStatusDocument,
@@ -48,10 +54,13 @@ import {
   CreateAiFeatureFeedbackDocument,
   CreateAiFeedbackDocument,
   CreateAiToneRuleDocument,
+  CreateAllTestThreadsDocument,
   CreateApiKeyDocument,
   CreateAttachmentDownloadUrlDocument,
   CreateAttachmentUploadUrlDocument,
   CreateAutoresponderDocument,
+  CreateBroadcastAudienceDocument,
+  CreateBroadcastDocument,
   CreateChatAppDocument,
   CreateChatAppSecretDocument,
   CreateCustomRoleDocument,
@@ -88,6 +97,7 @@ import {
   CreateSnippetDocument,
   CreateTaskDocument,
   CreateTenantDocument,
+  CreateTestThreadDocument,
   CreateThreadChannelAssociationDocument,
   CreateThreadDiscussionDocument,
   CreateThreadDocument,
@@ -130,8 +140,11 @@ import {
   CustomerSurveysDocument,
   CustomersDocument,
   DeleteAiToneRulesDocument,
+  DeleteAllTestThreadsDocument,
   DeleteApiKeyDocument,
   DeleteAutoresponderDocument,
+  DeleteBroadcastAudienceDocument,
+  DeleteBroadcastDocument,
   DeleteBusinessHoursDocument,
   DeleteChatAppDocument,
   DeleteChatAppSecretDocument,
@@ -141,6 +154,7 @@ import {
   DeleteCustomerDocument,
   DeleteCustomerGroupDocument,
   DeleteCustomerSurveyDocument,
+  DeleteEmailSuppressionDocument,
   DeleteEscalationPathDocument,
   DeleteGithubUserAuthIntegrationDocument,
   DeleteHelpCenterArticleDocument,
@@ -167,6 +181,7 @@ import {
   DeleteTenantDocument,
   DeleteTenantFieldDocument,
   DeleteTenantFieldSchemaDocument,
+  DeleteTestThreadDocument,
   DeleteThreadChannelAssociationDocument,
   DeleteThreadDiscussionDocument,
   DeleteThreadDocument,
@@ -194,11 +209,14 @@ import {
   DeletedThreadsDocument,
   DiscussionDocument,
   DiscussionsDocument,
+  DismissSuggestedLabelTypesDocument,
   EditQueuedAgentSessionMessageDocument,
+  EmailSuppressionDocument,
   EnabledAiToneRulesTextDocument,
   EscalateThreadDocument,
   EscalationPathDocument,
   EscalationPathsDocument,
+  ExportWorkflowTemplateDocument,
   ForkThreadDocument,
   GenerateAiToneRulesFromDescriptionDocument,
   GenerateHelpCenterArticleDocument,
@@ -206,6 +224,8 @@ import {
   GetMsTeamsMembersForChannelDocument,
   GithubUserAuthIntegrationDocument,
   HeatmapMetricDocument,
+  HelpCenterAiConversationDocument,
+  HelpCenterAiConversationsDocument,
   HelpCenterArticleBySlugDocument,
   HelpCenterArticleDocument,
   HelpCenterArticleGroupArticlesDocument,
@@ -303,6 +323,8 @@ import {
   RolesDocument,
   SavedThreadsViewDocument,
   SavedThreadsViewsDocument,
+  ScheduleBroadcastDocument,
+  SearchBroadcastsDocument,
   SearchCompaniesDocument,
   SearchCustomersDocument,
   SearchKnowledgeSourcesDocument,
@@ -328,6 +350,7 @@ import {
   SettingDocument,
   SetupTenantFieldSchemaMappingDocument,
   ShareThreadToUserInSlackDocument,
+  SidekickCreditBalanceDocument,
   SidekickCreditUsageByDayDocument,
   SidekickCustomSkillDocument,
   SidekickGithubAccessibleReposDocument,
@@ -346,6 +369,8 @@ import {
   SnoozeThreadDocument,
   StartServiceAuthorizationDocument,
   SubscriptionEventTypesDocument,
+  SuggestedLabelTypesDocument,
+  SuggestedSlackTeammatesDocument,
   SyncBusinessHoursSlotsDocument,
   SyncUserWorkingHoursDocument,
   TaskByRefDocument,
@@ -355,6 +380,7 @@ import {
   TenantDocument,
   TenantFieldSchemasDocument,
   TenantsDocument,
+  TestThreadsDocument,
   ThreadByExternalIdDocument,
   ThreadByRefDocument,
   ThreadBySlackPermalinkDocument,
@@ -391,6 +417,8 @@ import {
   UpdateAiToneRulesDocument,
   UpdateApiKeyDocument,
   UpdateAutoresponderDocument,
+  UpdateBroadcastAudienceDocument,
+  UpdateBroadcastDocument,
   UpdateChatAppDocument,
   UpdateCompanyTierDocument,
   UpdateConnectedDiscordChannelDocument,
@@ -400,6 +428,7 @@ import {
   UpdateCustomerCompanyDocument,
   UpdateCustomerGroupDocument,
   UpdateCustomerSurveyDocument,
+  UpdateDiscussionAgentStatusDocument,
   UpdateEscalationPathDocument,
   UpdateGeneratedReplyDocument,
   UpdateHelpCenterArticleGroupDocument,
@@ -426,6 +455,7 @@ import {
   UpdateTaskDocument,
   UpdateTenantTierDocument,
   UpdateThreadAgentStatusDocument,
+  UpdateThreadChannelAssociationTenantMembershipPolicyDocument,
   UpdateThreadEscalationPathDocument,
   UpdateThreadExternalIdDocument,
   UpdateThreadFieldSchemaDocument,
@@ -476,9 +506,12 @@ import {
   WorkflowExecutionDocument,
   WorkflowExecutionsByEntityDocument,
   WorkflowExecutionsDocument,
+  WorkflowExecutionsForWorkspaceDocument,
   WorkflowRuleDocument,
   WorkflowRulesDocument,
   WorkflowShareLinkDocument,
+  WorkflowTemplateDocument,
+  WorkflowTemplateGalleryDocument,
   WorkflowsDocument,
   WorkspaceChatSettingsDocument,
   WorkspaceCursorIntegrationDocument,
@@ -504,6 +537,8 @@ import {
   WorkspaceSlackSidekickIntegrationDocument,
 } from "./_generated_documents.js";
 import type {
+  AcceptSuggestedLabelTypesMutation,
+  AcceptSuggestedLabelTypesMutationVariables,
   AcceptWorkspaceInviteMutation,
   AcceptWorkspaceInviteMutationVariables,
   ActiveThreadClusterQuery,
@@ -563,6 +598,22 @@ import type {
   BillingSubscriptionFieldsFragment,
   BillingTopupCreditBalanceFieldsFragment,
   BooleanSettingFieldsFragment,
+  BroadcastAudienceFieldsFragment,
+  BroadcastAudienceQuery,
+  BroadcastAudienceQueryVariables,
+  BroadcastAudiencesQuery,
+  BroadcastAudiencesQueryVariables,
+  BroadcastFieldsFragment,
+  BroadcastQuery,
+  BroadcastQueryVariables,
+  BroadcastsQuery,
+  BroadcastsQueryVariables,
+  BulkCreateThreadLinkResultFieldsFragment,
+  BulkCreateThreadLinksMutation,
+  BulkCreateThreadLinksMutationVariables,
+  BulkDeleteThreadLinkResultFieldsFragment,
+  BulkDeleteThreadLinksMutation,
+  BulkDeleteThreadLinksMutationVariables,
   BulkJoinSlackChannelsMutation,
   BulkJoinSlackChannelsMutationVariables,
   BulkUpdateConnectedSlackChannelResultFieldsFragment,
@@ -586,8 +637,6 @@ import type {
   CancelHyperlineSubscriptionMutation,
   ChangeBillingPlanMutation,
   ChangeBillingPlanMutationVariables,
-  ChangeKnowledgeGapStatusMutation,
-  ChangeKnowledgeGapStatusMutationVariables,
   ChangeThreadCustomerMutation,
   ChangeThreadCustomerMutationVariables,
   ChangeThreadPriorityMutation,
@@ -642,6 +691,7 @@ import type {
   CreateAiFeedbackMutationVariables,
   CreateAiToneRuleMutation,
   CreateAiToneRuleMutationVariables,
+  CreateAllTestThreadsMutation,
   CreateApiKeyMutation,
   CreateApiKeyMutationVariables,
   CreateAttachmentDownloadUrlMutation,
@@ -650,6 +700,10 @@ import type {
   CreateAttachmentUploadUrlMutationVariables,
   CreateAutoresponderMutation,
   CreateAutoresponderMutationVariables,
+  CreateBroadcastAudienceMutation,
+  CreateBroadcastAudienceMutationVariables,
+  CreateBroadcastMutation,
+  CreateBroadcastMutationVariables,
   CreateChatAppMutation,
   CreateChatAppMutationVariables,
   CreateChatAppSecretMutation,
@@ -720,6 +774,7 @@ import type {
   CreateTaskMutationVariables,
   CreateTenantMutation,
   CreateTenantMutationVariables,
+  CreateTestThreadMutation,
   CreateThreadChannelAssociationMutation,
   CreateThreadChannelAssociationMutationVariables,
   CreateThreadDiscussionMutation,
@@ -832,10 +887,15 @@ import type {
   DefaultServiceIntegrationFieldsFragment,
   DeleteAiToneRulesMutation,
   DeleteAiToneRulesMutationVariables,
+  DeleteAllTestThreadsMutation,
   DeleteApiKeyMutation,
   DeleteApiKeyMutationVariables,
   DeleteAutoresponderMutation,
   DeleteAutoresponderMutationVariables,
+  DeleteBroadcastAudienceMutation,
+  DeleteBroadcastAudienceMutationVariables,
+  DeleteBroadcastMutation,
+  DeleteBroadcastMutationVariables,
   DeleteBusinessHoursMutation,
   DeleteChatAppMutation,
   DeleteChatAppMutationVariables,
@@ -853,6 +913,8 @@ import type {
   DeleteCustomerMutationVariables,
   DeleteCustomerSurveyMutation,
   DeleteCustomerSurveyMutationVariables,
+  DeleteEmailSuppressionMutation,
+  DeleteEmailSuppressionMutationVariables,
   DeleteEscalationPathMutation,
   DeleteEscalationPathMutationVariables,
   DeleteGithubUserAuthIntegrationMutation,
@@ -900,6 +962,8 @@ import type {
   DeleteTenantFieldSchemaMutationVariables,
   DeleteTenantMutation,
   DeleteTenantMutationVariables,
+  DeleteTestThreadMutation,
+  DeleteTestThreadMutationVariables,
   DeleteThreadChannelAssociationMutation,
   DeleteThreadChannelAssociationMutationVariables,
   DeleteThreadDiscussionMutation,
@@ -959,6 +1023,8 @@ import type {
   DiscussionResolvedNotificationDetailFieldsFragment,
   DiscussionsQuery,
   DiscussionsQueryVariables,
+  DismissSuggestedLabelTypesMutation,
+  DismissSuggestedLabelTypesMutationVariables,
   EditQueuedAgentSessionMessageMutation,
   EditQueuedAgentSessionMessageMutationVariables,
   EmailBounceNotificationDetailFieldsFragment,
@@ -967,6 +1033,9 @@ import type {
   EmailFieldsFragment,
   EmailPreviewUrlFieldsFragment,
   EmailSignatureFieldsFragment,
+  EmailSuppressionFieldsFragment,
+  EmailSuppressionQuery,
+  EmailSuppressionQueryVariables,
   EmbedTokenFieldsFragment,
   EnabledAiToneRulesTextQuery,
   EscalateThreadMutation,
@@ -978,6 +1047,8 @@ import type {
   EscalationPathStepUserFieldsFragment,
   EscalationPathsQuery,
   EscalationPathsQueryVariables,
+  ExportWorkflowTemplateMutation,
+  ExportWorkflowTemplateMutationVariables,
   FavoritePageFieldsFragment,
   FirstResponseTimeServiceLevelAgreementFieldsFragment,
   ForkThreadMutation,
@@ -997,7 +1068,12 @@ import type {
   HeatmapMetricFieldsFragment,
   HeatmapMetricQuery,
   HeatmapMetricQueryVariables,
+  HelpCenterAiConversationFieldsFragment,
   HelpCenterAiConversationMessageEntryFieldsFragment,
+  HelpCenterAiConversationQuery,
+  HelpCenterAiConversationQueryVariables,
+  HelpCenterAiConversationsQuery,
+  HelpCenterAiConversationsQueryVariables,
   HelpCenterArticleBySlugQuery,
   HelpCenterArticleBySlugQueryVariables,
   HelpCenterArticleDocumentFieldsFragment,
@@ -1062,6 +1138,7 @@ import type {
   IndexingStatusFailedFieldsFragment,
   IndexingStatusIndexedFieldsFragment,
   IndexingStatusPendingFieldsFragment,
+  IntegrationReauthRequiredNotificationDetailFieldsFragment,
   InternalNotificationFieldsFragment,
   InviteUserToWorkspaceMutation,
   InviteUserToWorkspaceMutationVariables,
@@ -1230,6 +1307,10 @@ import type {
   SavedThreadsViewQueryVariables,
   SavedThreadsViewsQuery,
   SavedThreadsViewsQueryVariables,
+  ScheduleBroadcastMutation,
+  ScheduleBroadcastMutationVariables,
+  SearchBroadcastsQuery,
+  SearchBroadcastsQueryVariables,
   SearchCompaniesQuery,
   SearchCompaniesQueryVariables,
   SearchCustomersQuery,
@@ -1282,6 +1363,8 @@ import type {
   SetupTenantFieldSchemaMappingMutationVariables,
   ShareThreadToUserInSlackMutation,
   ShareThreadToUserInSlackMutationVariables,
+  SidekickCreditBalanceFieldsFragment,
+  SidekickCreditBalanceQuery,
   SidekickCreditUsageByDayQuery,
   SidekickCreditUsageByDayQueryVariables,
   SidekickCustomSkillQuery,
@@ -1326,6 +1409,10 @@ import type {
   StringArraySettingFieldsFragment,
   StringSettingFieldsFragment,
   SubscriptionEventTypesQuery,
+  SuggestedLabelTypeFieldsFragment,
+  SuggestedLabelTypesQuery,
+  SuggestedSlackTeammatesQuery,
+  SuggestedSlackTeammatesQueryVariables,
   SyncBusinessHoursSlotsMutation,
   SyncBusinessHoursSlotsMutationVariables,
   SyncUserWorkingHoursMutation,
@@ -1359,6 +1446,7 @@ import type {
   TenantTierMembershipFieldsFragment,
   TenantsQuery,
   TenantsQueryVariables,
+  TestThreadsQuery,
   ThreadAssignmentNotificationDetailFieldsFragment,
   ThreadByExternalIdQuery,
   ThreadByExternalIdQueryVariables,
@@ -1375,8 +1463,8 @@ import type {
   ThreadClustersPaginatedQueryVariables,
   ThreadClustersQuery,
   ThreadClustersQueryVariables,
-  ThreadDiscussionAgentSessionChannelDetailsFieldsFragment,
   ThreadDiscussionApprovalRequestEntryPayloadFieldsFragment,
+  ThreadDiscussionConnectRequestEntryPayloadFieldsFragment,
   ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment,
   ThreadDiscussionEmailChannelDetailsFieldsFragment,
   ThreadDiscussionEntryFieldsFragment,
@@ -1479,6 +1567,10 @@ import type {
   UpdateApiKeyMutationVariables,
   UpdateAutoresponderMutation,
   UpdateAutoresponderMutationVariables,
+  UpdateBroadcastAudienceMutation,
+  UpdateBroadcastAudienceMutationVariables,
+  UpdateBroadcastMutation,
+  UpdateBroadcastMutationVariables,
   UpdateChatAppMutation,
   UpdateChatAppMutationVariables,
   UpdateCompanyTierMutation,
@@ -1497,6 +1589,8 @@ import type {
   UpdateCustomerGroupMutationVariables,
   UpdateCustomerSurveyMutation,
   UpdateCustomerSurveyMutationVariables,
+  UpdateDiscussionAgentStatusMutation,
+  UpdateDiscussionAgentStatusMutationVariables,
   UpdateEscalationPathMutation,
   UpdateEscalationPathMutationVariables,
   UpdateGeneratedReplyMutation,
@@ -1549,6 +1643,8 @@ import type {
   UpdateTenantTierMutationVariables,
   UpdateThreadAgentStatusMutation,
   UpdateThreadAgentStatusMutationVariables,
+  UpdateThreadChannelAssociationTenantMembershipPolicyMutation,
+  UpdateThreadChannelAssociationTenantMembershipPolicyMutationVariables,
   UpdateThreadEscalationPathMutation,
   UpdateThreadEscalationPathMutationVariables,
   UpdateThreadExternalIdMutation,
@@ -1659,6 +1755,8 @@ import type {
   WorkflowExecutionQueryVariables,
   WorkflowExecutionsByEntityQuery,
   WorkflowExecutionsByEntityQueryVariables,
+  WorkflowExecutionsForWorkspaceQuery,
+  WorkflowExecutionsForWorkspaceQueryVariables,
   WorkflowExecutionsQuery,
   WorkflowExecutionsQueryVariables,
   WorkflowFieldsFragment,
@@ -1673,6 +1771,11 @@ import type {
   WorkflowShareLinkQuery,
   WorkflowShareLinkQueryVariables,
   WorkflowStepFieldsFragment,
+  WorkflowTemplateFieldsFragment,
+  WorkflowTemplateGalleryItemFieldsFragment,
+  WorkflowTemplateGalleryQuery,
+  WorkflowTemplateQuery,
+  WorkflowTemplateQueryVariables,
   WorkflowsQuery,
   WorkflowsQueryVariables,
   WorkspaceChatSettingsQuery,
@@ -2243,6 +2346,173 @@ export class BooleanSettingModel {
     this.booleanValue = data.booleanValue;
     this.code = data.code;
     this.scope = data.scope;
+  }
+}
+
+export class BroadcastModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BroadcastFieldsFragment;
+  public readonly __typename = "Broadcast" as const;
+
+  public readonly completedAt: BroadcastFieldsFragment["completedAt"];
+  public readonly content: BroadcastFieldsFragment["content"];
+  public readonly contentFormat: BroadcastFieldsFragment["contentFormat"];
+  public readonly createdAt: BroadcastFieldsFragment["createdAt"];
+  public readonly deletedAt: BroadcastFieldsFragment["deletedAt"];
+  public readonly id: BroadcastFieldsFragment["id"];
+  public readonly isDeleted: BroadcastFieldsFragment["isDeleted"];
+  public readonly name: BroadcastFieldsFragment["name"];
+  public readonly notificationTitle: BroadcastFieldsFragment["notificationTitle"];
+  public readonly scheduledAt: BroadcastFieldsFragment["scheduledAt"];
+  public readonly startedAt: BroadcastFieldsFragment["startedAt"];
+  public readonly status: BroadcastFieldsFragment["status"];
+  public readonly type: BroadcastFieldsFragment["type"];
+  public readonly updatedAt: BroadcastFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly sender: ({ __typename: "PlainWorkspaceBroadcastSender" } | { __typename: "SlackBroadcastSender" }) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: BroadcastFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.completedAt = data.completedAt;
+    this.content = data.content;
+    this.contentFormat = data.contentFormat;
+    this.createdAt = data.createdAt;
+    this.deletedAt = data.deletedAt;
+    this.id = data.id;
+    this.isDeleted = data.isDeleted;
+    this.name = data.name;
+    this.notificationTitle = data.notificationTitle;
+    this.scheduledAt = data.scheduledAt;
+    this.startedAt = data.startedAt;
+    this.status = data.status;
+    this.type = data.type;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.sender = data.sender ? (() => {
+    switch ((data.sender as any).__typename) {
+      case "PlainWorkspaceBroadcastSender": return data.sender as any;
+      case "SlackBroadcastSender": return data.sender as any;
+      default: return data.sender as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class BroadcastAudienceModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BroadcastAudienceFieldsFragment;
+  public readonly __typename = "BroadcastAudience" as const;
+
+  public readonly createdAt: BroadcastAudienceFieldsFragment["createdAt"];
+  public readonly deletedAt: BroadcastAudienceFieldsFragment["deletedAt"];
+  public readonly id: BroadcastAudienceFieldsFragment["id"];
+  public readonly isDeleted: BroadcastAudienceFieldsFragment["isDeleted"];
+  public readonly name: BroadcastAudienceFieldsFragment["name"];
+  public readonly type: BroadcastAudienceFieldsFragment["type"];
+  public readonly updatedAt: BroadcastAudienceFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly deletedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: BroadcastAudienceFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.deletedAt = data.deletedAt;
+    this.id = data.id;
+    this.isDeleted = data.isDeleted;
+    this.name = data.name;
+    this.type = data.type;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.deletedBy = data.deletedBy ? (() => {
+    switch ((data.deletedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.deletedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.deletedBy as any);
+      case "UserActor": return new UserActorModel(client, data.deletedBy as any);
+      default: return data.deletedBy as any;
+    }
+  })() : null;
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class BulkCreateThreadLinkResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BulkCreateThreadLinkResultFieldsFragment;
+  public readonly __typename = "BulkCreateThreadLinkResult" as const;
+
+  public readonly threadId: BulkCreateThreadLinkResultFieldsFragment["threadId"];
+  public readonly threadLink: (GenericThreadLinkModel | JiraIssueThreadLinkModel | LinearIssueThreadLinkModel | PlainTaskThreadLinkModel | PlainThreadThreadLinkModel) | null;
+
+  constructor(client: PlainGraphQLClient, data: BulkCreateThreadLinkResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.threadId = data.threadId;
+    this.threadLink = data.threadLink ? (() => {
+    switch ((data.threadLink as any).__typename) {
+      case "GenericThreadLink": return new GenericThreadLinkModel(client, data.threadLink as any);
+      case "JiraIssueThreadLink": return new JiraIssueThreadLinkModel(client, data.threadLink as any);
+      case "LinearIssueThreadLink": return new LinearIssueThreadLinkModel(client, data.threadLink as any);
+      case "PlainTaskThreadLink": return new PlainTaskThreadLinkModel(client, data.threadLink as any);
+      case "PlainThreadThreadLink": return new PlainThreadThreadLinkModel(client, data.threadLink as any);
+      default: return data.threadLink as any;
+    }
+  })() : null;
+  }
+}
+
+export class BulkDeleteThreadLinkResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BulkDeleteThreadLinkResultFieldsFragment;
+  public readonly __typename = "BulkDeleteThreadLinkResult" as const;
+
+  public readonly threadLinkId: BulkDeleteThreadLinkResultFieldsFragment["threadLinkId"];
+
+  constructor(client: PlainGraphQLClient, data: BulkDeleteThreadLinkResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.threadLinkId = data.threadLinkId;
   }
 }
 
@@ -4285,6 +4555,26 @@ export class EmailSignatureModel {
   }
 }
 
+export class EmailSuppressionModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: EmailSuppressionFieldsFragment;
+  public readonly __typename = "EmailSuppression" as const;
+
+  public readonly createdAt: EmailSuppressionFieldsFragment["createdAt"];
+  public readonly emailAddress: EmailSuppressionFieldsFragment["emailAddress"];
+  public readonly isRemovable: EmailSuppressionFieldsFragment["isRemovable"];
+  public readonly reason: EmailSuppressionFieldsFragment["reason"];
+
+  constructor(client: PlainGraphQLClient, data: EmailSuppressionFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.emailAddress = data.emailAddress;
+    this.isRemovable = data.isRemovable;
+    this.reason = data.reason;
+  }
+}
+
 export class EmbedTokenModel {
   protected _client: PlainGraphQLClient;
   protected _data: EmbedTokenFieldsFragment;
@@ -4747,6 +5037,57 @@ export class HelpCenterModel {
       pageInfo: conn.pageInfo,
       fetch: (cursor) => this.articles({ ...variables, ...cursor }),
     });
+  }
+}
+
+export class HelpCenterAiConversationModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: HelpCenterAiConversationFieldsFragment;
+  public readonly __typename = "HelpCenterAiConversation" as const;
+
+  public readonly createdAt: HelpCenterAiConversationFieldsFragment["createdAt"];
+  public readonly id: HelpCenterAiConversationFieldsFragment["id"];
+  public readonly lastMessageAt: HelpCenterAiConversationFieldsFragment["lastMessageAt"];
+  public readonly messageCount: HelpCenterAiConversationFieldsFragment["messageCount"];
+  public readonly title: HelpCenterAiConversationFieldsFragment["title"];
+  public readonly updatedAt: HelpCenterAiConversationFieldsFragment["updatedAt"];
+
+  constructor(client: PlainGraphQLClient, data: HelpCenterAiConversationFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.lastMessageAt = data.lastMessageAt;
+    this.messageCount = data.messageCount;
+    this.title = data.title;
+    this.updatedAt = data.updatedAt;
+  }
+
+  public get customer(): Promise<CustomerModel | undefined> {
+    const id = this._data.customer?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CustomerQuery, CustomerQueryVariables>(
+      CustomerDocument,
+      { customerId: id } as CustomerQueryVariables
+    ).then(r => r.customer ? new CustomerModel(this._client, r.customer) : undefined);
+  }
+
+  public get helpCenter(): Promise<HelpCenterModel | undefined> {
+    const id = this._data.helpCenter?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<HelpCenterQuery, HelpCenterQueryVariables>(
+      HelpCenterDocument,
+      { id: id } as HelpCenterQueryVariables
+    ).then(r => r.helpCenter ? new HelpCenterModel(this._client, r.helpCenter) : undefined);
+  }
+
+  public get thread(): Promise<ThreadModel | undefined> {
+    const id = this._data.thread?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<ThreadQuery, ThreadQueryVariables>(
+      ThreadDocument,
+      { threadId: id } as ThreadQueryVariables
+    ).then(r => r.thread ? new ThreadModel(this._client, r.thread) : undefined);
   }
 }
 
@@ -5333,6 +5674,22 @@ export class IndexingStatusPendingModel {
   }
 }
 
+export class IntegrationReauthRequiredNotificationDetailModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: IntegrationReauthRequiredNotificationDetailFieldsFragment;
+  public readonly __typename = "IntegrationReauthRequiredNotificationDetail" as const;
+
+  public readonly serviceAuthorizationId: IntegrationReauthRequiredNotificationDetailFieldsFragment["serviceAuthorizationId"];
+  public readonly serviceIntegrationKey: IntegrationReauthRequiredNotificationDetailFieldsFragment["serviceIntegrationKey"];
+
+  constructor(client: PlainGraphQLClient, data: IntegrationReauthRequiredNotificationDetailFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.serviceAuthorizationId = data.serviceAuthorizationId;
+    this.serviceIntegrationKey = data.serviceIntegrationKey;
+  }
+}
+
 export class InternalNotificationModel {
   protected _client: PlainGraphQLClient;
   protected _data: InternalNotificationFieldsFragment;
@@ -5349,7 +5706,7 @@ export class InternalNotificationModel {
   public readonly userId: InternalNotificationFieldsFragment["userId"];
   public readonly archivedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly details: (DiscussionResolvedNotificationDetailModel | EmailBounceNotificationDetailModel | NoteMentionNotificationDetailModel | ThreadAssignmentNotificationDetailModel) | null;
+  public readonly details: (DiscussionResolvedNotificationDetailModel | EmailBounceNotificationDetailModel | IntegrationReauthRequiredNotificationDetailModel | NoteMentionNotificationDetailModel | ThreadAssignmentNotificationDetailModel) | null;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: InternalNotificationFieldsFragment) {
@@ -5384,6 +5741,7 @@ export class InternalNotificationModel {
     switch ((data.details as any).__typename) {
       case "DiscussionResolvedNotificationDetail": return new DiscussionResolvedNotificationDetailModel(client, data.details as any);
       case "EmailBounceNotificationDetail": return new EmailBounceNotificationDetailModel(client, data.details as any);
+      case "IntegrationReauthRequiredNotificationDetail": return new IntegrationReauthRequiredNotificationDetailModel(client, data.details as any);
       case "NoteMentionNotificationDetail": return new NoteMentionNotificationDetailModel(client, data.details as any);
       case "ThreadAssignmentNotificationDetail": return new ThreadAssignmentNotificationDetailModel(client, data.details as any);
       default: return data.details as any;
@@ -5527,8 +5885,6 @@ export class KnowledgeGapModel {
   public readonly description: KnowledgeGapFieldsFragment["description"];
   public readonly id: KnowledgeGapFieldsFragment["id"];
   public readonly lastSeenAt: KnowledgeGapFieldsFragment["lastSeenAt"];
-  public readonly status: KnowledgeGapFieldsFragment["status"];
-  public readonly statusChangedAt: KnowledgeGapFieldsFragment["statusChangedAt"];
   public readonly title: KnowledgeGapFieldsFragment["title"];
   public readonly updatedAt: KnowledgeGapFieldsFragment["updatedAt"];
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -5541,8 +5897,6 @@ export class KnowledgeGapModel {
     this.description = data.description;
     this.id = data.id;
     this.lastSeenAt = data.lastSeenAt;
-    this.status = data.status;
-    this.statusChangedAt = data.statusChangedAt;
     this.title = data.title;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
@@ -5565,6 +5919,15 @@ export class KnowledgeGapModel {
       default: return data.updatedBy as any;
     }
   })();
+  }
+
+  public get task(): Promise<TaskModel | undefined> {
+    const id = this._data.task?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<TaskQuery, TaskQueryVariables>(
+      TaskDocument,
+      { taskId: id } as TaskQueryVariables
+    ).then(r => r.task ? new TaskModel(this._client, r.task) : undefined);
   }
 }
 
@@ -5593,15 +5956,21 @@ export class KnowledgeSourceCitationModel {
   protected _data: KnowledgeSourceCitationFieldsFragment;
   public readonly __typename = "KnowledgeSourceCitation" as const;
 
-  public readonly messageId: KnowledgeSourceCitationFieldsFragment["messageId"];
+  public readonly sourceType: KnowledgeSourceCitationFieldsFragment["sourceType"];
   public readonly threadId: KnowledgeSourceCitationFieldsFragment["threadId"];
+  public readonly timelineEntryId: KnowledgeSourceCitationFieldsFragment["timelineEntryId"];
+  public readonly title: KnowledgeSourceCitationFieldsFragment["title"];
+  public readonly url: KnowledgeSourceCitationFieldsFragment["url"];
   public readonly document: (HelpCenterArticleDocumentModel | IndexedDocumentModel) | null;
 
   constructor(client: PlainGraphQLClient, data: KnowledgeSourceCitationFieldsFragment) {
     this._client = client;
     this._data = data;
-    this.messageId = data.messageId;
+    this.sourceType = data.sourceType;
     this.threadId = data.threadId;
+    this.timelineEntryId = data.timelineEntryId;
+    this.title = data.title;
+    this.url = data.url;
     this.document = data.document ? (() => {
     switch ((data.document as any).__typename) {
       case "HelpCenterArticleDocument": return new HelpCenterArticleDocumentModel(client, data.document as any);
@@ -5925,6 +6294,7 @@ export class MachineUserModel {
   public readonly description: MachineUserFieldsFragment["description"];
   public readonly fullName: MachineUserFieldsFragment["fullName"];
   public readonly id: MachineUserFieldsFragment["id"];
+  public readonly isCustomAgent: MachineUserFieldsFragment["isCustomAgent"];
   public readonly isDeleted: MachineUserFieldsFragment["isDeleted"];
   public readonly publicName: MachineUserFieldsFragment["publicName"];
   public readonly type: MachineUserFieldsFragment["type"];
@@ -5941,6 +6311,7 @@ export class MachineUserModel {
     this.description = data.description;
     this.fullName = data.fullName;
     this.id = data.id;
+    this.isCustomAgent = data.isCustomAgent;
     this.isDeleted = data.isDeleted;
     this.publicName = data.publicName;
     this.type = data.type;
@@ -6753,6 +7124,24 @@ export class ServiceLevelAgreementStatusTransitionedEntryModel {
   }
 }
 
+export class SidekickCreditBalanceModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SidekickCreditBalanceFieldsFragment;
+  public readonly __typename = "SidekickCreditBalance" as const;
+
+  public readonly allowance: SidekickCreditBalanceFieldsFragment["allowance"];
+  public readonly status: SidekickCreditBalanceFieldsFragment["status"];
+  public readonly topup: SidekickCreditBalanceFieldsFragment["topup"];
+
+  constructor(client: PlainGraphQLClient, data: SidekickCreditBalanceFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.allowance = data.allowance;
+    this.status = data.status;
+    this.topup = data.topup;
+  }
+}
+
 export class SidekickGithubServiceConfigModel {
   protected _client: PlainGraphQLClient;
   protected _data: SidekickGithubServiceConfigFieldsFragment;
@@ -6776,7 +7165,9 @@ export class SidekickMcpServerModel {
 
   public readonly authParams: SidekickMcpServerFieldsFragment["authParams"];
   public readonly authType: SidekickMcpServerFieldsFragment["authType"];
+  public readonly icons: SidekickMcpServerFieldsFragment["icons"];
   public readonly id: SidekickMcpServerFieldsFragment["id"];
+  public readonly isConnected: SidekickMcpServerFieldsFragment["isConnected"];
   public readonly name: SidekickMcpServerFieldsFragment["name"];
   public readonly operatingInstructions: SidekickMcpServerFieldsFragment["operatingInstructions"];
   public readonly slug: SidekickMcpServerFieldsFragment["slug"];
@@ -6788,7 +7179,9 @@ export class SidekickMcpServerModel {
     this._data = data;
     this.authParams = data.authParams;
     this.authType = data.authType;
+    this.icons = data.icons;
     this.id = data.id;
+    this.isConnected = data.isConnected;
     this.name = data.name;
     this.operatingInstructions = data.operatingInstructions;
     this.slug = data.slug;
@@ -6893,6 +7286,7 @@ export class SlackThreadChannelAssociationModel {
   public readonly createdAt: SlackThreadChannelAssociationFieldsFragment["createdAt"];
   public readonly id: SlackThreadChannelAssociationFieldsFragment["id"];
   public readonly tenantId: SlackThreadChannelAssociationFieldsFragment["tenantId"];
+  public readonly tenantMembershipPolicy: SlackThreadChannelAssociationFieldsFragment["tenantMembershipPolicy"];
   public readonly updatedAt: SlackThreadChannelAssociationFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -6905,6 +7299,7 @@ export class SlackThreadChannelAssociationModel {
     this.createdAt = data.createdAt;
     this.id = data.id;
     this.tenantId = data.tenantId;
+    this.tenantMembershipPolicy = data.tenantMembershipPolicy;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
@@ -7081,6 +7476,58 @@ export class StringSettingModel {
     this.code = data.code;
     this.scope = data.scope;
     this.stringValue = data.stringValue;
+  }
+}
+
+export class SuggestedLabelTypeModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: SuggestedLabelTypeFieldsFragment;
+  public readonly __typename = "SuggestedLabelType" as const;
+
+  public readonly color: SuggestedLabelTypeFieldsFragment["color"];
+  public readonly createdAt: SuggestedLabelTypeFieldsFragment["createdAt"];
+  public readonly description: SuggestedLabelTypeFieldsFragment["description"];
+  public readonly icon: SuggestedLabelTypeFieldsFragment["icon"];
+  public readonly id: SuggestedLabelTypeFieldsFragment["id"];
+  public readonly isExcludedFromAi: SuggestedLabelTypeFieldsFragment["isExcludedFromAi"];
+  public readonly name: SuggestedLabelTypeFieldsFragment["name"];
+  public readonly source: SuggestedLabelTypeFieldsFragment["source"];
+  public readonly status: SuggestedLabelTypeFieldsFragment["status"];
+  public readonly type: SuggestedLabelTypeFieldsFragment["type"];
+  public readonly updatedAt: SuggestedLabelTypeFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: SuggestedLabelTypeFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.color = data.color;
+    this.createdAt = data.createdAt;
+    this.description = data.description;
+    this.icon = data.icon;
+    this.id = data.id;
+    this.isExcludedFromAi = data.isExcludedFromAi;
+    this.name = data.name;
+    this.source = data.source;
+    this.status = data.status;
+    this.type = data.type;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
   }
 }
 
@@ -7342,6 +7789,7 @@ export class TenantFieldModel {
   public readonly createdAt: TenantFieldFieldsFragment["createdAt"];
   public readonly externalFieldId: TenantFieldFieldsFragment["externalFieldId"];
   public readonly id: TenantFieldFieldsFragment["id"];
+  public readonly source: TenantFieldFieldsFragment["source"];
   public readonly updatedAt: TenantFieldFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -7353,6 +7801,7 @@ export class TenantFieldModel {
     this.createdAt = data.createdAt;
     this.externalFieldId = data.externalFieldId;
     this.id = data.id;
+    this.source = data.source;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
@@ -7573,6 +8022,8 @@ export class ThreadModel {
   public readonly description: ThreadFieldsFragment["description"];
   public readonly externalId: ThreadFieldsFragment["externalId"];
   public readonly id: ThreadFieldsFragment["id"];
+  public readonly importedAt: ThreadFieldsFragment["importedAt"];
+  public readonly isTestThread: ThreadFieldsFragment["isTestThread"];
   public readonly lockedAt: ThreadFieldsFragment["lockedAt"];
   public readonly previewText: ThreadFieldsFragment["previewText"];
   public readonly priority: ThreadFieldsFragment["priority"];
@@ -7588,6 +8039,7 @@ export class ThreadModel {
   public readonly assignedTo: (MachineUserModel | SystemModel | UserModel) | null;
   public readonly channelDetails: (ChatThreadChannelDetailsModel | DiscordThreadChannelDetailsModel | ImportThreadChannelDetailsModel | MSTeamsThreadChannelDetailsModel | SlackThreadChannelDetailsModel) | null;
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly importedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
   public readonly lockedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
   public readonly statusChangedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly statusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
@@ -7604,6 +8056,8 @@ export class ThreadModel {
     this.description = data.description;
     this.externalId = data.externalId;
     this.id = data.id;
+    this.importedAt = data.importedAt;
+    this.isTestThread = data.isTestThread;
     this.lockedAt = data.lockedAt;
     this.previewText = data.previewText;
     this.priority = data.priority;
@@ -7667,6 +8121,14 @@ export class ThreadModel {
       default: return data.createdBy as any;
     }
   })();
+    this.importedBy = data.importedBy ? (() => {
+    switch ((data.importedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.importedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.importedBy as any);
+      case "UserActor": return new UserActorModel(client, data.importedBy as any);
+      default: return data.importedBy as any;
+    }
+  })() : null;
     this.lockedBy = data.lockedBy ? (() => {
     switch ((data.lockedBy as any).__typename) {
       case "MachineUserActor": return new MachineUserActorModel(client, data.lockedBy as any);
@@ -7878,6 +8340,8 @@ export class ThreadDiscussionModel {
   protected _data: ThreadDiscussionFieldsFragment;
   public readonly __typename = "ThreadDiscussion" as const;
 
+  public readonly agentSessionId: ThreadDiscussionFieldsFragment["agentSessionId"];
+  public readonly agentStatus: ThreadDiscussionFieldsFragment["agentStatus"];
   public readonly createdAt: ThreadDiscussionFieldsFragment["createdAt"];
   public readonly id: ThreadDiscussionFieldsFragment["id"];
   public readonly isUnread: ThreadDiscussionFieldsFragment["isUnread"];
@@ -7885,19 +8349,23 @@ export class ThreadDiscussionModel {
   public readonly resolvedAt: ThreadDiscussionFieldsFragment["resolvedAt"];
   public readonly sourceEntityId: ThreadDiscussionFieldsFragment["sourceEntityId"];
   public readonly sourceEntityType: ThreadDiscussionFieldsFragment["sourceEntityType"];
+  public readonly sourcePageAnchor: ThreadDiscussionFieldsFragment["sourcePageAnchor"];
   public readonly sourcePageLink: ThreadDiscussionFieldsFragment["sourcePageLink"];
+  public readonly sourceType: ThreadDiscussionFieldsFragment["sourceType"];
   public readonly status: ThreadDiscussionFieldsFragment["status"];
   public readonly threadId: ThreadDiscussionFieldsFragment["threadId"];
   public readonly title: ThreadDiscussionFieldsFragment["title"];
   public readonly updatedAt: ThreadDiscussionFieldsFragment["updatedAt"];
   public readonly visibility: ThreadDiscussionFieldsFragment["visibility"];
-  public readonly channelDetails: (ThreadDiscussionAgentSessionChannelDetailsModel | ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel | ThreadDiscussionEmailChannelDetailsModel | ThreadDiscussionSlackChannelDetailsModel) | null;
+  public readonly channelDetails: (ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel | ThreadDiscussionEmailChannelDetailsModel | ThreadDiscussionSlackChannelDetailsModel) | null;
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: ThreadDiscussionFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.agentSessionId = data.agentSessionId;
+    this.agentStatus = data.agentStatus;
     this.createdAt = data.createdAt;
     this.id = data.id;
     this.isUnread = data.isUnread;
@@ -7905,7 +8373,9 @@ export class ThreadDiscussionModel {
     this.resolvedAt = data.resolvedAt;
     this.sourceEntityId = data.sourceEntityId;
     this.sourceEntityType = data.sourceEntityType;
+    this.sourcePageAnchor = data.sourcePageAnchor;
     this.sourcePageLink = data.sourcePageLink;
+    this.sourceType = data.sourceType;
     this.status = data.status;
     this.threadId = data.threadId;
     this.title = data.title;
@@ -7913,7 +8383,6 @@ export class ThreadDiscussionModel {
     this.visibility = data.visibility;
     this.channelDetails = data.channelDetails ? (() => {
     switch ((data.channelDetails as any).__typename) {
-      case "ThreadDiscussionAgentSessionChannelDetails": return new ThreadDiscussionAgentSessionChannelDetailsModel(client, data.channelDetails as any);
       case "ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails": return new ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel(client, data.channelDetails as any);
       case "ThreadDiscussionEmailChannelDetails": return new ThreadDiscussionEmailChannelDetailsModel(client, data.channelDetails as any);
       case "ThreadDiscussionSlackChannelDetails": return new ThreadDiscussionSlackChannelDetailsModel(client, data.channelDetails as any);
@@ -7942,6 +8411,15 @@ export class ThreadDiscussionModel {
   })();
   }
 
+  public get agent(): Promise<MachineUserModel | undefined> {
+    const id = this._data.agent?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<MachineUserQuery, MachineUserQueryVariables>(
+      MachineUserDocument,
+      { machineUserId: id } as MachineUserQueryVariables
+    ).then(r => r.machineUser ? new MachineUserModel(this._client, r.machineUser) : undefined);
+  }
+
   public get thread(): Promise<ThreadModel | undefined> {
     const id = this._data.thread?.id;
     if (!id) return Promise.resolve(undefined);
@@ -7964,20 +8442,6 @@ export class ThreadDiscussionModel {
       pageInfo: conn.pageInfo,
       fetch: (cursor) => this.messages({ ...variables, ...cursor }),
     });
-  }
-}
-
-export class ThreadDiscussionAgentSessionChannelDetailsModel {
-  protected _client: PlainGraphQLClient;
-  protected _data: ThreadDiscussionAgentSessionChannelDetailsFieldsFragment;
-  public readonly __typename = "ThreadDiscussionAgentSessionChannelDetails" as const;
-
-  public readonly agentSessionId: ThreadDiscussionAgentSessionChannelDetailsFieldsFragment["agentSessionId"];
-
-  constructor(client: PlainGraphQLClient, data: ThreadDiscussionAgentSessionChannelDetailsFieldsFragment) {
-    this._client = client;
-    this._data = data;
-    this.agentSessionId = data.agentSessionId;
   }
 }
 
@@ -8013,6 +8477,28 @@ export class ThreadDiscussionApprovalRequestEntryPayloadModel {
       default: return data.resolvedBy as any;
     }
   })() : null;
+  }
+}
+
+export class ThreadDiscussionConnectRequestEntryPayloadModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionConnectRequestEntryPayloadFieldsFragment;
+  public readonly __typename = "ThreadDiscussionConnectRequestEntryPayload" as const;
+
+  public readonly connectRequestId: ThreadDiscussionConnectRequestEntryPayloadFieldsFragment["connectRequestId"];
+  public readonly justification: ThreadDiscussionConnectRequestEntryPayloadFieldsFragment["justification"];
+  public readonly resolvedAt: ThreadDiscussionConnectRequestEntryPayloadFieldsFragment["resolvedAt"];
+  public readonly status: ThreadDiscussionConnectRequestEntryPayloadFieldsFragment["status"];
+  public readonly tools: ThreadDiscussionConnectRequestEntryPayloadFieldsFragment["tools"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionConnectRequestEntryPayloadFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.connectRequestId = data.connectRequestId;
+    this.justification = data.justification;
+    this.resolvedAt = data.resolvedAt;
+    this.status = data.status;
+    this.tools = data.tools;
   }
 }
 
@@ -8087,7 +8573,7 @@ export class ThreadDiscussionMessageModel {
   public readonly type: ThreadDiscussionMessageFieldsFragment["type"];
   public readonly updatedAt: ThreadDiscussionMessageFieldsFragment["updatedAt"];
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly entry: (ThreadDiscussionApprovalRequestEntryPayloadModel | ThreadDiscussionMessageEntryPayloadModel | ThreadDiscussionToolCallEntryPayloadModel) | null;
+  public readonly entry: (ThreadDiscussionApprovalRequestEntryPayloadModel | ThreadDiscussionConnectRequestEntryPayloadModel | ThreadDiscussionMessageEntryPayloadModel | ThreadDiscussionToolCallEntryPayloadModel) | null;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: ThreadDiscussionMessageFieldsFragment) {
@@ -8116,7 +8602,8 @@ export class ThreadDiscussionMessageModel {
   })();
     this.entry = data.entry ? (() => {
     switch ((data.entry as any).__typename) {
-      case "ThreadDiscussionApprovalRequestEntryPayload": return new ThreadDiscussionApprovalRequestEntryPayloadModel(client, data.entry as any);
+      case "ThreadDiscussionApprovalRequestEntryPayload": return new ThreadDiscussionApprovalRequestEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionApprovalRequestEntryPayloadStatus } as any);
+      case "ThreadDiscussionConnectRequestEntryPayload": return new ThreadDiscussionConnectRequestEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionConnectRequestEntryPayloadStatus } as any);
       case "ThreadDiscussionMessageEntryPayload": return new ThreadDiscussionMessageEntryPayloadModel(client, data.entry as any);
       case "ThreadDiscussionToolCallEntryPayload": return new ThreadDiscussionToolCallEntryPayloadModel(client, data.entry as any);
       default: return data.entry as any;
@@ -9615,6 +10102,7 @@ export class WorkflowModel {
   public readonly name: WorkflowFieldsFragment["name"];
   public readonly order: WorkflowFieldsFragment["order"];
   public readonly publishedAt: WorkflowFieldsFragment["publishedAt"];
+  public readonly sourceTemplateId: WorkflowFieldsFragment["sourceTemplateId"];
   public readonly startStepId: WorkflowFieldsFragment["startStepId"];
   public readonly trigger: WorkflowFieldsFragment["trigger"];
   public readonly updatedAt: WorkflowFieldsFragment["updatedAt"];
@@ -9629,6 +10117,7 @@ export class WorkflowModel {
     this.name = data.name;
     this.order = data.order;
     this.publishedAt = data.publishedAt;
+    this.sourceTemplateId = data.sourceTemplateId;
     this.startStepId = data.startStepId;
     this.trigger = data.trigger;
     this.updatedAt = data.updatedAt;
@@ -9812,6 +10301,62 @@ export class WorkflowStepModel {
       default: return data.updatedBy as any;
     }
   })();
+  }
+}
+
+export class WorkflowTemplateModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WorkflowTemplateFieldsFragment;
+  public readonly __typename = "WorkflowTemplate" as const;
+
+  public readonly author: WorkflowTemplateFieldsFragment["author"];
+  public readonly authorDomain: WorkflowTemplateFieldsFragment["authorDomain"];
+  public readonly content: WorkflowTemplateFieldsFragment["content"];
+  public readonly dependencies: WorkflowTemplateFieldsFragment["dependencies"];
+  public readonly id: WorkflowTemplateFieldsFragment["id"];
+  public readonly isFeatured: WorkflowTemplateFieldsFragment["isFeatured"];
+  public readonly tags: WorkflowTemplateFieldsFragment["tags"];
+  public readonly title: WorkflowTemplateFieldsFragment["title"];
+
+  constructor(client: PlainGraphQLClient, data: WorkflowTemplateFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.author = data.author;
+    this.authorDomain = data.authorDomain;
+    this.content = data.content;
+    this.dependencies = data.dependencies;
+    this.id = data.id;
+    this.isFeatured = data.isFeatured;
+    this.tags = data.tags;
+    this.title = data.title;
+  }
+}
+
+export class WorkflowTemplateGalleryItemModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: WorkflowTemplateGalleryItemFieldsFragment;
+  public readonly __typename = "WorkflowTemplateGalleryItem" as const;
+
+  public readonly author: WorkflowTemplateGalleryItemFieldsFragment["author"];
+  public readonly authorDomain: WorkflowTemplateGalleryItemFieldsFragment["authorDomain"];
+  public readonly content: WorkflowTemplateGalleryItemFieldsFragment["content"];
+  public readonly dependencies: WorkflowTemplateGalleryItemFieldsFragment["dependencies"];
+  public readonly id: WorkflowTemplateGalleryItemFieldsFragment["id"];
+  public readonly isFeatured: WorkflowTemplateGalleryItemFieldsFragment["isFeatured"];
+  public readonly tags: WorkflowTemplateGalleryItemFieldsFragment["tags"];
+  public readonly title: WorkflowTemplateGalleryItemFieldsFragment["title"];
+
+  constructor(client: PlainGraphQLClient, data: WorkflowTemplateGalleryItemFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.author = data.author;
+    this.authorDomain = data.authorDomain;
+    this.content = data.content;
+    this.dependencies = data.dependencies;
+    this.id = data.id;
+    this.isFeatured = data.isFeatured;
+    this.tags = data.tags;
+    this.title = data.title;
   }
 }
 
@@ -10384,6 +10929,10 @@ export interface PlainSdkQueries {
   autoresponder(variables: AutoresponderQueryVariables): Promise<AutoresponderModel>;
   autoresponders(variables: AutorespondersQueryVariables): Promise<PlainConnection<AutoresponderModel>>;
   billingPlans(variables: BillingPlansQueryVariables): Promise<PlainConnection<BillingPlanModel>>;
+  broadcast(variables: BroadcastQueryVariables): Promise<BroadcastModel>;
+  broadcastAudience(variables: BroadcastAudienceQueryVariables): Promise<BroadcastAudienceModel>;
+  broadcastAudiences(variables: BroadcastAudiencesQueryVariables): Promise<PlainConnection<BroadcastAudienceModel>>;
+  broadcasts(variables: BroadcastsQueryVariables): Promise<PlainConnection<BroadcastModel>>;
   businessHours(): Promise<BusinessHoursModel>;
   businessHoursSlots(): Promise<BusinessHoursSlotModel[]>;
   chatApp(variables: ChatAppQueryVariables): Promise<ChatAppModel>;
@@ -10412,6 +10961,7 @@ export interface PlainSdkQueries {
   deletedThreads(variables: DeletedThreadsQueryVariables): Promise<PlainConnection<DeletedThreadModel>>;
   discussion(variables: DiscussionQueryVariables): Promise<ThreadDiscussionModel>;
   discussions(variables: DiscussionsQueryVariables): Promise<PlainConnection<ThreadDiscussionModel>>;
+  emailSuppression(variables: EmailSuppressionQueryVariables): Promise<EmailSuppressionModel>;
   enabledAiToneRulesText(): Promise<NonNullable<EnabledAiToneRulesTextQuery["enabledAiToneRulesText"]>>;
   escalationPath(variables: EscalationPathQueryVariables): Promise<EscalationPathModel>;
   escalationPaths(variables: EscalationPathsQueryVariables): Promise<PlainConnection<EscalationPathModel>>;
@@ -10420,6 +10970,8 @@ export interface PlainSdkQueries {
   githubUserAuthIntegration(): Promise<GithubUserAuthIntegrationModel>;
   heatmapMetric(variables: HeatmapMetricQueryVariables): Promise<HeatmapMetricModel>;
   helpCenter(variables: HelpCenterQueryVariables): Promise<HelpCenterModel>;
+  helpCenterAiConversation(variables: HelpCenterAiConversationQueryVariables): Promise<HelpCenterAiConversationModel>;
+  helpCenterAiConversations(variables: HelpCenterAiConversationsQueryVariables): Promise<PlainConnection<HelpCenterAiConversationModel>>;
   helpCenterArticle(variables: HelpCenterArticleQueryVariables): Promise<HelpCenterArticleModel>;
   helpCenterArticleBySlug(variables: HelpCenterArticleBySlugQueryVariables): Promise<HelpCenterArticleModel>;
   helpCenterArticleGroup(variables: HelpCenterArticleGroupQueryVariables): Promise<HelpCenterArticleGroupModel>;
@@ -10468,6 +11020,7 @@ export interface PlainSdkQueries {
   roles(variables: RolesQueryVariables): Promise<PlainConnection<RoleModel>>;
   savedThreadsView(variables: SavedThreadsViewQueryVariables): Promise<SavedThreadsViewModel>;
   savedThreadsViews(variables: SavedThreadsViewsQueryVariables): Promise<PlainConnection<SavedThreadsViewModel>>;
+  searchBroadcasts(variables: SearchBroadcastsQueryVariables): Promise<PlainConnection<BroadcastModel>>;
   searchCompanies(variables: SearchCompaniesQueryVariables): Promise<SearchCompaniesQuery["searchCompanies"]>;
   searchCustomers(variables: SearchCustomersQueryVariables): Promise<PlainConnection<CustomerModel>>;
   searchKnowledgeSources(variables: SearchKnowledgeSourcesQueryVariables): Promise<SearchKnowledgeSourcesQuery["searchKnowledgeSources"]>;
@@ -10480,6 +11033,7 @@ export interface PlainSdkQueries {
   serviceAuthorization(variables: ServiceAuthorizationQueryVariables): Promise<ServiceAuthorizationModel>;
   serviceAuthorizations(variables: ServiceAuthorizationsQueryVariables): Promise<PlainConnection<ServiceAuthorizationModel>>;
   setting(variables: SettingQueryVariables): Promise<NonNullable<SettingQuery["setting"]>>;
+  sidekickCreditBalance(): Promise<SidekickCreditBalanceModel>;
   sidekickCreditUsageByDay(variables: SidekickCreditUsageByDayQueryVariables): Promise<SidekickCreditUsageByDayQuery["sidekickCreditUsageByDay"]>;
   sidekickCustomSkill(variables: SidekickCustomSkillQueryVariables): Promise<NonNullable<SidekickCustomSkillQuery["sidekickCustomSkill"]>>;
   sidekickGithubAccessibleRepos(variables: SidekickGithubAccessibleReposQueryVariables): Promise<SidekickGithubAccessibleReposQuery["sidekickGithubAccessibleRepos"]>;
@@ -10496,6 +11050,8 @@ export interface PlainSdkQueries {
   snippet(variables: SnippetQueryVariables): Promise<SnippetModel>;
   snippets(variables: SnippetsQueryVariables): Promise<PlainConnection<SnippetModel>>;
   subscriptionEventTypes(): Promise<SubscriptionEventTypesQuery["subscriptionEventTypes"]>;
+  suggestedLabelTypes(): Promise<SuggestedLabelTypeModel[]>;
+  suggestedSlackTeammates(variables: SuggestedSlackTeammatesQueryVariables): Promise<SuggestedSlackTeammatesQuery["suggestedSlackTeammates"]>;
   task(variables: TaskQueryVariables): Promise<TaskModel>;
   taskByRef(variables: TaskByRefQueryVariables): Promise<TaskModel>;
   tasks(variables: TasksQueryVariables): Promise<PlainConnection<TaskModel>>;
@@ -10503,6 +11059,7 @@ export interface PlainSdkQueries {
   tenant(variables: TenantQueryVariables): Promise<TenantModel>;
   tenantFieldSchemas(variables: TenantFieldSchemasQueryVariables): Promise<PlainConnection<TenantFieldSchemaModel>>;
   tenants(variables: TenantsQueryVariables): Promise<PlainConnection<TenantModel>>;
+  testThreads(): Promise<ThreadModel[]>;
   thread(variables: ThreadQueryVariables): Promise<ThreadModel>;
   threadByExternalId(variables: ThreadByExternalIdQueryVariables): Promise<ThreadModel>;
   threadByRef(variables: ThreadByRefQueryVariables): Promise<ThreadModel>;
@@ -10545,9 +11102,12 @@ export interface PlainSdkQueries {
   workflowExecution(variables: WorkflowExecutionQueryVariables): Promise<WorkflowExecutionModel>;
   workflowExecutions(variables: WorkflowExecutionsQueryVariables): Promise<PlainConnection<WorkflowExecutionModel>>;
   workflowExecutionsByEntity(variables: WorkflowExecutionsByEntityQueryVariables): Promise<PlainConnection<WorkflowExecutionModel>>;
+  workflowExecutionsForWorkspace(variables: WorkflowExecutionsForWorkspaceQueryVariables): Promise<PlainConnection<WorkflowExecutionModel>>;
   workflowRule(variables: WorkflowRuleQueryVariables): Promise<WorkflowRuleModel>;
   workflowRules(variables: WorkflowRulesQueryVariables): Promise<PlainConnection<WorkflowRuleModel>>;
   workflowShareLink(variables: WorkflowShareLinkQueryVariables): Promise<WorkflowShareLinkModel>;
+  workflowTemplate(variables: WorkflowTemplateQueryVariables): Promise<WorkflowTemplateModel>;
+  workflowTemplateGallery(): Promise<WorkflowTemplateGalleryItemModel[]>;
   workflows(variables: WorkflowsQueryVariables): Promise<PlainConnection<WorkflowModel>>;
   workspace(variables: WorkspaceQueryVariables): Promise<WorkspaceModel>;
   workspaceChatSettings(): Promise<WorkspaceChatSettingsQuery["workspaceChatSettings"]>;
@@ -10574,6 +11134,7 @@ export interface PlainSdkQueries {
 }
 
 export interface PlainSdkMutations {
+  acceptSuggestedLabelTypes(variables: AcceptSuggestedLabelTypesMutationVariables): Promise<AcceptSuggestedLabelTypesMutation["acceptSuggestedLabelTypes"]>;
   acceptWorkspaceInvite(variables: AcceptWorkspaceInviteMutationVariables): Promise<AcceptWorkspaceInviteMutation["acceptWorkspaceInvite"]>;
   addAdditionalAssignees(variables: AddAdditionalAssigneesMutationVariables): Promise<AddAdditionalAssigneesMutation["addAdditionalAssignees"]>;
   addCustomerToCustomerGroups(variables: AddCustomerToCustomerGroupsMutationVariables): Promise<AddCustomerToCustomerGroupsMutation["addCustomerToCustomerGroups"]>;
@@ -10587,6 +11148,8 @@ export interface PlainSdkMutations {
   archiveLabelType(variables: ArchiveLabelTypeMutationVariables): Promise<ArchiveLabelTypeMutation["archiveLabelType"]>;
   assignRolesToUser(variables: AssignRolesToUserMutationVariables): Promise<AssignRolesToUserMutation["assignRolesToUser"]>;
   assignThread(variables: AssignThreadMutationVariables): Promise<AssignThreadMutation["assignThread"]>;
+  bulkCreateThreadLinks(variables: BulkCreateThreadLinksMutationVariables): Promise<BulkCreateThreadLinksMutation["bulkCreateThreadLinks"]>;
+  bulkDeleteThreadLinks(variables: BulkDeleteThreadLinksMutationVariables): Promise<BulkDeleteThreadLinksMutation["bulkDeleteThreadLinks"]>;
   bulkJoinSlackChannels(variables: BulkJoinSlackChannelsMutationVariables): Promise<BulkJoinSlackChannelsMutation["bulkJoinSlackChannels"]>;
   bulkUpdateConnectedSlackChannels(variables: BulkUpdateConnectedSlackChannelsMutationVariables): Promise<BulkUpdateConnectedSlackChannelsMutation["bulkUpdateConnectedSlackChannels"]>;
   bulkUpdateSlackChannelSettings(variables: BulkUpdateSlackChannelSettingsMutationVariables): Promise<BulkUpdateSlackChannelSettingsMutation["bulkUpdateSlackChannelSettings"]>;
@@ -10595,7 +11158,6 @@ export interface PlainSdkMutations {
   calculateRoleChangeCost(variables: CalculateRoleChangeCostMutationVariables): Promise<CalculateRoleChangeCostMutation["calculateRoleChangeCost"]>;
   cancelHyperlineSubscription(): Promise<CancelHyperlineSubscriptionMutation["cancelHyperlineSubscription"]>;
   changeBillingPlan(variables: ChangeBillingPlanMutationVariables): Promise<ChangeBillingPlanMutation["changeBillingPlan"]>;
-  changeKnowledgeGapStatus(variables: ChangeKnowledgeGapStatusMutationVariables): Promise<ChangeKnowledgeGapStatusMutation["changeKnowledgeGapStatus"]>;
   changeThreadCustomer(variables: ChangeThreadCustomerMutationVariables): Promise<ChangeThreadCustomerMutation["changeThreadCustomer"]>;
   changeThreadPriority(variables: ChangeThreadPriorityMutationVariables): Promise<ChangeThreadPriorityMutation["changeThreadPriority"]>;
   changeUserStatus(variables: ChangeUserStatusMutationVariables): Promise<ChangeUserStatusMutation["changeUserStatus"]>;
@@ -10604,10 +11166,13 @@ export interface PlainSdkMutations {
   createAiFeatureFeedback(variables: CreateAiFeatureFeedbackMutationVariables): Promise<CreateAiFeatureFeedbackMutation["createAiFeatureFeedback"]>;
   createAiFeedback(variables: CreateAiFeedbackMutationVariables): Promise<CreateAiFeedbackMutation["createAiFeedback"]>;
   createAiToneRule(variables: CreateAiToneRuleMutationVariables): Promise<CreateAiToneRuleMutation["createAiToneRule"]>;
+  createAllTestThreads(): Promise<CreateAllTestThreadsMutation["createAllTestThreads"]>;
   createApiKey(variables: CreateApiKeyMutationVariables): Promise<CreateApiKeyMutation["createApiKey"]>;
   createAttachmentDownloadUrl(variables: CreateAttachmentDownloadUrlMutationVariables): Promise<CreateAttachmentDownloadUrlMutation["createAttachmentDownloadUrl"]>;
   createAttachmentUploadUrl(variables: CreateAttachmentUploadUrlMutationVariables): Promise<CreateAttachmentUploadUrlMutation["createAttachmentUploadUrl"]>;
   createAutoresponder(variables: CreateAutoresponderMutationVariables): Promise<CreateAutoresponderMutation["createAutoresponder"]>;
+  createBroadcast(variables: CreateBroadcastMutationVariables): Promise<CreateBroadcastMutation["createBroadcast"]>;
+  createBroadcastAudience(variables: CreateBroadcastAudienceMutationVariables): Promise<CreateBroadcastAudienceMutation["createBroadcastAudience"]>;
   createChatApp(variables: CreateChatAppMutationVariables): Promise<CreateChatAppMutation["createChatApp"]>;
   createChatAppSecret(variables: CreateChatAppSecretMutationVariables): Promise<CreateChatAppSecretMutation["createChatAppSecret"]>;
   createCustomRole(variables: CreateCustomRoleMutationVariables): Promise<CreateCustomRoleMutation["createCustomRole"]>;
@@ -10644,6 +11209,7 @@ export interface PlainSdkMutations {
   createSnippet(variables: CreateSnippetMutationVariables): Promise<CreateSnippetMutation["createSnippet"]>;
   createTask(variables: CreateTaskMutationVariables): Promise<CreateTaskMutation["createTask"]>;
   createTenant(variables: CreateTenantMutationVariables): Promise<CreateTenantMutation["createTenant"]>;
+  createTestThread(): Promise<CreateTestThreadMutation["createTestThread"]>;
   createThread(variables: CreateThreadMutationVariables): Promise<CreateThreadMutation["createThread"]>;
   createThreadChannelAssociation(variables: CreateThreadChannelAssociationMutationVariables): Promise<CreateThreadChannelAssociationMutation["createThreadChannelAssociation"]>;
   createThreadDiscussion(variables: CreateThreadDiscussionMutationVariables): Promise<CreateThreadDiscussionMutation["createThreadDiscussion"]>;
@@ -10671,8 +11237,11 @@ export interface PlainSdkMutations {
   createWorkspaceSlackIntegration(variables: CreateWorkspaceSlackIntegrationMutationVariables): Promise<CreateWorkspaceSlackIntegrationMutation["createWorkspaceSlackIntegration"]>;
   createWorkspaceSlackSidekickIntegration(variables: CreateWorkspaceSlackSidekickIntegrationMutationVariables): Promise<CreateWorkspaceSlackSidekickIntegrationMutation["createWorkspaceSlackSidekickIntegration"]>;
   deleteAiToneRules(variables: DeleteAiToneRulesMutationVariables): Promise<DeleteAiToneRulesMutation["deleteAiToneRules"]>;
+  deleteAllTestThreads(): Promise<DeleteAllTestThreadsMutation["deleteAllTestThreads"]>;
   deleteApiKey(variables: DeleteApiKeyMutationVariables): Promise<DeleteApiKeyMutation["deleteApiKey"]>;
   deleteAutoresponder(variables: DeleteAutoresponderMutationVariables): Promise<DeleteAutoresponderMutation["deleteAutoresponder"]>;
+  deleteBroadcast(variables: DeleteBroadcastMutationVariables): Promise<DeleteBroadcastMutation["deleteBroadcast"]>;
+  deleteBroadcastAudience(variables: DeleteBroadcastAudienceMutationVariables): Promise<DeleteBroadcastAudienceMutation["deleteBroadcastAudience"]>;
   deleteBusinessHours(): Promise<DeleteBusinessHoursMutation["deleteBusinessHours"]>;
   deleteChatApp(variables: DeleteChatAppMutationVariables): Promise<DeleteChatAppMutation["deleteChatApp"]>;
   deleteChatAppSecret(variables: DeleteChatAppSecretMutationVariables): Promise<DeleteChatAppSecretMutation["deleteChatAppSecret"]>;
@@ -10682,6 +11251,7 @@ export interface PlainSdkMutations {
   deleteCustomerCardConfig(variables: DeleteCustomerCardConfigMutationVariables): Promise<DeleteCustomerCardConfigMutation["deleteCustomerCardConfig"]>;
   deleteCustomerGroup(variables: DeleteCustomerGroupMutationVariables): Promise<DeleteCustomerGroupMutation["deleteCustomerGroup"]>;
   deleteCustomerSurvey(variables: DeleteCustomerSurveyMutationVariables): Promise<DeleteCustomerSurveyMutation["deleteCustomerSurvey"]>;
+  deleteEmailSuppression(variables: DeleteEmailSuppressionMutationVariables): Promise<DeleteEmailSuppressionMutation["deleteEmailSuppression"]>;
   deleteEscalationPath(variables: DeleteEscalationPathMutationVariables): Promise<DeleteEscalationPathMutation["deleteEscalationPath"]>;
   deleteGithubUserAuthIntegration(): Promise<DeleteGithubUserAuthIntegrationMutation["deleteGithubUserAuthIntegration"]>;
   deleteHelpCenter(variables: DeleteHelpCenterMutationVariables): Promise<DeleteHelpCenterMutation["deleteHelpCenter"]>;
@@ -10708,6 +11278,7 @@ export interface PlainSdkMutations {
   deleteTenant(variables: DeleteTenantMutationVariables): Promise<DeleteTenantMutation["deleteTenant"]>;
   deleteTenantField(variables: DeleteTenantFieldMutationVariables): Promise<DeleteTenantFieldMutation["deleteTenantField"]>;
   deleteTenantFieldSchema(variables: DeleteTenantFieldSchemaMutationVariables): Promise<DeleteTenantFieldSchemaMutation["deleteTenantFieldSchema"]>;
+  deleteTestThread(variables: DeleteTestThreadMutationVariables): Promise<DeleteTestThreadMutation["deleteTestThread"]>;
   deleteThread(variables: DeleteThreadMutationVariables): Promise<DeleteThreadMutation["deleteThread"]>;
   deleteThreadChannelAssociation(variables: DeleteThreadChannelAssociationMutationVariables): Promise<DeleteThreadChannelAssociationMutation["deleteThreadChannelAssociation"]>;
   deleteThreadDiscussion(variables: DeleteThreadDiscussionMutationVariables): Promise<DeleteThreadDiscussionMutation["deleteThreadDiscussion"]>;
@@ -10732,8 +11303,10 @@ export interface PlainSdkMutations {
   deleteWorkspaceSlackChannelIntegration(variables: DeleteWorkspaceSlackChannelIntegrationMutationVariables): Promise<DeleteWorkspaceSlackChannelIntegrationMutation["deleteWorkspaceSlackChannelIntegration"]>;
   deleteWorkspaceSlackIntegration(variables: DeleteWorkspaceSlackIntegrationMutationVariables): Promise<DeleteWorkspaceSlackIntegrationMutation["deleteWorkspaceSlackIntegration"]>;
   deleteWorkspaceSlackSidekickIntegration(): Promise<DeleteWorkspaceSlackSidekickIntegrationMutation["deleteWorkspaceSlackSidekickIntegration"]>;
+  dismissSuggestedLabelTypes(variables: DismissSuggestedLabelTypesMutationVariables): Promise<DismissSuggestedLabelTypesMutation["dismissSuggestedLabelTypes"]>;
   editQueuedAgentSessionMessage(variables: EditQueuedAgentSessionMessageMutationVariables): Promise<EditQueuedAgentSessionMessageMutation["editQueuedAgentSessionMessage"]>;
   escalateThread(variables: EscalateThreadMutationVariables): Promise<EscalateThreadMutation["escalateThread"]>;
+  exportWorkflowTemplate(variables: ExportWorkflowTemplateMutationVariables): Promise<ExportWorkflowTemplateMutation["exportWorkflowTemplate"]>;
   forkThread(variables: ForkThreadMutationVariables): Promise<ForkThreadMutation["forkThread"]>;
   generateAiToneRulesFromDescription(variables: GenerateAiToneRulesFromDescriptionMutationVariables): Promise<GenerateAiToneRulesFromDescriptionMutation["generateAiToneRulesFromDescription"]>;
   generateHelpCenterArticle(variables: GenerateHelpCenterArticleMutationVariables): Promise<GenerateHelpCenterArticleMutation["generateHelpCenterArticle"]>;
@@ -10780,6 +11353,7 @@ export interface PlainSdkMutations {
   resolveAgentApproval(variables: ResolveAgentApprovalMutationVariables): Promise<ResolveAgentApprovalMutation["resolveAgentApproval"]>;
   resolveCustomerForMSTeamsChannel(variables: ResolveCustomerForMsTeamsChannelMutationVariables): Promise<ResolveCustomerForMsTeamsChannelMutation["resolveCustomerForMSTeamsChannel"]>;
   resolveCustomerForSlackChannel(variables: ResolveCustomerForSlackChannelMutationVariables): Promise<ResolveCustomerForSlackChannelMutation["resolveCustomerForSlackChannel"]>;
+  scheduleBroadcast(variables: ScheduleBroadcastMutationVariables): Promise<ScheduleBroadcastMutation["scheduleBroadcast"]>;
   sendBulkEmail(variables: SendBulkEmailMutationVariables): Promise<SendBulkEmailMutation["sendBulkEmail"]>;
   sendChat(variables: SendChatMutationVariables): Promise<SendChatMutation["sendChat"]>;
   sendCustomerChat(variables: SendCustomerChatMutationVariables): Promise<SendCustomerChatMutation["sendCustomerChat"]>;
@@ -10809,6 +11383,8 @@ export interface PlainSdkMutations {
   updateAiToneRules(variables: UpdateAiToneRulesMutationVariables): Promise<UpdateAiToneRulesMutation["updateAiToneRules"]>;
   updateApiKey(variables: UpdateApiKeyMutationVariables): Promise<UpdateApiKeyMutation["updateApiKey"]>;
   updateAutoresponder(variables: UpdateAutoresponderMutationVariables): Promise<UpdateAutoresponderMutation["updateAutoresponder"]>;
+  updateBroadcast(variables: UpdateBroadcastMutationVariables): Promise<UpdateBroadcastMutation["updateBroadcast"]>;
+  updateBroadcastAudience(variables: UpdateBroadcastAudienceMutationVariables): Promise<UpdateBroadcastAudienceMutation["updateBroadcastAudience"]>;
   updateChatApp(variables: UpdateChatAppMutationVariables): Promise<UpdateChatAppMutation["updateChatApp"]>;
   updateCompanyTier(variables: UpdateCompanyTierMutationVariables): Promise<UpdateCompanyTierMutation["updateCompanyTier"]>;
   updateConnectedDiscordChannel(variables: UpdateConnectedDiscordChannelMutationVariables): Promise<UpdateConnectedDiscordChannelMutation["updateConnectedDiscordChannel"]>;
@@ -10818,6 +11394,7 @@ export interface PlainSdkMutations {
   updateCustomerCompany(variables: UpdateCustomerCompanyMutationVariables): Promise<UpdateCustomerCompanyMutation["updateCustomerCompany"]>;
   updateCustomerGroup(variables: UpdateCustomerGroupMutationVariables): Promise<UpdateCustomerGroupMutation["updateCustomerGroup"]>;
   updateCustomerSurvey(variables: UpdateCustomerSurveyMutationVariables): Promise<UpdateCustomerSurveyMutation["updateCustomerSurvey"]>;
+  updateDiscussionAgentStatus(variables: UpdateDiscussionAgentStatusMutationVariables): Promise<UpdateDiscussionAgentStatusMutation["updateDiscussionAgentStatus"]>;
   updateEscalationPath(variables: UpdateEscalationPathMutationVariables): Promise<UpdateEscalationPathMutation["updateEscalationPath"]>;
   updateGeneratedReply(variables: UpdateGeneratedReplyMutationVariables): Promise<UpdateGeneratedReplyMutation["updateGeneratedReply"]>;
   updateHelpCenter(variables: UpdateHelpCenterMutationVariables): Promise<UpdateHelpCenterMutation["updateHelpCenter"]>;
@@ -10844,6 +11421,7 @@ export interface PlainSdkMutations {
   updateTask(variables: UpdateTaskMutationVariables): Promise<UpdateTaskMutation["updateTask"]>;
   updateTenantTier(variables: UpdateTenantTierMutationVariables): Promise<UpdateTenantTierMutation["updateTenantTier"]>;
   updateThreadAgentStatus(variables: UpdateThreadAgentStatusMutationVariables): Promise<UpdateThreadAgentStatusMutation["updateThreadAgentStatus"]>;
+  updateThreadChannelAssociationTenantMembershipPolicy(variables: UpdateThreadChannelAssociationTenantMembershipPolicyMutationVariables): Promise<UpdateThreadChannelAssociationTenantMembershipPolicyMutation["updateThreadChannelAssociationTenantMembershipPolicy"]>;
   updateThreadEscalationPath(variables: UpdateThreadEscalationPathMutationVariables): Promise<UpdateThreadEscalationPathMutation["updateThreadEscalationPath"]>;
   updateThreadExternalId(variables: UpdateThreadExternalIdMutationVariables): Promise<UpdateThreadExternalIdMutation["updateThreadExternalId"]>;
   updateThreadFieldSchema(variables: UpdateThreadFieldSchemaMutationVariables): Promise<UpdateThreadFieldSchemaMutation["updateThreadFieldSchema"]>;
@@ -10944,6 +11522,50 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new BillingPlanModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         fetch: (cursor) => query.billingPlans({ ...variables, ...cursor } as BillingPlansQueryVariables),
+      });
+    },
+
+    async broadcast(variables: BroadcastQueryVariables): Promise<BroadcastModel> {
+      const response = await _client.request<BroadcastQuery, BroadcastQueryVariables>(
+        BroadcastDocument, variables
+      );
+      if (!response.broadcast) {
+        throw new Error("broadcast not found");
+      }
+      return new BroadcastModel(_client, response.broadcast);
+    },
+
+    async broadcastAudience(variables: BroadcastAudienceQueryVariables): Promise<BroadcastAudienceModel> {
+      const response = await _client.request<BroadcastAudienceQuery, BroadcastAudienceQueryVariables>(
+        BroadcastAudienceDocument, variables
+      );
+      if (!response.broadcastAudience) {
+        throw new Error("broadcastAudience not found");
+      }
+      return new BroadcastAudienceModel(_client, response.broadcastAudience);
+    },
+
+    async broadcastAudiences(variables: BroadcastAudiencesQueryVariables): Promise<PlainConnection<BroadcastAudienceModel>> {
+      const response = await _client.request<BroadcastAudiencesQuery, BroadcastAudiencesQueryVariables>(
+        BroadcastAudiencesDocument, variables
+      );
+      const conn = response.broadcastAudiences;
+      return new PlainConnection<BroadcastAudienceModel>({
+        nodes: conn.edges.map(e => new BroadcastAudienceModel(_client, e.node)),
+        pageInfo: conn.pageInfo,
+        fetch: (cursor) => query.broadcastAudiences({ ...variables, ...cursor } as BroadcastAudiencesQueryVariables),
+      });
+    },
+
+    async broadcasts(variables: BroadcastsQueryVariables): Promise<PlainConnection<BroadcastModel>> {
+      const response = await _client.request<BroadcastsQuery, BroadcastsQueryVariables>(
+        BroadcastsDocument, variables
+      );
+      const conn = response.broadcasts;
+      return new PlainConnection<BroadcastModel>({
+        nodes: conn.edges.map(e => new BroadcastModel(_client, e.node)),
+        pageInfo: conn.pageInfo,
+        fetch: (cursor) => query.broadcasts({ ...variables, ...cursor } as BroadcastsQueryVariables),
       });
     },
 
@@ -11240,6 +11862,16 @@ export class PlainSdk {
       });
     },
 
+    async emailSuppression(variables: EmailSuppressionQueryVariables): Promise<EmailSuppressionModel> {
+      const response = await _client.request<EmailSuppressionQuery, EmailSuppressionQueryVariables>(
+        EmailSuppressionDocument, variables
+      );
+      if (!response.emailSuppression) {
+        throw new Error("emailSuppression not found");
+      }
+      return new EmailSuppressionModel(_client, response.emailSuppression);
+    },
+
     async enabledAiToneRulesText(): Promise<NonNullable<EnabledAiToneRulesTextQuery["enabledAiToneRulesText"]>> {
       const response = await _client.request<EnabledAiToneRulesTextQuery, Record<string, never>>(
         EnabledAiToneRulesTextDocument
@@ -11314,6 +11946,28 @@ export class PlainSdk {
         throw new Error("helpCenter not found");
       }
       return new HelpCenterModel(_client, response.helpCenter);
+    },
+
+    async helpCenterAiConversation(variables: HelpCenterAiConversationQueryVariables): Promise<HelpCenterAiConversationModel> {
+      const response = await _client.request<HelpCenterAiConversationQuery, HelpCenterAiConversationQueryVariables>(
+        HelpCenterAiConversationDocument, variables
+      );
+      if (!response.helpCenterAiConversation) {
+        throw new Error("helpCenterAiConversation not found");
+      }
+      return new HelpCenterAiConversationModel(_client, response.helpCenterAiConversation);
+    },
+
+    async helpCenterAiConversations(variables: HelpCenterAiConversationsQueryVariables): Promise<PlainConnection<HelpCenterAiConversationModel>> {
+      const response = await _client.request<HelpCenterAiConversationsQuery, HelpCenterAiConversationsQueryVariables>(
+        HelpCenterAiConversationsDocument, variables
+      );
+      const conn = response.helpCenterAiConversations;
+      return new PlainConnection<HelpCenterAiConversationModel>({
+        nodes: conn.edges.map(e => new HelpCenterAiConversationModel(_client, e.node)),
+        pageInfo: conn.pageInfo,
+        fetch: (cursor) => query.helpCenterAiConversations({ ...variables, ...cursor } as HelpCenterAiConversationsQueryVariables),
+      });
     },
 
     async helpCenterArticle(variables: HelpCenterArticleQueryVariables): Promise<HelpCenterArticleModel> {
@@ -11792,6 +12446,18 @@ export class PlainSdk {
       });
     },
 
+    async searchBroadcasts(variables: SearchBroadcastsQueryVariables): Promise<PlainConnection<BroadcastModel>> {
+      const response = await _client.request<SearchBroadcastsQuery, SearchBroadcastsQueryVariables>(
+        SearchBroadcastsDocument, variables
+      );
+      const conn = response.searchBroadcasts;
+      return new PlainConnection<BroadcastModel>({
+        nodes: conn.edges.map(e => new BroadcastModel(_client, e.node)),
+        pageInfo: conn.pageInfo,
+        fetch: (cursor) => query.searchBroadcasts({ ...variables, ...cursor } as SearchBroadcastsQueryVariables),
+      });
+    },
+
     async searchCompanies(variables: SearchCompaniesQueryVariables): Promise<SearchCompaniesQuery["searchCompanies"]> {
       const response = await _client.request<SearchCompaniesQuery, SearchCompaniesQueryVariables>(
         SearchCompaniesDocument, variables
@@ -11905,6 +12571,13 @@ export class PlainSdk {
         throw new Error("setting not found");
       }
       return response.setting;
+    },
+
+    async sidekickCreditBalance(): Promise<SidekickCreditBalanceModel> {
+      const response = await _client.request<SidekickCreditBalanceQuery, Record<string, never>>(
+        SidekickCreditBalanceDocument
+      );
+      return new SidekickCreditBalanceModel(_client, response.sidekickCreditBalance);
     },
 
     async sidekickCreditUsageByDay(variables: SidekickCreditUsageByDayQueryVariables): Promise<SidekickCreditUsageByDayQuery["sidekickCreditUsageByDay"]> {
@@ -12048,6 +12721,20 @@ export class PlainSdk {
       return response.subscriptionEventTypes;
     },
 
+    async suggestedLabelTypes(): Promise<SuggestedLabelTypeModel[]> {
+      const response = await _client.request<SuggestedLabelTypesQuery, Record<string, never>>(
+        SuggestedLabelTypesDocument
+      );
+      return (response.suggestedLabelTypes ?? []).map(d => new SuggestedLabelTypeModel(_client, d));
+    },
+
+    async suggestedSlackTeammates(variables: SuggestedSlackTeammatesQueryVariables): Promise<SuggestedSlackTeammatesQuery["suggestedSlackTeammates"]> {
+      const response = await _client.request<SuggestedSlackTeammatesQuery, SuggestedSlackTeammatesQueryVariables>(
+        SuggestedSlackTeammatesDocument, variables
+      );
+      return response.suggestedSlackTeammates;
+    },
+
     async task(variables: TaskQueryVariables): Promise<TaskModel> {
       const response = await _client.request<TaskQuery, TaskQueryVariables>(
         TaskDocument, variables
@@ -12123,6 +12810,13 @@ export class PlainSdk {
         pageInfo: conn.pageInfo,
         fetch: (cursor) => query.tenants({ ...variables, ...cursor } as TenantsQueryVariables),
       });
+    },
+
+    async testThreads(): Promise<ThreadModel[]> {
+      const response = await _client.request<TestThreadsQuery, Record<string, never>>(
+        TestThreadsDocument
+      );
+      return (response.testThreads ?? []).map(d => new ThreadModel(_client, d));
     },
 
     async thread(variables: ThreadQueryVariables): Promise<ThreadModel> {
@@ -12545,6 +13239,18 @@ export class PlainSdk {
       });
     },
 
+    async workflowExecutionsForWorkspace(variables: WorkflowExecutionsForWorkspaceQueryVariables): Promise<PlainConnection<WorkflowExecutionModel>> {
+      const response = await _client.request<WorkflowExecutionsForWorkspaceQuery, WorkflowExecutionsForWorkspaceQueryVariables>(
+        WorkflowExecutionsForWorkspaceDocument, variables
+      );
+      const conn = response.workflowExecutionsForWorkspace;
+      return new PlainConnection<WorkflowExecutionModel>({
+        nodes: conn.edges.map(e => new WorkflowExecutionModel(_client, e.node)),
+        pageInfo: conn.pageInfo,
+        fetch: (cursor) => query.workflowExecutionsForWorkspace({ ...variables, ...cursor } as WorkflowExecutionsForWorkspaceQueryVariables),
+      });
+    },
+
     async workflowRule(variables: WorkflowRuleQueryVariables): Promise<WorkflowRuleModel> {
       const response = await _client.request<WorkflowRuleQuery, WorkflowRuleQueryVariables>(
         WorkflowRuleDocument, variables
@@ -12575,6 +13281,23 @@ export class PlainSdk {
         throw new Error("workflowShareLink not found");
       }
       return new WorkflowShareLinkModel(_client, response.workflowShareLink);
+    },
+
+    async workflowTemplate(variables: WorkflowTemplateQueryVariables): Promise<WorkflowTemplateModel> {
+      const response = await _client.request<WorkflowTemplateQuery, WorkflowTemplateQueryVariables>(
+        WorkflowTemplateDocument, variables
+      );
+      if (!response.workflowTemplate) {
+        throw new Error("workflowTemplate not found");
+      }
+      return new WorkflowTemplateModel(_client, response.workflowTemplate);
+    },
+
+    async workflowTemplateGallery(): Promise<WorkflowTemplateGalleryItemModel[]> {
+      const response = await _client.request<WorkflowTemplateGalleryQuery, Record<string, never>>(
+        WorkflowTemplateGalleryDocument
+      );
+      return (response.workflowTemplateGallery ?? []).map(d => new WorkflowTemplateGalleryItemModel(_client, d));
     },
 
     async workflows(variables: WorkflowsQueryVariables): Promise<PlainConnection<WorkflowModel>> {
@@ -12798,6 +13521,13 @@ export class PlainSdk {
     this.query = query;
 
     const mutation: PlainSdkMutations = {
+    async acceptSuggestedLabelTypes(variables: AcceptSuggestedLabelTypesMutationVariables): Promise<AcceptSuggestedLabelTypesMutation["acceptSuggestedLabelTypes"]> {
+      const response = await _client.request<AcceptSuggestedLabelTypesMutation, AcceptSuggestedLabelTypesMutationVariables>(
+        AcceptSuggestedLabelTypesDocument, variables
+      );
+      return response.acceptSuggestedLabelTypes;
+    },
+
     async acceptWorkspaceInvite(variables: AcceptWorkspaceInviteMutationVariables): Promise<AcceptWorkspaceInviteMutation["acceptWorkspaceInvite"]> {
       const response = await _client.request<AcceptWorkspaceInviteMutation, AcceptWorkspaceInviteMutationVariables>(
         AcceptWorkspaceInviteDocument, variables
@@ -12889,6 +13619,20 @@ export class PlainSdk {
       return response.assignThread;
     },
 
+    async bulkCreateThreadLinks(variables: BulkCreateThreadLinksMutationVariables): Promise<BulkCreateThreadLinksMutation["bulkCreateThreadLinks"]> {
+      const response = await _client.request<BulkCreateThreadLinksMutation, BulkCreateThreadLinksMutationVariables>(
+        BulkCreateThreadLinksDocument, variables
+      );
+      return response.bulkCreateThreadLinks;
+    },
+
+    async bulkDeleteThreadLinks(variables: BulkDeleteThreadLinksMutationVariables): Promise<BulkDeleteThreadLinksMutation["bulkDeleteThreadLinks"]> {
+      const response = await _client.request<BulkDeleteThreadLinksMutation, BulkDeleteThreadLinksMutationVariables>(
+        BulkDeleteThreadLinksDocument, variables
+      );
+      return response.bulkDeleteThreadLinks;
+    },
+
     async bulkJoinSlackChannels(variables: BulkJoinSlackChannelsMutationVariables): Promise<BulkJoinSlackChannelsMutation["bulkJoinSlackChannels"]> {
       const response = await _client.request<BulkJoinSlackChannelsMutation, BulkJoinSlackChannelsMutationVariables>(
         BulkJoinSlackChannelsDocument, variables
@@ -12943,13 +13687,6 @@ export class PlainSdk {
         ChangeBillingPlanDocument, variables
       );
       return response.changeBillingPlan;
-    },
-
-    async changeKnowledgeGapStatus(variables: ChangeKnowledgeGapStatusMutationVariables): Promise<ChangeKnowledgeGapStatusMutation["changeKnowledgeGapStatus"]> {
-      const response = await _client.request<ChangeKnowledgeGapStatusMutation, ChangeKnowledgeGapStatusMutationVariables>(
-        ChangeKnowledgeGapStatusDocument, variables
-      );
-      return response.changeKnowledgeGapStatus;
     },
 
     async changeThreadCustomer(variables: ChangeThreadCustomerMutationVariables): Promise<ChangeThreadCustomerMutation["changeThreadCustomer"]> {
@@ -13008,6 +13745,13 @@ export class PlainSdk {
       return response.createAiToneRule;
     },
 
+    async createAllTestThreads(): Promise<CreateAllTestThreadsMutation["createAllTestThreads"]> {
+      const response = await _client.request<CreateAllTestThreadsMutation, Record<string, never>>(
+        CreateAllTestThreadsDocument
+      );
+      return response.createAllTestThreads;
+    },
+
     async createApiKey(variables: CreateApiKeyMutationVariables): Promise<CreateApiKeyMutation["createApiKey"]> {
       const response = await _client.request<CreateApiKeyMutation, CreateApiKeyMutationVariables>(
         CreateApiKeyDocument, variables
@@ -13034,6 +13778,20 @@ export class PlainSdk {
         CreateAutoresponderDocument, variables
       );
       return response.createAutoresponder;
+    },
+
+    async createBroadcast(variables: CreateBroadcastMutationVariables): Promise<CreateBroadcastMutation["createBroadcast"]> {
+      const response = await _client.request<CreateBroadcastMutation, CreateBroadcastMutationVariables>(
+        CreateBroadcastDocument, variables
+      );
+      return response.createBroadcast;
+    },
+
+    async createBroadcastAudience(variables: CreateBroadcastAudienceMutationVariables): Promise<CreateBroadcastAudienceMutation["createBroadcastAudience"]> {
+      const response = await _client.request<CreateBroadcastAudienceMutation, CreateBroadcastAudienceMutationVariables>(
+        CreateBroadcastAudienceDocument, variables
+      );
+      return response.createBroadcastAudience;
     },
 
     async createChatApp(variables: CreateChatAppMutationVariables): Promise<CreateChatAppMutation["createChatApp"]> {
@@ -13288,6 +14046,13 @@ export class PlainSdk {
       return response.createTenant;
     },
 
+    async createTestThread(): Promise<CreateTestThreadMutation["createTestThread"]> {
+      const response = await _client.request<CreateTestThreadMutation, Record<string, never>>(
+        CreateTestThreadDocument
+      );
+      return response.createTestThread;
+    },
+
     async createThread(variables: CreateThreadMutationVariables): Promise<CreateThreadMutation["createThread"]> {
       const response = await _client.request<CreateThreadMutation, CreateThreadMutationVariables>(
         CreateThreadDocument, variables
@@ -13477,6 +14242,13 @@ export class PlainSdk {
       return response.deleteAiToneRules;
     },
 
+    async deleteAllTestThreads(): Promise<DeleteAllTestThreadsMutation["deleteAllTestThreads"]> {
+      const response = await _client.request<DeleteAllTestThreadsMutation, Record<string, never>>(
+        DeleteAllTestThreadsDocument
+      );
+      return response.deleteAllTestThreads;
+    },
+
     async deleteApiKey(variables: DeleteApiKeyMutationVariables): Promise<DeleteApiKeyMutation["deleteApiKey"]> {
       const response = await _client.request<DeleteApiKeyMutation, DeleteApiKeyMutationVariables>(
         DeleteApiKeyDocument, variables
@@ -13489,6 +14261,20 @@ export class PlainSdk {
         DeleteAutoresponderDocument, variables
       );
       return response.deleteAutoresponder;
+    },
+
+    async deleteBroadcast(variables: DeleteBroadcastMutationVariables): Promise<DeleteBroadcastMutation["deleteBroadcast"]> {
+      const response = await _client.request<DeleteBroadcastMutation, DeleteBroadcastMutationVariables>(
+        DeleteBroadcastDocument, variables
+      );
+      return response.deleteBroadcast;
+    },
+
+    async deleteBroadcastAudience(variables: DeleteBroadcastAudienceMutationVariables): Promise<DeleteBroadcastAudienceMutation["deleteBroadcastAudience"]> {
+      const response = await _client.request<DeleteBroadcastAudienceMutation, DeleteBroadcastAudienceMutationVariables>(
+        DeleteBroadcastAudienceDocument, variables
+      );
+      return response.deleteBroadcastAudience;
     },
 
     async deleteBusinessHours(): Promise<DeleteBusinessHoursMutation["deleteBusinessHours"]> {
@@ -13552,6 +14338,13 @@ export class PlainSdk {
         DeleteCustomerSurveyDocument, variables
       );
       return response.deleteCustomerSurvey;
+    },
+
+    async deleteEmailSuppression(variables: DeleteEmailSuppressionMutationVariables): Promise<DeleteEmailSuppressionMutation["deleteEmailSuppression"]> {
+      const response = await _client.request<DeleteEmailSuppressionMutation, DeleteEmailSuppressionMutationVariables>(
+        DeleteEmailSuppressionDocument, variables
+      );
+      return response.deleteEmailSuppression;
     },
 
     async deleteEscalationPath(variables: DeleteEscalationPathMutationVariables): Promise<DeleteEscalationPathMutation["deleteEscalationPath"]> {
@@ -13736,6 +14529,13 @@ export class PlainSdk {
       return response.deleteTenantFieldSchema;
     },
 
+    async deleteTestThread(variables: DeleteTestThreadMutationVariables): Promise<DeleteTestThreadMutation["deleteTestThread"]> {
+      const response = await _client.request<DeleteTestThreadMutation, DeleteTestThreadMutationVariables>(
+        DeleteTestThreadDocument, variables
+      );
+      return response.deleteTestThread;
+    },
+
     async deleteThread(variables: DeleteThreadMutationVariables): Promise<DeleteThreadMutation["deleteThread"]> {
       const response = await _client.request<DeleteThreadMutation, DeleteThreadMutationVariables>(
         DeleteThreadDocument, variables
@@ -13904,6 +14704,13 @@ export class PlainSdk {
       return response.deleteWorkspaceSlackSidekickIntegration;
     },
 
+    async dismissSuggestedLabelTypes(variables: DismissSuggestedLabelTypesMutationVariables): Promise<DismissSuggestedLabelTypesMutation["dismissSuggestedLabelTypes"]> {
+      const response = await _client.request<DismissSuggestedLabelTypesMutation, DismissSuggestedLabelTypesMutationVariables>(
+        DismissSuggestedLabelTypesDocument, variables
+      );
+      return response.dismissSuggestedLabelTypes;
+    },
+
     async editQueuedAgentSessionMessage(variables: EditQueuedAgentSessionMessageMutationVariables): Promise<EditQueuedAgentSessionMessageMutation["editQueuedAgentSessionMessage"]> {
       const response = await _client.request<EditQueuedAgentSessionMessageMutation, EditQueuedAgentSessionMessageMutationVariables>(
         EditQueuedAgentSessionMessageDocument, variables
@@ -13916,6 +14723,13 @@ export class PlainSdk {
         EscalateThreadDocument, variables
       );
       return response.escalateThread;
+    },
+
+    async exportWorkflowTemplate(variables: ExportWorkflowTemplateMutationVariables): Promise<ExportWorkflowTemplateMutation["exportWorkflowTemplate"]> {
+      const response = await _client.request<ExportWorkflowTemplateMutation, ExportWorkflowTemplateMutationVariables>(
+        ExportWorkflowTemplateDocument, variables
+      );
+      return response.exportWorkflowTemplate;
     },
 
     async forkThread(variables: ForkThreadMutationVariables): Promise<ForkThreadMutation["forkThread"]> {
@@ -14240,6 +15054,13 @@ export class PlainSdk {
       return response.resolveCustomerForSlackChannel;
     },
 
+    async scheduleBroadcast(variables: ScheduleBroadcastMutationVariables): Promise<ScheduleBroadcastMutation["scheduleBroadcast"]> {
+      const response = await _client.request<ScheduleBroadcastMutation, ScheduleBroadcastMutationVariables>(
+        ScheduleBroadcastDocument, variables
+      );
+      return response.scheduleBroadcast;
+    },
+
     async sendBulkEmail(variables: SendBulkEmailMutationVariables): Promise<SendBulkEmailMutation["sendBulkEmail"]> {
       const response = await _client.request<SendBulkEmailMutation, SendBulkEmailMutationVariables>(
         SendBulkEmailDocument, variables
@@ -14443,6 +15264,20 @@ export class PlainSdk {
       return response.updateAutoresponder;
     },
 
+    async updateBroadcast(variables: UpdateBroadcastMutationVariables): Promise<UpdateBroadcastMutation["updateBroadcast"]> {
+      const response = await _client.request<UpdateBroadcastMutation, UpdateBroadcastMutationVariables>(
+        UpdateBroadcastDocument, variables
+      );
+      return response.updateBroadcast;
+    },
+
+    async updateBroadcastAudience(variables: UpdateBroadcastAudienceMutationVariables): Promise<UpdateBroadcastAudienceMutation["updateBroadcastAudience"]> {
+      const response = await _client.request<UpdateBroadcastAudienceMutation, UpdateBroadcastAudienceMutationVariables>(
+        UpdateBroadcastAudienceDocument, variables
+      );
+      return response.updateBroadcastAudience;
+    },
+
     async updateChatApp(variables: UpdateChatAppMutationVariables): Promise<UpdateChatAppMutation["updateChatApp"]> {
       const response = await _client.request<UpdateChatAppMutation, UpdateChatAppMutationVariables>(
         UpdateChatAppDocument, variables
@@ -14504,6 +15339,13 @@ export class PlainSdk {
         UpdateCustomerSurveyDocument, variables
       );
       return response.updateCustomerSurvey;
+    },
+
+    async updateDiscussionAgentStatus(variables: UpdateDiscussionAgentStatusMutationVariables): Promise<UpdateDiscussionAgentStatusMutation["updateDiscussionAgentStatus"]> {
+      const response = await _client.request<UpdateDiscussionAgentStatusMutation, UpdateDiscussionAgentStatusMutationVariables>(
+        UpdateDiscussionAgentStatusDocument, variables
+      );
+      return response.updateDiscussionAgentStatus;
     },
 
     async updateEscalationPath(variables: UpdateEscalationPathMutationVariables): Promise<UpdateEscalationPathMutation["updateEscalationPath"]> {
@@ -14686,6 +15528,13 @@ export class PlainSdk {
         UpdateThreadAgentStatusDocument, variables
       );
       return response.updateThreadAgentStatus;
+    },
+
+    async updateThreadChannelAssociationTenantMembershipPolicy(variables: UpdateThreadChannelAssociationTenantMembershipPolicyMutationVariables): Promise<UpdateThreadChannelAssociationTenantMembershipPolicyMutation["updateThreadChannelAssociationTenantMembershipPolicy"]> {
+      const response = await _client.request<UpdateThreadChannelAssociationTenantMembershipPolicyMutation, UpdateThreadChannelAssociationTenantMembershipPolicyMutationVariables>(
+        UpdateThreadChannelAssociationTenantMembershipPolicyDocument, variables
+      );
+      return response.updateThreadChannelAssociationTenantMembershipPolicy;
     },
 
     async updateThreadEscalationPath(variables: UpdateThreadEscalationPathMutationVariables): Promise<UpdateThreadEscalationPathMutation["updateThreadEscalationPath"]> {
