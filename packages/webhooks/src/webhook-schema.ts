@@ -810,14 +810,14 @@ export interface SlackMessage {
   slackChannelId: string;
   slackChannelName: string;
   slackMessageLink: string;
-  slackReactions?: Items[];
+  slackReactions?: SlackReaction[];
   createdAt: Datetime;
   createdBy: Actor;
   updatedAt: Datetime;
   updatedBy: Actor;
   [k: string]: unknown;
 }
-export interface Items {
+export interface SlackReaction {
   name: string;
   actors: {
     actorId: Id;
@@ -1045,7 +1045,7 @@ export interface ThreadSlackMessageUpdatedEventPayload {
 }
 export interface SlackReactionChange {
   changeType: "ADDED" | "REMOVED" | "UNKNOWN_SLACK_REACTION_CHANGE_TYPE";
-  reaction: Items;
+  reaction: SlackReaction;
   [k: string]: unknown;
 }
 export interface ThreadDiscordMessageReceivedEventPayload {
