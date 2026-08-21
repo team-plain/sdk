@@ -15,6 +15,7 @@ export type {
   CustomerGroupChangedPayload,
   CustomerGroupMembershipsChangedPayload,
   CustomerUpdatedPublicEventPayload,
+  DiscussionMessageCreatedPublicEventPayload,
   ThreadAssignmentTransitionedPublicEventPayload,
   ThreadChatSentPublicEventPayload,
   ThreadCreatedPublicEventPayload,
