@@ -86,6 +86,9 @@
           "$ref": "#/definitions/threadNoteMentionCreatedPublicEventPayload"
         },
         {
+          "$ref": "#/definitions/discussionMessageCreatedPublicEventPayload"
+        },
+        {
           "$ref": "#/definitions/threadChatReceivedPublicEventPayload"
         },
         {
@@ -128,6 +131,7 @@
         "thread.chat_received",
         "thread.note_created",
         "thread.note_mention_created",
+        "discussion.message_created",
         "thread.thread_labels_changed",
         "thread.thread_priority_changed",
         "thread.thread_field_created",
@@ -2688,7 +2692,8 @@
               }
             },
             "required": ["name", "actors"],
-            "additionalProperties": true
+            "additionalProperties": true,
+            "title": "SlackReaction"
           },
           "default": []
         },
@@ -2975,7 +2980,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-07-14"
+          "const": "2026-08-19"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
@@ -3379,6 +3384,78 @@
         }
       },
       "required": ["eventType", "thread", "note", "mentions"],
+      "additionalProperties": true
+    },
+    "discussionMessageCreatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "discussion.message_created"
+        },
+        "discussion": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/id"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["SLACK", "EMAIL", "AGENT_SESSION", "UNKNOWN_DISCUSSION_TYPE"]
+            },
+            "agent": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/machineUser"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": ["OPEN", "RESOLVED", "UNKNOWN_DISCUSSION_STATUS"]
+            },
+            "threadId": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/id"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": ["id", "type", "agent", "status", "threadId"],
+          "additionalProperties": true
+        },
+        "message": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/id"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["INBOUND", "OUTBOUND", "UNKNOWN_DISCUSSION_MESSAGE_TYPE"]
+            },
+            "markdown": {
+              "type": "string"
+            },
+            "createdBy": {
+              "$ref": "#/definitions/actor"
+            },
+            "createdAt": {
+              "$ref": "#/definitions/datetime"
+            }
+          },
+          "required": ["id", "type", "markdown", "createdBy", "createdAt"],
+          "additionalProperties": true
+        }
+      },
+      "required": ["eventType", "discussion", "message"],
       "additionalProperties": true
     },
     "threadServiceLevelAgreementStatusTransitionedPayload": {

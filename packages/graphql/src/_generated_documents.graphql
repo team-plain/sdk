@@ -563,6 +563,652 @@ fragment BooleanSettingFields on BooleanSetting {
   }
 }
 
+fragment BroadcastFields on Broadcast {
+  id
+  name
+  notificationTitle
+  content
+  contentFormat
+  type
+  sender {
+    __typename
+    ... on SlackBroadcastSender {
+      user {
+        ...UserActorFields
+      }
+    }
+    ... on PlainWorkspaceBroadcastSender {
+      workspace {
+        id
+      }
+    }
+  }
+  sendTarget {
+    scope
+    recipients {
+      type
+      slackTeamId
+      slackChannelId
+    }
+    excludeRecipients {
+      type
+      slackTeamId
+      slackChannelId
+    }
+  }
+  status
+  latestSend {
+    id
+    status
+    isTest
+    scheduledAt {
+      unixTimestamp
+      iso8601
+    }
+    startedAt {
+      unixTimestamp
+      iso8601
+    }
+    completedAt {
+      unixTimestamp
+      iso8601
+    }
+    deliveryCounts {
+      pending
+      sending
+      sent
+      failed
+      total
+    }
+  }
+  scheduledAt {
+    unixTimestamp
+    iso8601
+  }
+  startedAt {
+    unixTimestamp
+    iso8601
+  }
+  completedAt {
+    unixTimestamp
+    iso8601
+  }
+  isDeleted
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  deletedAt {
+    unixTimestamp
+    iso8601
+  }
+  deletedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
+fragment BroadcastAudienceFields on BroadcastAudience {
+  id
+  name
+  type
+  filters {
+    tenantIds
+    tierIds
+    tenantFields {
+      externalFieldId
+      stringValue
+      booleanValue
+      numberValue
+      stringArrayValue
+      userReferenceValues
+    }
+    slackChannels {
+      slackTeamId
+      slackChannelId
+    }
+    slackChannelNameContains
+    audienceIds
+  }
+  isDeleted
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  deletedAt {
+    unixTimestamp
+    iso8601
+  }
+  deletedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
+fragment BulkCreateThreadLinkResultFields on BulkCreateThreadLinkResult {
+  threadId
+  threadLink {
+    __typename
+    ... on LinearIssueThreadLink {
+      id
+      title
+      description
+      url
+      status
+      linkType
+      threadId
+      sourceId
+      sourceType
+      createdAt {
+        unixTimestamp
+        iso8601
+      }
+      createdBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      updatedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      linearIssueId
+      linearIssueIdentifier
+      linearIssueState {
+        type
+        label
+        color
+      }
+      linearIssueCreatedAt {
+        unixTimestamp
+        iso8601
+      }
+      linearIssueUpdatedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on JiraIssueThreadLink {
+      id
+      title
+      description
+      url
+      status
+      threadId
+      sourceId
+      sourceType
+      linkType
+      createdAt {
+        unixTimestamp
+        iso8601
+      }
+      createdBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      updatedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      jiraIssueId
+      jiraIssueKey
+      jiraIssueType {
+        name
+        iconUrl
+      }
+    }
+    ... on PlainThreadThreadLink {
+      id
+      title
+      description
+      url
+      status
+      threadId
+      sourceId
+      sourceType
+      linkType
+      createdAt {
+        unixTimestamp
+        iso8601
+      }
+      createdBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      updatedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      plainThreadId
+      plainThreadStatusDetailType
+    }
+    ... on PlainTaskThreadLink {
+      id
+      title
+      description
+      url
+      status
+      threadId
+      sourceId
+      sourceType
+      linkType
+      createdAt {
+        unixTimestamp
+        iso8601
+      }
+      createdBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      updatedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      plainTaskId
+    }
+    ... on GenericThreadLink {
+      id
+      title
+      description
+      url
+      status
+      threadId
+      sourceId
+      sourceType
+      sourceStatus {
+        key
+        label
+        color
+        icon
+      }
+      linkType
+      createdAt {
+        unixTimestamp
+        iso8601
+      }
+      createdBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+      updatedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
+    }
+  }
+  error {
+    message
+    type
+    code
+    fields {
+      field
+      message
+      type
+    }
+  }
+}
+
+fragment BulkDeleteThreadLinkResultFields on BulkDeleteThreadLinkResult {
+  threadLinkId
+  error {
+    message
+    type
+    code
+    fields {
+      field
+      message
+      type
+    }
+  }
+}
+
 fragment BulkUpdateConnectedSlackChannelResultFields on BulkUpdateConnectedSlackChannelResult {
   connectedSlackChannelId
   connectedSlackChannel {
@@ -1071,6 +1717,7 @@ fragment CompanyFields on Company {
       id
       companyId
       tenantId
+      tenantMembershipPolicy
       createdAt {
         unixTimestamp
         iso8601
@@ -4016,6 +4663,16 @@ fragment EmailSignatureFields on EmailSignature {
   }
 }
 
+fragment EmailSuppressionFields on EmailSuppression {
+  emailAddress
+  reason
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  isRemovable
+}
+
 fragment EmbedTokenFields on EmbedToken {
   token
   expiresAt {
@@ -4682,6 +5339,33 @@ fragment HelpCenterFields on HelpCenter {
       }
     }
   }
+}
+
+fragment HelpCenterAiConversationFields on HelpCenterAiConversation {
+  id
+  title
+  helpCenter {
+    id
+  }
+  customer {
+    id
+  }
+  thread {
+    id
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  lastMessageAt {
+    unixTimestamp
+    iso8601
+  }
+  messageCount
 }
 
 fragment HelpCenterAiConversationMessageEntryFields on HelpCenterAiConversationMessageEntry {
@@ -5596,6 +6280,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               publicName
               description
               type
+              isCustomAgent
               avatar {
                 id
                 fileName
@@ -5856,6 +6541,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               publicName
               description
               type
+              isCustomAgent
               avatar {
                 id
                 fileName
@@ -6118,6 +6804,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               publicName
               description
               type
+              isCustomAgent
               avatar {
                 id
                 fileName
@@ -6378,6 +7065,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               publicName
               description
               type
+              isCustomAgent
               avatar {
                 id
                 fileName
@@ -10233,6 +10921,11 @@ fragment IndexingStatusPendingFields on IndexingStatusPending {
   }
 }
 
+fragment IntegrationReauthRequiredNotificationDetailFields on IntegrationReauthRequiredNotificationDetail {
+  serviceIntegrationKey
+  serviceAuthorizationId
+}
+
 fragment InternalNotificationFields on InternalNotification {
   id
   userId
@@ -10300,6 +10993,10 @@ fragment InternalNotificationFields on InternalNotification {
     ... on DiscussionResolvedNotificationDetail {
       threadId
       threadDiscussionId
+    }
+    ... on IntegrationReauthRequiredNotificationDetail {
+      serviceIntegrationKey
+      serviceAuthorizationId
     }
   }
   readAt {
@@ -10499,11 +11196,6 @@ fragment KnowledgeGapFields on KnowledgeGap {
   id
   title
   description
-  status
-  statusChangedAt {
-    unixTimestamp
-    iso8601
-  }
   lastSeenAt {
     unixTimestamp
     iso8601
@@ -10580,6 +11272,9 @@ fragment KnowledgeGapFields on KnowledgeGap {
       }
     }
   }
+  task {
+    id
+  }
 }
 
 fragment KnowledgeGapFeedbackDetailsFields on KnowledgeGapFeedbackDetails {
@@ -10590,8 +11285,11 @@ fragment KnowledgeGapFeedbackDetailsFields on KnowledgeGapFeedbackDetails {
 }
 
 fragment KnowledgeSourceCitationFields on KnowledgeSourceCitation {
-  messageId
   threadId
+  timelineEntryId
+  sourceType
+  title
+  url
   document {
     __typename
     ... on IndexedDocument {
@@ -11191,6 +11889,7 @@ fragment MachineUserFields on MachineUser {
   publicName
   description
   type
+  isCustomAgent
   avatar {
     id
     fileName
@@ -12082,6 +12781,7 @@ fragment SavedThreadsViewFields on SavedThreadsView {
       hasServiceLevelAgreements
       hasChannels
       hasLastUpdated
+      hasCreatedAt
       hasAssignees
       hasRef
       hasIssueTrackerIssues
@@ -12510,6 +13210,20 @@ fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgree
   }
 }
 
+fragment SidekickCreditBalanceFields on SidekickCreditBalance {
+  status
+  allowance {
+    grant
+    used
+    remaining
+    periodEndsAt
+    lowBalanceThreshold
+  }
+  topup {
+    remaining
+  }
+}
+
 fragment SidekickGithubServiceConfigFields on SidekickGithubServiceConfig {
   selectedRepos {
     repoId
@@ -12531,10 +13245,16 @@ fragment SidekickMcpServerFields on SidekickMcpServer {
     placement
   }
   operatingInstructions
+  isConnected
   tools {
     name
     displayName
     description
+  }
+  icons {
+    src
+    mimeType
+    sizes
   }
 }
 
@@ -12594,6 +13314,7 @@ fragment SlackThreadChannelAssociationFields on SlackThreadChannelAssociation {
   id
   companyId
   tenantId
+  tenantMembershipPolicy
   createdAt {
     unixTimestamp
     iso8601
@@ -12829,6 +13550,72 @@ fragment StringSettingFields on StringSetting {
   }
 }
 
+fragment SuggestedLabelTypeFields on SuggestedLabelType {
+  id
+  name
+  icon
+  color
+  type
+  description
+  isExcludedFromAi
+  source
+  status
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
 fragment SystemFields on System {
   id
 }
@@ -13006,6 +13793,7 @@ fragment TaskFields on Task {
       publicName
       description
       type
+      isCustomAgent
       avatar {
         id
         fileName
@@ -13286,6 +14074,7 @@ fragment TenantFields on Tenant {
       id
       companyId
       tenantId
+      tenantMembershipPolicy
       createdAt {
         unixTimestamp
         iso8601
@@ -13405,6 +14194,7 @@ fragment TenantFields on Tenant {
 
 fragment TenantFieldFields on TenantField {
   id
+  source
   externalFieldId
   value {
     __typename
@@ -13650,6 +14440,7 @@ fragment ThreadFields on Thread {
   previewText
   priority
   externalId
+  isTestThread
   status
   statusChangedAt {
     unixTimestamp
@@ -13961,6 +14752,7 @@ fragment ThreadFields on Thread {
       publicName
       description
       type
+      isCustomAgent
       avatar {
         id
         fileName
@@ -14225,6 +15017,7 @@ fragment ThreadFields on Thread {
       publicName
       description
       type
+      isCustomAgent
       avatar {
         id
         fileName
@@ -14509,6 +15302,11 @@ fragment ThreadFields on Thread {
       customerId
       content
     }
+    suggestedSidekickPrompts {
+      label
+      prompt
+      category
+    }
     generatedAt {
       unixTimestamp
       iso8601
@@ -14519,6 +15317,33 @@ fragment ThreadFields on Thread {
     iso8601
   }
   lockedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  importedAt {
+    unixTimestamp
+    iso8601
+  }
+  importedBy {
     __typename
     ... on UserActor {
       userId
@@ -14680,6 +15505,10 @@ fragment ThreadDiscussionFields on ThreadDiscussion {
   }
   title
   status
+  agentStatus
+  agent {
+    id
+  }
   resolvedAt {
     unixTimestamp
     iso8601
@@ -14776,18 +15605,14 @@ fragment ThreadDiscussionFields on ThreadDiscussion {
       cursorWorkspaceIntegrationId
       repositoryUrl
     }
-    ... on ThreadDiscussionAgentSessionChannelDetails {
-      agentSessionId
-    }
   }
+  agentSessionId
   visibility
   sourceEntityId
   sourceEntityType
+  sourceType
   sourcePageLink
-}
-
-fragment ThreadDiscussionAgentSessionChannelDetailsFields on ThreadDiscussionAgentSessionChannelDetails {
-  agentSessionId
+  sourcePageAnchor
 }
 
 fragment ThreadDiscussionApprovalRequestEntryPayloadFields on ThreadDiscussionApprovalRequestEntryPayload {
@@ -14824,6 +15649,21 @@ fragment ThreadDiscussionApprovalRequestEntryPayloadFields on ThreadDiscussionAp
     }
   }
   calls
+}
+
+fragment ThreadDiscussionConnectRequestEntryPayloadFields on ThreadDiscussionConnectRequestEntryPayload {
+  connectRequestId
+  justification
+  tools {
+    slug
+    name
+    isConnected
+  }
+  status
+  resolvedAt {
+    unixTimestamp
+    iso8601
+  }
 }
 
 fragment ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFields on ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails {
@@ -14881,7 +15721,7 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
       approvalId
       leaseId
       justification
-      status
+      threadDiscussionApprovalRequestEntryPayloadStatus: status
       reviewerNote
       resolvedAt {
         unixTimestamp
@@ -14911,6 +15751,20 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
         }
       }
       calls
+    }
+    ... on ThreadDiscussionConnectRequestEntryPayload {
+      connectRequestId
+      justification
+      tools {
+        slug
+        name
+        isConnected
+      }
+      threadDiscussionConnectRequestEntryPayloadStatus: status
+      resolvedAt {
+        unixTimestamp
+        iso8601
+      }
     }
   }
   createdAt {
@@ -15970,6 +16824,11 @@ fragment ThreadLinkGroupFields on ThreadLinkGroup {
   }
   companyMetrics {
     noCompany {
+      totalCount
+    }
+  }
+  tenantMetrics {
+    noTenant {
       totalCount
     }
   }
@@ -17866,6 +18725,7 @@ fragment TimelineEntryFields on TimelineEntry {
           publicName
           description
           type
+          isCustomAgent
           avatar {
             id
             fileName
@@ -18126,6 +18986,7 @@ fragment TimelineEntryFields on TimelineEntry {
           publicName
           description
           type
+          isCustomAgent
           avatar {
             id
             fileName
@@ -18388,6 +19249,7 @@ fragment TimelineEntryFields on TimelineEntry {
           publicName
           description
           type
+          isCustomAgent
           avatar {
             id
             fileName
@@ -18648,6 +19510,7 @@ fragment TimelineEntryFields on TimelineEntry {
           publicName
           description
           type
+          isCustomAgent
           avatar {
             id
             fileName
@@ -22851,6 +23714,7 @@ fragment WorkflowFields on Workflow {
     iso8601
   }
   order
+  sourceTemplateId
   createdAt {
     unixTimestamp
     iso8601
@@ -23094,6 +23958,40 @@ fragment WorkflowStepFields on WorkflowStep {
         id
       }
     }
+  }
+}
+
+fragment WorkflowTemplateFields on WorkflowTemplate {
+  id
+  title
+  content {
+    type
+    value
+  }
+  tags
+  isFeatured
+  author
+  authorDomain
+  dependencies {
+    integrations
+    features
+  }
+}
+
+fragment WorkflowTemplateGalleryItemFields on WorkflowTemplateGalleryItem {
+  id
+  title
+  content {
+    type
+    value
+  }
+  tags
+  isFeatured
+  author
+  authorDomain
+  dependencies {
+    integrations
+    features
   }
 }
 
@@ -24091,6 +24989,12 @@ query SidekickCreditUsageByDay($input: SidekickCreditUsageByDayInput!) {
   }
 }
 
+query SidekickCreditBalance {
+  sidekickCreditBalance {
+    ...SidekickCreditBalanceFields
+  }
+}
+
 query WorkOSConfiguration {
   workOSConfiguration {
     ssoUrl
@@ -24126,6 +25030,12 @@ query LabelType($labelTypeId: ID!) {
 query LabelTypeByExternalId($externalId: ID!) {
   labelTypeByExternalId(externalId: $externalId) {
     ...LabelTypeFields
+  }
+}
+
+query SuggestedLabelTypes {
+  suggestedLabelTypes {
+    ...SuggestedLabelTypeFields
   }
 }
 
@@ -24381,9 +25291,78 @@ query Snippet($snippetId: ID!) {
   }
 }
 
+query Broadcasts($filters: BroadcastsFilter, $first: Int, $after: String, $last: Int, $before: String) {
+  broadcasts(filters: $filters, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...BroadcastFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query SearchBroadcasts($searchQuery: BroadcastsSearchQuery!, $filters: BroadcastsFilter, $first: Int, $after: String, $last: Int, $before: String) {
+  searchBroadcasts(searchQuery: $searchQuery, filters: $filters, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...BroadcastFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query Broadcast($broadcastId: ID!) {
+  broadcast(broadcastId: $broadcastId) {
+    ...BroadcastFields
+  }
+}
+
+query BroadcastAudiences($first: Int, $after: String, $last: Int, $before: String) {
+  broadcastAudiences(first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...BroadcastAudienceFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query BroadcastAudience($broadcastAudienceId: ID!) {
+  broadcastAudience(broadcastAudienceId: $broadcastAudienceId) {
+    ...BroadcastAudienceFields
+  }
+}
+
 query WorkspaceEmailSettings {
   workspaceEmailSettings {
     ...WorkspaceEmailSettingsFields
+  }
+}
+
+query EmailSuppression($emailAddress: String!) {
+  emailSuppression(emailAddress: $emailAddress) {
+    ...EmailSuppressionFields
   }
 }
 
@@ -24629,6 +25608,16 @@ query SearchSlackUsers($slackTeamId: String!, $slackChannelId: String!, $searchQ
       startCursor
       endCursor
     }
+  }
+}
+
+query SuggestedSlackTeammates($slackTeamId: String!) {
+  suggestedSlackTeammates(slackTeamId: $slackTeamId) {
+    slackUserId
+    email
+    fullName
+    slackHandle
+    slackAvatarUrl72px
   }
 }
 
@@ -24921,6 +25910,23 @@ query WorkflowExecutions($workflowId: ID!, $first: Int, $after: String, $last: I
   }
 }
 
+query WorkflowExecutionsForWorkspace($filters: WorkflowExecutionsFilter, $first: Int, $after: String, $last: Int, $before: String) {
+  workflowExecutionsForWorkspace(filters: $filters, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...WorkflowExecutionFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
 query WorkflowExecutionsByEntity($filters: WorkflowExecutionByEntityFilter!, $first: Int, $after: String, $last: Int, $before: String) {
   workflowExecutionsByEntity(filters: $filters, first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -24941,6 +25947,18 @@ query WorkflowExecutionsByEntity($filters: WorkflowExecutionByEntityFilter!, $fi
 query WorkflowShareLink($token: String!) {
   workflowShareLink(token: $token) {
     ...WorkflowShareLinkFields
+  }
+}
+
+query WorkflowTemplateGallery {
+  workflowTemplateGallery {
+    ...WorkflowTemplateGalleryItemFields
+  }
+}
+
+query WorkflowTemplate($templateId: ID!) {
+  workflowTemplate(templateId: $templateId) {
+    ...WorkflowTemplateFields
   }
 }
 
@@ -25023,6 +26041,12 @@ query Threads($filters: ThreadsFilter, $sortBy: ThreadsSort, $first: Int, $after
       endCursor
     }
     totalCount
+  }
+}
+
+query TestThreads {
+  testThreads {
+    ...ThreadFields
   }
 }
 
@@ -25706,6 +26730,29 @@ query HelpCenter($id: ID!) {
   }
 }
 
+query HelpCenterAiConversations($first: Int, $after: String, $last: Int, $before: String, $filters: HelpCenterAiConversationsFilter, $sortBy: HelpCenterAiConversationsSort) {
+  helpCenterAiConversations(first: $first, after: $after, last: $last, before: $before, filters: $filters, sortBy: $sortBy) {
+    edges {
+      node {
+        ...HelpCenterAiConversationFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query HelpCenterAiConversation($id: ID!) {
+  helpCenterAiConversation(id: $id) {
+    ...HelpCenterAiConversationFields
+  }
+}
+
 query HelpCenterArticle($id: ID!) {
   helpCenterArticle(id: $id) {
     ...HelpCenterArticleFields
@@ -25812,8 +26859,8 @@ query KnowledgeGap($knowledgeGapId: ID!) {
   }
 }
 
-query KnowledgeGaps($filters: KnowledgeGapsFilter, $sortBy: KnowledgeGapsSort, $first: Int, $after: String, $last: Int, $before: String) {
-  knowledgeGaps(filters: $filters, sortBy: $sortBy, first: $first, after: $after, last: $last, before: $before) {
+query KnowledgeGaps($sortBy: KnowledgeGapsSort, $first: Int, $after: String, $last: Int, $before: String) {
+  knowledgeGaps(sortBy: $sortBy, first: $first, after: $after, last: $last, before: $before) {
     edges {
       node {
         ...KnowledgeGapFields
@@ -26187,6 +27234,42 @@ mutation MoveLabelType($input: MoveLabelTypeInput!) {
   }
 }
 
+mutation AcceptSuggestedLabelTypes($input: AcceptSuggestedLabelTypesInput!) {
+  acceptSuggestedLabelTypes(input: $input) {
+    labelTypes {
+      ...LabelTypeFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DismissSuggestedLabelTypes($input: DismissSuggestedLabelTypesInput!) {
+  dismissSuggestedLabelTypes(input: $input) {
+    suggestedLabelTypes {
+      ...SuggestedLabelTypeFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation AddLabels($input: AddLabelsInput!) {
   addLabels(input: $input) {
     labels {
@@ -26287,6 +27370,42 @@ mutation CreateThreadLink($input: CreateThreadLinkInput!) {
       ... on GenericThreadLink {
         ...GenericThreadLinkFields
       }
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation BulkCreateThreadLinks($input: BulkCreateThreadLinksInput!) {
+  bulkCreateThreadLinks(input: $input) {
+    results {
+      ...BulkCreateThreadLinkResultFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation BulkDeleteThreadLinks($input: BulkDeleteThreadLinksInput!) {
+  bulkDeleteThreadLinks(input: $input) {
+    results {
+      ...BulkDeleteThreadLinkResultFields
     }
     error {
       message
@@ -26494,6 +27613,132 @@ mutation UpdateSnippet($input: UpdateSnippetInput!) {
   updateSnippet(input: $input) {
     snippet {
       ...SnippetFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateBroadcast($input: CreateBroadcastInput!) {
+  createBroadcast(input: $input) {
+    broadcast {
+      ...BroadcastFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateBroadcast($input: UpdateBroadcastInput!) {
+  updateBroadcast(input: $input) {
+    broadcast {
+      ...BroadcastFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteBroadcast($input: DeleteBroadcastInput!) {
+  deleteBroadcast(input: $input) {
+    broadcast {
+      ...BroadcastFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateBroadcastAudience($input: CreateBroadcastAudienceInput!) {
+  createBroadcastAudience(input: $input) {
+    broadcastAudience {
+      ...BroadcastAudienceFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateBroadcastAudience($input: UpdateBroadcastAudienceInput!) {
+  updateBroadcastAudience(input: $input) {
+    broadcastAudience {
+      ...BroadcastAudienceFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteBroadcastAudience($input: DeleteBroadcastAudienceInput!) {
+  deleteBroadcastAudience(input: $input) {
+    broadcastAudience {
+      ...BroadcastAudienceFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ScheduleBroadcast($input: ScheduleBroadcastInput!) {
+  scheduleBroadcast(input: $input) {
+    broadcast {
+      ...BroadcastFields
     }
     error {
       message
@@ -27112,6 +28357,25 @@ mutation CreateWorkflowShareLink($input: CreateWorkflowShareLinkInput!) {
   }
 }
 
+mutation ExportWorkflowTemplate($input: ExportWorkflowTemplateInput!) {
+  exportWorkflowTemplate(input: $input) {
+    files {
+      path
+      content
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation CreateWorkflowStep($input: CreateWorkflowStepInput!) {
   createWorkflowStep(input: $input) {
     workflowStep {
@@ -27544,6 +28808,21 @@ mutation CreateWorkspaceEmailDomainSettings($input: CreateWorkspaceEmailDomainSe
 
 mutation DeleteWorkspaceEmailDomainSettings {
   deleteWorkspaceEmailDomainSettings {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteEmailSuppression($input: DeleteEmailSuppressionInput!) {
+  deleteEmailSuppression(input: $input) {
     error {
       message
       type
@@ -29036,6 +30315,72 @@ mutation DeleteThread($input: DeleteThreadInput!) {
   }
 }
 
+mutation CreateTestThread {
+  createTestThread {
+    thread {
+      ...ThreadFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateAllTestThreads {
+  createAllTestThreads {
+    threads {
+      ...ThreadFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteTestThread($input: DeleteTestThreadInput!) {
+  deleteTestThread(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteAllTestThreads {
+  deleteAllTestThreads {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation CreateThreadDiscussion($input: CreateThreadDiscussionInput!) {
   createThreadDiscussion(input: $input) {
     threadDiscussion {
@@ -29112,6 +30457,24 @@ mutation SendDiscussionMessage($input: SendDiscussionMessageInput!) {
   sendDiscussionMessage(input: $input) {
     discussionMessage {
       ...ThreadDiscussionMessageFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateDiscussionAgentStatus($input: UpdateDiscussionAgentStatusInput!) {
+  updateDiscussionAgentStatus(input: $input) {
+    discussion {
+      ...ThreadDiscussionFields
     }
     error {
       message
@@ -29460,7 +30823,7 @@ mutation UpsertTenantFieldSchema($input: UpsertTenantFieldSchemaInput!) {
     tenantFieldSchemas {
       ...TenantFieldSchemaFields
     }
-    result
+    results
     error {
       message
       type
@@ -30581,6 +31944,27 @@ mutation CreateThreadChannelAssociation($input: CreateThreadChannelAssociationIn
   }
 }
 
+mutation UpdateThreadChannelAssociationTenantMembershipPolicy($input: UpdateThreadChannelAssociationTenantMembershipPolicyInput!) {
+  updateThreadChannelAssociationTenantMembershipPolicy(input: $input) {
+    threadChannelAssociation {
+      __typename
+      ... on SlackThreadChannelAssociation {
+        ...SlackThreadChannelAssociationFields
+      }
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation DeleteThreadChannelAssociation($input: DeleteThreadChannelAssociationInput!) {
   deleteThreadChannelAssociation(input: $input) {
     error {
@@ -31193,24 +32577,6 @@ mutation ImportCustomers($input: ImportCustomersInput!) {
   }
 }
 
-mutation ChangeKnowledgeGapStatus($input: ChangeKnowledgeGapStatusInput!) {
-  changeKnowledgeGapStatus(input: $input) {
-    knowledgeGap {
-      ...KnowledgeGapFields
-    }
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
 # ─── Sub-connection Queries ──────────────────────────────────────────────────
 
 query MachineUserApiKeys($machineUserId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
@@ -31359,6 +32725,40 @@ query TaskThreadLinks($taskId: ID!, $first: Int, $after: String, $last: Int, $be
           }
           ... on GenericThreadLink {
             ...GenericThreadLinkFields
+          }
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
+    }
+  }
+}
+
+query TaskSourceLinks($taskId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
+  task(taskId: $taskId) {
+    sourceLinks(first: $first, after: $after, last: $last, before: $before) {
+      edges {
+        node {
+          __typename
+          ... on KnowledgeGapTaskLink {
+            id
+            taskId
+            sourceId
+            sourceType
+            createdAt {
+              unixTimestamp
+              iso8601
+            }
+            updatedAt {
+              unixTimestamp
+              iso8601
+            }
           }
         }
         cursor

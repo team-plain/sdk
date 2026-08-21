@@ -8,27 +8,4 @@ export { parsePlainWebhook } from "./parse.js";
 export type { Result } from "./result.js";
 export { verifyPlainWebhook } from "./verify.js";
 
-export type {
-  CustomerChangedPayload,
-  CustomerCreatedPublicEventPayload,
-  CustomerDeletedPublicEventPayload,
-  CustomerGroupChangedPayload,
-  CustomerGroupMembershipsChangedPayload,
-  CustomerUpdatedPublicEventPayload,
-  ThreadAssignmentTransitionedPublicEventPayload,
-  ThreadChatSentPublicEventPayload,
-  ThreadCreatedPublicEventPayload,
-  ThreadEmailReceivedPublicEventPayload,
-  ThreadEmailSentPublicEventPayload,
-  ThreadFieldCreatedPublicEventPayload,
-  ThreadFieldDeletedPublicEventPayload,
-  ThreadFieldUpdatedPublicEventPayload,
-  ThreadLabelsChangedPublicEventPayload,
-  ThreadPriorityChangedPublicEventPayload,
-  ThreadServiceLevelAgreementStatusTransitionedPayload,
-  ThreadSlackMessageReceivedEventPayload,
-  ThreadSlackMessageSentEventPayload,
-  ThreadStatusTransitionedPublicEventPayload,
-  TimelineEntryChangedPayload,
-  WebhooksSchemaDefinition,
-} from "./webhook-schema.js";
+export type * from "./webhook-schema.js";

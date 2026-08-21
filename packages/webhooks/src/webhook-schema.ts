@@ -320,6 +320,7 @@ export interface WebhooksSchemaDefinition {
     | CustomerDeletedPublicEventPayload
     | ThreadNoteCreatedEventPayload
     | ThreadNoteMentionCreatedPublicEventPayload
+    | DiscussionMessageCreatedPublicEventPayload
     | ThreadChatReceivedPublicEventPayload
     | ThreadSlackMessageUpdatedEventPayload
     | ThreadDiscordMessageReceivedEventPayload
@@ -345,6 +346,7 @@ export interface WebhooksSchemaDefinition {
     | "thread.chat_received"
     | "thread.note_created"
     | "thread.note_mention_created"
+    | "discussion.message_created"
     | "thread.thread_labels_changed"
     | "thread.thread_priority_changed"
     | "thread.thread_field_created"
@@ -808,14 +810,14 @@ export interface SlackMessage {
   slackChannelId: string;
   slackChannelName: string;
   slackMessageLink: string;
-  slackReactions?: Items[];
+  slackReactions?: SlackReaction[];
   createdAt: Datetime;
   createdBy: Actor;
   updatedAt: Datetime;
   updatedBy: Actor;
   [k: string]: unknown;
 }
-export interface Items {
+export interface SlackReaction {
   name: string;
   actors: {
     actorId: Id;
@@ -1003,6 +1005,26 @@ export interface ThreadNoteMentionCreatedPublicEventPayload {
   mentions: MachineUser[];
   [k: string]: unknown;
 }
+export interface DiscussionMessageCreatedPublicEventPayload {
+  eventType: "discussion.message_created";
+  discussion: {
+    id: Id;
+    type: "SLACK" | "EMAIL" | "AGENT_SESSION" | "UNKNOWN_DISCUSSION_TYPE";
+    agent: MachineUser | null;
+    status: "OPEN" | "RESOLVED" | "UNKNOWN_DISCUSSION_STATUS";
+    threadId: Id | null;
+    [k: string]: unknown;
+  };
+  message: {
+    id: Id;
+    type: "INBOUND" | "OUTBOUND" | "UNKNOWN_DISCUSSION_MESSAGE_TYPE";
+    markdown: string;
+    createdBy: Actor;
+    createdAt: Datetime;
+    [k: string]: unknown;
+  };
+  [k: string]: unknown;
+}
 export interface ThreadChatReceivedPublicEventPayload {
   eventType: "thread.chat_received";
   chat: Chat;
@@ -1023,7 +1045,7 @@ export interface ThreadSlackMessageUpdatedEventPayload {
 }
 export interface SlackReactionChange {
   changeType: "ADDED" | "REMOVED" | "UNKNOWN_SLACK_REACTION_CHANGE_TYPE";
-  reaction: Items;
+  reaction: SlackReaction;
   [k: string]: unknown;
 }
 export interface ThreadDiscordMessageReceivedEventPayload {
@@ -1096,7 +1118,7 @@ export interface ThreadTenantUpdatedPublicEventPayload {
 }
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-07-14";
+  webhookTargetVersion: "2026-08-19";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

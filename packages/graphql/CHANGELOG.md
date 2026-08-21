@@ -1,5 +1,11 @@
 # @team-plain/graphql
 
+## 1.4.0
+
+### Minor Changes
+
+- d8ef453: Update GraphQL schema and regenerate the client, documents, and SDK. Adds the `updateDiscussionAgentStatus` mutation and the `MachineUser.isCustomAgent` field, both needed to build a custom agent.
+
 ## 1.3.0
 
 ### Minor Changes
