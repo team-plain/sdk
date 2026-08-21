@@ -2692,7 +2692,8 @@
               }
             },
             "required": ["name", "actors"],
-            "additionalProperties": true
+            "additionalProperties": true,
+            "title": "SlackReaction"
           },
           "default": []
         },
