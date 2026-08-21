@@ -44,6 +44,22 @@ describe("verifyPlainWebhook", () => {
     expect(result.error?.message).toBe("The signature provided is invalid.");
   });
 
+  // A caller-supplied signature can hold multi-byte characters, which makes its string length and
+  // its encoded byte length disagree. Comparing string lengths would let that past the guard and
+  // then make timingSafeEqual throw, turning a rejected webhook into an unhandled exception.
+  it.each([
+    ["a multi-byte character", `${"0".repeat(63)}\u00e9`],
+    ["a surrogate pair", `${"0".repeat(62)}\u{1f600}`],
+  ])("rejects rather than throws when the signature contains %s", (_name, signature) => {
+    expect(signature.length).toBe(64);
+    expect(Buffer.byteLength(signature, "utf8")).not.toBe(64);
+
+    const result = verifyPlainWebhook(JSON.stringify(threadCreatedPayload), signature, "secret");
+
+    expect(result.error).instanceOf(PlainWebhookSignatureVerificationError);
+    expect(result.error?.message).toBe("The signature provided is invalid.");
+  });
+
   it("returns an error when the signature matches but the timestamp is too far in the past", () => {
     const result = verifyPlainWebhook(
       JSON.stringify(threadCreatedPayload),
