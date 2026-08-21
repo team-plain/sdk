@@ -1,5 +1,12 @@
 # @team-plain/webhooks
 
+## 1.7.0
+
+### Minor Changes
+
+- a02211a: Export every type generated from the webhook schema. The barrel export named them by hand and had fallen 83 types behind `webhook-schema.ts`, so `Actor`, `Thread`, `Customer`, and 11 payload types shipped in the build but could not be imported.
+- a02211a: Name the Slack reaction type `SlackReaction` instead of `Items`. The shape is an inline anonymous object in the schema, so codegen had been naming it after the JSON Schema `items` keyword.
+
 ## 1.6.0
 
 ### Minor Changes
