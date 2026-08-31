@@ -3,6 +3,7 @@ import { describe, expect, it, test } from "vitest";
 import { PlainWebhookPayloadError, PlainWebhookVersionMismatchError } from "../errors.js";
 import { parsePlainWebhook } from "../parse.js";
 import customerCreatedPayload from "./webhook-payloads/customer-created.js";
+import discussionCreatedPayload from "./webhook-payloads/discussion-created.js";
 import discussionMessageCreatedPayload from "./webhook-payloads/discussion-message-created.js";
 import emailReceivedPayload from "./webhook-payloads/email-received.js";
 import invalidWebhook from "./webhook-payloads/invalid.js";
@@ -13,6 +14,7 @@ import threadStatusTransitionedPayload from "./webhook-payloads/thread-status-tr
 describe("Parse webhook", () => {
   [
     customerCreatedPayload,
+    discussionCreatedPayload,
     discussionMessageCreatedPayload,
     emailReceivedPayload,
     threadAssignmentTransitionedPayload,

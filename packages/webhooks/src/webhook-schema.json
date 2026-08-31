@@ -108,6 +108,9 @@
         },
         {
           "$ref": "#/definitions/threadLockedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/discussionCreatedPublicEventPayload"
         }
       ]
     },
@@ -134,6 +137,7 @@
         "thread.chat_received",
         "thread.note_created",
         "thread.note_mention_created",
+        "discussion.discussion_created",
         "discussion.message_created",
         "thread.thread_labels_changed",
         "thread.thread_priority_changed",
@@ -2984,7 +2988,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-08-25"
+          "const": "2026-08-31"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
@@ -3801,6 +3805,20 @@
         }
       },
       "required": ["eventType", "previousThread", "thread"],
+      "additionalProperties": true
+    },
+    "discussionCreatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "discussion.discussion_created"
+        },
+        "discussion": {
+          "$ref": "#/definitions/discussionMessageCreatedPublicEventPayload/properties/discussion"
+        }
+      },
+      "required": ["eventType", "discussion"],
       "additionalProperties": true
     }
   },
