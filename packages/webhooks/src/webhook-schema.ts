@@ -326,7 +326,8 @@ export interface WebhooksSchemaDefinition {
     | ThreadDiscordMessageReceivedEventPayload
     | ThreadDiscordMessageSentEventPayload
     | ThreadDiscordMessageUpdatedEventPayload
-    | ThreadTenantUpdatedPublicEventPayload;
+    | ThreadTenantUpdatedPublicEventPayload
+    | ThreadLockedPublicEventPayload;
   id: Id;
   type:
     | "thread.thread_created"
@@ -354,6 +355,7 @@ export interface WebhooksSchemaDefinition {
     | "thread.thread_field_deleted"
     | "thread.service_level_agreement_status_transitioned"
     | "thread.thread_tenant_updated"
+    | "thread.thread_locked"
     | "customer.customer_created"
     | "customer.customer_updated"
     | "customer.customer_deleted"
@@ -1116,9 +1118,15 @@ export interface ThreadTenantUpdatedPublicEventPayload {
   } | null;
   [k: string]: unknown;
 }
+export interface ThreadLockedPublicEventPayload {
+  eventType: "thread.thread_locked";
+  previousThread: Thread;
+  thread: Thread;
+  [k: string]: unknown;
+}
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-08-19";
+  webhookTargetVersion: "2026-08-25";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

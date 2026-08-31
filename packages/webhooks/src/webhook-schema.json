@@ -105,6 +105,9 @@
         },
         {
           "$ref": "#/definitions/threadTenantUpdatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/threadLockedPublicEventPayload"
         }
       ]
     },
@@ -139,6 +142,7 @@
         "thread.thread_field_deleted",
         "thread.service_level_agreement_status_transitioned",
         "thread.thread_tenant_updated",
+        "thread.thread_locked",
         "customer.customer_created",
         "customer.customer_updated",
         "customer.customer_deleted",
@@ -2980,7 +2984,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-08-19"
+          "const": "2026-08-25"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
@@ -3780,6 +3784,23 @@
         }
       },
       "required": ["eventType", "previousThread", "thread", "previousTenant", "tenant"],
+      "additionalProperties": true
+    },
+    "threadLockedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "thread.thread_locked"
+        },
+        "previousThread": {
+          "$ref": "#/definitions/thread"
+        },
+        "thread": {
+          "$ref": "#/definitions/thread"
+        }
+      },
+      "required": ["eventType", "previousThread", "thread"],
       "additionalProperties": true
     }
   },
