@@ -327,7 +327,8 @@ export interface WebhooksSchemaDefinition {
     | ThreadDiscordMessageSentEventPayload
     | ThreadDiscordMessageUpdatedEventPayload
     | ThreadTenantUpdatedPublicEventPayload
-    | ThreadLockedPublicEventPayload;
+    | ThreadLockedPublicEventPayload
+    | DiscussionCreatedPublicEventPayload;
   id: Id;
   type:
     | "thread.thread_created"
@@ -347,6 +348,7 @@ export interface WebhooksSchemaDefinition {
     | "thread.chat_received"
     | "thread.note_created"
     | "thread.note_mention_created"
+    | "discussion.discussion_created"
     | "discussion.message_created"
     | "thread.thread_labels_changed"
     | "thread.thread_priority_changed"
@@ -1009,14 +1011,7 @@ export interface ThreadNoteMentionCreatedPublicEventPayload {
 }
 export interface DiscussionMessageCreatedPublicEventPayload {
   eventType: "discussion.message_created";
-  discussion: {
-    id: Id;
-    type: "SLACK" | "EMAIL" | "AGENT_SESSION" | "UNKNOWN_DISCUSSION_TYPE";
-    agent: MachineUser | null;
-    status: "OPEN" | "RESOLVED" | "UNKNOWN_DISCUSSION_STATUS";
-    threadId: Id | null;
-    [k: string]: unknown;
-  };
+  discussion: Discussion;
   message: {
     id: Id;
     type: "INBOUND" | "OUTBOUND" | "UNKNOWN_DISCUSSION_MESSAGE_TYPE";
@@ -1025,6 +1020,14 @@ export interface DiscussionMessageCreatedPublicEventPayload {
     createdAt: Datetime;
     [k: string]: unknown;
   };
+  [k: string]: unknown;
+}
+export interface Discussion {
+  id: Id;
+  type: "SLACK" | "EMAIL" | "AGENT_SESSION" | "UNKNOWN_DISCUSSION_TYPE";
+  agent: MachineUser | null;
+  status: "OPEN" | "RESOLVED" | "UNKNOWN_DISCUSSION_STATUS";
+  threadId: Id | null;
   [k: string]: unknown;
 }
 export interface ThreadChatReceivedPublicEventPayload {
@@ -1124,9 +1127,14 @@ export interface ThreadLockedPublicEventPayload {
   thread: Thread;
   [k: string]: unknown;
 }
+export interface DiscussionCreatedPublicEventPayload {
+  eventType: "discussion.discussion_created";
+  discussion: Discussion;
+  [k: string]: unknown;
+}
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-08-25";
+  webhookTargetVersion: "2026-08-31";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

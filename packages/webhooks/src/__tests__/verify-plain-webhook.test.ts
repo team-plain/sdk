@@ -63,7 +63,7 @@ describe("verifyPlainWebhook", () => {
   it("returns an error when the signature matches but the timestamp is too far in the past", () => {
     const result = verifyPlainWebhook(
       JSON.stringify(threadCreatedPayload),
-      "b0d13ca87f0841808c1893ba978d98547751cec25f8cfe6638b855a3035b673e",
+      "22604a277c561614819699fe2e00165ee2e104ad7d194f7fd63662443e1b5aef",
       "secret",
     );
 
@@ -79,7 +79,7 @@ describe("verifyPlainWebhook", () => {
 
     const result = verifyPlainWebhook(
       JSON.stringify(threadCreatedPayload),
-      "b0d13ca87f0841808c1893ba978d98547751cec25f8cfe6638b855a3035b673e",
+      "22604a277c561614819699fe2e00165ee2e104ad7d194f7fd63662443e1b5aef",
       "secret",
     );
 
@@ -112,7 +112,7 @@ describe("verifyPlainWebhook", () => {
 
     const result = verifyPlainWebhook(
       JSON.stringify(invalidPayload),
-      "852bd1f9384c6a2e120f0ea314a3c686948d91610bcd11f3cf2f4a22c3f00aec",
+      "1a921c6b7a52ef96f0dc164c6827fd39abb7942b8c2deab424d54b7f8f267a87",
       "secret",
     );
 

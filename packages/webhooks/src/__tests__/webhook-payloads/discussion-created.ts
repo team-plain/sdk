@@ -4,15 +4,15 @@ const agentCreatedBy = {
 };
 
 export default {
-  timestamp: "2026-08-20T12:00:00.142Z",
+  timestamp: "2026-08-31T12:00:00.142Z",
   workspaceId: "w_01GST0W989ZNAW53X6XYHAY87P",
   payload: {
-    eventType: "discussion.message_created",
+    eventType: "discussion.discussion_created",
     discussion: {
       id: "thd_01HD44FHDPG82VQ4QNHDR4N2T1",
       type: "AGENT_SESSION",
       status: "OPEN",
-      threadId: "th_01HD44FHDPG82VQ4QNHDR4N2T2",
+      threadId: null,
       agent: {
         id: "mu_01HD44FHDPG82VQ4QNHDR4N2T3",
         fullName: "Support Agent",
@@ -26,16 +26,6 @@ export default {
         deletedBy: null,
       },
     },
-    message: {
-      id: "thdm_01HD44FHDPG82VQ4QNHDR4N2T4",
-      type: "OUTBOUND",
-      markdown: "Why did this invoice fail?",
-      createdBy: {
-        actorType: "user",
-        userId: "u_01HD44FHDPG82VQ4QNHDR4N2T5",
-      },
-      createdAt: "2026-08-20T12:00:00.000Z",
-    },
   },
   id: "pEv_01HD44FHDPMZ3YJB5GEB1EZKQV",
   webhookMetadata: {
@@ -43,7 +33,7 @@ export default {
     webhookTargetVersion: "2026-08-31",
     webhookDeliveryAttemptId: "whAttempt_01HD44FJ45FJKVFHM3MDVYPGRS",
     webhookDeliveryAttemptNumber: 1,
-    webhookDeliveryAttemptTimestamp: "2026-08-20T12:00:00.861Z",
+    webhookDeliveryAttemptTimestamp: "2026-08-31T12:00:00.861Z",
   },
-  type: "discussion.message_created",
+  type: "discussion.discussion_created",
 };
