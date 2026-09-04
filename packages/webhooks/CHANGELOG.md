@@ -1,5 +1,12 @@
 # @team-plain/webhooks
 
+## 1.8.0
+
+### Minor Changes
+
+- 469ce0c: Update webhook schema to 2026-08-25. Adds the `thread.thread_locked` event and exports its `ThreadLockedPublicEventPayload` type.
+- 3af0c54: Update webhook schema to 2026-08-31. Adds the `discussion.discussion_created` event and exports its `DiscussionCreatedPublicEventPayload` and `Discussion` types.
+
 ## 1.7.1
 
 ### Patch Changes
