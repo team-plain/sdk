@@ -270,6 +270,62 @@ describe("SDK generation", () => {
     expect(code).not.toContain("new CreateUserOutputModel");
   });
 
+  it("carries a schema deprecation onto the generated signature and method", () => {
+    const schema = buildSchema(`
+      type Query {
+        oldThing: String @deprecated(reason: "Use newThing instead.")
+      }
+      type Mutation {
+        markResolved(id: ID!): MarkResolvedOutput! @deprecated(reason: "Use changeStatus with status: RESOLVED instead.")
+        changeStatus(id: ID!): MarkResolvedOutput!
+      }
+      type MarkResolvedOutput {
+        error: String
+      }
+    `);
+    const docs = createDocuments(`
+      query OldThing {
+        oldThing
+      }
+      mutation MarkResolved($id: ID!) {
+        markResolved(id: $id) {
+          error
+        }
+      }
+      mutation ChangeStatus($id: ID!) {
+        changeStatus(id: $id) {
+          error
+        }
+      }
+    `);
+
+    const output = plugin(schema, docs, {});
+    const code = typeof output === "string" ? output : output.content;
+
+    const stubs = `
+      declare const OldThingDocument: any;
+      declare const MarkResolvedDocument: any;
+      declare const ChangeStatusDocument: any;
+      type OldThingQuery = { oldThing: string | null };
+      type MarkResolvedMutation = { markResolved: { error: string | null } };
+      type MarkResolvedMutationVariables = { id: string };
+      type ChangeStatusMutation = { changeStatus: { error: string | null } };
+      type ChangeStatusMutationVariables = { id: string };
+    `;
+
+    const diagnostics = compileTypeScript(code, stubs);
+    expect(diagnostics, formatDiagnostics(diagnostics)).toHaveLength(0);
+
+    // Twice each: once on the interface signature, once on the method body.
+    const mutationDoc = "/** @deprecated Use changeStatus with status: RESOLVED instead. */";
+    expect(code.split(mutationDoc)).toHaveLength(3);
+    expect(code.split("/** @deprecated Use newThing instead. */")).toHaveLength(3);
+    // The replacement is not deprecated, so nothing attaches to it.
+    expect(code).not.toContain(
+      "@deprecated Use changeStatus with status: RESOLVED instead. */\n    async changeStatus",
+    );
+  });
+
   it("aliases conflicting union fields when members share a field name with different types", () => {
     // When two union members have a field with the same name but different types,
     // GraphQL's "SameResponseShape" rule requires aliasing. The plugin should

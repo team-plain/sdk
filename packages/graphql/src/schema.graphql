@@ -468,6 +468,11 @@ type Customer {
   True when the customer was auto-created without a known identity (e.g. from an anonymous chat session). Anonymous customers may have limited profile data.
   """
   isAnonymous: Boolean!
+
+  """
+  Whether this is a test customer, created to back a test thread rather than representing a real person.
+  """
+  isTestCustomer: Boolean!
   createdAt: DateTime!
   createdBy: Actor!
   updatedAt: DateTime!
@@ -1214,9 +1219,18 @@ type Workflow {
   publishedAt: DateTime
 
   """
-  Display order of this workflow relative to other workflows. Lower values appear first.
+  Opaque sort key. Compare lexicographically to order workflows within a workspace — the
+  connection is already returned in this order. Sorting locally cannot disagree with the server:
+  the encoding is ASCII-only (`0-9A-Za-z`), so JavaScript's `<` matches the database's byte
+  ordering. Do not construct, parse or persist it: the encoding may change. To reorder, use
+  `moveWorkflow`, which takes IDs.
   """
-  order: Int!
+  position: String!
+
+  """
+  A legacy integer that no longer reflects where this workflow sits in the list, and is not maintained when a workflow moves. Do not sort by it.
+  """
+  order: Int! @deprecated(reason: "Use position instead, and moveWorkflow to reorder.")
 
   """
   The gallery template this workflow was created from, if any. Provenance only: the template may since have changed or been retired, and the workflow diverges as soon as it is edited.
@@ -1279,6 +1293,30 @@ input WorkflowsFilter {
   Filter by published status. true returns only published workflows (publishedAt set), false returns only unpublished workflows (publishedAt null).
   """
   isPublished: Boolean
+
+  """
+  Only workflows whose `events` trigger listens for at least one of these event types, e.g. `thread.thread_created`. Workflows with a `manual` or `schedule` trigger are never returned when this filter is set. An empty list is not a filter.
+  """
+  triggerEvents: [String!]
+}
+
+"""How to order the `workflows` connection."""
+enum WorkflowsSortField {
+  """
+  The workspace's own ordering, the default. Ascending matches the order the list is drawn in.
+  """
+  POSITION
+
+  """
+  When the workflow row itself was last changed. Editing steps one at a time does not move it —
+  only `bulkUpsertWorkflowSteps` touches the workflow alongside its steps.
+  """
+  UPDATED_AT
+}
+
+input WorkflowsSort {
+  field: WorkflowsSortField!
+  direction: SortDirection!
 }
 
 """The role a step plays in a workflow's execution graph."""
@@ -1381,7 +1419,9 @@ type WorkflowExecution {
   """Human-readable error message when `executionStatus` is FAILED."""
   errorMessage: String
 
-  """When the execution began processing (null while QUEUED)."""
+  """
+  When the execution began processing. While QUEUED, the time it was enqueued.
+  """
   startedAt: DateTime
 
   """
@@ -1390,7 +1430,7 @@ type WorkflowExecution {
   completedAt: DateTime
 
   """
-  Total wall-clock time in milliseconds from `startedAt` to `completedAt`.
+  How long the run took to execute, in milliseconds. Measured from when it began processing, so it excludes time spent queued.
   """
   executionDurationMs: Int
 
@@ -1850,6 +1890,83 @@ enum BroadcastSenderType {
 enum BroadcastContentFormat {
   """`content` is a serialised Tiptap document."""
   TIPTAP
+
+  """
+  `content` is a JSON array of Slack Block Kit blocks, as sent to `chat.postMessage`. Every block
+  type Slack accepts is allowed, including ones the Plain composer cannot author.
+  
+  Three things to know:
+  
+  - **Interactive elements do not work.** A button without a `url`, a select, a datepicker or an
+    `input` block will render in Slack and do nothing when used, because a broadcast has no app
+    listening for the interaction payload. Use buttons with a `url`.
+  - **Images must be publicly reachable.** Slack fetches `image_url` itself, and a Block Kit
+    broadcast has no Plain workspace files behind it.
+  - **A broadcast is one Slack message**, so it is subject to Slack's block limit and to Plain's
+    own payload budget. Oversized content is rejected when it is written.
+  
+  Content is checked against Slack's own Block Kit schema as it is written, so a malformed block is
+  normally a mutation error rather than a failed send. That check needs the
+  `workspaceSlackIntegration:read` permission and a connected Slack workspace: an API key without
+  it still works, but its content is only checked when the broadcast is sent.
+  
+  Content in this format cannot be edited in the Plain app.
+  """
+  SLACK_BLOCK_KIT
+}
+
+"""Why a broadcast or audience currently resolves to nobody."""
+enum BroadcastSendTargetRecipientsEmptyReason {
+  """
+  No tenant matches the filter. The filter itself is what needs changing.
+  """
+  NO_TENANTS_MATCHED
+
+  """
+  Tenants match, but none of them can be reached. On Slack that means no connected customer channel that is enabled.
+  """
+  NO_RECIPIENTS_RESOLVED
+
+  """Something matched, and the target's own exclusions removed all of it."""
+  EXCLUDED_BY_AUDIENCE
+}
+
+"""
+How many recipients a target resolves to right now. Point-in-time: it moves as tenants, tiers and
+tenant fields change, and as channels are connected or disabled, so it is not a promise about who
+will receive a send made later.
+
+Resolved through the same path a send uses, so this is the number that would actually be delivered
+to rather than an estimate assembled another way.
+"""
+type BroadcastSendTargetRecipients {
+  """
+  Recipients resolved. Exact: there is no ceiling on what a target may resolve to.
+  """
+  count: Int!
+
+  """Why `count` is zero. Null whenever it is not."""
+  emptyReason: BroadcastSendTargetRecipientsEmptyReason
+
+  """
+  The resolved recipients, in the order the count above counted them. `searchQuery` narrows these rows
+  by name without changing `count`, which is how large the audience is rather than how much of it is
+  being shown.
+  """
+  recipients(first: Int, after: String, last: Int, before: String, searchQuery: String): BroadcastSendTargetRecipientConnection!
+}
+
+"""
+Its own connection rather than `ConnectedSlackChannelConnection`, which carries the filters it was
+queried by. An audience with `and`/`or`/`not` is not expressible as one channel filter, so there is
+no honest value to put there.
+
+The edges are Slack channels because a broadcast can only be authored for Slack today. A second
+broadcast type widens the node rather than adding a second connection.
+"""
+type BroadcastSendTargetRecipientConnection {
+  pageInfo: PageInfo!
+  edges: [ConnectedSlackChannelEdge!]!
 }
 
 """
@@ -1987,6 +2104,16 @@ enum BroadcastSendDeliveryFailureReason {
   MAX_ATTEMPTS
 
   """
+  The delivery was retried until it ran out of attempts, across a mix of failures and rate limits.
+  """
+  MAX_RETRIES
+
+  """
+  Slack rate limited this recipient's Slack workspace for longer than the delivery could wait.
+  """
+  RATE_LIMITED
+
+  """
   The delivery failed for a reason this version of the API does not know how to name. Treat it as an
   unspecified failure rather than a stable value to branch on.
   """
@@ -2023,6 +2150,13 @@ type SlackBroadcastSendDeliveryRecipient {
   """
   slackTeamId: ID!
   slackChannelId: ID!
+
+  """
+  The channel's name as it was when the send resolved, so a delivery still names the channel it went to
+  after a rename or a disconnection. Null for deliveries from before the name was recorded — read the
+  channel by `slackTeamId` and `slackChannelId` to name those.
+  """
+  slackChannelName: String
 }
 
 type EmailBroadcastSendDeliveryRecipient {
@@ -2080,6 +2214,12 @@ input BroadcastSendsFilter {
   whole history.
   """
   isTest: Boolean
+
+  """
+  Filters sends to those with the given ids. Fetches a known send directly rather than paging the
+  history to find it. An id belonging to another broadcast matches nothing.
+  """
+  broadcastSendIds: [ID!]
 }
 
 type BroadcastSendEdge {
@@ -2163,6 +2303,11 @@ type Broadcast {
   type: BroadcastType!
 
   """
+  Whether Slack will expand the links and media in this broadcast when it sends. Only meaningful for a `SLACK` broadcast.
+  """
+  isLinkUnfurlingEnabled: Boolean!
+
+  """
   Who the broadcast is sent as. The variant matches the broadcast's `type`. Null until a sender is set.
   """
   sender: BroadcastSender
@@ -2232,6 +2377,25 @@ type Broadcast {
   The user or machine user that deleted the broadcast, or null if it has not been deleted.
   """
   deletedBy: InternalActor
+
+  """
+  Threads created by replies to the messages this broadcast posted. Equivalent to querying
+  `threads` with a `broadcastIds` filter, so the connection reports the same `totalCount` the
+  filter would.
+  """
+  threads(first: Int, after: String, last: Int, before: String): ThreadConnection!
+
+  """
+  Reactions on the messages this broadcast posted, one entry per emoji, totalled across every channel
+  it reached.
+  """
+  reactions: [BroadcastReactionCount!]!
+}
+
+"""One emoji and how many times it was used on a broadcast's messages."""
+type BroadcastReactionCount {
+  emojiName: String!
+  count: Int!
 }
 
 type Snippet {
@@ -2830,7 +2994,7 @@ type BroadcastAudience {
   type: BroadcastType!
 
   """
-  What the audience selects. Resolved to concrete recipients at send time, not when saved.
+  What the audience selects, resolved to concrete recipients at send time rather than when saved. No rows at all means every recipient the broadcast may reach.
   """
   filters: BroadcastAudienceFilter!
 
@@ -3279,6 +3443,11 @@ type EmailEntry {
 
   """All the attachments included in this email."""
   attachments: [Attachment!]!
+
+  """
+  Inline attachments embedded in the email body (images referenced as data URIs in markdownContent). Use their ids with createAttachmentDownloadUrl to download the embedded images without parsing markdownContent yourself.
+  """
+  inlineAttachments: [Attachment!]!
 
   """
   Whether this email entry is the start of a new thread in Plain. Can be used to show the full email content.
@@ -4846,13 +5015,35 @@ type Query {
   Returns a paginated list of the workspace's broadcast audiences, newest first. Soft-deleted
   audiences are excluded. Requires the `broadcastAudience:read` permission.
   """
-  broadcastAudiences(first: Int, after: String, last: Int, before: String): BroadcastAudienceConnection!
+  broadcastAudiences(
+    """
+    Narrows to audiences whose name contains this, matched case-insensitively and unanchored. Searched in the database rather than on the page, so it finds audiences a client has not loaded.
+    """
+    searchQuery: String
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): BroadcastAudienceConnection!
 
   """
   Fetches a single broadcast audience by its ID, or null if no audience with that ID exists.
   Requires the `broadcastAudience:read` permission.
   """
   broadcastAudience(broadcastAudienceId: ID!): BroadcastAudience
+
+  """
+  Who a send target resolves to right now. Takes the target rather than an id, so it answers for a
+  filter still being written — before an audience is saved, or before a broadcast's target is
+  committed — as readily as for one about to be sent.
+  
+  Point-in-time: the number moves as tenants, tiers and tenant fields change, and as channels are
+  connected or disabled. Resolved through the same path a send uses, so it is what would actually be
+  delivered to rather than an estimate assembled another way.
+  
+  Resolves the target on every call. Requires the `broadcast:read` permission.
+  """
+  broadcastSendTargetRecipients(input: BroadcastSendTargetRecipientsInput!): BroadcastSendTargetRecipients!
 
   """
   Returns the workspace's email settings, including whether email is enabled, any custom domain configuration, and BCC addresses.
@@ -5141,9 +5332,11 @@ type Query {
   workflow(workflowId: ID!): Workflow
 
   """
-  List workflows in the workspace, paginated. Use `filters` to narrow results by trigger type (MANUAL or EVENTS) or published status.
+  List workflows in the workspace, paginated. Use `filters` to narrow results by trigger type
+  (MANUAL, EVENTS or SCHEDULE), published status, or the events an `events` trigger listens for.
+  Ordered by `position` ascending unless `sortBy` says otherwise.
   """
-  workflows(first: Int, after: String, last: Int, before: String, filters: WorkflowsFilter): WorkflowConnection!
+  workflows(first: Int, after: String, last: Int, before: String, filters: WorkflowsFilter, sortBy: WorkflowsSort): WorkflowConnection!
 
   """
   Returns which blocks (condition/action/wait steps) are available for a workflow of the given
@@ -5276,7 +5469,7 @@ type Query {
   `team_reporting` billing feature. The available look-back window is determined by your plan's
   `insights_max_days` entitlement.
   """
-  timeSeriesMetric(name: String!, options: TimeSeriesMetricOptions): TimeSeriesMetric
+  timeSeriesMetric(name: String!, options: TimeSeriesMetricOptions): TimeSeriesMetric @deprecated(reason: "Use `threadTimeSeriesMetric` instead — it supports filtering and group-by.")
 
   """
   Fetch a named single-value (aggregate) metric for the workspace over a given time range.
@@ -5285,7 +5478,7 @@ type Query {
   by company, label type, tier, and more. Requires `metrics:read`; agent metrics require
   `metricsAgent:read`.
   """
-  singleValueMetric(name: String!, options: SingleValueMetricOptions): SingleValueMetric
+  singleValueMetric(name: String!, options: SingleValueMetricOptions): SingleValueMetric @deprecated(reason: "Use `threadSingleValueMetric` instead — it supports filtering and group-by.")
 
   """
   Fetch a named heatmap metric for the workspace, distributing activity across a 7-day × 24-hour
@@ -5293,7 +5486,7 @@ type Query {
   volume as a percentage, and the list of thread IDs. Use this to identify peak support hours
   during a date range. Requires `metrics:read`.
   """
-  heatmapMetric(name: String!, options: HeatmapMetricOptionsInput): HeatmapMetric
+  heatmapMetric(name: String!, options: HeatmapMetricOptionsInput): HeatmapMetric @deprecated(reason: "Use `threadHeatmapMetric` instead — it supports filtering and group-by.")
 
   """
   Fetch a time-series metric for threads with rich filter and group-by support.
@@ -5695,7 +5888,7 @@ type Query {
   """
   Paginated list of knowledge gaps detected in the workspace. Sort by signal count or recency. Defaults to descending signal count order. Requires the `knowledgeGap:read` permission.
   """
-  knowledgeGaps(sortBy: KnowledgeGapsSort, first: Int, after: String, last: Int, before: String): KnowledgeGapConnection!
+  knowledgeGaps(filters: KnowledgeGapsFilter, sortBy: KnowledgeGapsSort, first: Int, after: String, last: Int, before: String): KnowledgeGapConnection!
 }
 
 type EscalationPath {
@@ -6589,7 +6782,9 @@ type ThreadMetricGroup {
   """Stable id for the bucket (companyId, tierId, label id, etc.)."""
   value: String!
 
-  """Human-readable label (e.g. Stytch, Tier 1)."""
+  """
+  Display name resolved from `value` (e.g. the company, tenant, tier, label type, customer group, user or priority name). Null when there is nothing to resolve: the `__OTHER__` bucket, an entity that no longer exists, or a dimension whose `value` is already the display string (MESSAGE_SOURCE, THREAD_FIELD, TENANT_FIELD).
+  """
   label: String
 }
 
@@ -6815,6 +7010,9 @@ input ThreadsFilter {
   statusDetails: [StatusDetailType!]
   threadLinkGroupIds: [ID!]
   threadLinkSources: [ThreadLinkSourceFilter!]
+
+  """Threads created from a reply to one of these broadcasts."""
+  broadcastIds: [ID!]
   createdAt: DatetimeFilter
   updatedAt: DatetimeFilter
   surveyResponse: SurveyResponseFilter
@@ -7541,11 +7739,35 @@ input UpdateWorkflowInput {
   The ID of the first step to execute. Cannot be cleared to null on a published workflow; unpublish (`isPublished: false`) before restructuring steps, then republish.
   """
   startStepId: StringInput
-  order: IntInput
+
+  """
+  Writes the legacy `order` integer and nothing else — it does not change where the workflow sits in the list.
+  """
+  order: IntInput @deprecated(reason: "No longer affects ordering. Use moveWorkflow to reorder, and read position.")
   isPublished: BooleanInput
 }
 
 type UpdateWorkflowOutput {
+  workflow: Workflow
+  error: MutationError
+}
+
+input MoveWorkflowInput {
+  """
+  The workflow to move. Drafts can be moved too — they hold a position in the list like anything else.
+  """
+  workflowId: ID!
+
+  """
+  The workflow to place it directly after. Null moves it to the front, so every position is reachable.
+  """
+  afterWorkflowId: ID
+}
+
+type MoveWorkflowOutput {
+  """
+  The workflow that moved, carrying its new `position`. No other workflow changes.
+  """
   workflow: Workflow
   error: MutationError
 }
@@ -8542,30 +8764,32 @@ type BroadcastSendTargetRecipient {
 
 enum BroadcastSendTargetScope {
   """
-  Every tenant with a connected channel. Resolves at the channel layer, so a tenant with no connected channel contributes nothing rather than erroring.
+  Every recipient the broadcast may reach: each connected, enabled customer channel, whether or not a tenant is associated with it.
   """
-  ALL_TENANTS
+  ALL_RECIPIENTS
 
-  """Only the tenants the target's `filters` match."""
+  """Only what the target's `filters` match."""
   MATCHING
 }
 
 type BroadcastSendTarget {
   """
-  Whether the broadcast reaches every tenant or only the ones `filters` matches. Null until the author has chosen.
+  Whether the broadcast reaches everyone or only what `filters` matches. Everyone means every connected channel the broadcast may reach, whether or not a tenant is associated with it. Null until the author has chosen.
   """
   scope: BroadcastSendTargetScope
 
-  """Recipients named outright, independent of any audience."""
-  recipients: [BroadcastSendTargetRecipient!]!
-
   """
-  Everyone the broadcast goes to besides the recipients above: audiences, tiers, tenants and channels are all dimensions of this one filter. Set when `scope` is `MATCHING`, and null otherwise.
+  Who the broadcast reaches. Audiences, tiers, tenants and channel-name matches are all dimensions of this one filter. Set when `scope` is `MATCHING`, and null otherwise.
   """
   filters: BroadcastAudienceFilter
 
   """
-  Recipients subtracted from whatever the rest of the target resolves to, so a broadcast can drop one without editing the audience that pulled it in.
+  Recipients named outright, added to whatever `filters` resolved to. One the workspace cannot reach — on Slack, a channel it cannot post to — is dropped, the same as one named inside an audience.
+  """
+  recipients: [BroadcastSendTargetRecipient!]!
+
+  """
+  Recipients the author unchecked from what the target resolved to. Subtracted last, so a broadcast can drop one without editing the audience that pulled it in.
   """
   excludeRecipients: [BroadcastSendTargetRecipient!]!
 }
@@ -8579,17 +8803,31 @@ input BroadcastSendTargetRecipientInput {
   slackChannelId: ID
 }
 
+input BroadcastSendTargetRecipientsInput {
+  """
+  The channel the target is written for. An audience of another type cannot be resolved against it.
+  """
+  type: BroadcastType!
+  sendTarget: BroadcastSendTargetInput!
+}
+
 input BroadcastSendTargetInput {
   """
-  Omit to leave the broadcast targeting nobody. `MATCHING` requires `filters`; `ALL_TENANTS` rejects it.
+  Who the filter side of the target reaches. `MATCHING` requires `filters`; `ALL_RECIPIENTS` rejects it. Omit it to target only what `recipients` names, or nobody at all when that is empty too.
   """
   scope: BroadcastSendTargetScope
-  recipients: [BroadcastSendTargetRecipientInput!]!
 
   """
-  Everyone the broadcast goes to besides the recipients above. Every audience it names must be of the same type as the broadcast. Every node must constrain at least one dimension — an empty node is rejected rather than treated as everyone, which is what `ALL_TENANTS` is for.
+  Who the broadcast reaches. Every audience it names must be of the same type as the broadcast. Must constrain something: reaching everyone is the `ALL_RECIPIENTS` scope, not an empty filter. A node nested below the first must constrain something too.
   """
   filters: BroadcastAudienceFilterInput
+
+  """
+  Recipients to send to by id, added to whatever `filters` resolves to. For a caller that has ids rather
+  than a predicate; one the workspace cannot reach is dropped rather than failed. Either side of the
+  target stands alone: filters with no ids, or ids with no `scope`.
+  """
+  recipients: [BroadcastSendTargetRecipientInput!]
   excludeRecipients: [BroadcastSendTargetRecipientInput!]
 }
 
@@ -8601,12 +8839,21 @@ input CreateBroadcastInput {
   """
   notificationTitle: String
 
-  """The body of the broadcast, encoded as declared by `contentFormat`."""
+  """
+  The body of the broadcast, encoded as declared by `contentFormat`. Callers outside the Plain app
+  should send `SLACK_BLOCK_KIT` and a JSON array of Slack blocks; see `BroadcastContentFormat` for
+  what is accepted.
+  """
   content: String!
 
   """How `content` is encoded."""
   contentFormat: BroadcastContentFormat!
   type: BroadcastType!
+
+  """
+  Whether Slack expands the links and media in this broadcast. Defaults to true, which is Slack's own behaviour. Only meaningful for a `SLACK` broadcast.
+  """
+  isLinkUnfurlingEnabled: Boolean
 
   """
   Which kind of sender `senderUserId` describes. Required alongside `senderUserId`, and rejected with it when `PLAIN`.
@@ -8635,7 +8882,18 @@ input UpdateBroadcastInput {
   Set alongside `contentFormat` whenever the encoding of the new body differs from the stored one.
   """
   content: StringInput
+
+  """
+  How `content` is encoded. Changing this on its own re-checks the stored body against the new
+  encoding, so switching format without also sending matching `content` is rejected rather than
+  left to fail at send time.
+  """
   contentFormat: BroadcastContentFormatInput
+
+  """
+  Whether Slack expands the links and media in this broadcast. Omit to leave it unchanged.
+  """
+  isLinkUnfurlingEnabled: BooleanInput
 
   """
   Which kind of sender `senderUserId` describes. Validated against the state the broadcast will
@@ -8690,8 +8948,24 @@ input BroadcastAudienceFilterInput {
   tree, including under a `not` to exclude the audience.
   """
   audienceIds: [ID!]
+
+  """
+  Further conditions, all of which must hold. Nests at most two levels: this filter may hold `and`/`or`
+  children, and those children may hold their own, but a third level is rejected — the composer renders
+  a row of groups and cannot show anything deeper without changing who the filter reaches.
+  """
   and: [BroadcastAudienceFilterInput!]
+
+  """
+  Alternatives, any of which may hold. Nests at most two levels, the same as `and`.
+  """
   or: [BroadcastAudienceFilterInput!]
+
+  """
+  A condition to subtract. May name a single dimension and nothing else: no `and`/`or` of its own, no
+  second dimension, and no nested `not`, because negating a conjunction is a disjunction the composer
+  cannot render. Express that as separate audiences instead.
+  """
   not: BroadcastAudienceFilterInput
 }
 
@@ -8704,7 +8978,7 @@ input CreateBroadcastAudienceInput {
   type: BroadcastType!
 
   """
-  What the audience selects. Every node must constrain at least one dimension.
+  What the audience selects. An audience with no rows at all means every recipient the broadcast may reach, which is the only way to say so — a nested node still has to constrain something.
   """
   filters: BroadcastAudienceFilterInput!
 }
@@ -8753,6 +9027,21 @@ input ScheduleBroadcastInput {
 }
 
 type ScheduleBroadcastOutput {
+  broadcast: Broadcast
+  error: MutationError
+}
+
+input SendTestBroadcastInput {
+  broadcastId: ID!
+
+  """
+  The Slack channels to post the test to, between 1 and 10. Every one must already be connected to
+  this workspace, and naming the same channel twice posts to it once.
+  """
+  channels: [BroadcastSlackChannelRefInput!]!
+}
+
+type SendTestBroadcastOutput {
   broadcast: Broadcast
   error: MutationError
 }
@@ -10277,6 +10566,24 @@ type Mutation {
   scheduleBroadcast(input: ScheduleBroadcastInput!): ScheduleBroadcastOutput!
 
   """
+  Sends the broadcast to the Slack channels you name, up to 10, so you can see what recipients will
+  get before the real audience does. It goes out through the same pipeline as a real send, under the
+  broadcast's own sender, so what arrives is what any channel would have received — with a notice
+  at the top marking it as a test, since everyone in the channels you choose will see it.
+  
+  Every channel must already be connected to this workspace. They are independent of the broadcast's
+  own audience, which is left untouched: the broadcast needs a sender and a notification title, but it
+  does **not** need any channels of its own, because testing is what you do before choosing them.
+  
+  Only available while the broadcast can still be edited: once its send has started, it can no
+  longer be tested.
+  
+  A test send never changes the broadcast's `status`, and never unlocks or locks editing. Requires
+  the `broadcast:send` permission.
+  """
+  sendTestBroadcast(input: SendTestBroadcastInput!): SendTestBroadcastOutput!
+
+  """
   Create or update the settings for a team (label type of kind TEAM). If settings do not yet exist for the given team, they are created with defaults (round-robin disabled, max capacity 5); otherwise the existing settings are updated with the supplied values. The labelTypeId must refer to a label type of type TEAM — passing any other label type ID returns a validation error. Requires the `labelType:edit` permission.
   """
   upsertTeamSettings(input: UpsertTeamSettingsInput!): UpsertTeamSettingsOutput!
@@ -10447,9 +10754,14 @@ type Mutation {
   createWorkflow(input: CreateWorkflowInput!): CreateWorkflowOutput!
 
   """
-  Update a workflow's name, trigger configuration, entry step, display order, or published status.
+  Update a workflow's name, trigger configuration, entry step, or published status. To change where a workflow sits in the list, use `moveWorkflow`.
   """
   updateWorkflow(input: UpdateWorkflowInput!): UpdateWorkflowOutput!
+
+  """
+  Move a workflow so it sits directly after another, or to the front of the list when `afterWorkflowId` is null. Only the moved workflow changes.
+  """
+  moveWorkflow(input: MoveWorkflowInput!): MoveWorkflowOutput!
 
   """
   Permanently delete a workflow and all its steps. Existing executions are retained for audit purposes.
@@ -10773,7 +11085,7 @@ type Mutation {
   deleteWorkspaceSlackChannelIntegration(input: DeleteWorkspaceSlackChannelIntegrationInput!): DeleteWorkspaceSlackChannelIntegrationOutput!
 
   """
-  Installs Plain's Sidekick AI agent into the workspace's Slack. Exchanges the OAuth authorization code (obtained by sending the user through the URL from workspaceSlackSidekickInstallationInfo) for a bot token, creates the #ask-plain Slack channel, and persists the integration. Fails if a channel named #ask-plain already exists, since Slack offers no way to resolve an existing channel by name. Only one Sidekick integration is allowed per workspace and per Slack team; calling this when one already exists returns an error. Requires the workspaceSlackSidekickIntegration:create permission and the ai_agent billing entitlement.
+  Installs Plain's Sidekick AI agent into the workspace's Slack. Exchanges the OAuth authorization code (obtained by sending the user through the URL from workspaceSlackSidekickInstallationInfo) for a bot token, creates the Sidekick Slack channel, and persists the integration. The channel is normally #ask-plain; if that name is already taken in the Slack workspace the next free name is used instead, so read askSidekickSlackChannelName off the returned integration and show the user which channel was created rather than assuming #ask-plain. Fails only if every candidate name is taken. Only one Sidekick integration is allowed per workspace and per Slack team; calling this when one already exists returns an error. Requires the workspaceSlackSidekickIntegration:create permission and the ai_agent billing entitlement.
   """
   createWorkspaceSlackSidekickIntegration(input: CreateWorkspaceSlackSidekickIntegrationInput!): CreateWorkspaceSlackSidekickIntegrationOutput!
 
@@ -11062,7 +11374,7 @@ type Mutation {
   deleteThread(input: DeleteThreadInput!): DeleteThreadOutput!
 
   """
-  Create a test thread for the signed-in user. Test threads come from a synthetic customer rather
+  Create a test thread for the signed-in user. Test threads come from a test customer rather
   than a real one. The scenario is picked for you and fixes the thread's title; its opening
   message is written shortly after this returns. They are listed by `testThreads` rather than
   `threads`, and only for the user who created them. Requires the `thread:create` permission.
@@ -11072,7 +11384,7 @@ type Mutation {
   """
   Create one test thread per scenario for the signed-in user, so they get a populated inbox in a
   single call rather than one `createTestThread` per scenario. Each thread comes from that
-  scenario's own synthetic customer, and its opening message is written shortly after this
+  scenario's own test customer, and its opening message is written shortly after this
   returns. Scenarios the caller already has a test thread for are skipped, so calling this again
   tops the set up rather than duplicating it, and a scenario that fails does not stop the rest.
   Use `testThreads` for the caller's full set. Requires the `thread:create` permission.
@@ -11141,7 +11453,16 @@ type Mutation {
   """
   Mark a discussion as resolved, setting its status to RESOLVED and recording the resolution timestamp.
   """
-  markThreadDiscussionAsResolved(input: MarkThreadDiscussionAsResolvedInput!): MarkThreadDiscussionAsResolvedOutput!
+  markThreadDiscussionAsResolved(input: MarkThreadDiscussionAsResolvedInput!): MarkThreadDiscussionAsResolvedOutput! @deprecated(reason: "Use changeThreadDiscussionStatus with status: RESOLVED instead.")
+
+  """
+  Move a discussion between OPEN and RESOLVED. Resolving records the resolution timestamp and
+  settles agentStatus; reopening clears the timestamp and leaves agentStatus alone, because
+  reopening does not mean an agent has picked the work up again. Doing nothing when the discussion
+  is already in that status. Callable by a person, or by the agent a custom-agent discussion is
+  bound to, so an agent can mirror its own thread status back into Plain.
+  """
+  changeThreadDiscussionStatus(input: ChangeThreadDiscussionStatusInput!): ChangeThreadDiscussionStatusOutput!
 
   """
   Clear the unread flag on a discussion. Use this when the user has viewed a discussion so that the
@@ -11461,6 +11782,11 @@ type Mutation {
   Replace the workspace's business hours with the provided set of slots. Each slot defines a weekday, a timezone, and open/close times (HH:MM format). Passing an empty array clears all business hours. This mutation is idempotent and completely replaces any existing slots, including any previously set via the deprecated upsertBusinessHours mutation. Requires the `businessHours:edit` permission.
   """
   syncBusinessHoursSlots(input: SyncBusinessHoursSlotsInput!): SyncBusinessHoursSlotsOutput!
+
+  """
+  Create a new named business hours schedule, optionally with its opening slots. Overlapping and adjacent slots are merged on write. Requires the `businessHours:create` permission.
+  """
+  createBusinessHoursSchedule(input: CreateBusinessHoursScheduleInput!): CreateBusinessHoursScheduleOutput!
 
   """
   Replace a user's working hours schedule in full. When `isEnabled` is true, the user's status is automatically switched to ONLINE at the start of each slot and to OFFLINE or AWAY (depending on workspace settings) at the end. Omit `userId` to configure the currently authenticated user's own schedule.
@@ -12694,6 +13020,15 @@ type MarkThreadDiscussionAsResolvedOutput {
   error: MutationError
 }
 
+input ChangeThreadDiscussionStatusInput {
+  threadDiscussionId: ID!
+  status: ThreadDiscussionStatus!
+}
+
+type ChangeThreadDiscussionStatusOutput {
+  error: MutationError
+}
+
 input MarkThreadDiscussionReadInput {
   threadDiscussionId: ID!
 }
@@ -13141,7 +13476,15 @@ type UpsertTenantFieldSchemaOutput {
 }
 
 input TenantFieldIdentifier {
-  tenantId: ID!
+  """
+  Plain's internal identifier for the tenant. Provide exactly one of `tenantId` or `tenantIdentifier`.
+  """
+  tenantId: ID
+
+  """
+  Identify the tenant by Plain's internal id or your own external id. Provide exactly one of `tenantId` or `tenantIdentifier`.
+  """
+  tenantIdentifier: TenantIdentifierInput
   externalFieldId: ID!
 }
 
@@ -14041,7 +14384,7 @@ type Thread {
   externalId: ID
 
   """
-  Whether this is a test thread, created for a user to try Plain out against a synthetic customer rather than a real one.
+  Whether this is a test thread, created for a user to try Plain out against a test customer rather than a real one.
   """
   isTestThread: Boolean!
 
@@ -14194,6 +14537,12 @@ type Thread {
   The machine user who imported the thread. Null if the thread was not created by importThread.
   """
   importedBy: InternalActor
+
+  """
+  The broadcast this thread came from — set when the thread was created by a reply to a message a
+  broadcast posted. Null for every other thread. Requires the `broadcast:read` permission.
+  """
+  broadcast: Broadcast
 }
 
 type ThreadEscalationDetails {
@@ -15923,7 +16272,7 @@ type Subscription {
   threadFieldSchemaChanges: ThreadFieldSchemaChange!
 
   """
-  Real-time subscription that fires whenever the given workflow is created, updated (its steps, trigger, order, or publish state), or deleted. Each event carries a `changeType` and the `workflowId`; refetch `workflow(workflowId)` to re-render. Requires the `workflowRule:read` permission.
+  Real-time subscription that fires whenever the given workflow is created, updated (its steps, trigger, position, or publish state), or deleted. Each event carries a `changeType` and the `workflowId`; refetch `workflow(workflowId)` to re-render. Requires the `workflowRule:read` permission.
   """
   workflowChanges(workflowId: ID!): WorkflowChange!
 
@@ -16907,6 +17256,25 @@ type BusinessHoursSlot {
   closesAt: String!
 }
 
+"""
+A named set of business hours slots. A workspace can have several schedules, each covering a different team or region.
+"""
+type BusinessHoursSchedule {
+  id: ID!
+
+  """Human-readable name, unique within the workspace."""
+  name: String!
+
+  """
+  The slots that make up this schedule. Overlapping and adjacent slots are merged, and the list is sorted by timezone then weekday.
+  """
+  slots: [BusinessHoursSlot!]!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
 input BusinessHoursSlotInput {
   timezone: String!
   weekday: WeekDay!
@@ -16920,6 +17288,23 @@ input SyncBusinessHoursSlotsInput {
 
 type SyncBusinessHoursSlotsOutput {
   slots: [BusinessHoursSlot!]!
+  error: MutationError
+}
+
+input CreateBusinessHoursScheduleInput {
+  """
+  Human-readable name for the schedule. Must be unique within the workspace.
+  """
+  name: String!
+
+  """
+  The slots to open the schedule with. Omit or pass an empty array to create a schedule with no business hours yet.
+  """
+  slots: [BusinessHoursSlotInput!]
+}
+
+type CreateBusinessHoursScheduleOutput {
+  businessHoursSchedule: BusinessHoursSchedule
   error: MutationError
 }
 
@@ -18879,6 +19264,16 @@ type KnowledgeGapSignalConnection {
   edges: [KnowledgeGapSignalEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+}
+
+input KnowledgeGapsFilter {
+  statuses: [KnowledgeGapStatus!]
+}
+
+enum KnowledgeGapStatus {
+  TODO
+  DONE
+  CANCELLED
 }
 
 input KnowledgeGapsSort {
