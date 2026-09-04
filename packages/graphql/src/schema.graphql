@@ -119,12 +119,12 @@ type Workspace {
   logo: WorkspaceFile
 
   """
-  The WorkOS organization ID used for SSO and directory sync, if configured.
+  The per-workspace WorkOS organization used for membership and org switching, if configured.
   """
   workOSOrganizationId: String
 
   """
-  The WorkOS Hub organization ID, if this workspace is part of a hub organization.
+  The shared WorkOS hub organization that holds SSO, directory sync, and domain policy, if this workspace is hub-linked.
   """
   workOSHubOrganizationId: String
 }
@@ -1087,12 +1087,22 @@ type ThreadDiscussionMessageEntryPayload {
   slackBlocks: String
 }
 
+"""PENDING while in flight, then SUCCESS or ERROR (final)."""
+enum DiscussionToolCallStatus {
+  PENDING
+  SUCCESS
+  ERROR
+}
+
 type ThreadDiscussionToolCallEntryPayload {
-  service: String!
-  op: String!
+  """Null on a call an agent reported: Plain has no name for it."""
+  service: String
+  op: String
   description: String!
   args: String
-  isSuccess: Boolean!
+
+  """Where the call is in its lifecycle."""
+  status: DiscussionToolCallStatus!
   error: String
   durationMs: Int!
 }
@@ -2097,6 +2107,25 @@ enum BroadcastSendDeliveryFailureReason {
   """
   INVALID_SLACK_BLOCKS
 
+  """
+  The Slack channel is archived, or the recipient is a deactivated user's DM. Nothing can be posted
+  to it again.
+  """
+  CHANNEL_ARCHIVED
+
+  """
+  The Slack channel does not accept posts from apps, for example a read-only announcement channel.
+  """
+  CHANNEL_READ_ONLY
+
+  """
+  Slack refused to let Plain post to this channel, for reasons outside the app's scopes.
+  """
+  NO_SLACK_PERMISSION
+
+  """The message was too large for Slack to accept."""
+  MESSAGE_TOO_LONG
+
   """Slack rejected the post for a reason that will not change on a retry."""
   SLACK_UNRECOVERABLE
 
@@ -2112,6 +2141,17 @@ enum BroadcastSendDeliveryFailureReason {
   Slack rate limited this recipient's Slack workspace for longer than the delivery could wait.
   """
   RATE_LIMITED
+
+  """
+  The delivery held a claim when work on it stopped, so Slack may or may not have received the
+  message. Recorded by the recovery sweep rather than by an attempt.
+  """
+  ABANDONED_MID_SEND
+
+  """
+  No attempt to post the delivery was ever made before the recovery sweep closed it out.
+  """
+  NEVER_DELIVERED
 
   """
   The delivery failed for a reason this version of the API does not know how to name. Treat it as an
@@ -3949,7 +3989,7 @@ type WorkOSConfiguration {
   directorySyncUrl: String!
 
   """
-  URL to configure domain verification settings in the WorkOS admin portal.
+  URL to configure domain verification settings in the WorkOS admin portal. When the workspace is hub-linked, this points at the hub organization that holds the domain policy.
   """
   domainVerificationUrl: String!
 
@@ -5689,6 +5729,16 @@ type Query {
   businessHoursSlots: [BusinessHoursSlot!]!
 
   """
+  Fetches a single business hours schedule by its ID, or null if no schedule with that ID exists. Requires the `businessHours:read` permission.
+  """
+  businessHoursSchedule(businessHoursScheduleId: ID!): BusinessHoursSchedule
+
+  """
+  Returns a paginated list of the workspace's business hours schedules, sorted by name. Requires the `businessHours:read` permission.
+  """
+  businessHoursSchedules(first: Int, after: String, last: Int, before: String): BusinessHoursScheduleConnection!
+
+  """
   Returns the workspace's HMAC configuration, including the secret used to sign outbound webhook and HTTP-request payloads. Returns null if no secret has been generated yet. Requires the `workspaceHmac:read` permission.
   """
   workspaceHmac: WorkspaceHmac
@@ -6353,7 +6403,7 @@ input SingleValueMetricFilters {
 }
 
 input SingleValueMetricOptions {
-  """Defaults to 24 hours ago."""
+  """Defaults to 7 days ago."""
   from: String
   to: String
   dimension: MetricDimensionType
@@ -6469,7 +6519,7 @@ input TimeSeriesMetricFilters {
 }
 
 input TimeSeriesMetricOptions {
-  """Defaults to 24 hours ago."""
+  """Defaults to 7 days ago."""
   from: String
   to: String
   dimension: TimeSeriesMetricDimensionType
@@ -6609,10 +6659,6 @@ enum ThreadMetricGroupBy {
   The thread's assignee. Groups a thread under each distinct user who is its current primary or additional (secondary) assignee. Requires `metricsAgent:read`.
   """
   ASSIGNEE
-
-  """
-  Messaging channel the thread originated from (e.g. email, chat, Slack).
-  """
   COMPANY
   CUSTOMER_GROUP
   LABEL_TYPE
@@ -11451,6 +11497,12 @@ type Mutation {
   updateDiscussionAgentStatus(input: UpdateDiscussionAgentStatusInput!): UpdateDiscussionAgentStatusOutput!
 
   """
+  Report a tool call made by the discussion's custom agent, keyed by toolCallId. Repeat with the
+  same id to update; SUCCESS and ERROR are final. Callable by the bound custom agent.
+  """
+  upsertDiscussionToolCall(input: UpsertDiscussionToolCallInput!): UpsertDiscussionToolCallOutput!
+
+  """
   Mark a discussion as resolved, setting its status to RESOLVED and recording the resolution timestamp.
   """
   markThreadDiscussionAsResolved(input: MarkThreadDiscussionAsResolvedInput!): MarkThreadDiscussionAsResolvedOutput! @deprecated(reason: "Use changeThreadDiscussionStatus with status: RESOLVED instead.")
@@ -11787,6 +11839,16 @@ type Mutation {
   Create a new named business hours schedule, optionally with its opening slots. Overlapping and adjacent slots are merged on write. Requires the `businessHours:create` permission.
   """
   createBusinessHoursSchedule(input: CreateBusinessHoursScheduleInput!): CreateBusinessHoursScheduleOutput!
+
+  """
+  Update a business hours schedule's name, its slots, or both. Omitted fields are left unchanged; passing an empty `slots` array clears the schedule's business hours. Overlapping and adjacent slots are merged on write. Requires the `businessHours:edit` permission.
+  """
+  updateBusinessHoursSchedule(input: UpdateBusinessHoursScheduleInput!): UpdateBusinessHoursScheduleOutput!
+
+  """
+  Delete a business hours schedule and the slots belonging to it. Requires the `businessHours:delete` permission.
+  """
+  deleteBusinessHoursSchedule(input: DeleteBusinessHoursScheduleInput!): DeleteBusinessHoursScheduleOutput!
 
   """
   Replace a user's working hours schedule in full. When `isEnabled` is true, the user's status is automatically switched to ONLINE at the start of each slot and to OFFLINE or AWAY (depending on workspace settings) at the end. Omit `userId` to configure the currently authenticated user's own schedule.
@@ -13009,6 +13071,28 @@ input UpdateDiscussionAgentStatusInput {
 
 type UpdateDiscussionAgentStatusOutput {
   discussion: ThreadDiscussion
+  error: MutationError
+}
+
+input UpsertDiscussionToolCallInput {
+  discussionId: ID!
+
+  """
+  The agent's own id for the call, unique within the discussion. 1-256 chars, [A-Za-z0-9_-].
+  """
+  toolCallId: ID!
+  status: DiscussionToolCallStatus!
+
+  """One line describing what the call did, shown on the timeline."""
+  text: String!
+
+  """Why the call failed. Required when status is ERROR."""
+  error: String
+}
+
+type UpsertDiscussionToolCallOutput {
+  toolCall: ThreadDiscussionToolCallEntryPayload
+  result: UpsertResult
   error: MutationError
 }
 
@@ -17275,6 +17359,16 @@ type BusinessHoursSchedule {
   updatedBy: InternalActor!
 }
 
+type BusinessHoursScheduleEdge {
+  cursor: String!
+  node: BusinessHoursSchedule!
+}
+
+type BusinessHoursScheduleConnection {
+  edges: [BusinessHoursScheduleEdge!]!
+  pageInfo: PageInfo!
+}
+
 input BusinessHoursSlotInput {
   timezone: String!
   weekday: WeekDay!
@@ -17305,6 +17399,33 @@ input CreateBusinessHoursScheduleInput {
 
 type CreateBusinessHoursScheduleOutput {
   businessHoursSchedule: BusinessHoursSchedule
+  error: MutationError
+}
+
+input UpdateBusinessHoursScheduleInput {
+  businessHoursScheduleId: ID!
+
+  """
+  Rename the schedule. Omit to leave the name unchanged. Must be unique within the workspace.
+  """
+  name: StringInput
+
+  """
+  Replace the schedule's slots in full. Omit to leave them unchanged, or pass an empty array to clear them.
+  """
+  slots: [BusinessHoursSlotInput!]
+}
+
+type UpdateBusinessHoursScheduleOutput {
+  businessHoursSchedule: BusinessHoursSchedule
+  error: MutationError
+}
+
+input DeleteBusinessHoursScheduleInput {
+  businessHoursScheduleId: ID!
+}
+
+type DeleteBusinessHoursScheduleOutput {
   error: MutationError
 }
 

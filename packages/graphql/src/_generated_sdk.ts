@@ -35,6 +35,8 @@ import {
   BulkUpsertThreadFieldsDocument,
   BulkUpsertWorkflowStepsDocument,
   BusinessHoursDocument,
+  BusinessHoursScheduleDocument,
+  BusinessHoursSchedulesDocument,
   BusinessHoursSlotsDocument,
   CalculateRoleChangeCostDocument,
   CancelHyperlineSubscriptionDocument,
@@ -150,6 +152,7 @@ import {
   DeleteBroadcastAudienceDocument,
   DeleteBroadcastDocument,
   DeleteBusinessHoursDocument,
+  DeleteBusinessHoursScheduleDocument,
   DeleteChatAppDocument,
   DeleteChatAppSecretDocument,
   DeleteCompanyDocument,
@@ -425,6 +428,7 @@ import {
   UpdateAutoresponderDocument,
   UpdateBroadcastAudienceDocument,
   UpdateBroadcastDocument,
+  UpdateBusinessHoursScheduleDocument,
   UpdateChatAppDocument,
   UpdateCompanyTierDocument,
   UpdateConnectedDiscordChannelDocument,
@@ -481,6 +485,7 @@ import {
   UpsertCompanyDocument,
   UpsertCustomerDocument,
   UpsertCustomerGroupDocument,
+  UpsertDiscussionToolCallDocument,
   UpsertHelpCenterArticleDocument,
   UpsertMyEmailSignatureDocument,
   UpsertRoleScopesDocument,
@@ -642,6 +647,10 @@ import type {
   BusinessHoursFieldsFragment,
   BusinessHoursQuery,
   BusinessHoursScheduleFieldsFragment,
+  BusinessHoursScheduleQuery,
+  BusinessHoursScheduleQueryVariables,
+  BusinessHoursSchedulesQuery,
+  BusinessHoursSchedulesQueryVariables,
   BusinessHoursSlotFieldsFragment,
   BusinessHoursSlotsQuery,
   CalculateRoleChangeCostMutation,
@@ -913,6 +922,8 @@ import type {
   DeleteBroadcastMutation,
   DeleteBroadcastMutationVariables,
   DeleteBusinessHoursMutation,
+  DeleteBusinessHoursScheduleMutation,
+  DeleteBusinessHoursScheduleMutationVariables,
   DeleteChatAppMutation,
   DeleteChatAppMutationVariables,
   DeleteChatAppSecretMutation,
@@ -1591,6 +1602,8 @@ import type {
   UpdateBroadcastAudienceMutationVariables,
   UpdateBroadcastMutation,
   UpdateBroadcastMutationVariables,
+  UpdateBusinessHoursScheduleMutation,
+  UpdateBusinessHoursScheduleMutationVariables,
   UpdateChatAppMutation,
   UpdateChatAppMutationVariables,
   UpdateCompanyTierMutation,
@@ -1703,6 +1716,8 @@ import type {
   UpsertCustomerGroupMutationVariables,
   UpsertCustomerMutation,
   UpsertCustomerMutationVariables,
+  UpsertDiscussionToolCallMutation,
+  UpsertDiscussionToolCallMutationVariables,
   UpsertHelpCenterArticleMutation,
   UpsertHelpCenterArticleMutationVariables,
   UpsertMyEmailSignatureMutation,
@@ -8710,7 +8725,7 @@ export class ThreadDiscussionMessageModel {
       case "ThreadDiscussionApprovalRequestEntryPayload": return new ThreadDiscussionApprovalRequestEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionApprovalRequestEntryPayloadStatus } as any);
       case "ThreadDiscussionConnectRequestEntryPayload": return new ThreadDiscussionConnectRequestEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionConnectRequestEntryPayloadStatus } as any);
       case "ThreadDiscussionMessageEntryPayload": return new ThreadDiscussionMessageEntryPayloadModel(client, data.entry as any);
-      case "ThreadDiscussionToolCallEntryPayload": return new ThreadDiscussionToolCallEntryPayloadModel(client, data.entry as any);
+      case "ThreadDiscussionToolCallEntryPayload": return new ThreadDiscussionToolCallEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionToolCallEntryPayloadStatus } as any);
       default: return data.entry as any;
     }
   })() : null;
@@ -8838,9 +8853,9 @@ export class ThreadDiscussionToolCallEntryPayloadModel {
   public readonly description: ThreadDiscussionToolCallEntryPayloadFieldsFragment["description"];
   public readonly durationMs: ThreadDiscussionToolCallEntryPayloadFieldsFragment["durationMs"];
   public readonly error: ThreadDiscussionToolCallEntryPayloadFieldsFragment["error"];
-  public readonly isSuccess: ThreadDiscussionToolCallEntryPayloadFieldsFragment["isSuccess"];
   public readonly op: ThreadDiscussionToolCallEntryPayloadFieldsFragment["op"];
   public readonly service: ThreadDiscussionToolCallEntryPayloadFieldsFragment["service"];
+  public readonly status: ThreadDiscussionToolCallEntryPayloadFieldsFragment["status"];
 
   constructor(client: PlainGraphQLClient, data: ThreadDiscussionToolCallEntryPayloadFieldsFragment) {
     this._client = client;
@@ -8849,9 +8864,9 @@ export class ThreadDiscussionToolCallEntryPayloadModel {
     this.description = data.description;
     this.durationMs = data.durationMs;
     this.error = data.error;
-    this.isSuccess = data.isSuccess;
     this.op = data.op;
     this.service = data.service;
+    this.status = data.status;
   }
 }
 
@@ -11041,6 +11056,8 @@ export interface PlainSdkQueries {
   broadcasts(variables: BroadcastsQueryVariables): Promise<PlainConnection<BroadcastModel>>;
   /** @deprecated Use businessHoursSlots instead. */
   businessHours(): Promise<BusinessHoursModel>;
+  businessHoursSchedule(variables: BusinessHoursScheduleQueryVariables): Promise<BusinessHoursScheduleModel>;
+  businessHoursSchedules(variables: BusinessHoursSchedulesQueryVariables): Promise<PlainConnection<BusinessHoursScheduleModel>>;
   businessHoursSlots(): Promise<BusinessHoursSlotModel[]>;
   chatApp(variables: ChatAppQueryVariables): Promise<ChatAppModel>;
   chatAppSecret(variables: ChatAppSecretQueryVariables): Promise<ChatAppHiddenSecretModel>;
@@ -11357,6 +11374,7 @@ export interface PlainSdkMutations {
   deleteBroadcastAudience(variables: DeleteBroadcastAudienceMutationVariables): Promise<DeleteBroadcastAudienceMutation["deleteBroadcastAudience"]>;
   /** @deprecated Use syncBusinessHoursSlots instead. */
   deleteBusinessHours(): Promise<DeleteBusinessHoursMutation["deleteBusinessHours"]>;
+  deleteBusinessHoursSchedule(variables: DeleteBusinessHoursScheduleMutationVariables): Promise<DeleteBusinessHoursScheduleMutation["deleteBusinessHoursSchedule"]>;
   deleteChatApp(variables: DeleteChatAppMutationVariables): Promise<DeleteChatAppMutation["deleteChatApp"]>;
   deleteChatAppSecret(variables: DeleteChatAppSecretMutationVariables): Promise<DeleteChatAppSecretMutation["deleteChatAppSecret"]>;
   deleteCompany(variables: DeleteCompanyMutationVariables): Promise<DeleteCompanyMutation["deleteCompany"]>;
@@ -11502,6 +11520,7 @@ export interface PlainSdkMutations {
   updateAutoresponder(variables: UpdateAutoresponderMutationVariables): Promise<UpdateAutoresponderMutation["updateAutoresponder"]>;
   updateBroadcast(variables: UpdateBroadcastMutationVariables): Promise<UpdateBroadcastMutation["updateBroadcast"]>;
   updateBroadcastAudience(variables: UpdateBroadcastAudienceMutationVariables): Promise<UpdateBroadcastAudienceMutation["updateBroadcastAudience"]>;
+  updateBusinessHoursSchedule(variables: UpdateBusinessHoursScheduleMutationVariables): Promise<UpdateBusinessHoursScheduleMutation["updateBusinessHoursSchedule"]>;
   updateChatApp(variables: UpdateChatAppMutationVariables): Promise<UpdateChatAppMutation["updateChatApp"]>;
   updateCompanyTier(variables: UpdateCompanyTierMutationVariables): Promise<UpdateCompanyTierMutation["updateCompanyTier"]>;
   updateConnectedDiscordChannel(variables: UpdateConnectedDiscordChannelMutationVariables): Promise<UpdateConnectedDiscordChannelMutation["updateConnectedDiscordChannel"]>;
@@ -11559,6 +11578,7 @@ export interface PlainSdkMutations {
   upsertCompany(variables: UpsertCompanyMutationVariables): Promise<UpsertCompanyMutation["upsertCompany"]>;
   upsertCustomer(variables: UpsertCustomerMutationVariables): Promise<UpsertCustomerMutation["upsertCustomer"]>;
   upsertCustomerGroup(variables: UpsertCustomerGroupMutationVariables): Promise<UpsertCustomerGroupMutation["upsertCustomerGroup"]>;
+  upsertDiscussionToolCall(variables: UpsertDiscussionToolCallMutationVariables): Promise<UpsertDiscussionToolCallMutation["upsertDiscussionToolCall"]>;
   upsertHelpCenterArticle(variables: UpsertHelpCenterArticleMutationVariables): Promise<UpsertHelpCenterArticleMutation["upsertHelpCenterArticle"]>;
   upsertMyEmailSignature(variables: UpsertMyEmailSignatureMutationVariables): Promise<UpsertMyEmailSignatureMutation["upsertMyEmailSignature"]>;
   upsertRoleScopes(variables: UpsertRoleScopesMutationVariables): Promise<UpsertRoleScopesMutation["upsertRoleScopes"]>;
@@ -11703,6 +11723,28 @@ export class PlainSdk {
         throw new Error("businessHours not found");
       }
       return new BusinessHoursModel(_client, response.businessHours);
+    },
+
+    async businessHoursSchedule(variables: BusinessHoursScheduleQueryVariables): Promise<BusinessHoursScheduleModel> {
+      const response = await _client.request<BusinessHoursScheduleQuery, BusinessHoursScheduleQueryVariables>(
+        BusinessHoursScheduleDocument, variables
+      );
+      if (!response.businessHoursSchedule) {
+        throw new Error("businessHoursSchedule not found");
+      }
+      return new BusinessHoursScheduleModel(_client, response.businessHoursSchedule);
+    },
+
+    async businessHoursSchedules(variables: BusinessHoursSchedulesQueryVariables): Promise<PlainConnection<BusinessHoursScheduleModel>> {
+      const response = await _client.request<BusinessHoursSchedulesQuery, BusinessHoursSchedulesQueryVariables>(
+        BusinessHoursSchedulesDocument, variables
+      );
+      const conn = response.businessHoursSchedules;
+      return new PlainConnection<BusinessHoursScheduleModel>({
+        nodes: conn.edges.map(e => new BusinessHoursScheduleModel(_client, e.node)),
+        pageInfo: conn.pageInfo,
+        fetch: (cursor) => query.businessHoursSchedules({ ...variables, ...cursor } as BusinessHoursSchedulesQueryVariables),
+      });
     },
 
     async businessHoursSlots(): Promise<BusinessHoursSlotModel[]> {
@@ -14429,6 +14471,13 @@ export class PlainSdk {
       return response.deleteBusinessHours;
     },
 
+    async deleteBusinessHoursSchedule(variables: DeleteBusinessHoursScheduleMutationVariables): Promise<DeleteBusinessHoursScheduleMutation["deleteBusinessHoursSchedule"]> {
+      const response = await _client.request<DeleteBusinessHoursScheduleMutation, DeleteBusinessHoursScheduleMutationVariables>(
+        DeleteBusinessHoursScheduleDocument, variables
+      );
+      return response.deleteBusinessHoursSchedule;
+    },
+
     async deleteChatApp(variables: DeleteChatAppMutationVariables): Promise<DeleteChatAppMutation["deleteChatApp"]> {
       const response = await _client.request<DeleteChatAppMutation, DeleteChatAppMutationVariables>(
         DeleteChatAppDocument, variables
@@ -15438,6 +15487,13 @@ export class PlainSdk {
       return response.updateBroadcastAudience;
     },
 
+    async updateBusinessHoursSchedule(variables: UpdateBusinessHoursScheduleMutationVariables): Promise<UpdateBusinessHoursScheduleMutation["updateBusinessHoursSchedule"]> {
+      const response = await _client.request<UpdateBusinessHoursScheduleMutation, UpdateBusinessHoursScheduleMutationVariables>(
+        UpdateBusinessHoursScheduleDocument, variables
+      );
+      return response.updateBusinessHoursSchedule;
+    },
+
     async updateChatApp(variables: UpdateChatAppMutationVariables): Promise<UpdateChatAppMutation["updateChatApp"]> {
       const response = await _client.request<UpdateChatAppMutation, UpdateChatAppMutationVariables>(
         UpdateChatAppDocument, variables
@@ -15829,6 +15885,13 @@ export class PlainSdk {
         UpsertCustomerGroupDocument, variables
       );
       return response.upsertCustomerGroup;
+    },
+
+    async upsertDiscussionToolCall(variables: UpsertDiscussionToolCallMutationVariables): Promise<UpsertDiscussionToolCallMutation["upsertDiscussionToolCall"]> {
+      const response = await _client.request<UpsertDiscussionToolCallMutation, UpsertDiscussionToolCallMutationVariables>(
+        UpsertDiscussionToolCallDocument, variables
+      );
+      return response.upsertDiscussionToolCall;
     },
 
     async upsertHelpCenterArticle(variables: UpsertHelpCenterArticleMutationVariables): Promise<UpsertHelpCenterArticleMutation["upsertHelpCenterArticle"]> {
