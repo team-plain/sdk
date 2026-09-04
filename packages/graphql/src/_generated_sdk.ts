@@ -24,6 +24,8 @@ import {
   BroadcastAudienceDocument,
   BroadcastAudiencesDocument,
   BroadcastDocument,
+  BroadcastSendTargetRecipientsDocument,
+  BroadcastThreadsDocument,
   BroadcastsDocument,
   BulkCreateThreadLinksDocument,
   BulkDeleteThreadLinksDocument,
@@ -38,6 +40,7 @@ import {
   CancelHyperlineSubscriptionDocument,
   ChangeBillingPlanDocument,
   ChangeThreadCustomerDocument,
+  ChangeThreadDiscussionStatusDocument,
   ChangeThreadPriorityDocument,
   ChangeUserStatusDocument,
   ChatAppDocument,
@@ -61,6 +64,7 @@ import {
   CreateAutoresponderDocument,
   CreateBroadcastAudienceDocument,
   CreateBroadcastDocument,
+  CreateBusinessHoursScheduleDocument,
   CreateChatAppDocument,
   CreateChatAppSecretDocument,
   CreateCustomRoleDocument,
@@ -270,6 +274,7 @@ import {
   MarkThreadDiscussionReadDocument,
   MintEmbedTokenDocument,
   MoveLabelTypeDocument,
+  MoveWorkflowDocument,
   MyBillingRotaDocument,
   MyBillingSubscriptionDocument,
   MyEmailSignatureDocument,
@@ -342,6 +347,7 @@ import {
   SendMsTeamsMessageDocument,
   SendNewEmailDocument,
   SendSlackMessageDocument,
+  SendTestBroadcastDocument,
   SendThreadDiscussionMessageDocument,
   ServiceAuthorizationDocument,
   ServiceAuthorizationsDocument,
@@ -606,6 +612,11 @@ import type {
   BroadcastFieldsFragment,
   BroadcastQuery,
   BroadcastQueryVariables,
+  BroadcastSendTargetRecipientsFieldsFragment,
+  BroadcastSendTargetRecipientsQuery,
+  BroadcastSendTargetRecipientsQueryVariables,
+  BroadcastThreadsQuery,
+  BroadcastThreadsQueryVariables,
   BroadcastsQuery,
   BroadcastsQueryVariables,
   BulkCreateThreadLinkResultFieldsFragment,
@@ -630,6 +641,7 @@ import type {
   BulkUpsertWorkflowStepsMutationVariables,
   BusinessHoursFieldsFragment,
   BusinessHoursQuery,
+  BusinessHoursScheduleFieldsFragment,
   BusinessHoursSlotFieldsFragment,
   BusinessHoursSlotsQuery,
   CalculateRoleChangeCostMutation,
@@ -639,6 +651,8 @@ import type {
   ChangeBillingPlanMutationVariables,
   ChangeThreadCustomerMutation,
   ChangeThreadCustomerMutationVariables,
+  ChangeThreadDiscussionStatusMutation,
+  ChangeThreadDiscussionStatusMutationVariables,
   ChangeThreadPriorityMutation,
   ChangeThreadPriorityMutationVariables,
   ChangeUserStatusMutation,
@@ -704,6 +718,8 @@ import type {
   CreateBroadcastAudienceMutationVariables,
   CreateBroadcastMutation,
   CreateBroadcastMutationVariables,
+  CreateBusinessHoursScheduleMutation,
+  CreateBusinessHoursScheduleMutationVariables,
   CreateChatAppMutation,
   CreateChatAppMutationVariables,
   CreateChatAppSecretMutation,
@@ -1200,6 +1216,8 @@ import type {
   MintEmbedTokenMutationVariables,
   MoveLabelTypeMutation,
   MoveLabelTypeMutationVariables,
+  MoveWorkflowMutation,
+  MoveWorkflowMutationVariables,
   MsTeamsChannelMembersFieldsFragment,
   MsTeamsMessageEntryFieldsFragment,
   MsTeamsMessageFieldsFragment,
@@ -1345,6 +1363,8 @@ import type {
   SendNewEmailMutationVariables,
   SendSlackMessageMutation,
   SendSlackMessageMutationVariables,
+  SendTestBroadcastMutation,
+  SendTestBroadcastMutationVariables,
   SendThreadDiscussionMessageMutation,
   SendThreadDiscussionMessageMutationVariables,
   ServiceAuthorizationFieldsFragment,
@@ -2361,8 +2381,10 @@ export class BroadcastModel {
   public readonly deletedAt: BroadcastFieldsFragment["deletedAt"];
   public readonly id: BroadcastFieldsFragment["id"];
   public readonly isDeleted: BroadcastFieldsFragment["isDeleted"];
+  public readonly isLinkUnfurlingEnabled: BroadcastFieldsFragment["isLinkUnfurlingEnabled"];
   public readonly name: BroadcastFieldsFragment["name"];
   public readonly notificationTitle: BroadcastFieldsFragment["notificationTitle"];
+  public readonly reactions: BroadcastFieldsFragment["reactions"];
   public readonly scheduledAt: BroadcastFieldsFragment["scheduledAt"];
   public readonly startedAt: BroadcastFieldsFragment["startedAt"];
   public readonly status: BroadcastFieldsFragment["status"];
@@ -2383,8 +2405,10 @@ export class BroadcastModel {
     this.deletedAt = data.deletedAt;
     this.id = data.id;
     this.isDeleted = data.isDeleted;
+    this.isLinkUnfurlingEnabled = data.isLinkUnfurlingEnabled;
     this.name = data.name;
     this.notificationTitle = data.notificationTitle;
+    this.reactions = data.reactions;
     this.scheduledAt = data.scheduledAt;
     this.startedAt = data.startedAt;
     this.status = data.status;
@@ -2421,6 +2445,22 @@ export class BroadcastModel {
       default: return data.updatedBy as any;
     }
   })();
+  }
+
+  async threads(variables?: Omit<BroadcastThreadsQueryVariables, "broadcastId">): Promise<PlainConnection<ThreadModel>> {
+    const allVars = { ...variables, broadcastId: this.id } as BroadcastThreadsQueryVariables;
+    const response = await this._client.request<BroadcastThreadsQuery, BroadcastThreadsQueryVariables>(
+      BroadcastThreadsDocument, allVars
+    );
+    const parent = response.broadcast;
+    if (!parent) throw new Error("broadcast not found");
+    const conn = parent.threads;
+    return new PlainConnection<ThreadModel>({
+      nodes: conn.edges.map(e => new ThreadModel(this._client, e.node)),
+      pageInfo: conn.pageInfo,
+      totalCount: conn.totalCount,
+      fetch: (cursor) => this.threads({ ...variables, ...cursor }),
+    });
   }
 }
 
@@ -2474,6 +2514,22 @@ export class BroadcastAudienceModel {
       default: return data.updatedBy as any;
     }
   })();
+  }
+}
+
+export class BroadcastSendTargetRecipientsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BroadcastSendTargetRecipientsFieldsFragment;
+  public readonly __typename = "BroadcastSendTargetRecipients" as const;
+
+  public readonly count: BroadcastSendTargetRecipientsFieldsFragment["count"];
+  public readonly emptyReason: BroadcastSendTargetRecipientsFieldsFragment["emptyReason"];
+
+  constructor(client: PlainGraphQLClient, data: BroadcastSendTargetRecipientsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.count = data.count;
+    this.emptyReason = data.emptyReason;
   }
 }
 
@@ -2611,6 +2667,44 @@ export class BusinessHoursModel {
     this._client = client;
     this._data = data;
     this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class BusinessHoursScheduleModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: BusinessHoursScheduleFieldsFragment;
+  public readonly __typename = "BusinessHoursSchedule" as const;
+
+  public readonly createdAt: BusinessHoursScheduleFieldsFragment["createdAt"];
+  public readonly id: BusinessHoursScheduleFieldsFragment["id"];
+  public readonly name: BusinessHoursScheduleFieldsFragment["name"];
+  public readonly updatedAt: BusinessHoursScheduleFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: BusinessHoursScheduleFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.name = data.name;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
@@ -3308,6 +3402,7 @@ export class CustomerModel {
   public readonly fullName: CustomerFieldsFragment["fullName"];
   public readonly id: CustomerFieldsFragment["id"];
   public readonly isAnonymous: CustomerFieldsFragment["isAnonymous"];
+  public readonly isTestCustomer: CustomerFieldsFragment["isTestCustomer"];
   public readonly markedAsSpamAt: CustomerFieldsFragment["markedAsSpamAt"];
   public readonly shortName: CustomerFieldsFragment["shortName"];
   public readonly updatedAt: CustomerFieldsFragment["updatedAt"];
@@ -3327,6 +3422,7 @@ export class CustomerModel {
     this.fullName = data.fullName;
     this.id = data.id;
     this.isAnonymous = data.isAnonymous;
+    this.isTestCustomer = data.isTestCustomer;
     this.markedAsSpamAt = data.markedAsSpamAt;
     this.shortName = data.shortName;
     this.updatedAt = data.updatedAt;
@@ -8175,6 +8271,15 @@ export class ThreadModel {
   })();
   }
 
+  public get broadcast(): Promise<BroadcastModel | undefined> {
+    const id = this._data.broadcast?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<BroadcastQuery, BroadcastQueryVariables>(
+      BroadcastDocument,
+      { broadcastId: id } as BroadcastQueryVariables
+    ).then(r => r.broadcast ? new BroadcastModel(this._client, r.broadcast) : undefined);
+  }
+
   public get customer(): Promise<CustomerModel | undefined> {
     const id = this._data.customer?.id;
     if (!id) return Promise.resolve(undefined);
@@ -10100,7 +10205,7 @@ export class WorkflowModel {
   public readonly createdAt: WorkflowFieldsFragment["createdAt"];
   public readonly id: WorkflowFieldsFragment["id"];
   public readonly name: WorkflowFieldsFragment["name"];
-  public readonly order: WorkflowFieldsFragment["order"];
+  public readonly position: WorkflowFieldsFragment["position"];
   public readonly publishedAt: WorkflowFieldsFragment["publishedAt"];
   public readonly sourceTemplateId: WorkflowFieldsFragment["sourceTemplateId"];
   public readonly startStepId: WorkflowFieldsFragment["startStepId"];
@@ -10115,7 +10220,7 @@ export class WorkflowModel {
     this.createdAt = data.createdAt;
     this.id = data.id;
     this.name = data.name;
-    this.order = data.order;
+    this.position = data.position;
     this.publishedAt = data.publishedAt;
     this.sourceTemplateId = data.sourceTemplateId;
     this.startStepId = data.startStepId;
@@ -10932,7 +11037,9 @@ export interface PlainSdkQueries {
   broadcast(variables: BroadcastQueryVariables): Promise<BroadcastModel>;
   broadcastAudience(variables: BroadcastAudienceQueryVariables): Promise<BroadcastAudienceModel>;
   broadcastAudiences(variables: BroadcastAudiencesQueryVariables): Promise<PlainConnection<BroadcastAudienceModel>>;
+  broadcastSendTargetRecipients(variables: BroadcastSendTargetRecipientsQueryVariables): Promise<BroadcastSendTargetRecipientsModel>;
   broadcasts(variables: BroadcastsQueryVariables): Promise<PlainConnection<BroadcastModel>>;
+  /** @deprecated Use businessHoursSlots instead. */
   businessHours(): Promise<BusinessHoursModel>;
   businessHoursSlots(): Promise<BusinessHoursSlotModel[]>;
   chatApp(variables: ChatAppQueryVariables): Promise<ChatAppModel>;
@@ -10968,6 +11075,7 @@ export interface PlainSdkQueries {
   generatedReplies(variables: GeneratedRepliesQueryVariables): Promise<GeneratedReplyModel[]>;
   getMSTeamsMembersForChannel(variables: GetMsTeamsMembersForChannelQueryVariables): Promise<MSTeamsChannelMembersModel>;
   githubUserAuthIntegration(): Promise<GithubUserAuthIntegrationModel>;
+  /** @deprecated Use `threadHeatmapMetric` instead — it supports filtering and group-by. */
   heatmapMetric(variables: HeatmapMetricQueryVariables): Promise<HeatmapMetricModel>;
   helpCenter(variables: HelpCenterQueryVariables): Promise<HelpCenterModel>;
   helpCenterAiConversation(variables: HelpCenterAiConversationQueryVariables): Promise<HelpCenterAiConversationModel>;
@@ -11044,6 +11152,7 @@ export interface PlainSdkQueries {
   sidekickServiceConfig(variables: SidekickServiceConfigQueryVariables): Promise<NonNullable<SidekickServiceConfigQuery["sidekickServiceConfig"]>>;
   sidekickSettings(): Promise<SidekickSettingsQuery["sidekickSettings"]>;
   sidekickSkills(): Promise<SidekickSkillsQuery["sidekickSkills"]>;
+  /** @deprecated Use `threadSingleValueMetric` instead — it supports filtering and group-by. */
   singleValueMetric(variables: SingleValueMetricQueryVariables): Promise<NonNullable<SingleValueMetricQuery["singleValueMetric"]>>;
   slackAutoJoinRules(variables: SlackAutoJoinRulesQueryVariables): Promise<SlackAutoJoinRuleModel[]>;
   slackUser(variables: SlackUserQueryVariables): Promise<SlackUserModel>;
@@ -11079,6 +11188,7 @@ export interface PlainSdkQueries {
   threadsByExternalId(variables: ThreadsByExternalIdQueryVariables): Promise<PlainConnection<ThreadModel>>;
   tier(variables: TierQueryVariables): Promise<TierModel>;
   tiers(variables: TiersQueryVariables): Promise<PlainConnection<TierModel>>;
+  /** @deprecated Use `threadTimeSeriesMetric` instead — it supports filtering and group-by. */
   timeSeriesMetric(variables: TimeSeriesMetricQueryVariables): Promise<TimeSeriesMetricModel>;
   timelineEntries(variables: TimelineEntriesQueryVariables): Promise<PlainConnection<TimelineEntryModel>>;
   timelineEntry(variables: TimelineEntryQueryVariables): Promise<TimelineEntryModel>;
@@ -11159,10 +11269,12 @@ export interface PlainSdkMutations {
   cancelHyperlineSubscription(): Promise<CancelHyperlineSubscriptionMutation["cancelHyperlineSubscription"]>;
   changeBillingPlan(variables: ChangeBillingPlanMutationVariables): Promise<ChangeBillingPlanMutation["changeBillingPlan"]>;
   changeThreadCustomer(variables: ChangeThreadCustomerMutationVariables): Promise<ChangeThreadCustomerMutation["changeThreadCustomer"]>;
+  changeThreadDiscussionStatus(variables: ChangeThreadDiscussionStatusMutationVariables): Promise<ChangeThreadDiscussionStatusMutation["changeThreadDiscussionStatus"]>;
   changeThreadPriority(variables: ChangeThreadPriorityMutationVariables): Promise<ChangeThreadPriorityMutation["changeThreadPriority"]>;
   changeUserStatus(variables: ChangeUserStatusMutationVariables): Promise<ChangeUserStatusMutation["changeUserStatus"]>;
   completeServiceAuthorization(variables: CompleteServiceAuthorizationMutationVariables): Promise<CompleteServiceAuthorizationMutation["completeServiceAuthorization"]>;
   completeSidekickMcpServerConnection(variables: CompleteSidekickMcpServerConnectionMutationVariables): Promise<CompleteSidekickMcpServerConnectionMutation["completeSidekickMcpServerConnection"]>;
+  /** @deprecated Use createAiFeedback instead */
   createAiFeatureFeedback(variables: CreateAiFeatureFeedbackMutationVariables): Promise<CreateAiFeatureFeedbackMutation["createAiFeatureFeedback"]>;
   createAiFeedback(variables: CreateAiFeedbackMutationVariables): Promise<CreateAiFeedbackMutation["createAiFeedback"]>;
   createAiToneRule(variables: CreateAiToneRuleMutationVariables): Promise<CreateAiToneRuleMutation["createAiToneRule"]>;
@@ -11173,6 +11285,7 @@ export interface PlainSdkMutations {
   createAutoresponder(variables: CreateAutoresponderMutationVariables): Promise<CreateAutoresponderMutation["createAutoresponder"]>;
   createBroadcast(variables: CreateBroadcastMutationVariables): Promise<CreateBroadcastMutation["createBroadcast"]>;
   createBroadcastAudience(variables: CreateBroadcastAudienceMutationVariables): Promise<CreateBroadcastAudienceMutation["createBroadcastAudience"]>;
+  createBusinessHoursSchedule(variables: CreateBusinessHoursScheduleMutationVariables): Promise<CreateBusinessHoursScheduleMutation["createBusinessHoursSchedule"]>;
   createChatApp(variables: CreateChatAppMutationVariables): Promise<CreateChatAppMutation["createChatApp"]>;
   createChatAppSecret(variables: CreateChatAppSecretMutationVariables): Promise<CreateChatAppSecretMutation["createChatAppSecret"]>;
   createCustomRole(variables: CreateCustomRoleMutationVariables): Promise<CreateCustomRoleMutation["createCustomRole"]>;
@@ -11242,6 +11355,7 @@ export interface PlainSdkMutations {
   deleteAutoresponder(variables: DeleteAutoresponderMutationVariables): Promise<DeleteAutoresponderMutation["deleteAutoresponder"]>;
   deleteBroadcast(variables: DeleteBroadcastMutationVariables): Promise<DeleteBroadcastMutation["deleteBroadcast"]>;
   deleteBroadcastAudience(variables: DeleteBroadcastAudienceMutationVariables): Promise<DeleteBroadcastAudienceMutation["deleteBroadcastAudience"]>;
+  /** @deprecated Use syncBusinessHoursSlots instead. */
   deleteBusinessHours(): Promise<DeleteBusinessHoursMutation["deleteBusinessHours"]>;
   deleteChatApp(variables: DeleteChatAppMutationVariables): Promise<DeleteChatAppMutation["deleteChatApp"]>;
   deleteChatAppSecret(variables: DeleteChatAppSecretMutationVariables): Promise<DeleteChatAppSecretMutation["deleteChatAppSecret"]>;
@@ -11322,10 +11436,12 @@ export interface PlainSdkMutations {
   markCustomerAsSpam(variables: MarkCustomerAsSpamMutationVariables): Promise<MarkCustomerAsSpamMutation["markCustomerAsSpam"]>;
   markThreadAsDone(variables: MarkThreadAsDoneMutationVariables): Promise<MarkThreadAsDoneMutation["markThreadAsDone"]>;
   markThreadAsTodo(variables: MarkThreadAsTodoMutationVariables): Promise<MarkThreadAsTodoMutation["markThreadAsTodo"]>;
+  /** @deprecated Use changeThreadDiscussionStatus with status: RESOLVED instead. */
   markThreadDiscussionAsResolved(variables: MarkThreadDiscussionAsResolvedMutationVariables): Promise<MarkThreadDiscussionAsResolvedMutation["markThreadDiscussionAsResolved"]>;
   markThreadDiscussionRead(variables: MarkThreadDiscussionReadMutationVariables): Promise<MarkThreadDiscussionReadMutation["markThreadDiscussionRead"]>;
   mintEmbedToken(variables: MintEmbedTokenMutationVariables): Promise<MintEmbedTokenMutation["mintEmbedToken"]>;
   moveLabelType(variables: MoveLabelTypeMutationVariables): Promise<MoveLabelTypeMutation["moveLabelType"]>;
+  moveWorkflow(variables: MoveWorkflowMutationVariables): Promise<MoveWorkflowMutation["moveWorkflow"]>;
   previewBillingPlanChange(variables: PreviewBillingPlanChangeMutationVariables): Promise<PreviewBillingPlanChangeMutation["previewBillingPlanChange"]>;
   purchaseCredits(variables: PurchaseCreditsMutationVariables): Promise<PurchaseCreditsMutation["purchaseCredits"]>;
   refreshConnectedDiscordChannels(variables: RefreshConnectedDiscordChannelsMutationVariables): Promise<RefreshConnectedDiscordChannelsMutation["refreshConnectedDiscordChannels"]>;
@@ -11362,6 +11478,7 @@ export interface PlainSdkMutations {
   sendMSTeamsMessage(variables: SendMsTeamsMessageMutationVariables): Promise<SendMsTeamsMessageMutation["sendMSTeamsMessage"]>;
   sendNewEmail(variables: SendNewEmailMutationVariables): Promise<SendNewEmailMutation["sendNewEmail"]>;
   sendSlackMessage(variables: SendSlackMessageMutationVariables): Promise<SendSlackMessageMutation["sendSlackMessage"]>;
+  sendTestBroadcast(variables: SendTestBroadcastMutationVariables): Promise<SendTestBroadcastMutation["sendTestBroadcast"]>;
   sendThreadDiscussionMessage(variables: SendThreadDiscussionMessageMutationVariables): Promise<SendThreadDiscussionMessageMutation["sendThreadDiscussionMessage"]>;
   setCustomerTenants(variables: SetCustomerTenantsMutationVariables): Promise<SetCustomerTenantsMutation["setCustomerTenants"]>;
   setSlackAutoJoinRules(variables: SetSlackAutoJoinRulesMutationVariables): Promise<SetSlackAutoJoinRulesMutation["setSlackAutoJoinRules"]>;
@@ -11437,6 +11554,7 @@ export interface PlainSdkMutations {
   updateWorkflowStep(variables: UpdateWorkflowStepMutationVariables): Promise<UpdateWorkflowStepMutation["updateWorkflowStep"]>;
   updateWorkspace(variables: UpdateWorkspaceMutationVariables): Promise<UpdateWorkspaceMutation["updateWorkspace"]>;
   updateWorkspaceEmailSettings(variables: UpdateWorkspaceEmailSettingsMutationVariables): Promise<UpdateWorkspaceEmailSettingsMutation["updateWorkspaceEmailSettings"]>;
+  /** @deprecated Use syncBusinessHoursSlots instead. */
   upsertBusinessHours(variables: UpsertBusinessHoursMutationVariables): Promise<UpsertBusinessHoursMutation["upsertBusinessHours"]>;
   upsertCompany(variables: UpsertCompanyMutationVariables): Promise<UpsertCompanyMutation["upsertCompany"]>;
   upsertCustomer(variables: UpsertCustomerMutationVariables): Promise<UpsertCustomerMutation["upsertCustomer"]>;
@@ -11557,6 +11675,13 @@ export class PlainSdk {
       });
     },
 
+    async broadcastSendTargetRecipients(variables: BroadcastSendTargetRecipientsQueryVariables): Promise<BroadcastSendTargetRecipientsModel> {
+      const response = await _client.request<BroadcastSendTargetRecipientsQuery, BroadcastSendTargetRecipientsQueryVariables>(
+        BroadcastSendTargetRecipientsDocument, variables
+      );
+      return new BroadcastSendTargetRecipientsModel(_client, response.broadcastSendTargetRecipients);
+    },
+
     async broadcasts(variables: BroadcastsQueryVariables): Promise<PlainConnection<BroadcastModel>> {
       const response = await _client.request<BroadcastsQuery, BroadcastsQueryVariables>(
         BroadcastsDocument, variables
@@ -11569,6 +11694,7 @@ export class PlainSdk {
       });
     },
 
+    /** @deprecated Use businessHoursSlots instead. */
     async businessHours(): Promise<BusinessHoursModel> {
       const response = await _client.request<BusinessHoursQuery, Record<string, never>>(
         BusinessHoursDocument
@@ -11928,6 +12054,7 @@ export class PlainSdk {
       return new GithubUserAuthIntegrationModel(_client, response.githubUserAuthIntegration);
     },
 
+    /** @deprecated Use `threadHeatmapMetric` instead — it supports filtering and group-by. */
     async heatmapMetric(variables: HeatmapMetricQueryVariables): Promise<HeatmapMetricModel> {
       const response = await _client.request<HeatmapMetricQuery, HeatmapMetricQueryVariables>(
         HeatmapMetricDocument, variables
@@ -12665,6 +12792,7 @@ export class PlainSdk {
       return response.sidekickSkills;
     },
 
+    /** @deprecated Use `threadSingleValueMetric` instead — it supports filtering and group-by. */
     async singleValueMetric(variables: SingleValueMetricQueryVariables): Promise<NonNullable<SingleValueMetricQuery["singleValueMetric"]>> {
       const response = await _client.request<SingleValueMetricQuery, SingleValueMetricQueryVariables>(
         SingleValueMetricDocument, variables
@@ -13010,6 +13138,7 @@ export class PlainSdk {
       });
     },
 
+    /** @deprecated Use `threadTimeSeriesMetric` instead — it supports filtering and group-by. */
     async timeSeriesMetric(variables: TimeSeriesMetricQueryVariables): Promise<TimeSeriesMetricModel> {
       const response = await _client.request<TimeSeriesMetricQuery, TimeSeriesMetricQueryVariables>(
         TimeSeriesMetricDocument, variables
@@ -13696,6 +13825,13 @@ export class PlainSdk {
       return response.changeThreadCustomer;
     },
 
+    async changeThreadDiscussionStatus(variables: ChangeThreadDiscussionStatusMutationVariables): Promise<ChangeThreadDiscussionStatusMutation["changeThreadDiscussionStatus"]> {
+      const response = await _client.request<ChangeThreadDiscussionStatusMutation, ChangeThreadDiscussionStatusMutationVariables>(
+        ChangeThreadDiscussionStatusDocument, variables
+      );
+      return response.changeThreadDiscussionStatus;
+    },
+
     async changeThreadPriority(variables: ChangeThreadPriorityMutationVariables): Promise<ChangeThreadPriorityMutation["changeThreadPriority"]> {
       const response = await _client.request<ChangeThreadPriorityMutation, ChangeThreadPriorityMutationVariables>(
         ChangeThreadPriorityDocument, variables
@@ -13724,6 +13860,7 @@ export class PlainSdk {
       return response.completeSidekickMcpServerConnection;
     },
 
+    /** @deprecated Use createAiFeedback instead */
     async createAiFeatureFeedback(variables: CreateAiFeatureFeedbackMutationVariables): Promise<CreateAiFeatureFeedbackMutation["createAiFeatureFeedback"]> {
       const response = await _client.request<CreateAiFeatureFeedbackMutation, CreateAiFeatureFeedbackMutationVariables>(
         CreateAiFeatureFeedbackDocument, variables
@@ -13792,6 +13929,13 @@ export class PlainSdk {
         CreateBroadcastAudienceDocument, variables
       );
       return response.createBroadcastAudience;
+    },
+
+    async createBusinessHoursSchedule(variables: CreateBusinessHoursScheduleMutationVariables): Promise<CreateBusinessHoursScheduleMutation["createBusinessHoursSchedule"]> {
+      const response = await _client.request<CreateBusinessHoursScheduleMutation, CreateBusinessHoursScheduleMutationVariables>(
+        CreateBusinessHoursScheduleDocument, variables
+      );
+      return response.createBusinessHoursSchedule;
     },
 
     async createChatApp(variables: CreateChatAppMutationVariables): Promise<CreateChatAppMutation["createChatApp"]> {
@@ -14277,6 +14421,7 @@ export class PlainSdk {
       return response.deleteBroadcastAudience;
     },
 
+    /** @deprecated Use syncBusinessHoursSlots instead. */
     async deleteBusinessHours(): Promise<DeleteBusinessHoursMutation["deleteBusinessHours"]> {
       const response = await _client.request<DeleteBusinessHoursMutation, Record<string, never>>(
         DeleteBusinessHoursDocument
@@ -14837,6 +14982,7 @@ export class PlainSdk {
       return response.markThreadAsTodo;
     },
 
+    /** @deprecated Use changeThreadDiscussionStatus with status: RESOLVED instead. */
     async markThreadDiscussionAsResolved(variables: MarkThreadDiscussionAsResolvedMutationVariables): Promise<MarkThreadDiscussionAsResolvedMutation["markThreadDiscussionAsResolved"]> {
       const response = await _client.request<MarkThreadDiscussionAsResolvedMutation, MarkThreadDiscussionAsResolvedMutationVariables>(
         MarkThreadDiscussionAsResolvedDocument, variables
@@ -14863,6 +15009,13 @@ export class PlainSdk {
         MoveLabelTypeDocument, variables
       );
       return response.moveLabelType;
+    },
+
+    async moveWorkflow(variables: MoveWorkflowMutationVariables): Promise<MoveWorkflowMutation["moveWorkflow"]> {
+      const response = await _client.request<MoveWorkflowMutation, MoveWorkflowMutationVariables>(
+        MoveWorkflowDocument, variables
+      );
+      return response.moveWorkflow;
     },
 
     async previewBillingPlanChange(variables: PreviewBillingPlanChangeMutationVariables): Promise<PreviewBillingPlanChangeMutation["previewBillingPlanChange"]> {
@@ -15115,6 +15268,13 @@ export class PlainSdk {
         SendSlackMessageDocument, variables
       );
       return response.sendSlackMessage;
+    },
+
+    async sendTestBroadcast(variables: SendTestBroadcastMutationVariables): Promise<SendTestBroadcastMutation["sendTestBroadcast"]> {
+      const response = await _client.request<SendTestBroadcastMutation, SendTestBroadcastMutationVariables>(
+        SendTestBroadcastDocument, variables
+      );
+      return response.sendTestBroadcast;
     },
 
     async sendThreadDiscussionMessage(variables: SendThreadDiscussionMessageMutationVariables): Promise<SendThreadDiscussionMessageMutation["sendThreadDiscussionMessage"]> {
@@ -15642,6 +15802,7 @@ export class PlainSdk {
       return response.updateWorkspaceEmailSettings;
     },
 
+    /** @deprecated Use syncBusinessHoursSlots instead. */
     async upsertBusinessHours(variables: UpsertBusinessHoursMutationVariables): Promise<UpsertBusinessHoursMutation["upsertBusinessHours"]> {
       const response = await _client.request<UpsertBusinessHoursMutation, UpsertBusinessHoursMutationVariables>(
         UpsertBusinessHoursDocument, variables

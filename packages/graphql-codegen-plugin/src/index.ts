@@ -128,6 +128,25 @@ function isValueObjectType(type: GraphQLNamedType, _schema: GraphQLSchema): bool
   });
 }
 
+/**
+ * A root field deprecated in the schema stays callable in the SDK, so without this
+ * the only warning a consumer gets is the day the server drops it.
+ */
+function applyDeprecation(
+  field: { deprecationReason?: string | null },
+  signatures: string[],
+  sigStart: number,
+  methodBodies: string[],
+  bodyStart: number,
+): void {
+  if (!field.deprecationReason) return;
+  const doc = `/** @deprecated ${field.deprecationReason.replace(/\s+/g, " ").replace(/\*\//g, "*\\/")} */`;
+  signatures.splice(sigStart, 0, doc);
+  for (let i = bodyStart; i < methodBodies.length; i++) {
+    methodBodies[i] = `    ${doc}\n${methodBodies[i]}`;
+  }
+}
+
 const SKIP_MODEL_TYPES = new Set(["MutationError", "MutationFieldError"]);
 
 // ─── Plugin ───────────────────────────────────────────────────────────────────
@@ -602,6 +621,9 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     const opInfo = documentOperations.get(fieldName);
     if (!opInfo || opInfo.kind !== "query") continue;
 
+    const sigStart = querySignatures.length;
+    const bodyStart = queryMethodBodies.length;
+
     const cgName = opCgName(opInfo.operationName);
     const documentName = `${cgName}Document`;
     const queryTsName = `${cgName}Query`;
@@ -744,12 +766,16 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
         );
       }
     }
+    applyDeprecation(field, querySignatures, sigStart, queryMethodBodies, bodyStart);
   }
 
   // Process mutations — return raw output types (errors as data, not thrown)
   for (const [fieldName, field] of Object.entries(mutationFields)) {
     const opInfo = documentOperations.get(fieldName);
     if (!opInfo || opInfo.kind !== "mutation") continue;
+
+    const sigStart = mutationSignatures.length;
+    const bodyStart = mutationMethodBodies.length;
 
     const cgName = opCgName(opInfo.operationName);
     const documentName = `${cgName}Document`;
@@ -778,6 +804,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       return response.${fieldName};
     }`,
     );
+    applyDeprecation(field, mutationSignatures, sigStart, mutationMethodBodies, bodyStart);
   }
 
   // ── Assemble output ───────────────────────────────────────────────────────

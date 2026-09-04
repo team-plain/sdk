@@ -570,6 +570,7 @@ fragment BroadcastFields on Broadcast {
   content
   contentFormat
   type
+  isLinkUnfurlingEnabled
   sender {
     __typename
     ... on SlackBroadcastSender {
@@ -715,6 +716,10 @@ fragment BroadcastFields on Broadcast {
       }
     }
   }
+  reactions {
+    emojiName
+    count
+  }
 }
 
 fragment BroadcastAudienceFields on BroadcastAudience {
@@ -821,6 +826,11 @@ fragment BroadcastAudienceFields on BroadcastAudience {
       }
     }
   }
+}
+
+fragment BroadcastSendTargetRecipientsFields on BroadcastSendTargetRecipients {
+  count
+  emptyReason
 }
 
 fragment BulkCreateThreadLinkResultFields on BulkCreateThreadLinkResult {
@@ -1291,6 +1301,65 @@ fragment BulkUpsertWorkflowStepResultItemFields on BulkUpsertWorkflowStepResultI
 }
 
 fragment BusinessHoursFields on BusinessHours {
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
+fragment BusinessHoursScheduleFields on BusinessHoursSchedule {
+  id
+  name
   createdAt {
     unixTimestamp
     iso8601
@@ -2463,6 +2532,7 @@ fragment CustomerFields on Customer {
     id
   }
   isAnonymous
+  isTestCustomer
   createdAt {
     unixTimestamp
     iso8601
@@ -15366,6 +15436,9 @@ fragment ThreadFields on Thread {
       }
     }
   }
+  broadcast {
+    id
+  }
 }
 
 fragment ThreadAssignmentNotificationDetailFields on ThreadAssignmentNotificationDetail {
@@ -23713,7 +23786,7 @@ fragment WorkflowFields on Workflow {
     unixTimestamp
     iso8601
   }
-  order
+  position
   sourceTemplateId
   createdAt {
     unixTimestamp
@@ -25331,8 +25404,8 @@ query Broadcast($broadcastId: ID!) {
   }
 }
 
-query BroadcastAudiences($first: Int, $after: String, $last: Int, $before: String) {
-  broadcastAudiences(first: $first, after: $after, last: $last, before: $before) {
+query BroadcastAudiences($searchQuery: String, $first: Int, $after: String, $last: Int, $before: String) {
+  broadcastAudiences(searchQuery: $searchQuery, first: $first, after: $after, last: $last, before: $before) {
     edges {
       node {
         ...BroadcastAudienceFields
@@ -25351,6 +25424,12 @@ query BroadcastAudiences($first: Int, $after: String, $last: Int, $before: Strin
 query BroadcastAudience($broadcastAudienceId: ID!) {
   broadcastAudience(broadcastAudienceId: $broadcastAudienceId) {
     ...BroadcastAudienceFields
+  }
+}
+
+query BroadcastSendTargetRecipients($input: BroadcastSendTargetRecipientsInput!) {
+  broadcastSendTargetRecipients(input: $input) {
+    ...BroadcastSendTargetRecipientsFields
   }
 }
 
@@ -25862,8 +25941,8 @@ query Workflow($workflowId: ID!) {
   }
 }
 
-query Workflows($first: Int, $after: String, $last: Int, $before: String, $filters: WorkflowsFilter) {
-  workflows(first: $first, after: $after, last: $last, before: $before, filters: $filters) {
+query Workflows($first: Int, $after: String, $last: Int, $before: String, $filters: WorkflowsFilter, $sortBy: WorkflowsSort) {
+  workflows(first: $first, after: $after, last: $last, before: $before, filters: $filters, sortBy: $sortBy) {
     edges {
       node {
         ...WorkflowFields
@@ -26859,8 +26938,8 @@ query KnowledgeGap($knowledgeGapId: ID!) {
   }
 }
 
-query KnowledgeGaps($sortBy: KnowledgeGapsSort, $first: Int, $after: String, $last: Int, $before: String) {
-  knowledgeGaps(sortBy: $sortBy, first: $first, after: $after, last: $last, before: $before) {
+query KnowledgeGaps($filters: KnowledgeGapsFilter, $sortBy: KnowledgeGapsSort, $first: Int, $after: String, $last: Int, $before: String) {
+  knowledgeGaps(filters: $filters, sortBy: $sortBy, first: $first, after: $after, last: $last, before: $before) {
     edges {
       node {
         ...KnowledgeGapFields
@@ -27753,6 +27832,24 @@ mutation ScheduleBroadcast($input: ScheduleBroadcastInput!) {
   }
 }
 
+mutation SendTestBroadcast($input: SendTestBroadcastInput!) {
+  sendTestBroadcast(input: $input) {
+    broadcast {
+      ...BroadcastFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation UpsertTeamSettings($input: UpsertTeamSettingsInput!) {
   upsertTeamSettings(input: $input) {
     teamSettings {
@@ -28292,6 +28389,24 @@ mutation CreateWorkflow($input: CreateWorkflowInput!) {
 
 mutation UpdateWorkflow($input: UpdateWorkflowInput!) {
   updateWorkflow(input: $input) {
+    workflow {
+      ...WorkflowFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation MoveWorkflow($input: MoveWorkflowInput!) {
+  moveWorkflow(input: $input) {
     workflow {
       ...WorkflowFields
     }
@@ -30504,6 +30619,21 @@ mutation MarkThreadDiscussionAsResolved($input: MarkThreadDiscussionAsResolvedIn
   }
 }
 
+mutation ChangeThreadDiscussionStatus($input: ChangeThreadDiscussionStatusInput!) {
+  changeThreadDiscussionStatus(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation MarkThreadDiscussionRead($input: MarkThreadDiscussionReadInput!) {
   markThreadDiscussionRead(input: $input) {
     threadDiscussion {
@@ -31598,6 +31728,24 @@ mutation SyncBusinessHoursSlots($input: SyncBusinessHoursSlotsInput!) {
   }
 }
 
+mutation CreateBusinessHoursSchedule($input: CreateBusinessHoursScheduleInput!) {
+  createBusinessHoursSchedule(input: $input) {
+    businessHoursSchedule {
+      ...BusinessHoursScheduleFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation SyncUserWorkingHours($input: SyncUserWorkingHoursInput!) {
   syncUserWorkingHours(input: $input) {
     userWorkingHours {
@@ -32613,6 +32761,26 @@ query CustomerCustomerGroupMemberships($customerId: ID!, $filters: CustomerGroup
         startCursor
         endCursor
       }
+    }
+  }
+}
+
+query BroadcastThreads($broadcastId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
+  broadcast(broadcastId: $broadcastId) {
+    threads(first: $first, after: $after, last: $last, before: $before) {
+      edges {
+        node {
+          ...ThreadFields
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
   }
 }
