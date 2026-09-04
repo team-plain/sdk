@@ -131,6 +131,9 @@ function isValueObjectType(type: GraphQLNamedType, _schema: GraphQLSchema): bool
 /**
  * A root field deprecated in the schema stays callable in the SDK, so without this
  * the only warning a consumer gets is the day the server drops it.
+ *
+ * Invariant: the caller must capture sigStart/bodyStart after the loop's only early
+ * `continue`, so the indices always point at the entries this field pushed.
  */
 function applyDeprecation(
   field: { deprecationReason?: string | null },
