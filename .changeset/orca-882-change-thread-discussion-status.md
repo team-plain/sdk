@@ -6,4 +6,4 @@ Add `mutation.changeThreadDiscussionStatus` for moving a thread discussion betwe
 
 Caveat, `WorkflowModel.order` is gone. The API deprecated `Workflow.order` and the SDK does not select deprecated fields, so the regen dropped it. Read `WorkflowModel.position` instead, an opaque lexicographic sort key, and reorder with `mutation.moveWorkflow`. The connection is already returned in `position` order.
 
-Caveat, the broadcast surface changed: the `BroadcastSendTargetScope` value `ALL_TENANTS` is renamed `ALL_RECIPIENTS` (same meaning, rename it at the call site), and `BroadcastSendTargetInput.recipients` is now optional, so it can be left out when `filters` already names the audience. Broadcasts are pre-release, so this ships as a minor.
+Caveat, the regen also changes the broadcast types: `BroadcastSendTargetScope.ALL_TENANTS` becomes `ALL_RECIPIENTS`, and `BroadcastSendTargetInput.recipients` becomes optional. We are aware of this and are shipping it as a minor anyway, because nobody uses broadcasts yet. The types exist in GraphQL, but broadcasts are not a feature anyone should rely on at this point.
