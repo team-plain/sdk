@@ -325,9 +325,11 @@ import {
   ReorderThreadFieldSchemasDocument,
   ReplyToEmailDocument,
   ReplyToThreadDocument,
+  RequestDiscussionToolCallApprovalDocument,
   ResolveAgentApprovalDocument,
   ResolveCustomerForMsTeamsChannelDocument,
   ResolveCustomerForSlackChannelDocument,
+  ResolveDiscussionApprovalDocument,
   RolesDocument,
   SavedThreadsViewDocument,
   SavedThreadsViewsDocument,
@@ -1321,12 +1323,16 @@ import type {
   ReplyToEmailMutationVariables,
   ReplyToThreadMutation,
   ReplyToThreadMutationVariables,
+  RequestDiscussionToolCallApprovalMutation,
+  RequestDiscussionToolCallApprovalMutationVariables,
   ResolveAgentApprovalMutation,
   ResolveAgentApprovalMutationVariables,
   ResolveCustomerForMsTeamsChannelMutation,
   ResolveCustomerForMsTeamsChannelMutationVariables,
   ResolveCustomerForSlackChannelMutation,
   ResolveCustomerForSlackChannelMutationVariables,
+  ResolveDiscussionApprovalMutation,
+  ResolveDiscussionApprovalMutationVariables,
   RoleChangeCostFieldsFragment,
   RoleFieldsFragment,
   RolesQuery,
@@ -1509,6 +1515,7 @@ import type {
   ThreadDiscussionQueryVariables,
   ThreadDiscussionResolvedEntryFieldsFragment,
   ThreadDiscussionSlackChannelDetailsFieldsFragment,
+  ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment,
   ThreadDiscussionToolCallEntryPayloadFieldsFragment,
   ThreadEventEntryFieldsFragment,
   ThreadEventFieldsFragment,
@@ -8693,7 +8700,7 @@ export class ThreadDiscussionMessageModel {
   public readonly type: ThreadDiscussionMessageFieldsFragment["type"];
   public readonly updatedAt: ThreadDiscussionMessageFieldsFragment["updatedAt"];
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly entry: (ThreadDiscussionApprovalRequestEntryPayloadModel | ThreadDiscussionConnectRequestEntryPayloadModel | ThreadDiscussionMessageEntryPayloadModel | ThreadDiscussionToolCallEntryPayloadModel) | null;
+  public readonly entry: (ThreadDiscussionApprovalRequestEntryPayloadModel | ThreadDiscussionConnectRequestEntryPayloadModel | ThreadDiscussionMessageEntryPayloadModel | ThreadDiscussionToolCallApprovalEntryPayloadModel | ThreadDiscussionToolCallEntryPayloadModel) | null;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: ThreadDiscussionMessageFieldsFragment) {
@@ -8725,7 +8732,8 @@ export class ThreadDiscussionMessageModel {
       case "ThreadDiscussionApprovalRequestEntryPayload": return new ThreadDiscussionApprovalRequestEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionApprovalRequestEntryPayloadStatus } as any);
       case "ThreadDiscussionConnectRequestEntryPayload": return new ThreadDiscussionConnectRequestEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionConnectRequestEntryPayloadStatus } as any);
       case "ThreadDiscussionMessageEntryPayload": return new ThreadDiscussionMessageEntryPayloadModel(client, data.entry as any);
-      case "ThreadDiscussionToolCallEntryPayload": return new ThreadDiscussionToolCallEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionToolCallEntryPayloadStatus } as any);
+      case "ThreadDiscussionToolCallApprovalEntryPayload": return new ThreadDiscussionToolCallApprovalEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionToolCallApprovalEntryPayloadStatus, toolCallId: (data.entry as any).threadDiscussionToolCallApprovalEntryPayloadToolCallId } as any);
+      case "ThreadDiscussionToolCallEntryPayload": return new ThreadDiscussionToolCallEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionToolCallEntryPayloadStatus, toolCallId: (data.entry as any).threadDiscussionToolCallEntryPayloadToolCallId } as any);
       default: return data.entry as any;
     }
   })() : null;
@@ -8844,6 +8852,39 @@ export class ThreadDiscussionSlackChannelDetailsModel {
   }
 }
 
+export class ThreadDiscussionToolCallApprovalEntryPayloadModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment;
+  public readonly __typename = "ThreadDiscussionToolCallApprovalEntryPayload" as const;
+
+  public readonly approvalId: ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment["approvalId"];
+  public readonly justification: ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment["justification"];
+  public readonly resolvedAt: ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment["resolvedAt"];
+  public readonly reviewerNote: ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment["reviewerNote"];
+  public readonly status: ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment["status"];
+  public readonly toolCallId: ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment["toolCallId"];
+  public readonly resolvedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.approvalId = data.approvalId;
+    this.justification = data.justification;
+    this.resolvedAt = data.resolvedAt;
+    this.reviewerNote = data.reviewerNote;
+    this.status = data.status;
+    this.toolCallId = data.toolCallId;
+    this.resolvedBy = data.resolvedBy ? (() => {
+    switch ((data.resolvedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.resolvedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.resolvedBy as any);
+      case "UserActor": return new UserActorModel(client, data.resolvedBy as any);
+      default: return data.resolvedBy as any;
+    }
+  })() : null;
+  }
+}
+
 export class ThreadDiscussionToolCallEntryPayloadModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadDiscussionToolCallEntryPayloadFieldsFragment;
@@ -8856,6 +8897,7 @@ export class ThreadDiscussionToolCallEntryPayloadModel {
   public readonly op: ThreadDiscussionToolCallEntryPayloadFieldsFragment["op"];
   public readonly service: ThreadDiscussionToolCallEntryPayloadFieldsFragment["service"];
   public readonly status: ThreadDiscussionToolCallEntryPayloadFieldsFragment["status"];
+  public readonly toolCallId: ThreadDiscussionToolCallEntryPayloadFieldsFragment["toolCallId"];
 
   constructor(client: PlainGraphQLClient, data: ThreadDiscussionToolCallEntryPayloadFieldsFragment) {
     this._client = client;
@@ -8867,6 +8909,7 @@ export class ThreadDiscussionToolCallEntryPayloadModel {
     this.op = data.op;
     this.service = data.service;
     this.status = data.status;
+    this.toolCallId = data.toolCallId;
   }
 }
 
@@ -11484,9 +11527,11 @@ export interface PlainSdkMutations {
   reorderThreadFieldSchemas(variables: ReorderThreadFieldSchemasMutationVariables): Promise<ReorderThreadFieldSchemasMutation["reorderThreadFieldSchemas"]>;
   replyToEmail(variables: ReplyToEmailMutationVariables): Promise<ReplyToEmailMutation["replyToEmail"]>;
   replyToThread(variables: ReplyToThreadMutationVariables): Promise<ReplyToThreadMutation["replyToThread"]>;
+  requestDiscussionToolCallApproval(variables: RequestDiscussionToolCallApprovalMutationVariables): Promise<RequestDiscussionToolCallApprovalMutation["requestDiscussionToolCallApproval"]>;
   resolveAgentApproval(variables: ResolveAgentApprovalMutationVariables): Promise<ResolveAgentApprovalMutation["resolveAgentApproval"]>;
   resolveCustomerForMSTeamsChannel(variables: ResolveCustomerForMsTeamsChannelMutationVariables): Promise<ResolveCustomerForMsTeamsChannelMutation["resolveCustomerForMSTeamsChannel"]>;
   resolveCustomerForSlackChannel(variables: ResolveCustomerForSlackChannelMutationVariables): Promise<ResolveCustomerForSlackChannelMutation["resolveCustomerForSlackChannel"]>;
+  resolveDiscussionApproval(variables: ResolveDiscussionApprovalMutationVariables): Promise<ResolveDiscussionApprovalMutation["resolveDiscussionApproval"]>;
   scheduleBroadcast(variables: ScheduleBroadcastMutationVariables): Promise<ScheduleBroadcastMutation["scheduleBroadcast"]>;
   sendBulkEmail(variables: SendBulkEmailMutationVariables): Promise<SendBulkEmailMutation["sendBulkEmail"]>;
   sendChat(variables: SendChatMutationVariables): Promise<SendChatMutation["sendChat"]>;
@@ -15235,6 +15280,13 @@ export class PlainSdk {
       return response.replyToThread;
     },
 
+    async requestDiscussionToolCallApproval(variables: RequestDiscussionToolCallApprovalMutationVariables): Promise<RequestDiscussionToolCallApprovalMutation["requestDiscussionToolCallApproval"]> {
+      const response = await _client.request<RequestDiscussionToolCallApprovalMutation, RequestDiscussionToolCallApprovalMutationVariables>(
+        RequestDiscussionToolCallApprovalDocument, variables
+      );
+      return response.requestDiscussionToolCallApproval;
+    },
+
     async resolveAgentApproval(variables: ResolveAgentApprovalMutationVariables): Promise<ResolveAgentApprovalMutation["resolveAgentApproval"]> {
       const response = await _client.request<ResolveAgentApprovalMutation, ResolveAgentApprovalMutationVariables>(
         ResolveAgentApprovalDocument, variables
@@ -15254,6 +15306,13 @@ export class PlainSdk {
         ResolveCustomerForSlackChannelDocument, variables
       );
       return response.resolveCustomerForSlackChannel;
+    },
+
+    async resolveDiscussionApproval(variables: ResolveDiscussionApprovalMutationVariables): Promise<ResolveDiscussionApprovalMutation["resolveDiscussionApproval"]> {
+      const response = await _client.request<ResolveDiscussionApprovalMutation, ResolveDiscussionApprovalMutationVariables>(
+        ResolveDiscussionApprovalDocument, variables
+      );
+      return response.resolveDiscussionApproval;
     },
 
     async scheduleBroadcast(variables: ScheduleBroadcastMutationVariables): Promise<ScheduleBroadcastMutation["scheduleBroadcast"]> {

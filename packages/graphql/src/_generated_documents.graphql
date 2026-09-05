@@ -15782,6 +15782,7 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
       slackBlocks
     }
     ... on ThreadDiscussionToolCallEntryPayload {
+      threadDiscussionToolCallEntryPayloadToolCallId: toolCallId
       service
       op
       description
@@ -15824,6 +15825,40 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
         }
       }
       calls
+    }
+    ... on ThreadDiscussionToolCallApprovalEntryPayload {
+      approvalId
+      threadDiscussionToolCallApprovalEntryPayloadToolCallId: toolCallId
+      justification
+      threadDiscussionToolCallApprovalEntryPayloadStatus: status
+      reviewerNote
+      resolvedAt {
+        unixTimestamp
+        iso8601
+      }
+      resolvedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
     }
     ... on ThreadDiscussionConnectRequestEntryPayload {
       connectRequestId
@@ -15962,7 +15997,43 @@ fragment ThreadDiscussionSlackChannelDetailsFields on ThreadDiscussionSlackChann
   slackMessageLink
 }
 
+fragment ThreadDiscussionToolCallApprovalEntryPayloadFields on ThreadDiscussionToolCallApprovalEntryPayload {
+  approvalId
+  toolCallId
+  justification
+  status
+  reviewerNote
+  resolvedAt {
+    unixTimestamp
+    iso8601
+  }
+  resolvedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
 fragment ThreadDiscussionToolCallEntryPayloadFields on ThreadDiscussionToolCallEntryPayload {
+  toolCallId
   service
   op
   description
@@ -30630,15 +30701,50 @@ mutation UpdateDiscussionAgentStatus($input: UpdateDiscussionAgentStatusInput!) 
 mutation UpsertDiscussionToolCall($input: UpsertDiscussionToolCallInput!) {
   upsertDiscussionToolCall(input: $input) {
     toolCall {
+      toolCallId
       service
       op
       description
       args
       status
+      isSuccess
       error
       durationMs
     }
     result
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation RequestDiscussionToolCallApproval($input: RequestDiscussionToolCallApprovalInput!) {
+  requestDiscussionToolCallApproval(input: $input) {
+    approval {
+      ...ThreadDiscussionToolCallApprovalEntryPayloadFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ResolveDiscussionApproval($input: ResolveDiscussionApprovalInput!) {
+  resolveDiscussionApproval(input: $input) {
     error {
       message
       type
