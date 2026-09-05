@@ -15786,7 +15786,7 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
       op
       description
       args
-      isSuccess
+      threadDiscussionToolCallEntryPayloadStatus: status
       error
       durationMs
     }
@@ -15967,7 +15967,7 @@ fragment ThreadDiscussionToolCallEntryPayloadFields on ThreadDiscussionToolCallE
   op
   description
   args
-  isSuccess
+  status
   error
   durationMs
 }
@@ -26577,6 +26577,29 @@ query BusinessHoursSlots {
   }
 }
 
+query BusinessHoursSchedule($businessHoursScheduleId: ID!) {
+  businessHoursSchedule(businessHoursScheduleId: $businessHoursScheduleId) {
+    ...BusinessHoursScheduleFields
+  }
+}
+
+query BusinessHoursSchedules($first: Int, $after: String, $last: Int, $before: String) {
+  businessHoursSchedules(first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...BusinessHoursScheduleFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
 query WorkspaceHmac {
   workspaceHmac {
     ...WorkspaceHmacFields
@@ -30604,6 +30627,31 @@ mutation UpdateDiscussionAgentStatus($input: UpdateDiscussionAgentStatusInput!) 
   }
 }
 
+mutation UpsertDiscussionToolCall($input: UpsertDiscussionToolCallInput!) {
+  upsertDiscussionToolCall(input: $input) {
+    toolCall {
+      service
+      op
+      description
+      args
+      status
+      error
+      durationMs
+    }
+    result
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation MarkThreadDiscussionAsResolved($input: MarkThreadDiscussionAsResolvedInput!) {
   markThreadDiscussionAsResolved(input: $input) {
     error {
@@ -31733,6 +31781,39 @@ mutation CreateBusinessHoursSchedule($input: CreateBusinessHoursScheduleInput!) 
     businessHoursSchedule {
       ...BusinessHoursScheduleFields
     }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateBusinessHoursSchedule($input: UpdateBusinessHoursScheduleInput!) {
+  updateBusinessHoursSchedule(input: $input) {
+    businessHoursSchedule {
+      ...BusinessHoursScheduleFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteBusinessHoursSchedule($input: DeleteBusinessHoursScheduleInput!) {
+  deleteBusinessHoursSchedule(input: $input) {
     error {
       message
       type
