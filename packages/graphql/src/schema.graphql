@@ -747,7 +747,15 @@ enum ThreadDiscussionAgentStatus {
   """The agent is working."""
   IN_PROGRESS
 
-  """The agent has stopped and is waiting on a human, e.g. for an approval."""
+  """
+  The agent has stopped and is waiting on a human to decide one or more tool call approvals.
+  Accepted in filters; responses currently return NEEDS_INPUT for this state.
+  """
+  TOOL_CALL_APPROVAL_PENDING
+
+  """
+  The agent is waiting on a human, for example to decide a tool call approval.
+  """
   NEEDS_INPUT
 }
 
@@ -1070,7 +1078,7 @@ type ThreadDiscussionMessage {
   updatedBy: Actor!
 }
 
-union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionApprovalRequestEntryPayload | ThreadDiscussionConnectRequestEntryPayload
+union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionApprovalRequestEntryPayload | ThreadDiscussionToolCallApprovalEntryPayload | ThreadDiscussionConnectRequestEntryPayload
 
 type ThreadDiscussionMessageEntryPayload {
   text: String!
@@ -1095,6 +1103,12 @@ enum DiscussionToolCallStatus {
 }
 
 type ThreadDiscussionToolCallEntryPayload {
+  """
+  The id the agent reported this call under, and what an approval names to gate it. Null on a
+  Sidekick call, which Plain reports itself and does not key by an agent-supplied id.
+  """
+  toolCallId: ID
+
   """Null on a call an agent reported: Plain has no name for it."""
   service: String
   op: String
@@ -1103,6 +1117,12 @@ type ThreadDiscussionToolCallEntryPayload {
 
   """Where the call is in its lifecycle."""
   status: DiscussionToolCallStatus!
+
+  """
+  True only when the call succeeded. A call still PENDING also reads false, so this
+  boolean can no longer tell "not finished" from "failed". Use status for that.
+  """
+  isSuccess: Boolean! @deprecated(reason: "Use status, which separates PENDING from ERROR.")
   error: String
   durationMs: Int!
 }
@@ -1123,6 +1143,8 @@ enum AgentApprovalDecision {
 
 type ThreadDiscussionApprovalRequestEntryPayload {
   approvalId: ID!
+
+  """The Sidekick sandbox lease the approval grants."""
   leaseId: ID!
   justification: String!
   status: AgentApprovalStatus!
@@ -1134,6 +1156,23 @@ type ThreadDiscussionApprovalRequestEntryPayload {
   JSON-encoded array of { service, op, maxInvocations, usedCount, args }.
   """
   calls: String!
+}
+
+"""
+A custom agent's approval on one tool call it has already reported. Sidekick's approvals are ThreadDiscussionApprovalRequestEntryPayload.
+"""
+type ThreadDiscussionToolCallApprovalEntryPayload {
+  approvalId: ID!
+
+  """
+  The tool call this approval gates, unique among the discussion's approvals.
+  """
+  toolCallId: ID!
+  justification: String!
+  status: AgentApprovalStatus!
+  reviewerNote: String
+  resolvedAt: DateTime
+  resolvedBy: InternalActor
 }
 
 enum SidekickConnectRequestStatus {
@@ -11503,6 +11542,20 @@ type Mutation {
   upsertDiscussionToolCall(input: UpsertDiscussionToolCallInput!): UpsertDiscussionToolCallOutput!
 
   """
+  Ask a human to approve a tool call the agent has reported as PENDING. One approval per call,
+  ever, and several may be open on one discussion at once; asking again for the same toolCallId
+  returns the existing approval unchanged. Moves the discussion to TOOL_CALL_APPROVAL_PENDING.
+  """
+  requestDiscussionToolCallApproval(input: RequestDiscussionToolCallApprovalInput!): RequestDiscussionToolCallApprovalOutput!
+
+  """
+  Decide a custom agent's approval by its approvalId. Denying fails the tool call it gates, with
+  reviewerNote as the error; approving leaves the call PENDING for the agent to run. Sidekick's
+  approvals are decided with resolveAgentApproval instead.
+  """
+  resolveDiscussionApproval(input: ResolveDiscussionApprovalInput!): ResolveDiscussionApprovalOutput!
+
+  """
   Mark a discussion as resolved, setting its status to RESOLVED and recording the resolution timestamp.
   """
   markThreadDiscussionAsResolved(input: MarkThreadDiscussionAsResolvedInput!): MarkThreadDiscussionAsResolvedOutput! @deprecated(reason: "Use changeThreadDiscussionStatus with status: RESOLVED instead.")
@@ -13062,9 +13115,9 @@ input UpdateDiscussionAgentStatusInput {
   discussionId: ID!
 
   """
-  IN_PROGRESS while the agent works, NEEDS_INPUT when it has stopped and is waiting on a person,
-  IDLE when it has finished. Settling on IDLE also marks the discussion unread, so the reply
-  surfaces. UNKNOWN is not accepted: it means no agent turn has been observed.
+  IN_PROGRESS while the agent works, IDLE when it has finished, which also marks the discussion
+  unread. UNKNOWN and TOOL_CALL_APPROVAL_PENDING are rejected; ask with
+  requestDiscussionToolCallApproval, which sets the latter itself.
   """
   agentStatus: ThreadDiscussionAgentStatus!
 }
@@ -13093,6 +13146,39 @@ input UpsertDiscussionToolCallInput {
 type UpsertDiscussionToolCallOutput {
   toolCall: ThreadDiscussionToolCallEntryPayload
   result: UpsertResult
+  error: MutationError
+}
+
+input RequestDiscussionToolCallApprovalInput {
+  discussionId: ID!
+
+  """
+  The call to gate, by the toolCallId it was reported with. Must name a call on this discussion that is still PENDING.
+  """
+  toolCallId: ID!
+
+  """
+  Why the agent needs the call approved, in its own words. Shown on the card the reviewer sees.
+  """
+  justification: String!
+}
+
+type RequestDiscussionToolCallApprovalOutput {
+  approval: ThreadDiscussionToolCallApprovalEntryPayload
+  error: MutationError
+}
+
+input ResolveDiscussionApprovalInput {
+  approvalId: ID!
+  decision: AgentApprovalDecision!
+
+  """
+  Shown to the agent, and used as the error on the tool call the approval covers when denied.
+  """
+  reviewerNote: String
+}
+
+type ResolveDiscussionApprovalOutput {
   error: MutationError
 }
 
