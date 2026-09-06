@@ -30758,21 +30758,6 @@ mutation ResolveDiscussionApproval($input: ResolveDiscussionApprovalInput!) {
   }
 }
 
-mutation MarkThreadDiscussionAsResolved($input: MarkThreadDiscussionAsResolvedInput!) {
-  markThreadDiscussionAsResolved(input: $input) {
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
 mutation ChangeThreadDiscussionStatus($input: ChangeThreadDiscussionStatusInput!) {
   changeThreadDiscussionStatus(input: $input) {
     error {
