@@ -267,8 +267,9 @@ while (fragmentTypes.size !== previousSize) {
  */
 function expandValueObject(type: GraphQLObjectType, indent: string): string {
   const fields = type.getFields();
-  return Object.keys(fields)
-    .map((f) => `${indent}${f}`)
+  return Object.values(fields)
+    .filter((f) => f.deprecationReason == null)
+    .map((f) => `${indent}${f.name}`)
     .join("\n");
 }
 

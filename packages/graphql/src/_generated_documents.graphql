@@ -12845,8 +12845,6 @@ fragment SavedThreadsViewFields on SavedThreadsView {
       hasTier
       hasCustomerGroups
       hasLabels
-      hasLinearIssues
-      hasJiraIssues
       hasLinkedThreads
       hasServiceLevelAgreements
       hasChannels
@@ -30707,7 +30705,6 @@ mutation UpsertDiscussionToolCall($input: UpsertDiscussionToolCallInput!) {
       description
       args
       status
-      isSuccess
       error
       durationMs
     }
