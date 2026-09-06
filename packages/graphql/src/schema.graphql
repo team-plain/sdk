@@ -749,14 +749,8 @@ enum ThreadDiscussionAgentStatus {
 
   """
   The agent has stopped and is waiting on a human to decide one or more tool call approvals.
-  Accepted in filters; responses currently return NEEDS_INPUT for this state.
   """
   TOOL_CALL_APPROVAL_PENDING
-
-  """
-  The agent is waiting on a human, for example to decide a tool call approval.
-  """
-  NEEDS_INPUT
 }
 
 type ThreadDiscussion {
@@ -2279,6 +2273,13 @@ Narrows a send's delivery list. Omit a field to leave that dimension unconstrain
 input BroadcastSendDeliveriesFilter {
   """Filters deliveries to those whose status is one of the given statuses."""
   statuses: [BroadcastSendDeliveryStatus!]
+
+  """
+  Filters deliveries to those whose recipient matches the given text. Matched case-insensitively
+  and unanchored against the recorded Slack channel name, the Slack channel id, and the email
+  address — so a delivery is found by whichever of those identifies it.
+  """
+  searchQuery: String
 }
 
 """
@@ -11556,11 +11557,6 @@ type Mutation {
   resolveDiscussionApproval(input: ResolveDiscussionApprovalInput!): ResolveDiscussionApprovalOutput!
 
   """
-  Mark a discussion as resolved, setting its status to RESOLVED and recording the resolution timestamp.
-  """
-  markThreadDiscussionAsResolved(input: MarkThreadDiscussionAsResolvedInput!): MarkThreadDiscussionAsResolvedOutput! @deprecated(reason: "Use changeThreadDiscussionStatus with status: RESOLVED instead.")
-
-  """
   Move a discussion between OPEN and RESOLVED. Resolving records the resolution timestamp and
   settles agentStatus; reopening clears the timestamp and leaves agentStatus alone, because
   reopening does not mean an agent has picked the work up again. Doing nothing when the discussion
@@ -13179,14 +13175,6 @@ input ResolveDiscussionApprovalInput {
 }
 
 type ResolveDiscussionApprovalOutput {
-  error: MutationError
-}
-
-input MarkThreadDiscussionAsResolvedInput {
-  threadDiscussionId: ID!
-}
-
-type MarkThreadDiscussionAsResolvedOutput {
   error: MutationError
 }
 

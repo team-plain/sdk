@@ -273,7 +273,6 @@ import {
   MarkCustomerAsSpamDocument,
   MarkThreadAsDoneDocument,
   MarkThreadAsTodoDocument,
-  MarkThreadDiscussionAsResolvedDocument,
   MarkThreadDiscussionReadDocument,
   MintEmbedTokenDocument,
   MoveLabelTypeDocument,
@@ -1219,8 +1218,6 @@ import type {
   MarkThreadAsDoneMutationVariables,
   MarkThreadAsTodoMutation,
   MarkThreadAsTodoMutationVariables,
-  MarkThreadDiscussionAsResolvedMutation,
-  MarkThreadDiscussionAsResolvedMutationVariables,
   MarkThreadDiscussionReadMutation,
   MarkThreadDiscussionReadMutationVariables,
   MergedThreadMessageEntryFieldsFragment,
@@ -11497,8 +11494,6 @@ export interface PlainSdkMutations {
   markCustomerAsSpam(variables: MarkCustomerAsSpamMutationVariables): Promise<MarkCustomerAsSpamMutation["markCustomerAsSpam"]>;
   markThreadAsDone(variables: MarkThreadAsDoneMutationVariables): Promise<MarkThreadAsDoneMutation["markThreadAsDone"]>;
   markThreadAsTodo(variables: MarkThreadAsTodoMutationVariables): Promise<MarkThreadAsTodoMutation["markThreadAsTodo"]>;
-  /** @deprecated Use changeThreadDiscussionStatus with status: RESOLVED instead. */
-  markThreadDiscussionAsResolved(variables: MarkThreadDiscussionAsResolvedMutationVariables): Promise<MarkThreadDiscussionAsResolvedMutation["markThreadDiscussionAsResolved"]>;
   markThreadDiscussionRead(variables: MarkThreadDiscussionReadMutationVariables): Promise<MarkThreadDiscussionReadMutation["markThreadDiscussionRead"]>;
   mintEmbedToken(variables: MintEmbedTokenMutationVariables): Promise<MintEmbedTokenMutation["mintEmbedToken"]>;
   moveLabelType(variables: MoveLabelTypeMutationVariables): Promise<MoveLabelTypeMutation["moveLabelType"]>;
@@ -15074,14 +15069,6 @@ export class PlainSdk {
         MarkThreadAsTodoDocument, variables
       );
       return response.markThreadAsTodo;
-    },
-
-    /** @deprecated Use changeThreadDiscussionStatus with status: RESOLVED instead. */
-    async markThreadDiscussionAsResolved(variables: MarkThreadDiscussionAsResolvedMutationVariables): Promise<MarkThreadDiscussionAsResolvedMutation["markThreadDiscussionAsResolved"]> {
-      const response = await _client.request<MarkThreadDiscussionAsResolvedMutation, MarkThreadDiscussionAsResolvedMutationVariables>(
-        MarkThreadDiscussionAsResolvedDocument, variables
-      );
-      return response.markThreadDiscussionAsResolved;
     },
 
     async markThreadDiscussionRead(variables: MarkThreadDiscussionReadMutationVariables): Promise<MarkThreadDiscussionReadMutation["markThreadDiscussionRead"]> {
