@@ -1,5 +1,12 @@
 # @team-plain/ui-components
 
+## 10.0.0
+
+### Patch Changes
+
+- Updated dependencies [14fcc96]
+  - @team-plain/graphql@2.0.0
+
 ## 9.0.0
 
 ### Patch Changes
