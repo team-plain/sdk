@@ -111,6 +111,12 @@
         },
         {
           "$ref": "#/definitions/discussionCreatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/discussionToolCallApprovalRequestedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/discussionToolCallApprovalResolvedPublicEventPayload"
         }
       ]
     },
@@ -138,6 +144,8 @@
         "thread.note_created",
         "thread.note_mention_created",
         "discussion.discussion_created",
+        "discussion.tool_call_approval_requested",
+        "discussion.tool_call_approval_resolved",
         "discussion.message_created",
         "thread.thread_labels_changed",
         "thread.thread_priority_changed",
@@ -2988,7 +2996,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-08-31"
+          "const": "2026-09-06"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
@@ -3425,6 +3433,17 @@
               "type": "string",
               "enum": ["OPEN", "RESOLVED", "UNKNOWN_DISCUSSION_STATUS"]
             },
+            "agentStatus": {
+              "type": "string",
+              "enum": [
+                "UNKNOWN",
+                "IDLE",
+                "IN_PROGRESS",
+                "TOOL_CALL_APPROVAL_PENDING",
+                "UNKNOWN_DISCUSSION_AGENT_STATUS"
+              ],
+              "default": "UNKNOWN"
+            },
             "threadId": {
               "anyOf": [
                 {
@@ -3457,6 +3476,35 @@
             },
             "createdAt": {
               "$ref": "#/definitions/datetime"
+            },
+            "workspaceFiles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "$ref": "#/definitions/id"
+                  },
+                  "fileName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "fileSizeBytes": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "fileMimeType": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "fileExtension": {
+                    "$ref": "#/definitions/nullableString"
+                  }
+                },
+                "required": ["id", "fileName", "fileSizeBytes", "fileMimeType", "fileExtension"],
+                "additionalProperties": true
+              },
+              "default": []
             }
           },
           "required": ["id", "type", "markdown", "createdBy", "createdAt"],
@@ -3819,6 +3867,89 @@
         }
       },
       "required": ["eventType", "discussion"],
+      "additionalProperties": true
+    },
+    "discussionToolCallApprovalRequestedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "discussion.tool_call_approval_requested"
+        },
+        "discussion": {
+          "$ref": "#/definitions/discussionMessageCreatedPublicEventPayload/properties/discussion"
+        },
+        "approvalId": {
+          "$ref": "#/definitions/id"
+        },
+        "toolCallId": {
+          "type": "string"
+        },
+        "justification": {
+          "type": "string"
+        },
+        "requestedBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "requestedAt": {
+          "$ref": "#/definitions/datetime"
+        }
+      },
+      "required": [
+        "eventType",
+        "discussion",
+        "approvalId",
+        "toolCallId",
+        "justification",
+        "requestedBy",
+        "requestedAt"
+      ],
+      "additionalProperties": true
+    },
+    "discussionToolCallApprovalResolvedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "discussion.tool_call_approval_resolved"
+        },
+        "discussion": {
+          "$ref": "#/definitions/discussionMessageCreatedPublicEventPayload/properties/discussion"
+        },
+        "approvalId": {
+          "$ref": "#/definitions/id"
+        },
+        "toolCallId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["APPROVED", "DENIED", "UNKNOWN_APPROVAL_STATUS"]
+        },
+        "justification": {
+          "type": "string"
+        },
+        "reviewerNote": {
+          "type": ["string", "null"]
+        },
+        "resolvedBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "resolvedAt": {
+          "$ref": "#/definitions/datetime"
+        }
+      },
+      "required": [
+        "eventType",
+        "discussion",
+        "approvalId",
+        "toolCallId",
+        "status",
+        "justification",
+        "reviewerNote",
+        "resolvedBy",
+        "resolvedAt"
+      ],
       "additionalProperties": true
     }
   },
