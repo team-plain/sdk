@@ -5,6 +5,8 @@ import { parsePlainWebhook } from "../parse.js";
 import customerCreatedPayload from "./webhook-payloads/customer-created.js";
 import discussionCreatedPayload from "./webhook-payloads/discussion-created.js";
 import discussionMessageCreatedPayload from "./webhook-payloads/discussion-message-created.js";
+import discussionToolCallApprovalRequestedPayload from "./webhook-payloads/discussion-tool-call-approval-requested.js";
+import discussionToolCallApprovalResolvedPayload from "./webhook-payloads/discussion-tool-call-approval-resolved.js";
 import emailReceivedPayload from "./webhook-payloads/email-received.js";
 import invalidWebhook from "./webhook-payloads/invalid.js";
 import threadAssignmentTransitionedPayload from "./webhook-payloads/thread-assignment-transitioned.js";
@@ -16,6 +18,8 @@ describe("Parse webhook", () => {
     customerCreatedPayload,
     discussionCreatedPayload,
     discussionMessageCreatedPayload,
+    discussionToolCallApprovalRequestedPayload,
+    discussionToolCallApprovalResolvedPayload,
     emailReceivedPayload,
     threadAssignmentTransitionedPayload,
     threadCreatedPayload,
@@ -28,6 +32,39 @@ describe("Parse webhook", () => {
 
   test("should fail to validate an invalid payload", () => {
     expect(parsePlainWebhook(invalidWebhook).error).toBeTruthy();
+  });
+
+  // The discussion and the message both allow additional properties, so a fixture that merely
+  // carries agentStatus or workspaceFiles would pass against the previous schema too. Reject a bad
+  // value instead: that only holds if the field is really in the schema and enforced.
+  it("rejects an agentStatus outside the enum", () => {
+    const payload = {
+      ...discussionMessageCreatedPayload,
+      payload: {
+        ...discussionMessageCreatedPayload.payload,
+        discussion: {
+          ...discussionMessageCreatedPayload.payload.discussion,
+          agentStatus: "NOT_A_STATUS",
+        },
+      },
+    };
+
+    expect(parsePlainWebhook(payload).error).instanceOf(PlainWebhookPayloadError);
+  });
+
+  it("rejects a workspace file that is missing a required field", () => {
+    const payload = {
+      ...discussionMessageCreatedPayload,
+      payload: {
+        ...discussionMessageCreatedPayload.payload,
+        message: {
+          ...discussionMessageCreatedPayload.payload.message,
+          workspaceFiles: [{ id: "wf_01HD44FHDPG82VQ4QNHDR4N2T6" }],
+        },
+      },
+    };
+
+    expect(parsePlainWebhook(payload).error).instanceOf(PlainWebhookPayloadError);
   });
 
   it("accepts a stringified payload", () => {
