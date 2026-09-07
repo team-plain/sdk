@@ -1111,12 +1111,6 @@ type ThreadDiscussionToolCallEntryPayload {
 
   """Where the call is in its lifecycle."""
   status: DiscussionToolCallStatus!
-
-  """
-  True only when the call succeeded. A call still PENDING also reads false, so this
-  boolean can no longer tell "not finished" from "failed". Use status for that.
-  """
-  isSuccess: Boolean! @deprecated(reason: "Use status, which separates PENDING from ERROR.")
   error: String
   durationMs: Int!
 }
