@@ -14602,12 +14602,6 @@ export type ThreadDiscussionToolCallEntryPayload = {
   description: Scalars['String']['output'];
   durationMs: Scalars['Int']['output'];
   error?: Maybe<Scalars['String']['output']>;
-  /**
-   * True only when the call succeeded. A call still PENDING also reads false, so this
-   * boolean can no longer tell "not finished" from "failed". Use status for that.
-   * @deprecated Use status, which separates PENDING from ERROR.
-   */
-  isSuccess: Scalars['Boolean']['output'];
   op?: Maybe<Scalars['String']['output']>;
   /** Null on a call an agent reported: Plain has no name for it. */
   service?: Maybe<Scalars['String']['output']>;
