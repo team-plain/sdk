@@ -14,6 +14,7 @@
     "lint": "biome lint .",
     "check": "biome check --write ."
   },
+  "packageManager": "pnpm@10.34.5",
   "engines": {
     "node": ">=24.0.0"
   },
