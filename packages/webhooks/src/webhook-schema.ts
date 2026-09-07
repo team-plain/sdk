@@ -328,7 +328,9 @@ export interface WebhooksSchemaDefinition {
     | ThreadDiscordMessageUpdatedEventPayload
     | ThreadTenantUpdatedPublicEventPayload
     | ThreadLockedPublicEventPayload
-    | DiscussionCreatedPublicEventPayload;
+    | DiscussionCreatedPublicEventPayload
+    | DiscussionToolCallApprovalRequestedPublicEventPayload
+    | DiscussionToolCallApprovalResolvedPublicEventPayload;
   id: Id;
   type:
     | "thread.thread_created"
@@ -349,6 +351,8 @@ export interface WebhooksSchemaDefinition {
     | "thread.note_created"
     | "thread.note_mention_created"
     | "discussion.discussion_created"
+    | "discussion.tool_call_approval_requested"
+    | "discussion.tool_call_approval_resolved"
     | "discussion.message_created"
     | "thread.thread_labels_changed"
     | "thread.thread_priority_changed"
@@ -1018,6 +1022,14 @@ export interface DiscussionMessageCreatedPublicEventPayload {
     markdown: string;
     createdBy: Actor;
     createdAt: Datetime;
+    workspaceFiles?: {
+      id: Id;
+      fileName: string;
+      fileSizeBytes: number;
+      fileMimeType: string;
+      fileExtension: NullableString;
+      [k: string]: unknown;
+    }[];
     [k: string]: unknown;
   };
   [k: string]: unknown;
@@ -1027,6 +1039,12 @@ export interface Discussion {
   type: "SLACK" | "EMAIL" | "AGENT_SESSION" | "UNKNOWN_DISCUSSION_TYPE";
   agent: MachineUser | null;
   status: "OPEN" | "RESOLVED" | "UNKNOWN_DISCUSSION_STATUS";
+  agentStatus?:
+    | "UNKNOWN"
+    | "IDLE"
+    | "IN_PROGRESS"
+    | "TOOL_CALL_APPROVAL_PENDING"
+    | "UNKNOWN_DISCUSSION_AGENT_STATUS";
   threadId: Id | null;
   [k: string]: unknown;
 }
@@ -1132,9 +1150,31 @@ export interface DiscussionCreatedPublicEventPayload {
   discussion: Discussion;
   [k: string]: unknown;
 }
+export interface DiscussionToolCallApprovalRequestedPublicEventPayload {
+  eventType: "discussion.tool_call_approval_requested";
+  discussion: Discussion;
+  approvalId: Id;
+  toolCallId: string;
+  justification: string;
+  requestedBy: InternalActor;
+  requestedAt: Datetime;
+  [k: string]: unknown;
+}
+export interface DiscussionToolCallApprovalResolvedPublicEventPayload {
+  eventType: "discussion.tool_call_approval_resolved";
+  discussion: Discussion;
+  approvalId: Id;
+  toolCallId: string;
+  status: "APPROVED" | "DENIED" | "UNKNOWN_APPROVAL_STATUS";
+  justification: string;
+  reviewerNote: string | null;
+  resolvedBy: InternalActor;
+  resolvedAt: Datetime;
+  [k: string]: unknown;
+}
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-08-31";
+  webhookTargetVersion: "2026-09-06";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;
