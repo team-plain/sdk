@@ -9,6 +9,10 @@ import discussionToolCallApprovalRequestedPayload from "./webhook-payloads/discu
 import discussionToolCallApprovalResolvedPayload from "./webhook-payloads/discussion-tool-call-approval-resolved.js";
 import emailReceivedPayload from "./webhook-payloads/email-received.js";
 import invalidWebhook from "./webhook-payloads/invalid.js";
+import taskCreatedPayload from "./webhook-payloads/task-created.js";
+import taskDeletedPayload from "./webhook-payloads/task-deleted.js";
+import taskStatusTransitionedPayload from "./webhook-payloads/task-status-transitioned.js";
+import taskUpdatedPayload from "./webhook-payloads/task-updated.js";
 import threadAssignmentTransitionedPayload from "./webhook-payloads/thread-assignment-transitioned.js";
 import threadCreatedPayload from "./webhook-payloads/thread-created.js";
 import threadStatusTransitionedPayload from "./webhook-payloads/thread-status-transitioned.js";
@@ -21,6 +25,10 @@ describe("Parse webhook", () => {
     discussionToolCallApprovalRequestedPayload,
     discussionToolCallApprovalResolvedPayload,
     emailReceivedPayload,
+    taskCreatedPayload,
+    taskDeletedPayload,
+    taskStatusTransitionedPayload,
+    taskUpdatedPayload,
     threadAssignmentTransitionedPayload,
     threadCreatedPayload,
     threadStatusTransitionedPayload,

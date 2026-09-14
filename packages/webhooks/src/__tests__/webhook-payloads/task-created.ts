@@ -1,0 +1,61 @@
+export default {
+  timestamp: "2026-09-11T09:15:00.142Z",
+  workspaceId: "w_01GST0W989ZNAW53X6XYHAY87P",
+  payload: {
+    eventType: "task.task_created",
+    task: {
+      id: "tsk_01HD44FHDPG82VQ4QNHDR4N2T7",
+      ref: "TSK-142",
+      title: "Add pagination to customer search API",
+      description:
+        "Reported by three customers this week; search results cap at 50 with no way to page through more.",
+      status: "TODO",
+      priority: 1,
+      companyId: "co_01HD44FHDPG82VQ4QNHDR4N2TA",
+      tenantId: null,
+      assignee: {
+        id: "u_01GTVBT93M80K917N2FGAK3FD5",
+        email: "jane@plain.com",
+        fullName: "Jane Doe",
+        publicName: "Jane",
+        status: "OFFLINE",
+        statusChangedAt: "2023-03-06T11:44:56.257Z",
+        createdAt: "2023-03-06T11:44:56.257Z",
+        createdBy: {
+          actorType: "user",
+          userId: "u_01GTVBT93M80K917N2FGAK3FD5",
+        },
+        updatedAt: "2023-03-06T11:44:56.257Z",
+        updatedBy: {
+          actorType: "user",
+          userId: "u_01GTVBT93M80K917N2FGAK3FD5",
+        },
+        deletedAt: null,
+        deletedBy: null,
+      },
+      assignedAt: "2026-09-11T09:15:00.000Z",
+      sourceLinks: [
+        {
+          id: "tsl_01HD44FHDPG82VQ4QNHDR4N2T8",
+          sourceType: "knowledge_gap",
+          sourceId: "kg_01HD44FHDPG82VQ4QNHDR4N2T9",
+        },
+      ],
+      createdAt: "2026-09-11T09:15:00.000Z",
+      createdBy: { actorType: "system", system: "knowledge_gap_task_creator" },
+      updatedAt: "2026-09-11T09:15:00.000Z",
+      updatedBy: { actorType: "system", system: "knowledge_gap_task_creator" },
+      deletedAt: null,
+      deletedBy: null,
+    },
+  },
+  id: "pEv_01HD44FHDPMZ3YJB5GEB1EZKQW",
+  webhookMetadata: {
+    webhookTargetId: "whTarget_01HD4400VTDJQ646V6RY37SR7K",
+    webhookTargetVersion: "2026-09-11",
+    webhookDeliveryAttemptId: "whAttempt_01HD44FJ45FJKVFHM3MDVYPGRT",
+    webhookDeliveryAttemptNumber: 1,
+    webhookDeliveryAttemptTimestamp: "2026-09-11T09:15:00.531Z",
+  },
+  type: "task.task_created",
+};
