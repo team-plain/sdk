@@ -287,6 +287,17 @@ export type ServiceLevelAgreementStatusDetail =
       status: "CANCELLED";
       [k: string]: unknown;
     };
+export type TaskAssignee =
+  | {
+      type: "UNKNOWN";
+      [k: string]: unknown;
+    }
+  | User
+  | MachineUser
+  | {
+      id: string;
+      [k: string]: unknown;
+    };
 
 /**
  * Webhook request
@@ -330,7 +341,11 @@ export interface WebhooksSchemaDefinition {
     | ThreadLockedPublicEventPayload
     | DiscussionCreatedPublicEventPayload
     | DiscussionToolCallApprovalRequestedPublicEventPayload
-    | DiscussionToolCallApprovalResolvedPublicEventPayload;
+    | DiscussionToolCallApprovalResolvedPublicEventPayload
+    | TaskCreatedPublicEventPayload
+    | TaskUpdatedPublicEventPayload
+    | TaskStatusTransitionedPublicEventPayload
+    | TaskDeletedPublicEventPayload;
   id: Id;
   type:
     | "thread.thread_created"
@@ -368,7 +383,11 @@ export interface WebhooksSchemaDefinition {
     | "customer.customer_changed"
     | "customer.customer_group_changed"
     | "customer.customer_group_memberships_changed"
-    | "timeline.timeline_entry_changed";
+    | "timeline.timeline_entry_changed"
+    | "task.task_created"
+    | "task.task_updated"
+    | "task.task_status_transitioned"
+    | "task.task_deleted";
   webhookMetadata: WebhookMetadata;
   [k: string]: unknown;
 }
@@ -1172,9 +1191,57 @@ export interface DiscussionToolCallApprovalResolvedPublicEventPayload {
   resolvedAt: Datetime;
   [k: string]: unknown;
 }
+export interface TaskCreatedPublicEventPayload {
+  eventType: "task.task_created";
+  task: Task;
+  [k: string]: unknown;
+}
+export interface Task {
+  id: Id;
+  ref: string;
+  title: string;
+  description: string | null;
+  status: "TODO" | "IN_PROGRESS" | "DONE" | "CANCELLED" | "UNKNOWN_TASK_STATUS";
+  priority: number;
+  companyId: Id | null;
+  tenantId: Id | null;
+  assignee: TaskAssignee | null;
+  assignedAt: Datetime | null;
+  sourceLinks: TaskSourceLink[];
+  createdAt: Datetime;
+  createdBy: InternalActor;
+  updatedAt: Datetime;
+  updatedBy: InternalActor;
+  deletedAt: NullableDatetime;
+  deletedBy: NullableInternalActor;
+  [k: string]: unknown;
+}
+export interface TaskSourceLink {
+  id: Id;
+  sourceType: "knowledge_gap" | "UNKNOWN_TASK_LINK_SOURCE_TYPE";
+  sourceId: Id;
+  [k: string]: unknown;
+}
+export interface TaskUpdatedPublicEventPayload {
+  eventType: "task.task_updated";
+  task: Task;
+  previousTask: Task;
+  [k: string]: unknown;
+}
+export interface TaskStatusTransitionedPublicEventPayload {
+  eventType: "task.task_status_transitioned";
+  task: Task;
+  previousTask: Task;
+  [k: string]: unknown;
+}
+export interface TaskDeletedPublicEventPayload {
+  eventType: "task.task_deleted";
+  previousTask: Task;
+  [k: string]: unknown;
+}
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-09-06";
+  webhookTargetVersion: "2026-09-11";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

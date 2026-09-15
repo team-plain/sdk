@@ -41,7 +41,7 @@ export default {
   id: "pEv_01HD44FHDPMZ3YJB5GEB1EZKQV",
   webhookMetadata: {
     webhookTargetId: "whTarget_01HD4400VTDJQ646V6RY37SR7K",
-    webhookTargetVersion: "2026-09-06",
+    webhookTargetVersion: "2026-09-11",
     webhookDeliveryAttemptId: "whAttempt_01HD44FJ45FJKVFHM3MDVYPGRS",
     webhookDeliveryAttemptNumber: 1,
     webhookDeliveryAttemptTimestamp: "2026-09-06T12:00:00.861Z",
