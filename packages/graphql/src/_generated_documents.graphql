@@ -63,6 +63,101 @@ fragment AiFeatureFeedbackOutputFields on AiFeatureFeedbackOutput {
   }
 }
 
+fragment AiFeedbackFields on AiFeedback {
+  id
+  feature
+  details {
+    __typename
+    ... on AiAgentFeedbackDetails {
+      reason
+      comment
+      sentiment
+      threadId
+      timelineEntryId
+    }
+    ... on ThreadCatchupFeedbackDetails {
+      reason
+      comment
+      sentiment
+      threadId
+    }
+    ... on ThreadClustersFeedbackDetails {
+      reason
+      comment
+      sentiment
+      clusterId
+    }
+    ... on ToneRuleFeedbackDetails {
+      reason
+      comment
+      sentiment
+      toneRuleId
+      toneRuleInput
+      toneRuleDescription
+    }
+    ... on KnowledgeGapFeedbackDetails {
+      reason
+      comment
+      sentiment
+      knowledgeGapId
+    }
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
 fragment AiToneRuleFields on AiToneRule {
   id
   category
@@ -128,6 +223,11 @@ fragment ApiKeyFields on ApiKey {
   id
   description
   permissions
+  impersonationAllowList {
+    userIds
+    roleIds
+    customRoleIds
+  }
   createdBy {
     __typename
     ... on UserActor {
@@ -6343,6 +6443,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   }
                 }
               }
+              isManagedByDirectory
             }
             ... on MachineUser {
               id
@@ -6604,6 +6705,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   }
                 }
               }
+              isManagedByDirectory
             }
             ... on MachineUser {
               id
@@ -6867,6 +6969,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   }
                 }
               }
+              isManagedByDirectory
             }
             ... on MachineUser {
               id
@@ -7128,6 +7231,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   }
                 }
               }
+              isManagedByDirectory
             }
             ... on MachineUser {
               id
@@ -7420,6 +7524,16 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
         ... on ThreadPriorityChangedEntry {
           previousPriority
           nextPriority
+        }
+        ... on ThreadServiceLevelAgreementPolicyChangedEntry {
+          previousServiceLevelAgreementPolicy {
+            id
+            name
+          }
+          nextServiceLevelAgreementPolicy {
+            id
+            name
+          }
         }
         ... on ThreadEventEntry {
           timelineEventId
@@ -10655,6 +10769,38 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
           }
         }
       }
+      timelineEntryCreatedBy: createdBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on CustomerActor {
+          customerId
+          customer {
+            id
+          }
+        }
+        ... on DeletedCustomerActor {
+          customerId
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
+      }
       llmText
     }
     ... on Note {
@@ -10698,7 +10844,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
         unixTimestamp
         iso8601
       }
-      createdBy {
+      noteCreatedBy: createdBy {
         __typename
         ... on UserActor {
           userId
@@ -12818,6 +12964,7 @@ fragment SavedThreadsViewFields on SavedThreadsView {
     companies
     tenants
     tiers
+    serviceLevelAgreementPolicyIds
     labelTypeIds
     messageSource
     supportEmailAddresses
@@ -13020,6 +13167,66 @@ fragment ServiceAuthorizationFields on ServiceAuthorization {
     }
   }
   isImportRunnerIntegration
+}
+
+fragment ServiceLevelAgreementPolicyFields on ServiceLevelAgreementPolicy {
+  id
+  name
+  description
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
 }
 
 fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgreementStatusTransitionedEntry {
@@ -13278,6 +13485,22 @@ fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgree
   }
 }
 
+fragment SidekickAvailableToolFields on SidekickAvailableTool {
+  service
+  op
+  displayName
+  description
+  approvalMode
+  risk
+  configurableArgs {
+    name
+    source
+    dependsOn
+    exclusiveWith
+    defaultValue
+  }
+}
+
 fragment SidekickCreditBalanceFields on SidekickCreditBalance {
   status
   allowance {
@@ -13324,6 +13547,14 @@ fragment SidekickMcpServerFields on SidekickMcpServer {
     mimeType
     sizes
   }
+}
+
+fragment SidekickToolArgOptionsPageFields on SidekickToolArgOptionsPage {
+  options {
+    id
+    label
+  }
+  nextCursor
 }
 
 fragment SlackAutoJoinRuleFields on SlackAutoJoinRule {
@@ -13854,6 +14085,7 @@ fragment TaskFields on Task {
           }
         }
       }
+      isManagedByDirectory
     }
     ... on MachineUser {
       id
@@ -14813,6 +15045,7 @@ fragment ThreadFields on Thread {
           }
         }
       }
+      isManagedByDirectory
     }
     ... on MachineUser {
       id
@@ -15078,6 +15311,7 @@ fragment ThreadFields on Thread {
           }
         }
       }
+      isManagedByDirectory
     }
     ... on MachineUser {
       id
@@ -15307,6 +15541,9 @@ fragment ThreadFields on Thread {
     id
   }
   tier {
+    id
+  }
+  serviceLevelAgreementPolicy {
     id
   }
   channel
@@ -15870,6 +16107,40 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
       resolvedAt {
         unixTimestamp
         iso8601
+      }
+    }
+    ... on ThreadDiscussionTurnStoppedEntryPayload {
+      stoppedBy {
+        __typename
+        ... on UserActor {
+          userId
+          user {
+            id
+          }
+        }
+        ... on CustomerActor {
+          customerId
+          customer {
+            id
+          }
+        }
+        ... on DeletedCustomerActor {
+          customerId
+        }
+        ... on SystemActor {
+          systemId
+          workflowExecutionId
+          workflow {
+            id
+            name
+          }
+        }
+        ... on MachineUserActor {
+          machineUserId
+          machineUser {
+            id
+          }
+        }
       }
     }
   }
@@ -17715,6 +17986,17 @@ fragment ThreadPriorityChangedEntryFields on ThreadPriorityChangedEntry {
   nextPriority
 }
 
+fragment ThreadServiceLevelAgreementPolicyChangedEntryFields on ThreadServiceLevelAgreementPolicyChangedEntry {
+  previousServiceLevelAgreementPolicy {
+    id
+    name
+  }
+  nextServiceLevelAgreementPolicy {
+    id
+    name
+  }
+}
+
 fragment ThreadSingleValueMetricFields on ThreadSingleValueMetric {
   threadIds
 }
@@ -18860,6 +19142,7 @@ fragment TimelineEntryFields on TimelineEntry {
               }
             }
           }
+          isManagedByDirectory
         }
         ... on MachineUser {
           id
@@ -19121,6 +19404,7 @@ fragment TimelineEntryFields on TimelineEntry {
               }
             }
           }
+          isManagedByDirectory
         }
         ... on MachineUser {
           id
@@ -19384,6 +19668,7 @@ fragment TimelineEntryFields on TimelineEntry {
               }
             }
           }
+          isManagedByDirectory
         }
         ... on MachineUser {
           id
@@ -19645,6 +19930,7 @@ fragment TimelineEntryFields on TimelineEntry {
               }
             }
           }
+          isManagedByDirectory
         }
         ... on MachineUser {
           id
@@ -19937,6 +20223,16 @@ fragment TimelineEntryFields on TimelineEntry {
     ... on ThreadPriorityChangedEntry {
       previousPriority
       nextPriority
+    }
+    ... on ThreadServiceLevelAgreementPolicyChangedEntry {
+      previousServiceLevelAgreementPolicy {
+        id
+        name
+      }
+      nextServiceLevelAgreementPolicy {
+        id
+        name
+      }
     }
     ... on ThreadEventEntry {
       timelineEventId
@@ -23172,6 +23468,38 @@ fragment TimelineEntryFields on TimelineEntry {
       }
     }
   }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on CustomerActor {
+      customerId
+      customer {
+        id
+      }
+    }
+    ... on DeletedCustomerActor {
+      customerId
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
   llmText
 }
 
@@ -23331,6 +23659,7 @@ fragment UserFields on User {
       }
     }
   }
+  isManagedByDirectory
 }
 
 fragment UserActorFields on UserActor {
@@ -24225,6 +24554,8 @@ fragment WorkspaceFields on Workspace {
   }
   workOSOrganizationId
   workOSHubOrganizationId
+  isSSOEnabled
+  isDirectoryEnabled
 }
 
 fragment WorkspaceCursorIntegrationFields on WorkspaceCursorIntegration {
@@ -24736,6 +25067,24 @@ fragment WorkspaceMSTeamsIntegrationFields on WorkspaceMSTeamsIntegration {
         id
       }
     }
+  }
+}
+
+fragment WorkspaceSetupFields on WorkspaceSetup {
+  connectedChannelKeys
+  hasConnectedChannel
+  userCount
+  hasInvitedTeammates
+  labelTypeCount
+  hasLabelTypes
+  tierCount
+  hasTiers
+  workflowStatus
+  connectedSidekickToolKeys
+  hasConnectedSidekickTools
+  steps {
+    key
+    isComplete
   }
 }
 
@@ -25520,6 +25869,12 @@ query WorkspaceChatSettings {
   }
 }
 
+query WorkspaceSetup {
+  workspaceSetup {
+    ...WorkspaceSetupFields
+  }
+}
+
 query MachineUser($machineUserId: ID!) {
   machineUser(machineUserId: $machineUserId) {
     ...MachineUserFields
@@ -26032,6 +26387,7 @@ query WorkflowCapabilities($triggerType: WorkflowTriggerType!) {
     hasConditionSupport
     hasWaitSupport
     allowedActionTypes
+    hasSidekickActionSupport
   }
 }
 
@@ -26634,6 +26990,29 @@ query Tier($tierId: ID!) {
   }
 }
 
+query ServiceLevelAgreementPolicies($filters: ServiceLevelAgreementPoliciesFilter, $first: Int, $after: String, $last: Int, $before: String) {
+  serviceLevelAgreementPolicies(filters: $filters, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...ServiceLevelAgreementPolicyFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query ServiceLevelAgreementPolicy($serviceLevelAgreementPolicyId: ID!) {
+  serviceLevelAgreementPolicy(serviceLevelAgreementPolicyId: $serviceLevelAgreementPolicyId) {
+    ...ServiceLevelAgreementPolicyFields
+  }
+}
+
 query BusinessHours {
   businessHours {
     ...BusinessHoursFields
@@ -26715,6 +27094,18 @@ query SearchPlainHelpCenter($searchQuery: String!, $pageSize: Int) {
     content
     title
     url
+  }
+}
+
+query SidekickAvailableTools {
+  sidekickAvailableTools {
+    ...SidekickAvailableToolFields
+  }
+}
+
+query SidekickToolArgOptions($source: SidekickToolArgOptionSource!, $parent: ID, $query: String, $first: Int, $after: String) {
+  sidekickToolArgOptions(source: $source, parent: $parent, query: $query, first: $first, after: $after) {
+    ...SidekickToolArgOptionsPageFields
   }
 }
 
@@ -27035,6 +27426,24 @@ query KnowledgeGaps($filters: KnowledgeGapsFilter, $sortBy: KnowledgeGapsSort, $
     edges {
       node {
         ...KnowledgeGapFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query AiFeedback($filters: AiFeedbackFilter, $first: Int, $after: String, $last: Int, $before: String) {
+  aiFeedback(filters: $filters, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...AiFeedbackFields
       }
       cursor
     }
@@ -30435,6 +30844,24 @@ mutation UpdateThreadTier($input: UpdateThreadTierInput!) {
   }
 }
 
+mutation UpdateThreadServiceLevelAgreementPolicy($input: UpdateThreadServiceLevelAgreementPolicyInput!) {
+  updateThreadServiceLevelAgreementPolicy(input: $input) {
+    thread {
+      ...ThreadFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation UpdateThreadEscalationPath($input: UpdateThreadEscalationPathInput!) {
   updateThreadEscalationPath(input: $input) {
     thread {
@@ -30838,6 +31265,21 @@ mutation EditQueuedAgentSessionMessage($input: EditQueuedAgentSessionMessageInpu
     queuedAgentSessionMessage {
       ...QueuedAgentSessionMessageFields
     }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation StopAgentSessionTurn($input: StopAgentSessionTurnInput!) {
+  stopAgentSessionTurn(input: $input) {
     error {
       message
       type
@@ -31714,6 +32156,60 @@ mutation DeleteServiceLevelAgreement($input: DeleteServiceLevelAgreementInput!) 
       ... on NextResponseTimeServiceLevelAgreement {
         ...NextResponseTimeServiceLevelAgreementFields
       }
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateServiceLevelAgreementPolicy($input: CreateServiceLevelAgreementPolicyInput!) {
+  createServiceLevelAgreementPolicy(input: $input) {
+    serviceLevelAgreementPolicy {
+      ...ServiceLevelAgreementPolicyFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateServiceLevelAgreementPolicy($input: UpdateServiceLevelAgreementPolicyInput!) {
+  updateServiceLevelAgreementPolicy(input: $input) {
+    serviceLevelAgreementPolicy {
+      ...ServiceLevelAgreementPolicyFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteServiceLevelAgreementPolicy($input: DeleteServiceLevelAgreementPolicyInput!) {
+  deleteServiceLevelAgreementPolicy(input: $input) {
+    serviceLevelAgreementPolicy {
+      ...ServiceLevelAgreementPolicyFields
     }
     error {
       message

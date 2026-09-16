@@ -55,6 +55,11 @@ type User {
   isDeleted: Boolean!
   deletedAt: DateTime
   deletedBy: Actor
+
+  """
+  Whether this user currently exists in the workspace's directory. Directory-managed users cannot be removed from Plain while directory sync is enabled.
+  """
+  isManagedByDirectory: Boolean!
 }
 
 """
@@ -127,6 +132,14 @@ type Workspace {
   The shared WorkOS hub organization that holds SSO, directory sync, and domain policy, if this workspace is hub-linked.
   """
   workOSHubOrganizationId: String
+
+  """True when this workspace or its hub has an active SSO connection."""
+  isSSOEnabled: Boolean!
+
+  """
+  True when this workspace or its hub has a directory (SCIM) configured. When true, members must be invited and have their roles changed in the identity provider.
+  """
+  isDirectoryEnabled: Boolean!
 }
 
 type WorkspaceInvite {
@@ -857,8 +870,9 @@ type ThreadDiscussion {
   discussions. Frontend can render these as greyed-out preview bubbles
   pinned to the bottom of the chat; they disappear when the agent picks
   them up (a real ThreadDiscussionMessage is created at that point with a
-  correctly-ordered timestamp) or when the queue is cleared by error /
-  timeout / manual stop.
+  correctly-ordered timestamp) or when the queue is cleared by error or
+  timeout. Stopping the current turn does not clear the queue: the next
+  queued message starts as a new turn.
   """
   queuedAgentSessionMessages: [QueuedAgentSessionMessage!]!
 }
@@ -877,6 +891,14 @@ type QueuedAgentSessionMessage {
   createdBy: Actor!
   updatedAt: DateTime!
   updatedBy: Actor!
+}
+
+input StopAgentSessionTurnInput {
+  agentSessionId: ID!
+}
+
+type StopAgentSessionTurnOutput {
+  error: MutationError
 }
 
 input DeleteQueuedAgentSessionMessageInput {
@@ -1072,7 +1094,7 @@ type ThreadDiscussionMessage {
   updatedBy: Actor!
 }
 
-union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionApprovalRequestEntryPayload | ThreadDiscussionToolCallApprovalEntryPayload | ThreadDiscussionConnectRequestEntryPayload
+union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionApprovalRequestEntryPayload | ThreadDiscussionToolCallApprovalEntryPayload | ThreadDiscussionConnectRequestEntryPayload | ThreadDiscussionTurnStoppedEntryPayload
 
 type ThreadDiscussionMessageEntryPayload {
   text: String!
@@ -1195,6 +1217,15 @@ type ThreadDiscussionConnectRequestEntryPayload {
   When every requested tool became connected. Null while the request is pending.
   """
   resolvedAt: DateTime
+}
+
+"""
+A person stopped Sidekick mid-turn. Rendered as a plain line in the transcript so a
+reader can see why the agent stopped talking. Who stopped it and when are the
+message's own createdBy and createdAt.
+"""
+type ThreadDiscussionTurnStoppedEntryPayload {
+  stoppedBy: Actor!
 }
 
 type WorkflowRule {
@@ -1321,6 +1352,9 @@ type WorkflowCapabilities {
   Action step types this workflow is restricted to (e.g. `send_slack_notification`). An empty list means no restriction (all action types are allowed).
   """
   allowedActionTypes: [String!]!
+
+  """Whether the `ask_sidekick` (Sidekick action) block is available."""
+  hasSidekickActionSupport: Boolean!
 }
 
 input WorkflowsFilter {
@@ -1335,6 +1369,11 @@ input WorkflowsFilter {
   Only workflows whose `events` trigger listens for at least one of these event types, e.g. `thread.thread_created`. Workflows with a `manual` or `schedule` trigger are never returned when this filter is set. An empty list is not a filter.
   """
   triggerEvents: [String!]
+
+  """
+  Only workflows created by one of these users or machine users. Workflows created by the system have no user to match and are never returned when this filter is set. An empty list is not a filter.
+  """
+  createdByUserIds: [ID!]
 }
 
 """How to order the `workflows` connection."""
@@ -1349,6 +1388,17 @@ enum WorkflowsSortField {
   only `bulkUpsertWorkflowSteps` touches the workflow alongside its steps.
   """
   UPDATED_AT
+
+  """The workflow's name."""
+  NAME
+
+  """When the workflow was created."""
+  CREATED_AT
+
+  """
+  When the workflow was published. Drafts have no such time and group at the end of the connection in either direction.
+  """
+  PUBLISHED_AT
 }
 
 input WorkflowsSort {
@@ -1387,7 +1437,7 @@ type WorkflowStep {
   """
   JSON-encoded step configuration. Every payload is an object with `version: 1` and a `type` discriminator. The payload shape depends on the step `type`:
   - CONDITION: a condition. `type` is either a leaf check (e.g. `contains_label`, `thread_field_equals`, `thread_field_is_set`, `priority_equals`, `assigned_to`, `customer_equals`, `ai_workflow_rule_condition`) or a combinator (`and`, `or`, `not`, `else_if`) that nests other conditions under `conditions`/`condition`.
-  - ACTION: an action, e.g. `apply_labels`, `remove_labels`, `set_priority`, `set_status`, `set_tier`, `assign_to_user`, `assign_to_team`, `add_note`, `send_message`, `send_slack_notification`, `send_http_request`, `set_thread_field`, `snooze_thread`, `escalate_thread`.
+  - ACTION: an action, e.g. `apply_labels`, `remove_labels`, `set_priority`, `set_status`, `set_tier`, `set_service_level_agreement_policy`, `assign_to_user`, `assign_to_team`, `add_note`, `send_message`, `send_slack_notification`, `send_http_request`, `set_thread_field`, `snooze_thread`, `escalate_thread`.
   - WAIT: `{ "duration": <seconds>, "cancelCondition"?: <condition> }`.
   Examples: `{"version":1,"type":"apply_labels","labelTypeIds":["lt_..."]}`, `{"version":1,"type":"else_if","conditions":[...]}`.
   Payloads embed workspace-specific IDs (label type IDs, user IDs, tier IDs, etc.), which are not portable: copying a payload into another workspace references IDs that do not exist there and the step silently applies nothing.
@@ -1523,6 +1573,11 @@ type WorkflowStepExecution {
   Entities this step produced or affected, for linking to them from the run.
   """
   entities: [WorkflowStepEntityRef!]!
+
+  """
+  What the step did, in the actor's own words, e.g. the one-line report an AI step gives when it completes its task.
+  """
+  summary: String
 }
 
 type WorkflowExecutionEdge {
@@ -1736,6 +1791,7 @@ enum ThreadsGroupBy {
   ASSIGNEE
   CUSTOMER_GROUP
   TENANT
+  SERVICE_LEVEL_AGREEMENT_POLICY
 }
 
 """
@@ -1755,6 +1811,7 @@ type SavedThreadsViewNestedFilter {
   companies: [ID!]!
   tenants: [ID!]!
   tiers: [ID!]!
+  serviceLevelAgreementPolicyIds: [ID!]!
   labelTypeIds: [ID!]!
   messageSource: [MessageSource!]!
   supportEmailAddresses: [String!]!
@@ -1781,6 +1838,7 @@ type SavedThreadsViewFilter {
   companies: [ID!]!
   tenants: [ID!]!
   tiers: [ID!]!
+  serviceLevelAgreementPolicyIds: [ID!]!
   labelTypeIds: [ID!]!
   messageSource: [MessageSource!]!
   supportEmailAddresses: [String!]!
@@ -3698,6 +3756,27 @@ type ThreadPriorityChangedEntry {
   nextPriority: Int!
 }
 
+"""
+An SLA policy as it was when a timeline entry was written. Policies can be renamed or deleted afterwards, so this is a snapshot rather than a link.
+"""
+type ServiceLevelAgreementPolicyRef {
+  id: ID!
+  name: String!
+}
+
+"""
+A timeline entry recording a change to the SLA policy applied to a thread.
+"""
+type ThreadServiceLevelAgreementPolicyChangedEntry {
+  """The policy the thread was on before the change. Null when it had none."""
+  previousServiceLevelAgreementPolicy: ServiceLevelAgreementPolicyRef
+
+  """
+  The policy the thread is on after the change. Null when the policy was cleared.
+  """
+  nextServiceLevelAgreementPolicy: ServiceLevelAgreementPolicyRef
+}
+
 type ThreadLabelsChangedEntry {
   previousLabels: [Label!]!
   nextLabels: [Label!]!
@@ -3720,7 +3799,7 @@ union Actor = UserActor | CustomerActor | DeletedCustomerActor | SystemActor | M
 union InternalActor = UserActor | SystemActor | MachineUserActor
 
 """A union of all possible entries that can appear in a timeline."""
-union Entry = NoteEntry | ChatEntry | EmailEntry | CustomEntry | LinearIssueThreadLinkStateTransitionedEntry | ThreadAssignmentTransitionedEntry | ThreadAdditionalAssigneesTransitionedEntry | ThreadStatusTransitionedEntry | ThreadPriorityChangedEntry | ThreadEventEntry | CustomerEventEntry | SlackMessageEntry | SlackReplyEntry | ThreadLabelsChangedEntry | ThreadDiscussionEntry | ThreadDiscussionMessageEntry | ThreadDiscussionResolvedEntry | ServiceLevelAgreementStatusTransitionedEntry | MSTeamsMessageEntry | DiscordMessageEntry | ThreadLinkCreatedEntry | ThreadLinkUpdatedEntry | ThreadLinkDeletedEntry | ThreadLinkTargetCreatedEntry | ThreadLinkTargetDeletedEntry | HelpCenterAiConversationMessageEntry | CustomerSurveyRequestedEntry | MergedThreadMessageEntry
+union Entry = NoteEntry | ChatEntry | EmailEntry | CustomEntry | LinearIssueThreadLinkStateTransitionedEntry | ThreadAssignmentTransitionedEntry | ThreadAdditionalAssigneesTransitionedEntry | ThreadStatusTransitionedEntry | ThreadPriorityChangedEntry | ThreadServiceLevelAgreementPolicyChangedEntry | ThreadEventEntry | CustomerEventEntry | SlackMessageEntry | SlackReplyEntry | ThreadLabelsChangedEntry | ThreadDiscussionEntry | ThreadDiscussionMessageEntry | ThreadDiscussionResolvedEntry | ServiceLevelAgreementStatusTransitionedEntry | MSTeamsMessageEntry | DiscordMessageEntry | ThreadLinkCreatedEntry | ThreadLinkUpdatedEntry | ThreadLinkDeletedEntry | ThreadLinkTargetCreatedEntry | ThreadLinkTargetDeletedEntry | HelpCenterAiConversationMessageEntry | CustomerSurveyRequestedEntry | MergedThreadMessageEntry
 
 type HelpCenterAiConversationMessageEntry {
   helpCenterId: ID!
@@ -3796,7 +3875,16 @@ type TimelineEntry {
   The payload of this timeline entry. Use an inline fragment on the concrete type (e.g. `NoteEntry`, `EmailEntry`, `CustomerEventEntry`) to access type-specific fields.
   """
   entry: Entry!
+
+  """
+  Who this entry is attributed to, and who the customer sees it as. For a reply sent by a machine user impersonating a workspace user, this is the impersonated user.
+  """
   actor: Actor!
+
+  """
+  Whose credentials wrote this entry, which is the machine user for an impersonated reply. Null on entries created before this was recorded.
+  """
+  createdBy: Actor
 
   """
   A plain-text rendering of this timeline entry suitable for use in LLM prompts or search indexing.
@@ -3938,6 +4026,11 @@ type ApiKey {
   The list of permission strings granted to this API key, e.g. `customer:read`. These determine which API operations the key is authorized to perform.
   """
   permissions: [String!]!
+
+  """
+  The workspace users, roles and custom roles this key may reply as. Empty means nothing has been added yet, so the key cannot reply as anyone.
+  """
+  impersonationAllowList: ApiKeyImpersonationAllowList!
   createdBy: InternalActor!
   createdAt: DateTime!
   updatedBy: InternalActor!
@@ -5135,6 +5228,13 @@ type Query {
   workspaceChatSettings: WorkspaceChatSettings!
 
   """
+  Returns how far this workspace has progressed through setup: channels, teammates, label
+  types, tiers, automation and Sidekick tools. Backs both the Onboarding checklist and the
+  Sidekick onboarding skill, so the two can never disagree.
+  """
+  workspaceSetup: WorkspaceSetup!
+
+  """
   Fetches a single machine user by ID. Returns null if no machine user with the given ID exists in the workspace.
   """
   machineUser(machineUserId: ID!): MachineUser
@@ -5753,6 +5853,16 @@ type Query {
   tier(tierId: ID!): Tier
 
   """
+  Returns the SLA policies in the workspace, sorted by name. Pass `filters` to narrow by name or by the target types a policy holds. Supports cursor-based pagination. Requires the `serviceLevelAgreement:read` permission.
+  """
+  serviceLevelAgreementPolicies(filters: ServiceLevelAgreementPoliciesFilter, first: Int, after: String, last: Int, before: String): ServiceLevelAgreementPolicyConnection!
+
+  """
+  Returns a single SLA policy by its Plain ID. Returns null if no policy with that ID exists. Requires the `serviceLevelAgreement:read` permission.
+  """
+  serviceLevelAgreementPolicy(serviceLevelAgreementPolicyId: ID!): ServiceLevelAgreementPolicy
+
+  """
   Fetch the workspace's business hours configuration. Deprecated — use businessHoursSlots instead, which supports timezone-aware slots.
   """
   businessHours: BusinessHours @deprecated(reason: "Use businessHoursSlots instead.")
@@ -5805,6 +5915,16 @@ type Query {
   searchPlainHelpCenter(searchQuery: String!, pageSize: Int): [PlainHelpCenterArticleSearchResult!]!
 
   """
+  List the Sidekick tools available to this workspace: Plain tools always, external tools only for connected integrations.
+  """
+  sidekickAvailableTools: [SidekickAvailableTool!]!
+
+  """
+  Browse choices for a configurable tool arg (from `SidekickAvailableTool.configurableArgs`). Pass the selected dependsOn argument as parent; clear after when changing source, parent or query.
+  """
+  sidekickToolArgOptions(source: SidekickToolArgOptionSource!, parent: ID, query: String, first: Int, after: String): SidekickToolArgOptionsPage!
+
+  """
   Returns all AI-generated thread clusters for the current workspace, sorted by thread count descending.
   Clusters group semantically similar threads together so you can spot trends and recurring issues at a glance.
   The optional `variant` argument selects which clustering model run to return; omit it to receive the default variant.
@@ -5836,7 +5956,7 @@ type Query {
 
   """
   This API is in beta and may change without notice.
-  Returns the current suggested reply candidates for a thread, scoped to the most recent customer message. Suggestions submitted via `addGeneratedReply` are always included. Suggestions generated by Plain AI are excluded when suggested responses are disabled or not available for the workspace, or when an externally submitted suggestion exists for the same message. Returns an empty list if no customer message exists on the thread or no suggestion is available. Requires the `generatedReply:read` permission.
+  Returns the current suggested reply candidates for a thread, scoped to the most recent inbound message from the customer or from a machine user. Suggestions submitted via `addGeneratedReply` are always included. Suggestions generated by Plain AI are excluded when suggested responses are disabled or not available for the workspace, or when an externally submitted suggestion exists for the same message. Returns an empty list if the thread has no such message or no suggestion is available. Requires the `generatedReply:read` permission.
   """
   generatedReplies(threadId: ID!, options: [GenerateReplyOption!]): [GeneratedReply!]
 
@@ -5973,6 +6093,11 @@ type Query {
   Paginated list of knowledge gaps detected in the workspace. Sort by signal count or recency. Defaults to descending signal count order. Requires the `knowledgeGap:read` permission.
   """
   knowledgeGaps(filters: KnowledgeGapsFilter, sortBy: KnowledgeGapsSort, first: Int, after: String, last: Int, before: String): KnowledgeGapConnection!
+
+  """
+  Paginated list of the feedback your team has submitted on Plain's AI features, such as a thumbs up or down on an Ari reply, newest first. Use the optional `filters` argument to narrow results by feature, sentiment or submission time. Requires the `aiFeatureFeedback:read` permission.
+  """
+  aiFeedback(filters: AiFeedbackFilter, first: Int, after: String, last: Int, before: String): AiFeedbackConnection!
 }
 
 type EscalationPath {
@@ -6136,6 +6261,94 @@ type GeneratedReply {
 input GenerateReplyOption {
   key: String
   value: String
+}
+
+enum SidekickToolArgOptionSource {
+  SLACK_CHANNELS
+  PLAIN_DISCUSSION_CHANNELS
+  LINEAR_TEAMS
+  LINEAR_PROJECTS
+  NOTION_PAGES
+  NOTION_DATA_SOURCES
+  HELP_CENTERS
+  HELP_CENTER_GROUPS
+  HELP_CENTER_ARTICLE_STATUSES
+}
+
+"""A tool available to Sidekick in this workspace."""
+type SidekickAvailableTool {
+  """The service the tool belongs to, e.g. `plain`, `slack`."""
+  service: String!
+
+  """
+  The operation identifier, e.g. `thread.addLabels` or `chat.postMessage`.
+  """
+  op: String!
+
+  """Human label for the tool."""
+  displayName: String!
+
+  """One-line description of what the tool does."""
+  description: String!
+
+  """
+  The workspace's effective approval mode (override merged over factory default): `not_required`, `approval_required`, or `disabled`. Disabled tools are rejected at runtime even if granted; `approval_required` tools granted to a workflow step run without a human approval.
+  """
+  approvalMode: String!
+
+  """
+  Whether the op observes or mutates: `read`, `write`, or `destructive`. Reads are granted automatically to a restricted Sidekick session for any service it has at least one granted tool on, so pickers should offer writes as the selectable actions.
+  """
+  risk: String!
+
+  """
+  Op args a workflow grant can pin at build time (e.g. the Slack channel on `chat.postMessage`). Empty for most tools.
+  """
+  configurableArgs: [SidekickToolConfigurableArg!]!
+}
+
+"""An op arg the workflow builder can pin on a tool grant."""
+type SidekickToolConfigurableArg {
+  """The arg name as the tool declares it, e.g. `channel`."""
+  name: String!
+
+  """
+  Which option list populates the picker; pass to `sidekickToolArgOptions`.
+  """
+  source: SidekickToolArgOptionSource!
+
+  """
+  Select this argument first and pass its value as parent when loading options. Clear this selection when the parent changes.
+  """
+  dependsOn: String
+
+  """Another argument that cannot be selected alongside this one."""
+  exclusiveWith: String
+
+  """
+  Initial picker selection. Save it in the tool permission to enforce it.
+  """
+  defaultValue: String
+}
+
+type SidekickToolArgOptionsPage {
+  options: [SidekickToolArgOption!]!
+
+  """
+  Pass as after to load more choices. Null means there are no more pages.
+  """
+  nextCursor: String
+}
+
+"""One selectable value for a configurable tool arg."""
+type SidekickToolArgOption {
+  """
+  The value stored on the grant and enforced at runtime, e.g. a Slack channel ID.
+  """
+  id: ID!
+
+  """Human label for the picker, e.g. the channel name."""
+  label: String!
 }
 
 """
@@ -6321,6 +6534,11 @@ interface ServiceLevelAgreement {
   useBusinessHoursOnly: Boolean!
 
   """
+  The business hours schedules this SLA is tracked against. Empty if the SLA is tracked 24/7.
+  """
+  businessHoursSchedules: [BusinessHoursSchedule!]!
+
+  """
   This SLA can only be applied to a thread if it has one of these priority values.
   """
   threadPriorityFilter: [Int!]!
@@ -6351,6 +6569,11 @@ type FirstResponseTimeServiceLevelAgreement implements ServiceLevelAgreement {
   """
   firstResponseTimeMinutes: Int!
   useBusinessHoursOnly: Boolean!
+
+  """
+  The business hours schedules this SLA is tracked against. Empty if the SLA is tracked 24/7.
+  """
+  businessHoursSchedules: [BusinessHoursSchedule!]!
   threadPriorityFilter: [Int!]!
   threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilter
   breachActions: [BreachAction!]!
@@ -6361,7 +6584,7 @@ type FirstResponseTimeServiceLevelAgreement implements ServiceLevelAgreement {
 }
 
 """
-An SLA that tracks the time from each new customer message until a teammate replies. Requires a first-response-time SLA to exist on the same tier.
+An SLA that tracks the time from each new customer message until a teammate replies. On a tier, this requires a first-response-time SLA to exist on the same tier; in an SLA policy it stands on its own.
 """
 type NextResponseTimeServiceLevelAgreement implements ServiceLevelAgreement {
   id: ID!
@@ -6371,6 +6594,11 @@ type NextResponseTimeServiceLevelAgreement implements ServiceLevelAgreement {
   """
   nextResponseTimeMinutes: Int!
   useBusinessHoursOnly: Boolean!
+
+  """
+  The business hours schedules this SLA is tracked against. Empty if the SLA is tracked 24/7.
+  """
+  businessHoursSchedules: [BusinessHoursSchedule!]!
   threadPriorityFilter: [Int!]!
   threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilter
   breachActions: [BreachAction!]!
@@ -6378,6 +6606,78 @@ type NextResponseTimeServiceLevelAgreement implements ServiceLevelAgreement {
   createdBy: InternalActor!
   updatedAt: DateTime!
   updatedBy: InternalActor!
+}
+
+"""
+A named group of SLA targets that a workflow or a user applies to a thread. Unlike tier SLAs, a policy's targets are selected by type alone, so a policy holds at most one target per type.
+"""
+type ServiceLevelAgreementPolicy {
+  id: ID!
+  name: String!
+  description: String
+
+  """The SLA targets this policy applies. At most one per type."""
+  targets: [ServiceLevelAgreementPolicyTarget!]!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+"""
+How far ahead of an SLA target's deadline the thread is treated as close to breaching.
+"""
+type ServiceLevelAgreementWarnBefore {
+  """
+  How many minutes before the deadline the SLA is treated as close to breaching.
+  """
+  minutes: Int!
+}
+
+"""
+One response-time promise inside an SLA policy. A policy holds at most one target of each type.
+"""
+type ServiceLevelAgreementPolicyTarget {
+  id: ID!
+  type: ServiceLevelAgreementType!
+
+  """This target breaches if no response is sent within this many minutes."""
+  minutes: Int!
+  warnBefore: ServiceLevelAgreementWarnBefore
+
+  """
+  The business hours schedules this SLA target is tracked against. Empty if tracked 24/7.
+  """
+  businessHoursSchedules: [BusinessHoursSchedule!]!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+type ServiceLevelAgreementPolicyEdge {
+  cursor: String!
+  node: ServiceLevelAgreementPolicy!
+}
+
+type ServiceLevelAgreementPolicyConnection {
+  edges: [ServiceLevelAgreementPolicyEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Narrows the SLA policy list. Omit a field to leave that dimension unconstrained.
+"""
+input ServiceLevelAgreementPoliciesFilter {
+  """
+  Narrows to policies whose name contains this, matched case-insensitively and unanchored. Searched in the database rather than on the page, so it finds policies a client has not loaded.
+  """
+  searchQuery: String
+
+  """
+  Narrows to policies holding a target of at least one of these types. A policy with no target of any given type is excluded.
+  """
+  serviceLevelAgreementTypes: [ServiceLevelAgreementType!]
 }
 
 union BreachAction = BeforeBreachAction
@@ -7080,6 +7380,7 @@ input ThreadsFilter {
   customerGroupIdentifiers: [CustomerGroupIdentifier!]
   serviceLevelAgreements: ServiceLevelAgreementFilter
   tierIdentifiers: [TierIdentifierInput!]
+  serviceLevelAgreementPolicyIds: [ID!]
   threadFields: [ThreadFieldFilter!]
   tenantIdentifiers: [TenantIdentifierInput!]
   companyIdentifiers: [CompanyIdentifierInput!]
@@ -8696,6 +8997,9 @@ input SavedThreadsViewFilterInput {
   companies: [ID!]!
   tenants: [ID!]!
   tiers: [ID!]!
+
+  """Omitted or null means no policy filter."""
+  serviceLevelAgreementPolicyIds: [ID!]
   labelTypeIds: [ID!]!
   messageSource: [MessageSource!]!
   supportEmailAddresses: [String!]!
@@ -9426,6 +9730,54 @@ type WorkspaceChatSettings {
   isEnabled: Boolean!
 }
 
+enum WorkspaceSetupWorkflowStatus {
+  NOT_STARTED
+  PARTIAL
+  DONE
+}
+
+enum WorkspaceSetupStepKey {
+  CREATE_LABEL_TYPES
+  SET_UP_WORKFLOWS
+  CONNECT_CHANNELS
+  SET_UP_TIERS
+  SET_UP_SIDEKICK
+  INVITE_TEAM
+}
+
+type WorkspaceSetupStep {
+  key: WorkspaceSetupStepKey!
+  isComplete: Boolean!
+}
+
+type WorkspaceSetup {
+  """
+  Channel keys the workspace has actually connected, e.g. ["email", "slack"]. Never
+  contains "api", and "chat" only appears once live chat is enabled and a chat app exists.
+  """
+  connectedChannelKeys: [String!]!
+  hasConnectedChannel: Boolean!
+  userCount: Int!
+  hasInvitedTeammates: Boolean!
+  labelTypeCount: Int!
+  hasLabelTypes: Boolean!
+  tierCount: Int!
+  hasTiers: Boolean!
+
+  """
+  Whether the workspace has created a workflow. PARTIAL means at least one exists and none
+  is currently published.
+  """
+  workflowStatus: WorkspaceSetupWorkflowStatus!
+  connectedSidekickToolKeys: [String!]!
+  hasConnectedSidekickTools: Boolean!
+
+  """
+  All six setup facts in checklist order, alongside the flat fields above.
+  """
+  steps: [WorkspaceSetupStep!]!
+}
+
 input EmailParticipantInput {
   name: String
   email: String!
@@ -9879,10 +10231,28 @@ type UpdateMachineUserOutput {
   error: MutationError
 }
 
+"""The workspace users, roles and custom roles an API key may reply as."""
+type ApiKeyImpersonationAllowList {
+  userIds: [ID!]!
+  roleIds: [ID!]!
+  customRoleIds: [ID!]!
+}
+
+input ApiKeyImpersonationAllowListInput {
+  userIds: [ID!]!
+  roleIds: [ID!]!
+  customRoleIds: [ID!]!
+}
+
 input CreateApiKeyInput {
   machineUserId: ID!
   description: String
   permissions: [String!]!
+
+  """
+  The workspace users, roles and custom roles this key may reply as. Omit to create a key that cannot reply as anyone yet.
+  """
+  impersonationAllowList: ApiKeyImpersonationAllowListInput
 }
 
 type CreateApiKeyOutput {
@@ -9899,6 +10269,11 @@ input UpdateApiKeyInput {
   apiKeyId: ID!
   description: String
   permissions: [String!]!
+
+  """
+  Replaces the whole list of workspace users, roles and custom roles this key may reply as. Omit to leave it unchanged; send null or empty lists to clear it.
+  """
+  impersonationAllowList: ApiKeyImpersonationAllowListInput
 }
 
 type UpdateApiKeyOutput {
@@ -11429,6 +11804,11 @@ type Mutation {
   updateThreadTier(input: UpdateThreadTierInput!): UpdateThreadTierOutput!
 
   """
+  Assign an SLA policy to a thread. A policy takes precedence over the thread's tier when selecting SLAs. Pass `serviceLevelAgreementPolicyId: null` to detach the policy and fall back to the tier's SLAs. Requires the `thread:edit` permission.
+  """
+  updateThreadServiceLevelAgreementPolicy(input: UpdateThreadServiceLevelAgreementPolicyInput!): UpdateThreadServiceLevelAgreementPolicyOutput!
+
+  """
   Attach a thread to a specific escalation path, or pass `escalationPathId: null` to detach it. An escalation path defines the sequence of users or teams the thread escalates through if nobody responds in time. Requires the `thread:edit` permission.
   """
   updateThreadEscalationPath(input: UpdateThreadEscalationPathInput!): UpdateThreadEscalationPathOutput!
@@ -11590,6 +11970,14 @@ type Mutation {
   picked the message up.
   """
   editQueuedAgentSessionMessage(input: EditQueuedAgentSessionMessageInput!): EditQueuedAgentSessionMessageOutput!
+
+  """
+  Stops the in-flight turn of a Sidekick AGENT_SESSION discussion: the sandbox stops,
+  queued messages are dropped and a pending tool approval is cancelled, but the session
+  survives, so the next message continues the same conversation. Does nothing when the
+  session is not running, and rejects discussions outside the in-app channel.
+  """
+  stopAgentSessionTurn(input: StopAgentSessionTurnInput!): StopAgentSessionTurnOutput!
 
   """
   Send a reply to the customer on a thread using the most appropriate channel automatically. Supports threads where the last inbound message is an email, a Slack message, or a form submission. If the thread has no messages yet, an email is sent to the customer. Requires the `thread:reply` (or channel-specific send) permission.
@@ -11842,6 +12230,21 @@ type Mutation {
   Delete an SLA from a tier. A first-response-time SLA cannot be deleted while a next-response-time SLA still exists on the same tier — delete the next-response SLA first. Returns the deleted SLA on success. Requires the `serviceLevelAgreement:delete` permission.
   """
   deleteServiceLevelAgreement(input: DeleteServiceLevelAgreementInput!): DeleteServiceLevelAgreementOutput!
+
+  """
+  Create an SLA policy together with its targets. A policy holds at most one target per type, and any combination of types is valid. Business hours are configured on the policy and apply to every target in it. A policy only starts tracking once it is applied to a thread. Requires the `serviceLevelAgreement:create` permission.
+  """
+  createServiceLevelAgreementPolicy(input: CreateServiceLevelAgreementPolicyInput!): CreateServiceLevelAgreementPolicyOutput!
+
+  """
+  Update an SLA policy and its targets. Pass the full set of targets you want the policy to have: a target of an existing type is updated in place, so live SLA trackers are unaffected, a new type is added, and a type you leave out is removed along with its trackers. Requires the `serviceLevelAgreement:edit` permission.
+  """
+  updateServiceLevelAgreementPolicy(input: UpdateServiceLevelAgreementPolicyInput!): UpdateServiceLevelAgreementPolicyOutput!
+
+  """
+  Delete an SLA policy. Its targets and their SLA trackers are deleted with it, and any thread the policy was applied to falls back to its tier's SLAs. Requires the `serviceLevelAgreement:delete` permission.
+  """
+  deleteServiceLevelAgreementPolicy(input: DeleteServiceLevelAgreementPolicyInput!): DeleteServiceLevelAgreementPolicyOutput!
 
   """
   Adds one or more tenants or companies to a tier (up to 25 per call). Because each tenant or company can belong to only one tier at a time, adding a member that already belongs to another tier will move it to this tier. Requires the `tierMembership:read` and `tierMembership:create` permissions.
@@ -12123,7 +12526,7 @@ type Mutation {
   reorderCustomerSurveys(input: ReorderCustomerSurveysInput!): ReorderCustomerSurveysOutput!
 
   """
-  Programmatically add a suggested reply to a thread. The reply is surfaced to teammates in Plain so they can review, edit, and send it — the customer sees nothing until a teammate explicitly sends it. The `timelineEntryId` must reference a customer message on the thread. The `markdown` field is capped at 5,000 characters. Requires the `generatedReply:create` permission.
+  Programmatically add a suggested reply to a thread. The reply is surfaced to teammates in Plain so they can review, edit, and send it — the customer sees nothing until a teammate explicitly sends it. The `timelineEntryId` must reference an inbound message on the thread, from the customer or from a machine user. A message the workspace sent, including one your own machine user sent, is not a valid target. The `markdown` field is capped at 5,000 characters. Requires the `generatedReply:create` permission.
   """
   addGeneratedReply(input: AddGeneratedReplyInput!): AddGeneratedReplyOutput!
 
@@ -12269,6 +12672,71 @@ input CreateAiFeedbackInput {
 
 type CreateAiFeedbackOutput {
   error: MutationError
+}
+
+"""The Plain AI feature a piece of feedback relates to."""
+enum AiFeedbackFeature {
+  """A reply drafted or sent by Ari, Plain's AI agent."""
+  AI_AGENT
+
+  """An AI-generated summary of what has happened so far on a thread."""
+  THREAD_CATCHUP
+
+  """A cluster of related threads surfaced by Plain's AI."""
+  THREAD_CLUSTERS
+
+  """An AI tone rule governing how Plain's AI writes."""
+  TONE_RULE
+
+  """
+  A knowledge gap detected from questions your customers are not finding answers to.
+  """
+  KNOWLEDGE_GAP
+}
+
+"""
+A single piece of feedback a teammate submitted on a Plain AI feature result.
+"""
+type AiFeedback {
+  id: ID!
+  feature: AiFeedbackFeature!
+
+  """
+  Feature-specific context for the feedback, including the sentiment, the optional free-text comment, and the ID of whatever the feedback was left on.
+  """
+  details: AiFeatureFeedbackDetails!
+  createdAt: DateTime!
+
+  """The user or machine user who submitted this feedback."""
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+
+  """The user or machine user who last modified this feedback."""
+  updatedBy: InternalActor!
+}
+
+type AiFeedbackEdge {
+  cursor: String!
+  node: AiFeedback!
+}
+
+type AiFeedbackConnection {
+  edges: [AiFeedbackEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input AiFeedbackFilter {
+  """Only return feedback on these AI features."""
+  features: [AiFeedbackFeature!]
+
+  """
+  Only return feedback with these sentiments. Feedback submitted before sentiment was captured has no sentiment and is excluded by this filter.
+  """
+  sentiments: [AiFeedbackSentiment!]
+
+  """Only return feedback submitted within this time window."""
+  createdAt: DatetimeFilter
 }
 
 type AiToneRule {
@@ -13300,7 +13768,7 @@ input ServiceLevelAgreementThreadLabelTypeIdFilterInput {
 }
 
 input ServiceLevelAgreementInput {
-  """Set this to configure the firt response time SLA."""
+  """Set this to configure the first response time SLA."""
   firstResponseTimeMinutes: Int
 
   """Set this to configure an SLA for next responses."""
@@ -13317,9 +13785,14 @@ input ServiceLevelAgreementInput {
   threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilterInput
 
   """
-  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will tracked 24/7.
+  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7.
   """
-  useBusinessHoursOnly: Boolean!
+  useBusinessHoursOnly: Boolean
+
+  """
+  The business hours schedules to track this SLA against. Replaces useBusinessHoursOnly. Pass an empty array for the SLA to be tracked 24/7.
+  """
+  businessHoursScheduleIds: [ID!]
 
   """
   The actions to take when the SLA is about to breach and when it breaches.
@@ -13407,9 +13880,14 @@ input UpdateServiceLevelAgreementInput {
   threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilterInput
 
   """
-  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will tracked 24/7.
+  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7.
   """
-  useBusinessHoursOnly: BooleanInput
+  useBusinessHoursOnly: OptionalBooleanInput
+
+  """
+  The business hours schedules to track this SLA against. Replaces useBusinessHoursOnly. Pass an empty array to clear business hours associations for the SLA to be tracked 24/7.
+  """
+  businessHoursScheduleIds: [ID!]
 
   """
   The actions to take when the SLA is about to breach and when it breaches.
@@ -13428,6 +13906,65 @@ input DeleteServiceLevelAgreementInput {
 
 type DeleteServiceLevelAgreementOutput {
   serviceLevelAgreement: ServiceLevelAgreement
+  error: MutationError
+}
+
+input ServiceLevelAgreementWarnBeforeInput {
+  """
+  How many minutes before the deadline the SLA is treated as close to breaching. Must be strictly less than the target.
+  """
+  minutes: Int!
+}
+
+input ServiceLevelAgreementPolicyTargetInput {
+  """The type of target. A policy can hold at most one target of each type."""
+  type: ServiceLevelAgreementType!
+
+  """
+  This target will breach if it does not receive a response within this many minutes.
+  """
+  minutes: Int!
+  warnBefore: ServiceLevelAgreementWarnBeforeInput!
+
+  """
+  The business hours schedules to track this target against. Leave it out or pass an empty array for the target to be tracked 24/7; leave it out when updating and the target keeps the schedules it already has.
+  """
+  businessHoursScheduleIds: [ID!]
+}
+
+input CreateServiceLevelAgreementPolicyInput {
+  name: String!
+  description: String
+
+  """The targets this policy applies. At most one per type."""
+  targets: [ServiceLevelAgreementPolicyTargetInput!]!
+}
+
+type CreateServiceLevelAgreementPolicyOutput {
+  serviceLevelAgreementPolicy: ServiceLevelAgreementPolicy
+  error: MutationError
+}
+
+input UpdateServiceLevelAgreementPolicyInput {
+  serviceLevelAgreementPolicyId: ID!
+  name: StringInput
+  description: OptionalStringInput
+
+  """The full set of targets the policy should have after the update."""
+  targets: [ServiceLevelAgreementPolicyTargetInput!]!
+}
+
+type UpdateServiceLevelAgreementPolicyOutput {
+  serviceLevelAgreementPolicy: ServiceLevelAgreementPolicy
+  error: MutationError
+}
+
+input DeleteServiceLevelAgreementPolicyInput {
+  serviceLevelAgreementPolicyId: ID!
+}
+
+type DeleteServiceLevelAgreementPolicyOutput {
+  serviceLevelAgreementPolicy: ServiceLevelAgreementPolicy
   error: MutationError
 }
 
@@ -13894,8 +14431,17 @@ input CustomerImpersonationInput {
   customerIdentifier: CustomerIdentifierInput!
 }
 
+input UserImpersonationInput {
+  """
+  The workspace user to reply as. Set userId or emailAddress; a machine user cannot be impersonated.
+  """
+  userIdentifier: UserIdentifierInput!
+}
+
+"""Exactly one field must be set."""
 input ImpersonationInput {
-  asCustomer: CustomerImpersonationInput!
+  asCustomer: CustomerImpersonationInput
+  asUser: UserImpersonationInput
 }
 
 input ReplyToThreadEmailChannelSpecificOptionsInput {
@@ -14455,6 +15001,7 @@ enum TimelineEntryType {
   THREAD_ADDITIONAL_ASSIGNEES_TRANSITIONED
   THREAD_STATUS_TRANSITIONED
   THREAD_PRIORITY_CHANGED
+  THREAD_SERVICE_LEVEL_AGREEMENT_POLICY_CHANGED
 
   """
   A custom event scoped to a single thread, created via `createThreadEvent`.
@@ -14644,6 +15191,11 @@ type Thread {
   The tier this thread is associated with. Tiers mandate the SLAs for this thread.
   """
   tier: Tier
+
+  """
+  The SLA policy assigned to this thread. When set, its targets are the thread's SLAs and the tier's SLAs do not apply.
+  """
+  serviceLevelAgreementPolicy: ServiceLevelAgreementPolicy
 
   """
   Summary of SLA objective statuses for this thread (e.g. whether first-response or next-response time targets are met, breached, or approaching breach). Always present but may show no active trackers if no SLA is linked.
@@ -17460,7 +18012,7 @@ input CreateBusinessHoursScheduleInput {
   name: String!
 
   """
-  The slots to open the schedule with. Omit or pass an empty array to create a schedule with no business hours yet.
+  The slots to open the schedule with. Must contain at least one slot, and every slot must use the same timezone.
   """
   slots: [BusinessHoursSlotInput!]
 }
@@ -17479,7 +18031,7 @@ input UpdateBusinessHoursScheduleInput {
   name: StringInput
 
   """
-  Replace the schedule's slots in full. Omit to leave them unchanged, or pass an empty array to clear them.
+  Replace the schedule's slots in full. Omit to leave them unchanged. If given, must contain at least one slot, and every slot must use the same timezone.
   """
   slots: [BusinessHoursSlotInput!]
 }
@@ -17596,6 +18148,16 @@ input UpdateThreadTierInput {
 }
 
 type UpdateThreadTierOutput {
+  thread: Thread
+  error: MutationError
+}
+
+input UpdateThreadServiceLevelAgreementPolicyInput {
+  threadId: ID!
+  serviceLevelAgreementPolicyId: ID
+}
+
+type UpdateThreadServiceLevelAgreementPolicyOutput {
   thread: Thread
   error: MutationError
 }
@@ -17844,6 +18406,7 @@ type CancelHyperlineSubscriptionOutput {
 
 enum FeatureKey {
   BUSINESS_HOURS
+  MULTIPLE_BUSINESS_HOURS
   SLACK_DISCUSSIONS
   SERVICE_LEVEL_AGREEMENTS
   DATA_IMPORTERS
