@@ -111,6 +111,7 @@ import {
   CreateThreadDocument,
   CreateThreadEventDocument,
   CreateThreadFieldSchemaDocument,
+  CreateThreadFromSlackMessageDocument,
   CreateThreadLinkDocument,
   CreateTierDocument,
   CreateUserAccountDocument,
@@ -825,6 +826,8 @@ import type {
   CreateThreadEventMutationVariables,
   CreateThreadFieldSchemaMutation,
   CreateThreadFieldSchemaMutationVariables,
+  CreateThreadFromSlackMessageMutation,
+  CreateThreadFromSlackMessageMutationVariables,
   CreateThreadLinkMutation,
   CreateThreadLinkMutationVariables,
   CreateThreadMutation,
@@ -6497,6 +6500,7 @@ export class MachineUserModel {
   public readonly description: MachineUserFieldsFragment["description"];
   public readonly fullName: MachineUserFieldsFragment["fullName"];
   public readonly id: MachineUserFieldsFragment["id"];
+  public readonly isAssignableToThreads: MachineUserFieldsFragment["isAssignableToThreads"];
   public readonly isCustomAgent: MachineUserFieldsFragment["isCustomAgent"];
   public readonly isDeleted: MachineUserFieldsFragment["isDeleted"];
   public readonly publicName: MachineUserFieldsFragment["publicName"];
@@ -6514,6 +6518,7 @@ export class MachineUserModel {
     this.description = data.description;
     this.fullName = data.fullName;
     this.id = data.id;
+    this.isAssignableToThreads = data.isAssignableToThreads;
     this.isCustomAgent = data.isCustomAgent;
     this.isDeleted = data.isDeleted;
     this.publicName = data.publicName;
@@ -11642,6 +11647,7 @@ export interface PlainSdkMutations {
   createThreadDiscussion(variables: CreateThreadDiscussionMutationVariables): Promise<CreateThreadDiscussionMutation["createThreadDiscussion"]>;
   createThreadEvent(variables: CreateThreadEventMutationVariables): Promise<CreateThreadEventMutation["createThreadEvent"]>;
   createThreadFieldSchema(variables: CreateThreadFieldSchemaMutationVariables): Promise<CreateThreadFieldSchemaMutation["createThreadFieldSchema"]>;
+  createThreadFromSlackMessage(variables: CreateThreadFromSlackMessageMutationVariables): Promise<CreateThreadFromSlackMessageMutation["createThreadFromSlackMessage"]>;
   createThreadLink(variables: CreateThreadLinkMutationVariables): Promise<CreateThreadLinkMutation["createThreadLink"]>;
   createTier(variables: CreateTierMutationVariables): Promise<CreateTierMutation["createTier"]>;
   createUserAccount(variables: CreateUserAccountMutationVariables): Promise<CreateUserAccountMutation["createUserAccount"]>;
@@ -14636,6 +14642,13 @@ export class PlainSdk {
         CreateThreadFieldSchemaDocument, variables
       );
       return response.createThreadFieldSchema;
+    },
+
+    async createThreadFromSlackMessage(variables: CreateThreadFromSlackMessageMutationVariables): Promise<CreateThreadFromSlackMessageMutation["createThreadFromSlackMessage"]> {
+      const response = await _client.request<CreateThreadFromSlackMessageMutation, CreateThreadFromSlackMessageMutationVariables>(
+        CreateThreadFromSlackMessageDocument, variables
+      );
+      return response.createThreadFromSlackMessage;
     },
 
     async createThreadLink(variables: CreateThreadLinkMutationVariables): Promise<CreateThreadLinkMutation["createThreadLink"]> {
