@@ -20,9 +20,12 @@ export class ForbiddenError extends PlainError {
 }
 
 export class NetworkError extends PlainError {
-  constructor(message: string) {
+  constructor(message: string, options?: { cause?: unknown }) {
     super(message);
     this.name = "NetworkError";
+    if (options?.cause !== undefined) {
+      this.cause = options.cause;
+    }
   }
 }
 

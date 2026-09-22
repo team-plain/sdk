@@ -125,6 +125,40 @@ describe("rate limit retries", () => {
   });
 });
 
+describe("fetch failures", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("wraps a rejected fetch in NetworkError with the original cause", async () => {
+    const fetchMock = mockFetch();
+    const boom = new TypeError("fetch failed");
+    fetchMock.mockRejectedValue(boom);
+    const client = new PlainClient({ apiKey: "k" });
+
+    const error = await client.query.customer({ customerId: "c_1" }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(NetworkError);
+    expect((error as NetworkError).message).toContain("fetch failed");
+    expect((error as NetworkError).cause).toBe(boom);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a rejected fetch when retryOnNetworkError is set", async () => {
+    const fetchMock = mockFetch();
+    fetchMock
+      .mockRejectedValueOnce(new TypeError("fetch failed"))
+      .mockResolvedValueOnce(graphqlResponse({ customer }));
+    const client = new PlainClient({
+      apiKey: "k",
+      retry: { maxRetries: 2, initialDelayMs: 1, retryOnNetworkError: true },
+    });
+
+    const result = await client.query.customer({ customerId: "c_1" });
+    expect(result?.id).toBe("c_1");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe("parseRetryAfterSeconds", () => {
   it("parses delay-seconds", () => {
     expect(parseRetryAfterSeconds("12")).toBe(12);

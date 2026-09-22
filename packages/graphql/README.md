@@ -126,7 +126,7 @@ const client = new PlainClient({
     initialDelayMs: 500,
     // Never wait longer than this between attempts (default: 30s)
     maxDelayMs: 30_000,
-    // Also retry NetworkError (5xx, failed fetch). Off by default because a
+    // Also retry NetworkError (5xx, rejected fetch). Off by default because a
     // mutation that hit a 5xx may or may not have been applied.
     retryOnNetworkError: false,
   },

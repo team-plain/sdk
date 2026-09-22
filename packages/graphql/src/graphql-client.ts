@@ -78,15 +78,24 @@ export class PlainGraphQLClient {
       variables: variables ?? undefined,
     });
 
-    const response = await fetch(this.apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-        "User-Agent": `@team-plain/graphql`,
-      },
-      body,
-    });
+    let response: Response;
+    try {
+      response = await fetch(this.apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+          "User-Agent": `@team-plain/graphql`,
+        },
+        body,
+      });
+    } catch (cause) {
+      // fetch rejects with a bare TypeError (DNS, connection reset, aborted
+      // signal…). Surface it as a NetworkError so callers get the typed
+      // exception the README promises and `retryOnNetworkError` can act on it.
+      const detail = cause instanceof Error ? cause.message : String(cause);
+      throw new NetworkError(`Network request failed: ${detail}`, { cause });
+    }
 
     if (!response.ok) {
       const errorDetail = await this.extractErrorMessage(response);
