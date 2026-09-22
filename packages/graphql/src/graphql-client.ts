@@ -9,6 +9,15 @@ import {
   PlainGraphQLError,
   RateLimitError,
 } from "./error.js";
+import {
+  isRetryableError,
+  parseRetryAfterSeconds,
+  type ResolvedRetryOptions,
+  type RetryOptions,
+  resolveRetryOptions,
+  retryDelayMs,
+  sleep,
+} from "./retry.js";
 
 export interface GraphQLResponse<TData> {
   data?: TData;
@@ -25,18 +34,42 @@ export interface GraphQLResponse<TData> {
 export interface PlainGraphQLClientOptions {
   apiKey: string;
   apiUrl?: string;
+  /**
+   * Automatically retry requests that were rate limited (HTTP 429), honouring
+   * the API's `Retry-After` header and otherwise backing off exponentially.
+   * Retries are disabled unless this is provided.
+   */
+  retry?: RetryOptions;
 }
 
 export class PlainGraphQLClient {
   private apiKey: string;
   private apiUrl: string;
+  private retry: ResolvedRetryOptions;
 
   constructor(options: PlainGraphQLClientOptions) {
     this.apiKey = options.apiKey;
     this.apiUrl = options.apiUrl ?? "https://core-api.uk.plain.com/graphql/v1";
+    this.retry = resolveRetryOptions(options.retry);
   }
 
   async request<TData, TVariables extends Record<string, unknown>>(
+    document: TypedDocumentNode<TData, TVariables>,
+    variables?: TVariables,
+  ): Promise<TData> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.requestOnce(document, variables);
+      } catch (error) {
+        if (attempt >= this.retry.maxRetries || !isRetryableError(error, this.retry)) {
+          throw error;
+        }
+        await sleep(retryDelayMs(error, attempt + 1, this.retry));
+      }
+    }
+  }
+
+  private async requestOnce<TData, TVariables extends Record<string, unknown>>(
     document: TypedDocumentNode<TData, TVariables>,
     variables?: TVariables,
   ): Promise<TData> {
@@ -71,6 +104,7 @@ export class PlainGraphQLClient {
       if (response.status === 429) {
         throw new RateLimitError(
           errorDetail ? `Rate limit exceeded: ${errorDetail}` : "Rate limit exceeded",
+          parseRetryAfterSeconds(response.headers.get("retry-after")),
         );
       }
       throw new NetworkError(

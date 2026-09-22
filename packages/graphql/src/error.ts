@@ -27,9 +27,16 @@ export class NetworkError extends PlainError {
 }
 
 export class RateLimitError extends PlainError {
-  constructor(message: string) {
+  /**
+   * How long the API asked us to wait before retrying, in seconds, taken from
+   * the `Retry-After` response header when present.
+   */
+  public readonly retryAfterSeconds: number | undefined;
+
+  constructor(message: string, retryAfterSeconds?: number) {
     super(message);
     this.name = "RateLimitError";
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
