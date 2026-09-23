@@ -9,15 +9,6 @@ import {
   PlainGraphQLError,
   RateLimitError,
 } from "./error.js";
-import {
-  isRetryableError,
-  parseRetryAfterSeconds,
-  type ResolvedRetryOptions,
-  type RetryOptions,
-  resolveRetryOptions,
-  retryDelayMs,
-  sleep,
-} from "./retry.js";
 
 export interface GraphQLResponse<TData> {
   data?: TData;
@@ -31,26 +22,30 @@ export interface GraphQLResponse<TData> {
   }>;
 }
 
+export interface RetryOptions {
+  // `0` distables retries
+  maxRetries: number;
+}
+
 export interface PlainGraphQLClientOptions {
   apiKey: string;
   apiUrl?: string;
-  /**
-   * Automatically retry requests that were rate limited (HTTP 429), honouring
-   * the API's `Retry-After` header and otherwise backing off exponentially.
-   * Retries are disabled unless this is provided.
-   */
   retry?: RetryOptions;
 }
+
+const RETRY_AFTER_JITTER_MS = 1000;
+const BACKOFF_BASE_MS = 500;
+const BACKOFF_MAX_MS = 30_000;
 
 export class PlainGraphQLClient {
   private apiKey: string;
   private apiUrl: string;
-  private retry: ResolvedRetryOptions;
+  private maxRetries: number;
 
   constructor(options: PlainGraphQLClientOptions) {
     this.apiKey = options.apiKey;
     this.apiUrl = options.apiUrl ?? "https://core-api.uk.plain.com/graphql/v1";
-    this.retry = resolveRetryOptions(options.retry);
+    this.maxRetries = options.retry?.maxRetries ?? 0;
   }
 
   async request<TData, TVariables extends Record<string, unknown>>(
@@ -61,10 +56,10 @@ export class PlainGraphQLClient {
       try {
         return await this.requestOnce(document, variables);
       } catch (error) {
-        if (attempt >= this.retry.maxRetries || !isRetryableError(error, this.retry)) {
+        if (!(error instanceof RateLimitError) || attempt >= this.maxRetries) {
           throw error;
         }
-        await sleep(retryDelayMs(error, attempt + 1, this.retry));
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs(error, attempt)));
       }
     }
   }
@@ -78,24 +73,15 @@ export class PlainGraphQLClient {
       variables: variables ?? undefined,
     });
 
-    let response: Response;
-    try {
-      response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-          "User-Agent": `@team-plain/graphql`,
-        },
-        body,
-      });
-    } catch (cause) {
-      // fetch rejects with a bare TypeError (DNS, connection reset, aborted
-      // signal…). Surface it as a NetworkError so callers get the typed
-      // exception the README promises and `retryOnNetworkError` can act on it.
-      const detail = cause instanceof Error ? cause.message : String(cause);
-      throw new NetworkError(`Network request failed: ${detail}`, { cause });
-    }
+    const response = await fetch(this.apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+        "User-Agent": `@team-plain/graphql`,
+      },
+      body,
+    });
 
     if (!response.ok) {
       const errorDetail = await this.extractErrorMessage(response);
@@ -111,9 +97,10 @@ export class PlainGraphQLClient {
         );
       }
       if (response.status === 429) {
+        const retryAfterSeconds = Number(response.headers.get("retry-after") ?? Number.NaN);
         throw new RateLimitError(
           errorDetail ? `Rate limit exceeded: ${errorDetail}` : "Rate limit exceeded",
-          parseRetryAfterSeconds(response.headers.get("retry-after")),
+          retryAfterSeconds >= 0 ? retryAfterSeconds : undefined,
         );
       }
       throw new NetworkError(
@@ -147,4 +134,11 @@ export class PlainGraphQLClient {
     }
     return undefined;
   }
+}
+
+function retryDelayMs(error: RateLimitError, attempt: number): number {
+  if (error.retryAfterSeconds !== undefined) {
+    return error.retryAfterSeconds * 1000 + Math.random() * RETRY_AFTER_JITTER_MS;
+  }
+  return Math.random() * Math.min(BACKOFF_BASE_MS * 2 ** attempt, BACKOFF_MAX_MS);
 }

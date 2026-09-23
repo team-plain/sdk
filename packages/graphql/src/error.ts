@@ -20,20 +20,13 @@ export class ForbiddenError extends PlainError {
 }
 
 export class NetworkError extends PlainError {
-  constructor(message: string, options?: { cause?: unknown }) {
+  constructor(message: string) {
     super(message);
     this.name = "NetworkError";
-    if (options?.cause !== undefined) {
-      this.cause = options.cause;
-    }
   }
 }
 
 export class RateLimitError extends PlainError {
-  /**
-   * How long the API asked us to wait before retrying, in seconds, taken from
-   * the `Retry-After` response header when present.
-   */
   public readonly retryAfterSeconds: number | undefined;
 
   constructor(message: string, retryAfterSeconds?: number) {

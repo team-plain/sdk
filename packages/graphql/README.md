@@ -119,21 +119,12 @@ Plain enforces a per-workspace request rate limit and responds with HTTP 429 abo
 ```ts
 const client = new PlainClient({
   apiKey: process.env.PLAIN_API_KEY!,
-  retry: {
-    // Retry up to 5 times after the first attempt (default: 0, disabled)
-    maxRetries: 5,
-    // Base delay for exponential backoff with jitter (default: 500ms)
-    initialDelayMs: 500,
-    // Never wait longer than this between attempts (default: 30s)
-    maxDelayMs: 30_000,
-    // Also retry NetworkError (5xx, rejected fetch). Off by default because a
-    // mutation that hit a 5xx may or may not have been applied.
-    retryOnNetworkError: false,
-  },
+  // Retry rate limited requests up to 5 times after the first attempt (default: 0, disabled)
+  retry: { maxRetries: 5 },
 });
 ```
 
-When Plain sends a `Retry-After` header the client waits for that long instead of the computed backoff. Once retries are exhausted the last error is thrown as normal.
+The client waits for `Retry-After` plus up to a second of jitter, or backs off exponentially (capped at 30s) when the header is missing. Once retries are exhausted the last error is thrown as normal.
 
 ## Migrating from `@team-plain/typescript-sdk`
 
