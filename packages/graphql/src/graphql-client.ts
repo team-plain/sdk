@@ -1,6 +1,6 @@
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import packageJson from "@team-plain/graphql/package.json" with { type: "json" };
 import { print } from "graphql";
-import { SDK_VERSION } from "./_generated_version.js";
 
 import {
   AuthenticationError,
@@ -51,7 +51,7 @@ export class PlainGraphQLClient {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${this.apiKey}`,
-        "User-Agent": `@team-plain/graphql/${SDK_VERSION}`,
+        "User-Agent": `@team-plain/graphql/${packageJson.version}`,
       },
       body,
     });
