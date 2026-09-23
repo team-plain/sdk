@@ -1,4 +1,5 @@
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import packageJson from "@team-plain/graphql/package.json" with { type: "json" };
 import { print } from "graphql";
 
 import {
@@ -50,7 +51,7 @@ export class PlainGraphQLClient {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${this.apiKey}`,
-        "User-Agent": `@team-plain/graphql`,
+        "User-Agent": `@team-plain/graphql/${packageJson.version}`,
       },
       body,
     });

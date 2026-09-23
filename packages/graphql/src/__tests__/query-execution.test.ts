@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { version } from "../../package.json";
 import { CustomerModel } from "../_generated_sdk.js";
 import { PlainClient } from "../client.js";
 import {
@@ -71,7 +72,7 @@ describe("query execution", () => {
     expect(body.query).toContain("customer");
   });
 
-  it("sends correct auth header", async () => {
+  it("sends auth, content type, and versioned User-Agent headers", async () => {
     fetchMock = mockFetch();
     fetchMock.mockResolvedValueOnce(graphqlResponse(customerData));
     const client = new PlainClient({ apiKey: "my-secret-key" });
@@ -81,6 +82,7 @@ describe("query execution", () => {
     const headers = getRequestHeaders(fetchMock);
     expect(headers.Authorization).toBe("Bearer my-secret-key");
     expect(headers["Content-Type"]).toBe("application/json");
+    expect(headers["User-Agent"]).toBe(`@team-plain/graphql/${version}`);
   });
 
   it("sends request to default API URL", async () => {
