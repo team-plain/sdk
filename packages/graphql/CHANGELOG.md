@@ -1,5 +1,11 @@
 # @team-plain/graphql
 
+## 3.1.1
+
+### Patch Changes
+
+- 3e77e40: Include the SDK package version in the User-Agent request header.
+
 ## 3.1.0
 
 ### Minor Changes
