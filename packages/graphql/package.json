@@ -47,7 +47,7 @@
     "generate-documents": "tsx src/generate-documents.ts",
     "download-schema": "tsx scripts/download-schema.ts",
     "codegen": "pnpm download-schema && tsx src/generate-documents.ts && graphql-codegen --config codegen.yml",
-    "build": "node scripts/generate-version.ts && tsc && tsup",
+    "build": "tsx scripts/generate-version.ts && tsc && tsup",
     "prepublishOnly": "npm run build",
     "test": "vitest run"
   },
