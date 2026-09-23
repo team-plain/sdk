@@ -1,4 +1,4 @@
-import type { RetryOptions } from "./graphql-client.js";
+import type { RetryOptions } from "./retry.js";
 
 export interface PlainClientOptions {
   apiKey: string;

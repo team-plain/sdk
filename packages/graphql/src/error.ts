@@ -28,11 +28,13 @@ export class NetworkError extends PlainError {
 
 export class RateLimitError extends PlainError {
   public readonly retryAfterSeconds: number | undefined;
+  public readonly limit: number | undefined;
 
-  constructor(message: string, retryAfterSeconds?: number) {
+  constructor(message: string, retryAfterSeconds?: number, limit?: number) {
     super(message);
     this.name = "RateLimitError";
     this.retryAfterSeconds = retryAfterSeconds;
+    this.limit = limit;
   }
 }
 

@@ -9,6 +9,7 @@ import {
   PlainGraphQLError,
   RateLimitError,
 } from "./error.js";
+import { numericHeader, retryDelayMs, type RetryOptions } from "./retry.js";
 
 export interface GraphQLResponse<TData> {
   data?: TData;
@@ -22,20 +23,11 @@ export interface GraphQLResponse<TData> {
   }>;
 }
 
-export interface RetryOptions {
-  // `0` distables retries
-  maxRetries: number;
-}
-
 export interface PlainGraphQLClientOptions {
   apiKey: string;
   apiUrl?: string;
   retry?: RetryOptions;
 }
-
-const RETRY_AFTER_JITTER_MS = 1000;
-const BACKOFF_BASE_MS = 500;
-const BACKOFF_MAX_MS = 30_000;
 
 export class PlainGraphQLClient {
   private apiKey: string;
@@ -97,10 +89,10 @@ export class PlainGraphQLClient {
         );
       }
       if (response.status === 429) {
-        const retryAfterSeconds = Number(response.headers.get("retry-after") ?? Number.NaN);
         throw new RateLimitError(
           errorDetail ? `Rate limit exceeded: ${errorDetail}` : "Rate limit exceeded",
-          retryAfterSeconds >= 0 ? retryAfterSeconds : undefined,
+          numericHeader(response, "retry-after"),
+          numericHeader(response, "x-ratelimit-limit"),
         );
       }
       throw new NetworkError(
@@ -134,11 +126,4 @@ export class PlainGraphQLClient {
     }
     return undefined;
   }
-}
-
-function retryDelayMs(error: RateLimitError, attempt: number): number {
-  if (error.retryAfterSeconds !== undefined) {
-    return error.retryAfterSeconds * 1000 + Math.random() * RETRY_AFTER_JITTER_MS;
-  }
-  return Math.random() * Math.min(BACKOFF_BASE_MS * 2 ** attempt, BACKOFF_MAX_MS);
 }
