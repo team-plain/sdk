@@ -112,6 +112,20 @@ for (const identity of customer.identities) {
 - **Queries**: network, auth (401), forbidden (403), and rate limit (429) errors throw typed exceptions (`AuthenticationError`, `ForbiddenError`, `RateLimitError`, `NetworkError`, `PlainGraphQLError`).
 - **Mutations**: return the full `*Output` type. Check `result.error` for a typed `MutationError` with `message`, `type`, `code`, and `fields[]`. This is intentional — Plain's API treats mutation errors as data.
 
+### Rate limits and retries
+
+Plain enforces a per-workspace request rate limit and responds with HTTP 429 above it. The SDK throws a `RateLimitError` carrying the API's `Retry-After` hint as `retryAfterSeconds` and your workspace's per-minute request limit as `limit`, when the API sent them. A rate limited request was never processed, so it is always safe to retry — you can have the client do that for you:
+
+```ts
+const client = new PlainClient({
+  apiKey: process.env.PLAIN_API_KEY!,
+  // Retry rate limited requests up to 5 times after the first attempt (default: 0, disabled)
+  retry: { maxRetries: 5 },
+});
+```
+
+The client waits for `Retry-After` plus up to a second of jitter, or backs off exponentially (capped at 30s) when the header is missing. Once retries are exhausted the last error is thrown as normal.
+
 ## Migrating from `@team-plain/typescript-sdk`
 
 If you're migrating from the old `@team-plain/typescript-sdk` package, see the [Migration Guide](./MIGRATION.md) for a full breakdown of breaking changes including error handling, method renames, enum changes, and before/after examples.

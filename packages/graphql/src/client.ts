@@ -7,6 +7,7 @@ export class PlainClient extends PlainSdk {
     const graphqlClient = new PlainGraphQLClient({
       apiKey: options.apiKey,
       apiUrl: options.apiUrl,
+      retry: options.retry,
     });
     super(graphqlClient);
   }

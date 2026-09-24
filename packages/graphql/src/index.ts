@@ -16,6 +16,10 @@ export {
   PlainGraphQLError,
   RateLimitError,
 } from "./error.js";
-export type { GraphQLResponse, PlainGraphQLClientOptions } from "./graphql-client.js";
+export type {
+  GraphQLResponse,
+  PlainGraphQLClientOptions,
+} from "./graphql-client.js";
+export type { RetryOptions } from "./retry.js";
 export { PlainGraphQLClient } from "./graphql-client.js";
 export type { PlainClientOptions } from "./types.js";

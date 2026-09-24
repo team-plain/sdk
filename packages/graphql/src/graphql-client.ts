@@ -10,6 +10,7 @@ import {
   PlainGraphQLError,
   RateLimitError,
 } from "./error.js";
+import { numericHeader, retryDelayMs, type RetryOptions } from "./retry.js";
 
 export interface GraphQLResponse<TData> {
   data?: TData;
@@ -26,18 +27,37 @@ export interface GraphQLResponse<TData> {
 export interface PlainGraphQLClientOptions {
   apiKey: string;
   apiUrl?: string;
+  retry?: RetryOptions;
 }
 
 export class PlainGraphQLClient {
   private apiKey: string;
   private apiUrl: string;
+  private maxRetries: number;
 
   constructor(options: PlainGraphQLClientOptions) {
     this.apiKey = options.apiKey;
     this.apiUrl = options.apiUrl ?? "https://core-api.uk.plain.com/graphql/v1";
+    this.maxRetries = options.retry?.maxRetries ?? 0;
   }
 
   async request<TData, TVariables extends Record<string, unknown>>(
+    document: TypedDocumentNode<TData, TVariables>,
+    variables?: TVariables,
+  ): Promise<TData> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.requestOnce(document, variables);
+      } catch (error) {
+        if (!(error instanceof RateLimitError) || attempt >= this.maxRetries) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs(error, attempt)));
+      }
+    }
+  }
+
+  private async requestOnce<TData, TVariables extends Record<string, unknown>>(
     document: TypedDocumentNode<TData, TVariables>,
     variables?: TVariables,
   ): Promise<TData> {
@@ -72,6 +92,8 @@ export class PlainGraphQLClient {
       if (response.status === 429) {
         throw new RateLimitError(
           errorDetail ? `Rate limit exceeded: ${errorDetail}` : "Rate limit exceeded",
+          numericHeader(response, "retry-after"),
+          numericHeader(response, "x-ratelimit-limit"),
         );
       }
       throw new NetworkError(
