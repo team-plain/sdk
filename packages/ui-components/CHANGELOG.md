@@ -1,5 +1,12 @@
 # @team-plain/ui-components
 
+## 13.0.0
+
+### Patch Changes
+
+- Updated dependencies [ffee322]
+  - @team-plain/graphql@3.2.0
+
 ## 12.0.1
 
 ### Patch Changes
