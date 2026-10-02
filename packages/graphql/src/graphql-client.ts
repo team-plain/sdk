@@ -10,7 +10,7 @@ import {
   PlainGraphQLError,
   RateLimitError,
 } from "./error.js";
-import { numericHeader, retryDelayMs, type RetryOptions } from "./retry.js";
+import { numericHeader, type RetryOptions, retryDelayMs } from "./retry.js";
 
 export interface GraphQLResponse<TData> {
   data?: TData;

@@ -51,6 +51,6 @@
   "devDependencies": {
     "@team-plain/graphql": "workspace:*",
     "tsup": "^8.5.1",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   }
 }
