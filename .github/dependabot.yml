@@ -27,7 +27,7 @@ updates:
     # Majors land one per PR, so the default of 5 stalls the queue.
     open-pull-requests-limit: 15
     # Must be at least minimumReleaseAge in pnpm-workspace.yaml (minutes; 10080 is 7
-    # days). Shorter, and pnpm rejects whatever Dependabot proposes.
+    # days).
     cooldown:
       default-days: 7
     groups:
