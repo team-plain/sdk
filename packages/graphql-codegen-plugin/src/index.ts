@@ -1,5 +1,6 @@
 import type { PluginFunction, Types } from "@graphql-codegen/plugin-helpers";
 import {
+  type GraphQLArgument,
   type GraphQLField,
   type GraphQLNamedType,
   type GraphQLObjectType,
@@ -152,15 +153,17 @@ function applyDeprecation(
 
 const SKIP_MODEL_TYPES = new Set(["MutationError", "MutationFieldError"]);
 
+function hasSchemaDefault(arg: GraphQLArgument): boolean {
+  return arg.default !== undefined || arg.defaultValue !== undefined;
+}
+
 function variablesParams(
   field: GraphQLField<unknown, unknown>,
   varsTsName: string,
 ): { signature: string; implementation: string } {
   if (field.args.length === 0) return { signature: "", implementation: "" };
-  const hasDefaultedArg = field.args.some((a) => a.defaultValue !== undefined);
-  const hasRequiredArg = field.args.some(
-    (a) => isNonNullType(a.type) && a.defaultValue === undefined,
-  );
+  const hasDefaultedArg = field.args.some(hasSchemaDefault);
+  const hasRequiredArg = field.args.some((a) => isNonNullType(a.type) && !hasSchemaDefault(a));
   return hasDefaultedArg && !hasRequiredArg
     ? {
         signature: `variables?: ${varsTsName}`,

@@ -450,7 +450,7 @@ function generateFragment(type: GraphQLObjectType): string {
 
 function formatArgType(arg: GraphQLArgument): string {
   // A nullable variable may feed a non-null arg that has a default, so callers can omit it.
-  if (isNonNullType(arg.type) && arg.defaultValue !== undefined) {
+  if (isNonNullType(arg.type) && (arg.default !== undefined || arg.defaultValue !== undefined)) {
     return arg.type.ofType.toString();
   }
   return arg.type.toString();
