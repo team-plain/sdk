@@ -1,0 +1,58 @@
+---
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    schedule:
+      interval: weekly
+      time: "10:30"
+      timezone: "Europe/London"
+    # A week gives compromised action releases time to be discovered before adoption.
+    cooldown:
+      default-days: 7
+    groups:
+      gha-deps:
+        patterns:
+          - "*"
+    directory: "/"
+
+  - package-ecosystem: npm
+    schedule:
+      interval: weekly
+      time: "10:30"
+      timezone: "Europe/London"
+    directories:
+      - "/"
+    versioning-strategy: increase
+    # Majors land one per PR, so the default of 5 stalls the queue.
+    open-pull-requests-limit: 15
+    # Must be at least minimumReleaseAge in pnpm-workspace.yaml (minutes; 10080 is 7
+    # days).
+    cooldown:
+      default-days: 7
+    groups:
+      npm-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      npm-minor:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+      # Without group-by, every major lands in one combined PR.
+      npm-major:
+        applies-to: version-updates
+        group-by: dependency-name
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+    ignore:
+      # Tracks the runtime, not latest. Raise it with engines.node.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"

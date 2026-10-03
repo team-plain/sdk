@@ -33,17 +33,20 @@ describe("rate limit retries", () => {
     [{ "retry-after": "7", "x-ratelimit-limit": "450" }, 7, 450],
     [{}, undefined, undefined],
     [{ "retry-after": "soon", "x-ratelimit-limit": "lots" }, undefined, undefined],
-  ])("reads rate limit headers %o and does not retry by default", async (headers, retryAfterSeconds, limit) => {
-    const fetchMock = mockFetch();
-    fetchMock.mockResolvedValueOnce(rateLimited(headers));
-    const client = new PlainClient({ apiKey: "k" });
+  ])(
+    "reads rate limit headers %o and does not retry by default",
+    async (headers, retryAfterSeconds, limit) => {
+      const fetchMock = mockFetch();
+      fetchMock.mockResolvedValueOnce(rateLimited(headers));
+      const client = new PlainClient({ apiKey: "k" });
 
-    const error = await deleteCustomer(client).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(RateLimitError);
-    expect((error as RateLimitError).retryAfterSeconds).toBe(retryAfterSeconds);
-    expect((error as RateLimitError).limit).toBe(limit);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+      const error = await deleteCustomer(client).catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(RateLimitError);
+      expect((error as RateLimitError).retryAfterSeconds).toBe(retryAfterSeconds);
+      expect((error as RateLimitError).limit).toBe(limit);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("waits the full Retry-After before retrying", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout"] });

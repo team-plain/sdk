@@ -17,10 +17,11 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@graphql-codegen/plugin-helpers": "^5.1.0",
-    "graphql": "^16.9.0"
+    "@graphql-codegen/plugin-helpers": "^7.3.0",
+    "graphql": "^16.14.2"
   },
   "devDependencies": {
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2",
+    "typescript6": "npm:@typescript/typescript6@^6.0.2"
   }
 }

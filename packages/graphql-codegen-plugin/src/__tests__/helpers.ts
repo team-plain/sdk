@@ -1,6 +1,7 @@
 import type { Types } from "@graphql-codegen/plugin-helpers";
 import { parse } from "graphql";
-import ts from "typescript";
+// TypeScript 7 ships no JS compiler API, so type-checking generated code needs the 6.x line.
+import ts from "typescript6";
 
 /**
  * Parse a GraphQL string into the `Types.DocumentFile[]` format that `plugin()` expects.
