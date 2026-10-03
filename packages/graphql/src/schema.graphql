@@ -413,6 +413,16 @@ type TenantConnection {
   pageInfo: PageInfo!
 }
 
+type AccountEdge {
+  cursor: String!
+  node: Account!
+}
+
+type AccountConnection {
+  edges: [AccountEdge!]!
+  pageInfo: PageInfo!
+}
+
 """
 Deprecated: customer-level status has been replaced by per-thread status. Use `Thread.status` and
 `ThreadStatus` instead.
@@ -473,6 +483,9 @@ type Customer {
 
   """A subquery to fetch the customer's tenants."""
   tenantMemberships(first: Int, after: String, last: Int, before: String): CustomerTenantMembershipConnection!
+
+  """A subquery to fetch the customer's accounts."""
+  accountMemberships(first: Int, after: String, last: Int, before: String): CustomerAccountMembershipConnection!
 
   """The company the customer belongs to."""
   company: Company
@@ -576,6 +589,27 @@ type CustomerTenantMembershipEdge {
 
 type CustomerTenantMembershipConnection {
   edges: [CustomerTenantMembershipEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Represents a customer's membership in an account. Returned on the `accountMemberships` sub-query of a `Customer`.
+"""
+type CustomerAccountMembership {
+  account: Account!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+type CustomerAccountMembershipEdge {
+  cursor: String!
+  node: CustomerAccountMembership!
+}
+
+type CustomerAccountMembershipConnection {
+  edges: [CustomerAccountMembershipEdge!]!
   pageInfo: PageInfo!
 }
 
@@ -995,6 +1029,11 @@ input DiscussionsFilter {
   createdBySystem: Boolean
 
   """
+  When true, only return the bounded Sidekick tasks started by an `ask_sidekick` workflow step. When false, exclude them. These report an outcome to their workflow step rather than being a conversation anyone joins, so human-facing session lists should pass false.
+  """
+  isWorkflowTask: Boolean
+
+  """
   Only return discussions run by one of the provided kinds of agent. Discussions with no agent at
   all, such as a Slack channel or email discussion, match none of them; use
   not: { agentTypes: [...] } for those.
@@ -1267,9 +1306,9 @@ type Workflow {
   """
   JSON-encoded trigger configuration, shaped as `{ "type": <triggerType>, ... }`. Valid types and their required fields:
   - `manual` — no extra fields; the workflow runs only via the `triggerWorkflow` mutation or a UI button.
-  - `events` — `events: string[]` (at least one); runs on the listed domain events, e.g. `thread.thread_created`, `thread.message_added`, `thread.thread_field_updated`, `thread.thread_labels_changed`, `thread.thread_status_transitioned`.
+  - `events` — `events: string[]` (at least one); runs on the listed domain events, e.g. `thread.thread_created`, `thread.message_added`, `thread.thread_field_updated`, `thread.thread_labels_changed`, `thread.thread_status_transitioned`, `thread.thread_discussion_created`, `thread.thread_discussion_message_created`, `thread.thread_discussion_resolved` (Slack and email discussions only; AI agent replies do not fire the message event). `thread.service_level_agreement_status_transitioned` fires on a status change of any SLA type; `thread.first_response_time_service_level_agreement_status_transitioned`, `thread.next_response_time_service_level_agreement_status_transitioned`, `thread.first_resolution_time_service_level_agreement_status_transitioned` and `thread.total_resolution_time_service_level_agreement_status_transitioned` fire only when an SLA of that type changes status. `slack.reaction_added` fires when any Slack emoji is added to a message already on a thread, including a reply; pair it with a `slack_emoji_equals` condition to match one emoji.
   - `schedule` — `cron: string`; runs on a recurring cron schedule evaluated in UTC.
-  Example: `{"type":"events","events":["thread.thread_field_updated"]}`.
+  Examples: `{"type":"events","events":["thread.thread_field_updated"]}`, `{"type":"events","events":["thread.total_resolution_time_service_level_agreement_status_transitioned"]}`, `{"type":"events","events":["slack.reaction_added"]}`.
   """
   trigger: String!
 
@@ -1296,18 +1335,38 @@ type Workflow {
   position: String!
 
   """
-  A legacy integer that no longer reflects where this workflow sits in the list, and is not maintained when a workflow moves. Do not sort by it.
+  1-based dispatch priority among published event workflows with a start step, derived from
+  `position`, so `moveWorkflow` changes it. A lower number is always considered first, though
+  only the workflows listening for the arriving event run. 0 for anything outside that set.
   """
-  order: Int! @deprecated(reason: "Use position instead, and moveWorkflow to reorder.")
+  order: Int!
+
+  """
+  When this workflow was most recently triggered, or null if it never has been. Dates the
+  trigger rather than the outcome, so a queued or failed run sets it as a successful one does.
+  """
+  lastTriggeredAt: DateTime
 
   """
   The gallery template this workflow was created from, if any. Provenance only: the template may since have changed or been retired, and the workflow diverges as soon as it is edited.
   """
   sourceTemplateId: ID
+
+  """
+  Entities this workflow's steps reference, deduplicated across steps. Presence means a step
+  carries the id; whether that step runs depends on the workflow being published and its
+  conditions matching.
+  """
+  references: WorkflowReferences!
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
   updatedBy: InternalActor!
+}
+
+type WorkflowReferences {
+  """SLA policies applied by a `set_service_level_agreement_policy` action."""
+  serviceLevelAgreementPolicyIds: [ID!]!
 }
 
 type WorkflowEdge {
@@ -1374,6 +1433,21 @@ input WorkflowsFilter {
   Only workflows created by one of these users or machine users. Workflows created by the system have no user to match and are never returned when this filter is set. An empty list is not a filter.
   """
   createdByUserIds: [ID!]
+
+  """
+  Only workflows holding a step that references at least one of the given entities. Drafts are included; combine with `isPublished` to narrow.
+  """
+  references: WorkflowReferencesFilter
+}
+
+"""
+Entities a workflow step can reference. Fields combine with AND; an empty list is not a filter. At most 100 ids per field.
+"""
+input WorkflowReferencesFilter {
+  """
+  Workflows with a `set_service_level_agreement_policy` action applying one of these policies. A step that clears the policy matches nothing.
+  """
+  serviceLevelAgreementPolicyIds: [ID!]
 }
 
 """How to order the `workflows` connection."""
@@ -1389,16 +1463,21 @@ enum WorkflowsSortField {
   """
   UPDATED_AT
 
-  """The workflow's name."""
+  """The workflow's name, ordered under the database's default collation."""
   NAME
 
   """When the workflow was created."""
   CREATED_AT
 
   """
-  When the workflow was published. Drafts have no such time and group at the end of the connection in either direction.
+  When the workflow was published. Drafts have no such time and sort as the earliest possible instant, so they lead ascending and trail descending.
   """
   PUBLISHED_AT
+
+  """
+  When the workflow was last triggered. Workflows that have never run sort as the earliest possible instant, so they lead ascending and trail descending.
+  """
+  LAST_TRIGGERED_AT
 }
 
 input WorkflowsSort {
@@ -1438,7 +1517,7 @@ type WorkflowStep {
   JSON-encoded step configuration. Every payload is an object with `version: 1` and a `type` discriminator. The payload shape depends on the step `type`:
   - CONDITION: a condition. `type` is either a leaf check (e.g. `contains_label`, `thread_field_equals`, `thread_field_is_set`, `priority_equals`, `assigned_to`, `customer_equals`, `ai_workflow_rule_condition`) or a combinator (`and`, `or`, `not`, `else_if`) that nests other conditions under `conditions`/`condition`.
   - ACTION: an action, e.g. `apply_labels`, `remove_labels`, `set_priority`, `set_status`, `set_tier`, `set_service_level_agreement_policy`, `assign_to_user`, `assign_to_team`, `add_note`, `send_message`, `send_slack_notification`, `send_http_request`, `set_thread_field`, `snooze_thread`, `escalate_thread`.
-  - WAIT: `{ "duration": <seconds>, "cancelCondition"?: <condition> }`.
+  - WAIT: `{ "duration": <seconds>, "businessHoursScheduleIds"?: [<ID>, ...], "cancelCondition"?: <condition> }`. When `businessHoursScheduleIds` is set, `duration` counts open time while any selected schedule is open.
   Examples: `{"version":1,"type":"apply_labels","labelTypeIds":["lt_..."]}`, `{"version":1,"type":"else_if","conditions":[...]}`.
   Payloads embed workspace-specific IDs (label type IDs, user IDs, tier IDs, etc.), which are not portable: copying a payload into another workspace references IDs that do not exist there and the step silently applies nothing.
   """
@@ -1736,6 +1815,19 @@ type SavedThreadsViewFilterTenantField {
   userReferenceValues: [ID!]!
 }
 
+type SavedThreadsViewFilterAccountField {
+  """The external ID of the account field schema being filtered on."""
+  externalFieldId: ID!
+  stringValue: String
+  booleanValue: Boolean
+  numberValue: Float
+  stringArrayValue: [String!]!
+  dateValue: DateTime
+
+  """IDs of users matched when filtering on a user-reference account field."""
+  userReferenceValues: [ID!]!
+}
+
 """
 Filters threads by a specific external link source, combining the source system type and the source's identifier.
 """
@@ -1772,7 +1864,9 @@ type ThreadsDisplayOptions {
   hasTasks: Boolean!
   hasThreadFieldKeys: [String!]!
   hasTenants: Boolean!
+  hasAccounts: Boolean!
   hasTenantFieldExternalIds: [ID!]!
+  hasAccountFieldExternalIds: [ID!]!
 }
 
 enum ThreadsLayout {
@@ -1790,6 +1884,7 @@ enum ThreadsGroupBy {
   CHANNEL
   ASSIGNEE
   CUSTOMER_GROUP
+  ACCOUNT
   TENANT
   SERVICE_LEVEL_AGREEMENT_POLICY
 }
@@ -1810,6 +1905,7 @@ type SavedThreadsViewNestedFilter {
   customerGroups: [ID!]!
   companies: [ID!]!
   tenants: [ID!]!
+  accounts: [ID!]!
   tiers: [ID!]!
   serviceLevelAgreementPolicyIds: [ID!]!
   labelTypeIds: [ID!]!
@@ -1819,6 +1915,7 @@ type SavedThreadsViewNestedFilter {
   slaStatuses: [String!]!
   threadFields: [SavedThreadsViewFilterThreadField!]!
   tenantFields: [SavedThreadsViewFilterTenantField!]!
+  accountFields: [SavedThreadsViewFilterAccountField!]!
   threadLinkGroupIds: [ID!]!
   threadLinkSources: [SavedThreadsViewFilterThreadLinkSource!]!
   createdAtFilter: DatetimeFilterOutput
@@ -1837,6 +1934,7 @@ type SavedThreadsViewFilter {
   customerGroups: [ID!]!
   companies: [ID!]!
   tenants: [ID!]!
+  accounts: [ID!]!
   tiers: [ID!]!
   serviceLevelAgreementPolicyIds: [ID!]!
   labelTypeIds: [ID!]!
@@ -1846,6 +1944,7 @@ type SavedThreadsViewFilter {
   slaStatuses: [String!]!
   threadFields: [SavedThreadsViewFilterThreadField!]!
   tenantFields: [SavedThreadsViewFilterTenantField!]!
+  accountFields: [SavedThreadsViewFilterAccountField!]!
   threadLinkGroupIds: [ID!]!
   threadLinkSources: [SavedThreadsViewFilterThreadLinkSource!]!
   createdAtFilter: DatetimeFilterOutput
@@ -2024,6 +2123,11 @@ enum BroadcastSendTargetRecipientsEmptyReason {
 
   """Something matched, and the target's own exclusions removed all of it."""
   EXCLUDED_BY_AUDIENCE
+
+  """
+  Something matched, and every channel it would have reached has unsubscribed from broadcasts.
+  """
+  ALL_RECIPIENTS_UNSUBSCRIBED
 }
 
 """
@@ -2044,11 +2148,23 @@ type BroadcastSendTargetRecipients {
   emptyReason: BroadcastSendTargetRecipientsEmptyReason
 
   """
+  How many channels this target matched that were dropped because they unsubscribed. Does not change
+  `count`, which is who a send would reach. Zero when nobody among the matches has opted out.
+  """
+  unsubscribedExcludedCount: Int!
+
+  """
   The resolved recipients, in the order the count above counted them. `searchQuery` narrows these rows
   by name without changing `count`, which is how large the audience is rather than how much of it is
   being shown.
   """
   recipients(first: Int, after: String, last: Int, before: String, searchQuery: String): BroadcastSendTargetRecipientConnection!
+
+  """
+  Channels the target matched that were dropped for unsubscribe. Same paging and search shape as
+  `recipients`. Does not change `count` or `unsubscribedExcludedCount`.
+  """
+  unsubscribedRecipients(first: Int, after: String, last: Int, before: String, searchQuery: String): BroadcastSendTargetRecipientConnection!
 }
 
 """
@@ -2132,6 +2248,12 @@ enum BroadcastSendDeliveryStatus {
   The message did not reach this recipient and will not be retried. `failureReason` says why.
   """
   FAILED
+
+  """
+  Matched the audience at send time but was not posted because the channel is unsubscribed.
+  Terminal from insert — never claimed, reaped, or retried. `slackMessageTs` is always null.
+  """
+  SKIPPED_UNSUBSCRIBED
 }
 
 """
@@ -2247,7 +2369,8 @@ enum BroadcastSendDeliveryFailureReason {
 
 """
 How many of a send's recipients are in each state. Read as one snapshot: the counts are taken by a
-single query, so they always sum to `total`.
+single query. `total` is the deliverable set (`pending` + `sending` + `sent` + `failed`);
+`skippedUnsubscribed` is recorded separately and is not part of `total`.
 """
 type BroadcastSendDeliveryCounts {
   pending: Int!
@@ -2256,8 +2379,15 @@ type BroadcastSendDeliveryCounts {
   failed: Int!
 
   """
-  Every recipient this send resolved to. Zero until the send has resolved its recipients, including
-  while it is still `SCHEDULED`.
+  Recipients matched at resolve time but not posted because the channel was unsubscribed. Not
+  included in `total`.
+  """
+  skippedUnsubscribed: Int!
+
+  """
+  Every deliverable recipient this send resolved to (`pending` + `sending` + `sent` +
+  `failed`). Excludes `skippedUnsubscribed`. Zero until the send has resolved its recipients,
+  including while it is still `SCHEDULED`.
   """
   total: Int!
 }
@@ -2440,6 +2570,13 @@ type Broadcast {
   isLinkUnfurlingEnabled: Boolean!
 
   """
+  Whether Plain appends an unsubscribe link when this broadcast is delivered. Null inherits the
+  workspace setting for adding an unsubscribe link to broadcasts; an explicit true or false
+  overrides that default for this broadcast only.
+  """
+  appendUnsubscribeLink: Boolean
+
+  """
   Who the broadcast is sent as. The variant matches the broadcast's `type`. Null until a sender is set.
   """
   sender: BroadcastSender
@@ -2528,6 +2665,11 @@ type Broadcast {
 type BroadcastReactionCount {
   emojiName: String!
   count: Int!
+
+  """
+  Image to render for a custom emoji. Null for a standard emoji, which renders from its name.
+  """
+  imageUrl: String
 }
 
 type Snippet {
@@ -2636,6 +2778,11 @@ type Task {
   The tenant this task is linked to, if any. Mutually exclusive with `company`.
   """
   tenant: Tenant
+
+  """
+  The account this task is linked to, if any. Mutually exclusive with `company`.
+  """
+  account: Account
 
   """
   The user or machine user currently assigned to this task, or null if unassigned.
@@ -2788,7 +2935,15 @@ type IntegrationReauthRequiredNotificationDetail {
   serviceAuthorizationId: ID!
 }
 
-union InternalNotificationDetail = NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | EmailBounceNotificationDetail | DiscussionResolvedNotificationDetail | IntegrationReauthRequiredNotificationDetail
+"""
+A webhook target needs attention (delivery failing or automatically disabled).
+"""
+type WebhookTargetNotificationDetail {
+  """The ID of the webhook target this notification refers to."""
+  webhookTargetId: ID!
+}
+
+union InternalNotificationDetail = NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | EmailBounceNotificationDetail | DiscussionResolvedNotificationDetail | IntegrationReauthRequiredNotificationDetail | WebhookTargetNotificationDetail
 
 """
 An internal notification displayed to workspace members in the Plain app.
@@ -2802,7 +2957,7 @@ type InternalNotification {
   userId: ID!
 
   """
-  The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', and 'discussion_resolved'. Use `details` for type-specific data.
+  The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', 'discussion_resolved', 'integration_reauth_required', and 'webhook_target'. Use `details` for type-specific data.
   """
   type: String!
 
@@ -2813,7 +2968,7 @@ type InternalNotification {
   description: String
 
   """
-  Structured data specific to the notification type. The concrete type is one of NoteMentionNotificationDetail, ThreadAssignmentNotificationDetail, EmailBounceNotificationDetail, or DiscussionResolvedNotificationDetail. Null when no extra context is available.
+  Structured data specific to the notification type. Null when no extra context is available (e.g. basic notifications).
   """
   details: InternalNotificationDetail
 
@@ -3015,6 +3170,13 @@ input CustomersFilter {
   tenantIdentifiers: [TenantIdentifierInput!]
 
   """
+  Filters customers to those belonging to the given accounts.
+  Customers who dont belong to any of the given accounts will not be included.
+  Can be combined with other company filters.
+  """
+  accountIdentifiers: [AccountIdentifierInput!]
+
+  """
   Filters customers to those who are members of a Slack channel with the given Slack channel ID.
   """
   slackChannelId: ID
@@ -3067,6 +3229,21 @@ type BroadcastAudienceTenantFieldFilter {
 }
 
 """
+Matches an account field against one value. Exactly one value field must be set.
+"""
+type BroadcastAudienceAccountFieldFilter {
+  """The external ID of the account field schema being filtered on."""
+  externalFieldId: ID!
+  stringValue: String
+  booleanValue: Boolean
+  numberValue: Float
+  stringArrayValue: [String!]!
+
+  """IDs of users matched when filtering on a user-reference account field."""
+  userReferenceValues: [ID!]!
+}
+
+"""
 A Slack channel. A channel id is only unique within its team, so both are needed to name one.
 """
 type BroadcastSlackChannelRef {
@@ -3079,6 +3256,86 @@ input BroadcastSlackChannelRefInput {
   slackChannelId: ID!
 }
 
+enum BroadcastRecipientUnsubscribeSource {
+  CUSTOMER_LINK
+  PLAIN_USER
+  BULK_IMPORT
+}
+
+enum BroadcastRecipientUnsubscribeChannelType {
+  SLACK
+}
+
+"""
+Who one unsubscribe was for. The variant matches the channel — email lands as another arm later.
+GraphQL has no input unions, so mutation inputs stay flat with `type` + nullable channel fields
+(see `UnsubscribeBroadcastRecipientInput`); only the output uses this union.
+"""
+union BroadcastRecipientUnsubscribeRecipient = SlackBroadcastRecipientUnsubscribeRecipient
+
+type SlackBroadcastRecipientUnsubscribeRecipient {
+  """
+  A channel id is only unique within its Slack team, so the two together identify the channel.
+  """
+  slackTeamId: ID!
+  slackChannelId: ID!
+
+  """
+  The connected Slack channel when it still exists in this workspace. Null if the channel was disconnected after unsubscribing.
+  """
+  connectedSlackChannel: ConnectedSlackChannel
+}
+
+type BroadcastRecipientUnsubscribe {
+  id: ID!
+  workspaceId: ID!
+  recipient: BroadcastRecipientUnsubscribeRecipient!
+  source: BroadcastRecipientUnsubscribeSource!
+  broadcastSendDeliveryId: ID
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+type BroadcastRecipientUnsubscribeEdge {
+  cursor: String!
+  node: BroadcastRecipientUnsubscribe!
+}
+
+type BroadcastRecipientUnsubscribeConnection {
+  edges: [BroadcastRecipientUnsubscribeEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Flat because GraphQL has no input unions. Supply the fields belonging to the `type` given.
+"""
+input UnsubscribeBroadcastRecipientInput {
+  type: BroadcastRecipientUnsubscribeChannelType!
+  slackTeamId: ID
+  slackChannelId: ID
+}
+
+type UnsubscribeBroadcastRecipientOutput {
+  unsubscribe: BroadcastRecipientUnsubscribe
+  error: MutationError
+}
+
+"""
+Flat because GraphQL has no input unions. Supply the fields belonging to the `type` given.
+"""
+input ResubscribeBroadcastRecipientInput {
+  type: BroadcastRecipientUnsubscribeChannelType!
+  slackTeamId: ID
+  slackChannelId: ID
+}
+
+type ResubscribeBroadcastRecipientOutput {
+  unsubscribe: BroadcastRecipientUnsubscribe
+  error: MutationError
+}
+
 """
 What a saved audience selects, and what a broadcast send target reaches. A tree: `and`, `or` and
 `not` hold more of this same type, ANDed with the dimensions beside them. Dimensions on one node AND
@@ -3087,8 +3344,10 @@ written — omit it instead.
 """
 type BroadcastAudienceFilter {
   tenantIds: [ID!]!
+  accountIds: [ID!]!
   tierIds: [ID!]!
   tenantFields: [BroadcastAudienceTenantFieldFilter!]!
+  accountFields: [BroadcastAudienceAccountFieldFilter!]!
 
   """
   Specific channels, pinned by id. Nothing re-resolves these, so an audience holding only these is a saved channel list.
@@ -3160,6 +3419,7 @@ type BroadcastEdge {
 type BroadcastConnection {
   edges: [BroadcastEdge!]!
   pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type UserActor {
@@ -3988,6 +4248,11 @@ type MachineUser {
   True when this machine user is an agent the workspace built itself, rather than an ordinary API integration.
   """
   isCustomAgent: Boolean!
+
+  """
+  False when custom-agent pricing is on for the workspace and this machine user is neither a custom agent nor Ari. Such a machine user cannot be assigned to a thread. True means the agent rule does not refuse this machine user; other gates, such as credits, can still refuse an assignment.
+  """
+  isAssignableToThreads: Boolean!
   avatar: WorkspaceFile
 
   """Fetches a single API key belonging to this machine user by its ID."""
@@ -4993,7 +5258,7 @@ type Query {
   myBillingRota: BillingRota
 
   """
-  Sidekick credit usage for the workspace, bucketed by the UTC day each session resolved, over the given date range. Use it to show a per-day breakdown of how Sidekick is consuming credits. Requires the `billing:read` permission.
+  Credit usage for the workspace, bucketed by the UTC day each billable item resolved, over the given date range. Covers Sidekick sessions and work done by the workspace's own agents. Use it to show a per-day breakdown of credit consumption. Requires the `billing:read` permission.
   """
   sidekickCreditUsageByDay(input: SidekickCreditUsageByDayInput!): SidekickCreditUsageByDay!
 
@@ -5001,6 +5266,11 @@ type Query {
   The workspace's current Sidekick (Plain) credit balance: the monthly allowance grant/used/remaining and when it resets, plus any purchased top-up remaining. Use it to answer how many credits are left. Requires the `billing:read` permission.
   """
   sidekickCreditBalance: SidekickCreditBalance!
+
+  """
+  Every billable item the workspace has been charged credits for, newest first: Sidekick sessions, Sidekick actions a workflow ran, and work done by the workspace's own agents. Use it to show the line-by-line breakdown behind a credit total. Supports standard forward and backward pagination. Requires the `billing:read` permission.
+  """
+  creditSpend(first: Int, after: String, last: Int, before: String): CreditSpendConnection!
 
   """
   Returns short-lived WorkOS admin portal URLs and an embeddable widget token so workspace admins can configure SSO, directory sync, and domain verification.
@@ -5177,6 +5447,21 @@ type Query {
   `broadcast:read` permission.
   """
   broadcast(broadcastId: ID!): Broadcast
+
+  """
+  Returns a paginated list of Slack channels that have opted out of broadcasts, newest first.
+  Requires the `broadcast:read` permission and the broadcasts feature flag.
+  """
+  broadcastRecipientUnsubscribes(
+    """
+    Narrows to unsubscribes whose connected channel name contains this, matched case-insensitively and unanchored. Channels that are no longer connected are excluded from name search.
+    """
+    searchQuery: String
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): BroadcastRecipientUnsubscribeConnection!
 
   """
   Returns a paginated list of the workspace's broadcast audiences, newest first. Soft-deleted
@@ -5386,6 +5671,15 @@ type Query {
   connectedSlackChannel(connectedSlackChannelId: ID!): ConnectedSlackChannel
 
   """
+  The Slack test channel for one workspace Slack integration, or null until the first Slack test thread creates it.
+  There is one test channel per integration. Requires the `workspaceSlackIntegration:read` and `connectedSlackChannel:read` permissions.
+  """
+  testChannel(
+    """The workspace Slack integration the test channel belongs to."""
+    slackIntegrationId: ID!
+  ): ConnectedSlackChannel
+
+  """
   Gets the auto-join rules for a workspace slack channel integration.
   Rules that have not yet been saved through `setSlackAutoJoinRules` are
   read from the legacy prefix/suffix settings and have a null id.
@@ -5406,6 +5700,21 @@ type Query {
   Resolves a Slack message permalink to the Plain thread it belongs to. Returns null if no thread is associated with the given Slack message.
   """
   threadBySlackPermalink(slackPermalink: String!): Thread
+
+  """
+  Resolves a Slack message to the Plain thread it belongs to, using the same channel ID and
+  message timestamp as `createThreadFromSlackMessage`. Returns null if no thread is associated
+  with the given Slack message. Requires the `thread:read` permission.
+  """
+  threadBySlackMessage(
+    """
+    The Slack channel the message is in, as provided by Slack (e.g. C0123ABCD).
+    """
+    slackChannelId: String!
+
+    """The Slack `ts` of the message."""
+    slackMessageTimestamp: String!
+  ): Thread
 
   """
   Returns the Slack channels the current user belongs to within the given Slack workspace. Useful for populating channel pickers in UI integrations.
@@ -5507,7 +5816,8 @@ type Query {
 
   """
   List workflows in the workspace, paginated. Use `filters` to narrow results by trigger type
-  (MANUAL, EVENTS or SCHEDULE), published status, or the events an `events` trigger listens for.
+  (MANUAL, EVENTS or SCHEDULE), published status, the events an `events` trigger listens for,
+  or the entities their steps reference (e.g. every workflow applying a given SLA policy).
   Ordered by `position` ascending unless `sortBy` says otherwise.
   """
   workflows(first: Int, after: String, last: Int, before: String, filters: WorkflowsFilter, sortBy: WorkflowsSort): WorkflowConnection!
@@ -5721,6 +6031,16 @@ type Query {
   tenant(tenantId: ID!): Tenant
 
   """
+  Returns a paginated list of accounts in the workspace. Use the `filters` argument to narrow by ID, deleted status, or last-updated time. Requires the `tenant:read` permission.
+  """
+  accounts(first: Int, after: String, last: Int, before: String, filters: AccountsFilter): AccountConnection!
+
+  """
+  Fetches a single account by its Plain-assigned ID. Returns null if no matching account is found. Requires the `tenant:read` permission.
+  """
+  account(accountId: ID!): Account
+
+  """
   Fetch a single task by its ID. Returns null if no task with that ID exists. Requires the `task:read` permission.
   """
   task(taskId: ID!): Task
@@ -5741,11 +6061,23 @@ type Query {
   tenantFieldSchemas(filters: TenantFieldSchemasFilter, first: Int, after: String, last: Int, before: String): TenantFieldSchemaConnection!
 
   """
-  Searches tenants by name (case-insensitive partial match) or by external ID (exact match).
+  Returns the list of account field schemas defined in the workspace. Use the `source` and `isVisible` filters to narrow results. Supports cursor-based pagination.
+  """
+  accountFieldSchemas(filters: AccountFieldSchemasFilter, first: Int, after: String, last: Int, before: String): AccountFieldSchemaConnection!
+
+  """
+  Searches tenants by name or domain (case-insensitive partial match), or by external ID (exact match).
   The search term must be at least 2 characters long. Returns a paginated list of results.
   Requires the `tenant:read` permission.
   """
   searchTenants(searchQuery: TenantsSearchQuery!, filters: TenantsFilter, first: Int, after: String, last: Int, before: String): TenantSearchResultConnection!
+
+  """
+  Searches accounts by name or domain (case-insensitive partial match), or by external ID (exact match).
+  The search term must be at least 2 characters long. Returns a paginated list of results.
+  Requires the `tenant:read` permission.
+  """
+  searchAccounts(searchQuery: AccountsSearchQuery!, filters: AccountsFilter, first: Int, after: String, last: Int, before: String): AccountSearchResultConnection!
 
   """
   Fetch a single discussion by its ID. Returns null if no discussion with the given ID exists.
@@ -5863,14 +6195,14 @@ type Query {
   serviceLevelAgreementPolicy(serviceLevelAgreementPolicyId: ID!): ServiceLevelAgreementPolicy
 
   """
-  Fetch the workspace's business hours configuration. Deprecated — use businessHoursSlots instead, which supports timezone-aware slots.
+  Fetch the workspace's business hours configuration. Deprecated — use businessHoursSchedules instead, which supports multiple named, timezone-aware schedules.
   """
-  businessHours: BusinessHours @deprecated(reason: "Use businessHoursSlots instead.")
+  businessHours: BusinessHours @deprecated(reason: "Use businessHoursSchedules instead.")
 
   """
-  Return all active business hours slots for the workspace. Each slot specifies a weekday, timezone, and open/close times. Returns an empty list if no business hours are configured. Requires the `businessHours:read` permission.
+  Return all active business hours slots for the workspace, merged across every schedule. Deprecated — use businessHoursSchedules instead, which returns each schedule's slots separately. Requires the `businessHours:read` permission.
   """
-  businessHoursSlots: [BusinessHoursSlot!]!
+  businessHoursSlots: [BusinessHoursSlot!]! @deprecated(reason: "Use businessHoursSchedules instead.")
 
   """
   Fetches a single business hours schedule by its ID, or null if no schedule with that ID exists. Requires the `businessHours:read` permission.
@@ -6329,6 +6661,11 @@ type SidekickToolConfigurableArg {
   Initial picker selection. Save it in the tool permission to enforce it.
   """
   defaultValue: String
+
+  """
+  When true the builder may pin several values for this arg; the agent must then pass one of them. When false the pin is a single value.
+  """
+  isMultiValued: Boolean!
 }
 
 type SidekickToolArgOptionsPage {
@@ -6423,6 +6760,7 @@ input ThreadClustersFilter {
   variant: String
   companyIds: [ID!]
   tenantIds: [ID!]
+  accountIds: [ID!]
 }
 
 type Tier {
@@ -6486,6 +6824,16 @@ type TenantTierMembership {
   updatedBy: InternalActor!
 }
 
+type AccountTierMembership {
+  id: ID!
+  tierId: ID!
+  accountId: ID!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
 type CompanyTierMembership {
   id: ID!
   tierId: ID!
@@ -6522,6 +6870,16 @@ type ServiceLevelAgreementThreadLabelTypeIdFilter {
   requireAll: Boolean!
 }
 
+"""Thread status details a resolution-time SLA can pause on."""
+enum ServiceLevelAgreementPauseStatusDetailType {
+  WAITING_FOR_CUSTOMER
+  WAITING_INDEFINITELY
+  WAITING_FOR_DURATION
+  IN_PROGRESS
+  THREAD_LINK_UPDATED
+  THREAD_DISCUSSION_RESOLVED
+}
+
 """
 A service level agreement (SLA) attached to a tier. Every thread belonging to the tier inherits the SLA and is tracked against its time target.
 """
@@ -6529,9 +6887,9 @@ interface ServiceLevelAgreement {
   id: ID!
 
   """
-  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will tracked 24/7.
+  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will tracked 24/7. Deprecated — use businessHoursSchedules instead.
   """
-  useBusinessHoursOnly: Boolean!
+  useBusinessHoursOnly: Boolean! @deprecated(reason: "Use businessHoursSchedules to see which business hours are linked to this SLA.")
 
   """
   The business hours schedules this SLA is tracked against. Empty if the SLA is tracked 24/7.
@@ -6568,7 +6926,7 @@ type FirstResponseTimeServiceLevelAgreement implements ServiceLevelAgreement {
   This SLA will breach if it does not receive a first response within this many minutes.
   """
   firstResponseTimeMinutes: Int!
-  useBusinessHoursOnly: Boolean!
+  useBusinessHoursOnly: Boolean! @deprecated(reason: "Use businessHoursSchedules to see which business hours are linked to this SLA.")
 
   """
   The business hours schedules this SLA is tracked against. Empty if the SLA is tracked 24/7.
@@ -6593,6 +6951,66 @@ type NextResponseTimeServiceLevelAgreement implements ServiceLevelAgreement {
   This SLA will breach if it does not receive a next response within this many minutes.
   """
   nextResponseTimeMinutes: Int!
+  useBusinessHoursOnly: Boolean! @deprecated(reason: "Use businessHoursSchedules to see which business hours are linked to this SLA.")
+
+  """
+  The business hours schedules this SLA is tracked against. Empty if the SLA is tracked 24/7.
+  """
+  businessHoursSchedules: [BusinessHoursSchedule!]!
+  threadPriorityFilter: [Int!]!
+  threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilter
+  breachActions: [BreachAction!]!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+"""
+An SLA that tracks the time from thread creation until the thread is first marked Done. Reopening a thread does not start a new tracker.
+"""
+type FirstResolutionTimeServiceLevelAgreement implements ServiceLevelAgreement {
+  id: ID!
+
+  """
+  This SLA will breach if the thread is not first marked Done within this many minutes.
+  """
+  firstResolutionTimeMinutes: Int!
+
+  """
+  The thread status details that pause this first-resolution-time clock. Empty means the clock never pauses. Defaults to waiting for the customer.
+  """
+  pauseOnStatusDetailTypes: [ServiceLevelAgreementPauseStatusDetailType!]!
+  useBusinessHoursOnly: Boolean!
+
+  """
+  The business hours schedules this SLA is tracked against. Empty if the SLA is tracked 24/7.
+  """
+  businessHoursSchedules: [BusinessHoursSchedule!]!
+  threadPriorityFilter: [Int!]!
+  threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilter
+  breachActions: [BreachAction!]!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+"""
+An SLA that tracks the time from thread creation until the thread is marked Done, including after it is reopened. Reopening a very old thread can immediately breach this SLA.
+"""
+type TotalResolutionTimeServiceLevelAgreement implements ServiceLevelAgreement {
+  id: ID!
+
+  """
+  This SLA will breach if the thread is not marked Done within this many minutes of creation, including time after it is reopened.
+  """
+  totalResolutionTimeMinutes: Int!
+
+  """
+  The thread status details that pause this total-resolution-time clock. Empty means the clock never pauses. Defaults to waiting for the customer.
+  """
+  pauseOnStatusDetailTypes: [ServiceLevelAgreementPauseStatusDetailType!]!
   useBusinessHoursOnly: Boolean!
 
   """
@@ -6635,15 +7053,20 @@ type ServiceLevelAgreementWarnBefore {
 }
 
 """
-One response-time promise inside an SLA policy. A policy holds at most one target of each type.
+One time-to-target promise inside an SLA policy. A policy holds at most one target of each type.
 """
 type ServiceLevelAgreementPolicyTarget {
   id: ID!
   type: ServiceLevelAgreementType!
 
-  """This target breaches if no response is sent within this many minutes."""
+  """This target breaches if the SLA is not met within this many minutes."""
   minutes: Int!
   warnBefore: ServiceLevelAgreementWarnBefore
+
+  """
+  The thread status details that pause this resolution-time clock. Empty means the clock never pauses. Null for first-response and next-response targets.
+  """
+  pauseOnStatusDetailTypes: [ServiceLevelAgreementPauseStatusDetailType!]
 
   """
   The business hours schedules this SLA target is tracked against. Empty if tracked 24/7.
@@ -6721,6 +7144,7 @@ enum MetricDimensionType {
   MESSAGE_SOURCE
   PRIORITY
   THREAD_FIELD
+  ACCOUNT_FIELD
   TENANT_FIELD
   TIER
 }
@@ -6825,6 +7249,11 @@ enum TimeSeriesMetricDimensionType {
   A custom field attached to the thread. Requires `subDimension` set to the field key.
   """
   THREAD_FIELD
+
+  """
+  A custom field attached to the thread's account. Requires `subDimension` set to the field's external ID.
+  """
+  ACCOUNT_FIELD
 
   """
   A custom field attached to the thread's tenant. Requires `subDimension` set to the field's external ID.
@@ -6949,6 +7378,7 @@ enum TimeSeriesMetricName {
   threads_time_customer_waiting__p50 @deprecated(reason: "Use `threads_time_customer_waiting` (percentile defaults to 50).")
   threads_time_customer_waiting__p90 @deprecated(reason: "Use `threads_time_customer_waiting` with `percentile: 90`.")
   threads_status_transitions_count__todo
+  threads_status_reopened_count
   threads_status_transitions_count__todo_with_created
   threads_status_transitions_count__done
   threads_status_transitions_count__snoozed
@@ -7000,6 +7430,12 @@ enum ThreadMetricGroupBy {
   """Source system of the thread's messages (e.g. EMAIL, SLACK, API)."""
   MESSAGE_SOURCE
   PRIORITY
+  ACCOUNT
+
+  """
+  A custom field attached to the thread's account. Requires `subKey` set to the field's external ID.
+  """
+  ACCOUNT_FIELD
   TENANT
 
   """
@@ -7040,6 +7476,7 @@ input ThreadMetricFilters {
   labelTypeIds: [ID!]
   companyIdentifiers: [CompanyIdentifierInput!]
   tenantIdentifiers: [TenantIdentifierInput!]
+  accountIdentifiers: [AccountIdentifierInput!]
   tierIdentifiers: [TierIdentifierInput!]
   customerGroupIdentifiers: [CustomerGroupIdentifier!]
 
@@ -7051,6 +7488,7 @@ input ThreadMetricFilters {
   messageSource: [MessageSource!]
   threadFields: [ThreadFieldFilter!]
   tenantFields: [TenantFieldFilter!]
+  accountFields: [AccountFieldFilter!]
   surveyResponse: SurveyResponseFilter
 
   """
@@ -7350,6 +7788,7 @@ input TasksFilter {
   isAssigned: Boolean
   statuses: [TaskStatus!]
   tenantIds: [ID!]
+  accountIds: [ID!]
   and: [TasksFilter!]
   or: [TasksFilter!]
   not: TasksFilter
@@ -7383,6 +7822,7 @@ input ThreadsFilter {
   serviceLevelAgreementPolicyIds: [ID!]
   threadFields: [ThreadFieldFilter!]
   tenantIdentifiers: [TenantIdentifierInput!]
+  accountIdentifiers: [AccountIdentifierInput!]
   companyIdentifiers: [CompanyIdentifierInput!]
   messageSource: [MessageSource!]
   participantIds: [ID!]
@@ -7398,6 +7838,7 @@ input ThreadsFilter {
   updatedAt: DatetimeFilter
   surveyResponse: SurveyResponseFilter
   tenantFields: [TenantFieldFilter!]
+  accountFields: [AccountFieldFilter!]
   agentStatus: AgentStatusFilter
   and: [ThreadsFilter!]
   or: [ThreadsFilter!]
@@ -7419,9 +7860,26 @@ input TenantFieldFilter {
   userReferenceValues: [ID!]
 }
 
+input AccountFieldFilter {
+  externalFieldId: String!
+  stringValue: String
+
+  """
+  Matches when the field's value equals any of these (OR). For STRING/ENUM fields.
+  """
+  stringValues: [String!]
+  booleanValue: Boolean
+  dateValue: String
+  numberValue: Float
+  stringArrayValue: [String!]
+  userReferenceValues: [ID!]
+}
+
 enum ServiceLevelAgreementType {
   FIRST_RESPONSE_TIME
   NEXT_RESPONSE_TIME
+  FIRST_RESOLUTION_TIME
+  TOTAL_RESOLUTION_TIME
 }
 
 input ServiceLevelAgreementFilter {
@@ -7705,6 +8163,7 @@ enum ThreadScopePrimitiveType {
   A messaging channel such as Slack, Discord, or email (identified by channel key or email address).
   """
   CHANNEL
+  ACCOUNT
   TENANT
   COMPANY
 }
@@ -7797,6 +8256,7 @@ type UpdateLabelTypeOutput {
 input AddLabelsInput {
   labelTypeIds: [ID!]!
   threadId: ID!
+  onlyIfNoLabels: Boolean
 }
 
 type AddLabelsOutput {
@@ -8870,6 +9330,18 @@ type ThreadLinkGroupTenantMetrics {
   noTenant: ThreadLinkGroupAggregateMetrics!
 }
 
+type ThreadLinkGroupSingleAccountMetrics {
+  account: Account!
+  metrics: ThreadLinkGroupAggregateMetrics!
+}
+
+type ThreadLinkGroupAccountMetrics {
+  byAccount: [ThreadLinkGroupSingleAccountMetrics!]!
+
+  """Metrics when the thread is not associated with any account."""
+  noAccount: ThreadLinkGroupAggregateMetrics!
+}
+
 type ThreadLinkGroup {
   id: ID!
 
@@ -8896,6 +9368,14 @@ type ThreadLinkGroup {
   tenant metrics may sum to more than the group's total thread links.
   """
   tenantMetrics: ThreadLinkGroupTenantMetrics!
+
+  """
+  Breakdown of linked thread counts by account, including threads with no account.
+  A thread is matched to its own account and to any EMAIL_DOMAIN account its customer
+  is a member of. The thread will be counted once per account, so total counts for
+  account metrics may sum to more than the group's total thread links.
+  """
+  accountMetrics: ThreadLinkGroupAccountMetrics!
 
   """
   The default rank of the thread link group which takes into account
@@ -8927,6 +9407,7 @@ input ThreadLinkGroupFilter {
   companyIds: [ID!]
   tierIds: [ID!]
   tenantIds: [ID!]
+  accountIds: [ID!]
 }
 
 input CreateNoteInput {
@@ -8984,7 +9465,9 @@ input ThreadsDisplayOptionsInput {
   hasTasks: Boolean
   hasThreadFieldKeys: [String!]
   hasTenants: Boolean
+  hasAccounts: Boolean
   hasTenantFieldExternalIds: [ID!]
+  hasAccountFieldExternalIds: [ID!]
 }
 
 input SavedThreadsViewFilterInput {
@@ -8995,7 +9478,8 @@ input SavedThreadsViewFilterInput {
   participants: [ID!]!
   customerGroups: [ID!]!
   companies: [ID!]!
-  tenants: [ID!]!
+  tenants: [ID!]
+  accounts: [ID!]
   tiers: [ID!]!
 
   """Omitted or null means no policy filter."""
@@ -9006,7 +9490,8 @@ input SavedThreadsViewFilterInput {
   slaTypes: [String!]!
   slaStatuses: [String!]!
   threadFields: [ThreadFieldFilter!]!
-  tenantFields: [TenantFieldFilter!]!
+  tenantFields: [TenantFieldFilter!]
+  accountFields: [AccountFieldFilter!]
   threadLinkGroupIds: [ID!]!
   threadLinkSources: [ThreadLinkSourceFilter!]!
   createdAtFilter: DatetimeFilter
@@ -9240,6 +9725,12 @@ input CreateBroadcastInput {
   isLinkUnfurlingEnabled: Boolean
 
   """
+  Whether Plain appends an unsubscribe link when this broadcast is delivered. Omit to inherit the
+  workspace default. Pass true or false to override that default for this broadcast only.
+  """
+  appendUnsubscribeLink: Boolean
+
+  """
   Which kind of sender `senderUserId` describes. Required alongside `senderUserId`, and rejected with it when `PLAIN`.
   """
   senderType: BroadcastSenderType
@@ -9280,6 +9771,13 @@ input UpdateBroadcastInput {
   isLinkUnfurlingEnabled: BooleanInput
 
   """
+  Whether Plain appends an unsubscribe link when this broadcast is delivered. Omit to leave the
+  override unchanged. Pass null to clear it so the broadcast inherits the workspace default again;
+  pass true or false to override that default for this broadcast only.
+  """
+  appendUnsubscribeLink: OptionalBooleanInput
+
+  """
   Which kind of sender `senderUserId` describes. Validated against the state the broadcast will
   hold, so either half can be set on its own as long as the result is coherent: `PLAIN_USER`
   needs a `senderUserId`, `PLAIN` must not have one.
@@ -9289,9 +9787,9 @@ input UpdateBroadcastInput {
   senderEmailAddress: OptionalStringInput
 
   """
-  Pass a target to replace the current one, or an empty `channels` list to clear it. Omit to leave
-  it unchanged. Clearing the target — or the sender — of a broadcast that is already scheduled is
-  rejected, because a scheduled broadcast has to stay sendable.
+  Pass a target to replace the current one, or null — equivalently a target with no `scope` and no
+  `recipients` — to clear it. Omit to leave it unchanged. Clearing the target — or the sender — of a
+  broadcast that is already scheduled is rejected, because a scheduled broadcast has to stay sendable.
   """
   sendTarget: BroadcastSendTargetInput
 }
@@ -9319,10 +9817,21 @@ input BroadcastAudienceTenantFieldFilterInput {
   userReferenceValues: [String!]
 }
 
+input BroadcastAudienceAccountFieldFilterInput {
+  externalFieldId: ID!
+  stringValue: String
+  booleanValue: Boolean
+  numberValue: Float
+  stringArrayValue: [String!]
+  userReferenceValues: [String!]
+}
+
 input BroadcastAudienceFilterInput {
   tenantIds: [ID!]
+  accountIds: [ID!]
   tierIds: [ID!]
   tenantFields: [BroadcastAudienceTenantFieldFilterInput!]
+  accountFields: [BroadcastAudienceAccountFieldFilterInput!]
   slackChannels: [BroadcastSlackChannelRefInput!]
   slackChannelNameContains: [String!]
 
@@ -9454,6 +9963,7 @@ input CreateTaskInput {
   priority: Int
   companyId: ID
   tenantId: ID
+  accountId: ID
   assignedTo: CreateTaskAssignedToInput
 }
 
@@ -9484,6 +9994,11 @@ input UpdateTaskInput {
   Only one of companyId or tenantId can be set. Cannot specify both. Setting tenantId will unset companyId if it already exists.
   """
   tenantId: ID
+
+  """
+  Only one of companyId or accountId can be set. Cannot specify both. Setting accountId will unset companyId if it already exists.
+  """
+  accountId: ID
   assignedTo: UpdateTaskAssignedToInput
 }
 
@@ -9598,6 +10113,11 @@ type DnsRecord {
 type WorkspaceEmailDomainSettings {
   domainName: String!
   supportEmailAddress: String!
+
+  """
+  Whether this domain is managed by Plain rather than owned by the workspace.
+  """
+  isPlainManagedDomain: Boolean!
 
   """
   The list of alternate email addresses that can be used to send emails to and from the workspace.
@@ -10160,6 +10680,7 @@ input UpsertCustomerOnCreateInput {
   email: EmailAddressInput!
   customerGroupIdentifiers: [CustomerGroupIdentifier!]
   tenantIdentifiers: [TenantIdentifierInput!]
+  accountIdentifiers: [AccountIdentifierInput!]
 }
 
 input UpsertCustomerOnUpdateInput {
@@ -10309,6 +10830,26 @@ type DeleteThreadOutput {
 type CreateTestThreadOutput {
   thread: Thread
   error: MutationError
+}
+
+"""The channels a test thread's conversation can happen on."""
+enum TestThreadChannel {
+  CHAT
+  SLACK
+}
+
+input CreateTestThreadInput {
+  """
+  Where the thread's conversation happens. `SLACK` puts it in the workspace's Slack test
+  channel, creating that channel on first use, which needs the `workspaceSlackIntegration:edit`
+  permission; reusing an existing one does not. Defaults to `CHAT`.
+  """
+  channel: TestThreadChannel! = CHAT
+
+  """
+  The Slack integration whose workspace the test channel belongs to. Required when `channel` is `SLACK`, ignored otherwise.
+  """
+  slackIntegrationId: ID
 }
 
 type CreateAllTestThreadsOutput {
@@ -10761,6 +11302,29 @@ type UpdateInternalNotificationsOutput {
   error: MutationError
 }
 
+input UpdateAllMyInternalNotificationsInput {
+  """
+  Same filter as `myInternalNotifications`. Archived notifications are excluded.
+  """
+  filters: InternalNotificationsFilter
+
+  """
+  ISO-8601 timestamp to mark matching notifications read. Pass null to mark them unread.
+  """
+  readAt: OptionalStringInput
+
+  """ISO-8601 timestamp to archive matching notifications."""
+  archivedAt: StringInput
+}
+
+type UpdateAllMyInternalNotificationsOutput {
+  """
+  How many notifications changed state. Rows that already had the requested state are not counted.
+  """
+  updatedCount: Int!
+  error: MutationError
+}
+
 type Mutation {
   """
   Creates or updates the user account for the currently authenticated user. Idempotent: calling this multiple times with the same identity will update the existing account rather than creating a duplicate. Used during the initial onboarding flow to set the user's display names.
@@ -10893,12 +11457,12 @@ type Mutation {
   removeLabelsFromUser(input: RemoveLabelsFromUserInput!): RemoveLabelsFromUserOutput!
 
   """
-  Links a thread to an external entity such as a Linear issue, Jira ticket, another Plain thread, or a Plain task. Provide exactly one of `linearIssue`, `jiraIssue`, `plainThread`, `plainTask`, or `sourceId`/`sourceType` for generic issue trackers. Returns an error with code `thread_link_already_exists` if the same link already exists for the thread.
+  Links a thread to an external entity such as a Linear issue, Jira ticket, another Plain thread, or a Plain task. Provide exactly one of `linearIssue`, `jiraIssue`, `plainThread`, `plainTask`, or `sourceId`/`sourceType` for generic issue trackers. If the thread is already linked to the entity with the same link type, the existing link is returned. Returns an error with code `thread_link_already_exists` if it is linked with a different link type.
   """
   createThreadLink(input: CreateThreadLinkInput!): CreateThreadLinkOutput!
 
   """
-  Links many threads to a single target entity (a Linear issue, Jira ticket, another Plain thread, a Plain task, or a generic issue tracker) in one request. Provide exactly one of `linearIssue`, `jiraIssue`, `plainThread`, `plainTask`, or `sourceId`/`sourceType`, plus the list of `threadIds` to link to it. Each thread is linked independently: the returned `results` carry a per-thread `threadLink` or `error` (e.g. `thread_link_already_exists`), and the top-level `error` is set to `bulk_partial_failure` if any thread failed. Requires the `threadLink:create` permission.
+  Links many threads to a single target entity (a Linear issue, Jira ticket, another Plain thread, a Plain task, or a generic issue tracker) in one request. Provide exactly one of `linearIssue`, `jiraIssue`, `plainThread`, `plainTask`, or `sourceId`/`sourceType`, plus the list of `threadIds` to link to it. Each thread is linked independently: the returned `results` carry a per-thread `threadLink` or `error`, and the top-level `error` is set to `bulk_partial_failure` if any thread failed. A thread already linked to the target with the same link type gets the existing link back. Requires the `threadLink:create` permission.
   """
   bulkCreateThreadLinks(input: BulkCreateThreadLinksInput!): BulkCreateThreadLinksOutput!
 
@@ -10990,6 +11554,18 @@ type Mutation {
   the `broadcast:delete` permission.
   """
   deleteBroadcast(input: DeleteBroadcastInput!): DeleteBroadcastOutput!
+
+  """
+  Records that a broadcast recipient should not receive further broadcasts. Idempotent. Requires the
+  `broadcast:edit` permission and the broadcasts feature flag.
+  """
+  unsubscribeBroadcastRecipient(input: UnsubscribeBroadcastRecipientInput!): UnsubscribeBroadcastRecipientOutput!
+
+  """
+  Removes an unsubscribe so the recipient can receive broadcasts again. Idempotent. Requires the
+  `broadcast:edit` permission and the broadcasts feature flag.
+  """
+  resubscribeBroadcastRecipient(input: ResubscribeBroadcastRecipientInput!): ResubscribeBroadcastRecipientOutput!
 
   """
   Creates a reusable broadcast audience. `filters` is validated against `type`, so a filter naming a
@@ -11354,9 +11930,25 @@ type Mutation {
   bulkUpdateConnectedSlackChannels(input: BulkUpdateConnectedSlackChannelsInput!): BulkUpdateConnectedSlackChannelsOutput!
 
   """
-  Instructs the Plain Slack bot to join all Slack channels it has access to for the given workspace Slack channel integration. Use this after first installing the integration to connect existing channels.
+  Instructs the Plain Slack bot to join public Slack channels for the given workspace
+  Slack channel integration. By default it joins every public channel matching an
+  auto-join rule on the integration. Set `rule` to join only the public channels
+  matching one rule, identified by its channel name prefix and suffix.
   """
   bulkJoinSlackChannels(input: BulkJoinSlackChannelsInput!): BulkJoinSlackChannelsOutput!
+
+  """
+  Creates a thread from a top-level message in a connected customer Slack channel, along with the
+  replies Plain has already received for it. This is the trigger for the `API_ONLY` ingestion
+  mode, and works in every other mode too. Ingestion runs asynchronously, so `thread` is
+  returned only when the message had already been ingested. Requires the `thread:create`
+  permission.
+  
+  This is not a way to import historic conversations: only replies Plain saw over the Slack
+  events API are included, so a message from before the Plain bot joined the channel becomes a
+  thread missing everything that was said before then.
+  """
+  createThreadFromSlackMessage(input: CreateThreadFromSlackMessageInput!): CreateThreadFromSlackMessageOutput!
 
   """
   Replaces all auto-join rules for a workspace slack channel integration.
@@ -11518,6 +12110,11 @@ type Mutation {
   Connects a workspace-level Slack notifications integration using an OAuth auth code. This integration enables Plain to post notifications to a Slack channel on behalf of the workspace. Get the installation URL from workspaceSlackInstallationInfo.
   """
   createWorkspaceSlackIntegration(input: CreateWorkspaceSlackIntegrationInput!): CreateWorkspaceSlackIntegrationOutput!
+
+  """
+  Connects a workspace-level Slack notifications integration reusing a Slack connection the workspace already has, with no second OAuth install. The new integration posts through the given workspace Slack channel integration's connection. Choose the notification channel afterwards with the notification/slack/channel_id setting.
+  """
+  createWorkspaceSlackIntegrationFromAuth(input: CreateWorkspaceSlackIntegrationFromAuthInput!): CreateWorkspaceSlackIntegrationFromAuthOutput!
 
   """
   Disconnects and removes a workspace-level Slack notifications integration.
@@ -11710,12 +12307,12 @@ type Mutation {
   reloadCustomerCardInstance(input: ReloadCustomerCardInstanceInput!): ReloadCustomerCardInstanceOutput!
 
   """
-  Register a new HTTP endpoint to receive Plain webhook events. You must specify the URL, a human-readable description, the webhook schema version to pin to, whether deliveries should start immediately, and the list of event types to subscribe to. Use `subscriptionEventTypes` to discover valid event type identifiers. Requires the `webhookTarget:create` permission.
+  Register a new HTTP endpoint to receive Plain webhook events. You must specify the URL, a human-readable description, the webhook schema version to pin to, whether deliveries should start immediately, and the list of event types to subscribe to. You can optionally supply custom HTTP headers (e.g. an `Authorization` header) to send with every delivery. Use `subscriptionEventTypes` to discover valid event type identifiers. Requires the `webhookTarget:create` permission.
   """
   createWebhookTarget(input: CreateWebhookTargetInput!): CreateWebhookTargetOutput!
 
   """
-  Update an existing webhook target. You can change the URL, pause or resume deliveries via `isEnabled`, switch to a newer schema version, or change which event types are subscribed to. Scalar fields use a `{ value: ... }` wrapper so you can omit fields you do not want to change; `eventSubscriptions` is a full replacement of the previous list, so include every event type the target should receive. At least one field must be provided. Requires the `webhookTarget:edit` permission.
+  Update an existing webhook target. You can change the URL, pause or resume deliveries via `isEnabled`, switch to a newer schema version, change which event types are subscribed to, or replace the custom HTTP headers. Scalar fields use a `{ value: ... }` wrapper so you can omit fields you do not want to change; `eventSubscriptions` and `headers` are full replacements of the previous lists, so include every entry the target should keep. At least one field must be provided. Requires the `webhookTarget:edit` permission.
   """
   updateWebhookTarget(input: UpdateWebhookTargetInput!): UpdateWebhookTargetOutput!
 
@@ -11799,6 +12396,11 @@ type Mutation {
   updateThreadTenant(input: UpdateThreadTenantInput!): UpdateThreadTenantOutput!
 
   """
+  Move a thread to a different account, or pass `accountIdentifier: null` to detach it from its current account. Requires the `thread:edit` permission.
+  """
+  updateThreadAccount(input: UpdateThreadAccountInput!): UpdateThreadAccountOutput!
+
+  """
   Assign a thread to a tier, which governs the SLAs applied to it. Pass `tierIdentifier: null` to detach the thread from its current tier. Requires the `thread:edit` permission.
   """
   updateThreadTier(input: UpdateThreadTierInput!): UpdateThreadTierOutput!
@@ -11837,9 +12439,12 @@ type Mutation {
   Create a test thread for the signed-in user. Test threads come from a test customer rather
   than a real one. The scenario is picked for you and fixes the thread's title; its opening
   message is written shortly after this returns. They are listed by `testThreads` rather than
-  `threads`, and only for the user who created them. Requires the `thread:create` permission.
+  `threads`, and only for the user who created them. Pass `channel: SLACK` to have the
+  conversation happen in the workspace's Slack test channel instead of chat, so the caller sees a
+  thread arrive the way a customer's Slack message does. Requires the `thread:create`
+  permission.
   """
-  createTestThread: CreateTestThreadOutput!
+  createTestThread(input: CreateTestThreadInput! = {channel: CHAT}): CreateTestThreadOutput!
 
   """
   Create one test thread per scenario for the signed-in user, so they get a populated inbox in a
@@ -11931,11 +12536,14 @@ type Mutation {
   resolveDiscussionApproval(input: ResolveDiscussionApprovalInput!): ResolveDiscussionApprovalOutput!
 
   """
-  Move a discussion between OPEN and RESOLVED. Resolving records the resolution timestamp and
-  settles agentStatus; reopening clears the timestamp and leaves agentStatus alone, because
-  reopening does not mean an agent has picked the work up again. Doing nothing when the discussion
-  is already in that status. Callable by a person, or by the agent a custom-agent discussion is
-  bound to, so an agent can mirror its own thread status back into Plain.
+  Stop the in-flight turn of an in-app discussion answered by an agent the workspace built. Plain
+  runs nothing for that agent, so it records the stop and emits discussion.turn_stop_requested for
+  the agent to act on. Sidekick turns are stopped with stopAgentSessionTurn instead.
+  """
+  stopDiscussionTurn(input: StopDiscussionTurnInput!): StopDiscussionTurnOutput!
+
+  """
+  Moves a discussion between OPEN and RESOLVED. Callable by a person, by the custom agent a discussion is bound to, or by the machine user that started a Sidekick discussion.
   """
   changeThreadDiscussionStatus(input: ChangeThreadDiscussionStatusInput!): ChangeThreadDiscussionStatusOutput!
 
@@ -11952,7 +12560,7 @@ type Mutation {
   deleteThreadDiscussion(input: DeleteThreadDiscussionInput!): DeleteThreadDiscussionOutput!
 
   """
-  Approves or denies a pending Sidekick tool-use approval request identified by its leaseId. When approved, the agent session automatically resumes and executes the approved tools. When denied, the agent is notified so it can explain the denial to the user. An optional reviewerNote is passed back to the agent in both cases.
+  Approves or denies a pending Sidekick tool-use approval request identified by its leaseId. When approved, the agent session automatically resumes and executes the approved tools. When denied, the agent is notified so it can explain the denial to the user. An optional reviewerNote is passed back to the agent in both cases. A machine user may resolve only approvals of a Sidekick session it started.
   """
   resolveAgentApproval(input: ResolveAgentApprovalInput!): ResolveAgentApprovalOutput!
 
@@ -11972,10 +12580,7 @@ type Mutation {
   editQueuedAgentSessionMessage(input: EditQueuedAgentSessionMessageInput!): EditQueuedAgentSessionMessageOutput!
 
   """
-  Stops the in-flight turn of a Sidekick AGENT_SESSION discussion: the sandbox stops,
-  queued messages are dropped and a pending tool approval is cancelled, but the session
-  survives, so the next message continues the same conversation. Does nothing when the
-  session is not running, and rejects discussions outside the in-app channel.
+  Stops the in-flight turn of an in-app Sidekick session; the session and its queue survive, and the oldest queued message runs next. A machine user may stop only a session it started.
   """
   stopAgentSessionTurn(input: StopAgentSessionTurnInput!): StopAgentSessionTurnOutput!
 
@@ -12027,12 +12632,27 @@ type Mutation {
   createTenant(input: CreateTenantInput!): CreateTenantOutput!
 
   """
+  Creates a new account. Fails with a validation error if an account already exists with the provided `externalId`.
+  Use `upsertAccount` instead if you want to create or update an account idempotently.
+  Requires the `tenant:create` permission.
+  """
+  createAccount(input: CreateAccountInput!): CreateAccountOutput!
+
+  """
   Creates a new tenant or updates an existing one identified by `externalId` or `tenantId`.
   Use this to keep Plain's tenant records in sync with the groups or organisations in your own product.
   The `result` field on the output indicates whether a record was created or updated.
   Requires the `tenant:read` and `tenant:create` permissions.
   """
   upsertTenant(input: UpsertTenantInput!): UpsertTenantOutput!
+
+  """
+  Creates a new account or updates an existing one identified by `externalId` or `accountId`.
+  Use this to keep Plain's account records in sync with the groups or organisations in your own product.
+  The `result` field on the output indicates whether a record was created or updated.
+  Requires the `tenant:read` and `tenant:create` permissions.
+  """
+  upsertAccount(input: UpsertAccountInput!): UpsertAccountOutput!
 
   """
   Permanently deletes a tenant, unlinking it from all customers and removing its fields.
@@ -12043,6 +12663,14 @@ type Mutation {
   deleteTenant(input: DeleteTenantInput!): DeleteTenantOutput!
 
   """
+  Permanently deletes an account, unlinking it from all customers and removing its fields.
+  Threads that were associated with the account retain a tombstone reference but are no longer routed through it.
+  The account can be identified by either its Plain `accountId` or its `externalId`.
+  Requires the `tenant:delete` permission.
+  """
+  deleteAccount(input: DeleteAccountInput!): DeleteAccountOutput!
+
+  """
   Adds a customer to one or more tenants. The customer can be identified by their Plain ID, external ID, or email address.
   If the customer is already a member of a given tenant the operation is a no-op for that tenant.
   Requires the `customer:edit` and `customerTenantMembership:create` permissions.
@@ -12050,11 +12678,25 @@ type Mutation {
   addCustomerToTenants(input: AddCustomerToTenantsInput!): AddCustomerToTenantsOutput!
 
   """
+  Adds a customer to one or more accounts. The customer can be identified by their Plain ID, external ID, or email address.
+  If the customer is already a member of a given account the operation is a no-op for that account.
+  Requires the `customer:edit` and `customerTenantMembership:create` permissions.
+  """
+  addCustomerToAccounts(input: AddCustomerToAccountsInput!): AddCustomerToAccountsOutput!
+
+  """
   Removes a customer from one or more tenants. The customer can be identified by their Plain ID, external ID, or email address.
   If the customer is not currently a member of a specified tenant the operation is a no-op for that tenant.
   Requires the `customer:edit` and `customerTenantMembership:delete` permissions.
   """
   removeCustomerFromTenants(input: RemoveCustomerFromTenantsInput!): RemoveCustomerFromTenantsOutput!
+
+  """
+  Removes a customer from one or more accounts. The customer can be identified by their Plain ID, external ID, or email address.
+  If the customer is not currently a member of a specified account the operation is a no-op for that account.
+  Requires the `customer:edit` and `customerTenantMembership:delete` permissions.
+  """
+  removeCustomerFromAccounts(input: RemoveCustomerFromAccountsInput!): RemoveCustomerFromAccountsOutput!
 
   """
   Replaces the full set of tenant memberships for a customer in a single call.
@@ -12065,9 +12707,22 @@ type Mutation {
   setCustomerTenants(input: SetCustomerTenantsInput!): SetCustomerTenantsOutput!
 
   """
+  Replaces the full set of account memberships for a customer in a single call.
+  Any accounts not included in the input are removed; any new ones are added.
+  Use this when syncing account membership from your own system rather than tracking individual add/remove changes.
+  Requires the `customer:edit`, `customerTenantMembership:create`, and `customerTenantMembership:delete` permissions.
+  """
+  setCustomerAccounts(input: SetCustomerAccountsInput!): SetCustomerAccountsOutput!
+
+  """
   Creates or updates one or more tenant field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission.
   """
   upsertTenantFieldSchema(input: UpsertTenantFieldSchemaInput!): UpsertTenantFieldSchemaOutput!
+
+  """
+  Creates or updates one or more account field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission.
+  """
+  upsertAccountFieldSchema(input: UpsertAccountFieldSchemaInput!): UpsertAccountFieldSchemaOutput!
 
   """
   Permanently deletes a tenant field schema and all field values stored against it across all tenants. This action cannot be undone. Requires `tenantFieldSchema:delete` permission.
@@ -12075,9 +12730,19 @@ type Mutation {
   deleteTenantFieldSchema(input: DeleteTenantFieldSchemaInput!): DeleteTenantFieldSchemaOutput!
 
   """
+  Permanently deletes an account field schema and all field values stored against it across all accounts. This action cannot be undone. Requires `tenantFieldSchema:delete` permission.
+  """
+  deleteAccountFieldSchema(input: DeleteAccountFieldSchemaInput!): DeleteAccountFieldSchemaOutput!
+
+  """
   Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, or `userReferenceValues`). Requires `tenant:edit` permission.
   """
   upsertTenantField(input: UpsertTenantFieldInput!): UpsertTenantFieldOutput!
+
+  """
+  Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, or `userReferenceValues`). Requires `tenant:edit` permission.
+  """
+  upsertAccountField(input: UpsertAccountFieldInput!): UpsertAccountFieldOutput!
 
   """
   Clears a tenant's value for a specific field without removing the field schema itself. Use this to unset a field value while keeping the schema available for other tenants. Requires `tenant:edit` permission.
@@ -12085,14 +12750,29 @@ type Mutation {
   deleteTenantField(input: DeleteTenantFieldInput!): DeleteTenantFieldOutput!
 
   """
+  Clears an account's value for a specific field without removing the field schema itself. Use this to unset a field value while keeping the schema available for other accounts. Requires `tenant:edit` permission.
+  """
+  deleteAccountField(input: DeleteAccountFieldInput!): DeleteAccountFieldOutput!
+
+  """
   Maps a tenant field schema to a built-in Plain concept such as `TIER`, enabling automatic tier assignment based on the field's value. Only one schema can be mapped to a given concept at a time.
   """
   setupTenantFieldSchemaMapping(input: SetupTenantFieldSchemaMappingInput!): SetupTenantFieldSchemaMappingOutput!
 
   """
+  Maps an account field schema to a built-in Plain concept such as `TIER`, enabling automatic tier assignment based on the field's value. Only one schema can be mapped to a given concept at a time.
+  """
+  setupAccountFieldSchemaMapping(input: SetupAccountFieldSchemaMappingInput!): SetupAccountFieldSchemaMappingOutput!
+
+  """
   Removes the mapping between a tenant field schema and a built-in Plain concept, disabling any automatic behaviour (such as tier assignment) driven by that field.
   """
   removeTenantFieldSchemaMapping(input: RemoveTenantFieldSchemaMappingInput!): RemoveTenantFieldSchemaMappingOutput!
+
+  """
+  Removes the mapping between an account field schema and a built-in Plain concept, disabling any automatic behaviour (such as tier assignment) driven by that field.
+  """
+  removeAccountFieldSchemaMapping(input: RemoveAccountFieldSchemaMappingInput!): RemoveAccountFieldSchemaMappingOutput!
 
   """
   Creates a new company or updates an existing one identified by `companyId` or `companyDomainName`. The output includes a `result` field of either `CREATED` or `UPDATED` so you can tell which happened. You can pass a bare domain (e.g. `plain.com`) or a full URL and Plain will extract the domain. Requires the `company:create` and `company:edit` permissions.
@@ -12217,12 +12897,12 @@ type Mutation {
   deleteTier(input: DeleteTierInput!): DeleteTierOutput!
 
   """
-  Create a service level agreement (SLA) for a tier. Each SLA commits your team to responding within a specified time window and can be scoped by thread priority and/or label type. Provide either `firstResponseTimeMinutes` (time from thread creation to first reply) or `nextResponseTimeMinutes` (time from each customer message to the next reply), but not both in a single call. A `nextResponseTimeMinutes` SLA can only be created if a `firstResponseTimeMinutes` SLA already exists on the same tier. Requires the `serviceLevelAgreement:create` permission.
+  Create a service level agreement (SLA) for a tier. Each SLA commits your team to a time target and can be scoped by thread priority and/or label type. Provide exactly one of `firstResponseTimeMinutes` (time from thread creation to first reply), `nextResponseTimeMinutes` (time from each customer message to the next reply), `firstResolutionTimeMinutes` (time from thread creation to first Done), or `totalResolutionTimeMinutes` (time from thread creation to Done, including after reopen). A `nextResponseTimeMinutes` SLA can only be created if a `firstResponseTimeMinutes` SLA already exists on the same tier. Requires the `serviceLevelAgreement:create` permission.
   """
   createServiceLevelAgreement(input: CreateServiceLevelAgreementInput!): CreateServiceLevelAgreementOutput!
 
   """
-  Update an existing SLA's time target, priority or label filter, business-hours setting, or breach actions. You cannot change an SLA's type (first-response vs. next-response) after creation. Use the field-level wrapper inputs (e.g. `{ "value": 60 }`) for the fields you want to change and omit the rest. Requires the `serviceLevelAgreement:edit` permission.
+  Update an existing SLA's time target, priority or label filter, business-hours setting, or breach actions. You cannot change an SLA's type after creation. Use the field-level wrapper inputs (e.g. `{ "value": 60 }`) for the fields you want to change and omit the rest. Requires the `serviceLevelAgreement:edit` permission.
   """
   updateServiceLevelAgreement(input: UpdateServiceLevelAgreementInput!): UpdateServiceLevelAgreementOutput!
 
@@ -12267,19 +12947,24 @@ type Mutation {
   updateTenantTier(input: UpdateTenantTierInput!): UpdateTenantTierOutput!
 
   """
-  Create or update the workspace's business hours using a per-weekday schedule. Deprecated — use syncBusinessHoursSlots instead, which supports multiple timezones and overlapping slots.
+  Sets the tier for a single account, identified by its Plain ID or external ID. Pass a null `tierIdentifier` to remove the account from its current tier. Use `addMembersToTier` when you need to move multiple accounts at once. Requires the `tierMembership:read` and `tierMembership:create` permissions.
   """
-  upsertBusinessHours(input: UpsertBusinessHoursInput!): UpsertBusinessHoursOutput! @deprecated(reason: "Use syncBusinessHoursSlots instead.")
+  updateAccountTier(input: UpdateAccountTierInput!): UpdateAccountTierOutput!
 
   """
-  Delete the workspace's business hours configuration. Deprecated — call syncBusinessHoursSlots with an empty slots array to clear business hours instead.
+  Create or update the workspace's business hours using a per-weekday schedule. Deprecated — use createBusinessHoursSchedule or updateBusinessHoursSchedule instead, which support multiple named, timezone-aware schedules.
   """
-  deleteBusinessHours: DeleteBusinessHoursOutput! @deprecated(reason: "Use syncBusinessHoursSlots instead.")
+  upsertBusinessHours(input: UpsertBusinessHoursInput!): UpsertBusinessHoursOutput! @deprecated(reason: "Use createBusinessHoursSchedule or updateBusinessHoursSchedule instead.")
 
   """
-  Replace the workspace's business hours with the provided set of slots. Each slot defines a weekday, a timezone, and open/close times (HH:MM format). Passing an empty array clears all business hours. This mutation is idempotent and completely replaces any existing slots, including any previously set via the deprecated upsertBusinessHours mutation. Requires the `businessHours:edit` permission.
+  Delete the workspace's business hours configuration. Deprecated — use deleteBusinessHoursSchedule instead.
   """
-  syncBusinessHoursSlots(input: SyncBusinessHoursSlotsInput!): SyncBusinessHoursSlotsOutput!
+  deleteBusinessHours: DeleteBusinessHoursOutput! @deprecated(reason: "Use deleteBusinessHoursSchedule instead.")
+
+  """
+  Replace the workspace's business hours with the provided set of slots. Deprecated — use createBusinessHoursSchedule or updateBusinessHoursSchedule instead, which support multiple named schedules. Only works while the workspace has exactly one business hours schedule; otherwise it returns an error. Requires the `businessHours:edit` permission.
+  """
+  syncBusinessHoursSlots(input: SyncBusinessHoursSlotsInput!): SyncBusinessHoursSlotsOutput! @deprecated(reason: "Use createBusinessHoursSchedule or updateBusinessHoursSchedule instead.")
 
   """
   Create a new named business hours schedule, optionally with its opening slots. Overlapping and adjacent slots are merged on write. Requires the `businessHours:create` permission.
@@ -12399,6 +13084,11 @@ type Mutation {
   Changes how tenants are assigned for an existing thread channel association. Requires the `threadChannelAssociation:edit` permission.
   """
   updateThreadChannelAssociationTenantMembershipPolicy(input: UpdateThreadChannelAssociationTenantMembershipPolicyInput!): UpdateThreadChannelAssociationTenantMembershipPolicyOutput!
+
+  """
+  Changes how accounts are assigned for an existing thread channel association. Requires the `threadChannelAssociation:edit` permission.
+  """
+  updateThreadChannelAssociationAccountMembershipPolicy(input: UpdateThreadChannelAssociationAccountMembershipPolicyInput!): UpdateThreadChannelAssociationAccountMembershipPolicyOutput!
 
   """
   Removes a thread channel association, unlinking the connected Slack channel from its associated company or tenant. Requires the `threadChannelAssociation:delete` permission.
@@ -12572,6 +13262,14 @@ type Mutation {
   Returns the updated notifications. Requires the `user:read` permission.
   """
   updateInternalNotifications(input: UpdateInternalNotificationsInput!): UpdateInternalNotificationsOutput!
+
+  """
+  Updates every internal notification belonging to the current user that matches `filters`.
+  Archived notifications are excluded. Provide exactly one of `readAt` or `archivedAt`.
+  Returns how many rows changed. Rows that already had the requested state are not counted.
+  Requires the `user:read` permission.
+  """
+  updateAllMyInternalNotifications(input: UpdateAllMyInternalNotificationsInput!): UpdateAllMyInternalNotificationsOutput!
 
   """
   Upsert up to 50 tenant field schemas from an external system using their externalFieldId for idempotency. Set isDeleted: true on a schema to mark it as deleted in Plain. Returns an ImportResult with added, updated, and skipped counts.
@@ -13350,6 +14048,7 @@ enum DiscussionAgentType {
 
 enum DiscussionSourceEntityType {
   COMPANY
+  ACCOUNT
   TENANT
   LABEL
   CHANNEL
@@ -13640,6 +14339,14 @@ type ResolveDiscussionApprovalOutput {
   error: MutationError
 }
 
+input StopDiscussionTurnInput {
+  discussionId: ID!
+}
+
+type StopDiscussionTurnOutput {
+  error: MutationError
+}
+
 input ChangeThreadDiscussionStatusInput {
   threadDiscussionId: ID!
   status: ThreadDiscussionStatus!
@@ -13703,6 +14410,16 @@ input UpdateTenantTierInput {
 
 type UpdateTenantTierOutput {
   tenantTierMembership: TenantTierMembership
+  error: MutationError
+}
+
+input UpdateAccountTierInput {
+  tierIdentifier: TierIdentifierInput
+  accountIdentifier: AccountIdentifierInput!
+}
+
+type UpdateAccountTierOutput {
+  accountTierMembership: AccountTierMembership
   error: MutationError
 }
 
@@ -13775,6 +14492,21 @@ input ServiceLevelAgreementInput {
   nextResponseTimeMinutes: Int
 
   """
+  Set this to configure a first-resolution-time SLA. The clock starts when the thread arrives and the SLA is met when the thread is first marked Done.
+  """
+  firstResolutionTimeMinutes: Int
+
+  """
+  Set this to configure a total-resolution-time SLA. The clock starts when the thread arrives and continues across reopenings until the thread is marked Done.
+  """
+  totalResolutionTimeMinutes: Int
+
+  """
+  The thread status details that pause the resolution-time clock. Only valid with firstResolutionTimeMinutes or totalResolutionTimeMinutes. Defaults to [WAITING_FOR_CUSTOMER]. Pass an empty array to keep the clock running.
+  """
+  pauseOnStatusDetailTypes: [ServiceLevelAgreementPauseStatusDetailType!]
+
+  """
   This SLA can only be applied to a thread if it has one of these priority values. If not provided, it defaults to all priorities (0, 1, 2 and 3).
   """
   threadPriorityFilter: [Int!]
@@ -13785,9 +14517,9 @@ input ServiceLevelAgreementInput {
   threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilterInput
 
   """
-  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7.
+  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
   """
-  useBusinessHoursOnly: Boolean
+  useBusinessHoursOnly: Boolean @deprecated(reason: "Use businessHoursScheduleIds to specify which business hours are linked to this SLA.")
 
   """
   The business hours schedules to track this SLA against. Replaces useBusinessHoursOnly. Pass an empty array for the SLA to be tracked 24/7.
@@ -13811,6 +14543,7 @@ input BeforeBreachActionInput {
 input TierMemberIdentifierInput {
   companyId: ID
   tenantId: ID
+  accountId: ID
 }
 
 type CreateTierOutput {
@@ -13855,6 +14588,10 @@ input IntArrayInput {
   value: [Int!]!
 }
 
+input ServiceLevelAgreementPauseStatusDetailTypeArrayInput {
+  value: [ServiceLevelAgreementPauseStatusDetailType!]!
+}
+
 input UpdateServiceLevelAgreementInput {
   """The ID of the SLA to update."""
   serviceLevelAgreementId: ID!
@@ -13870,6 +14607,21 @@ input UpdateServiceLevelAgreementInput {
   nextResponseTimeMinutes: IntInput
 
   """
+  This SLA will breach if the thread is not first marked Done within this many minutes. May only be provided if the service level agreement is a first-resolution-time SLA.
+  """
+  firstResolutionTimeMinutes: IntInput
+
+  """
+  This SLA will breach if the thread is not marked Done within this many minutes of creation, including after it is reopened. May only be provided if the service level agreement is a total-resolution-time SLA.
+  """
+  totalResolutionTimeMinutes: IntInput
+
+  """
+  The thread status details that pause the resolution-time clock. May only be provided if the service level agreement is a first- or total-resolution-time SLA. Pass an empty array to keep the clock running.
+  """
+  pauseOnStatusDetailTypes: ServiceLevelAgreementPauseStatusDetailTypeArrayInput
+
+  """
   This SLA can only be applied to a thread if it has one of these priority values. If not provided, it defaults to all priorities (0, 1, 2 and 3).
   """
   threadPriorityFilter: IntArrayInput
@@ -13880,9 +14632,9 @@ input UpdateServiceLevelAgreementInput {
   threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilterInput
 
   """
-  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7.
+  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
   """
-  useBusinessHoursOnly: OptionalBooleanInput
+  useBusinessHoursOnly: OptionalBooleanInput @deprecated(reason: "Use businessHoursScheduleIds to specify which business hours are linked to this SLA.")
 
   """
   The business hours schedules to track this SLA against. Replaces useBusinessHoursOnly. Pass an empty array to clear business hours associations for the SLA to be tracked 24/7.
@@ -13921,7 +14673,7 @@ input ServiceLevelAgreementPolicyTargetInput {
   type: ServiceLevelAgreementType!
 
   """
-  This target will breach if it does not receive a response within this many minutes.
+  This target will breach if the SLA is not met within this many minutes.
   """
   minutes: Int!
   warnBefore: ServiceLevelAgreementWarnBeforeInput!
@@ -13930,6 +14682,11 @@ input ServiceLevelAgreementPolicyTargetInput {
   The business hours schedules to track this target against. Leave it out or pass an empty array for the target to be tracked 24/7; leave it out when updating and the target keeps the schedules it already has.
   """
   businessHoursScheduleIds: [ID!]
+
+  """
+  The thread status details that pause the resolution-time clock. Only valid when type is FIRST_RESOLUTION_TIME or TOTAL_RESOLUTION_TIME. Defaults to [WAITING_FOR_CUSTOMER]. Pass an empty array to keep the clock running.
+  """
+  pauseOnStatusDetailTypes: [ServiceLevelAgreementPauseStatusDetailType!]
 }
 
 input CreateServiceLevelAgreementPolicyInput {
@@ -13999,6 +14756,25 @@ enum TenantSource {
   EMAIL_DOMAIN
 }
 
+enum AccountSource {
+  """Account was created directly via the Plain API."""
+  API
+
+  """Account was synced from a Salesforce integration."""
+  SALESFORCE
+
+  """Account was synced from a HubSpot integration."""
+  HUBSPOT
+
+  """Account was synced from an Attio integration."""
+  ATTIO
+
+  """
+  Account was created automatically based on the customer's email domain.
+  """
+  EMAIL_DOMAIN
+}
+
 type Tenant {
   id: ID!
   name: String!
@@ -14046,6 +14822,66 @@ type Tenant {
 
   """
   Whether customers whose email domain matches this tenant's primary or alternate domains are automatically added to it.
+  """
+  isDomainAutoJoinEnabled: Boolean!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+"""
+An account is the same record as a tenant, with the same ID. Every tenant field and operation has an account equivalent.
+"""
+type Account {
+  id: ID!
+  name: String!
+
+  """
+  Your system's identifier for this account, set when the account was created via the API or an integration. Use this to map back to the corresponding record in your own database.
+  """
+  externalId: String!
+
+  """
+  An optional URL linking to the account in your own product or admin panel.
+  """
+  url: String
+
+  """
+  Indicates how this account was created: directly via the API, synced from Salesforce, or synced from HubSpot.
+  """
+  source: AccountSource!
+
+  """
+  The support tier assigned to this account, used to apply SLAs and prioritisation rules to threads belonging to this account.
+  """
+  tier: Tier
+
+  """
+  Slack (or other channel) associations configured for this account, used to route new threads to the appropriate channel automatically.
+  """
+  threadChannelAssociations: [ThreadChannelAssociation!]!
+
+  """
+  Custom field values stored on this account, corresponding to the workspace's account field schemas.
+  """
+  accountFields: [AccountField!]!
+
+  """
+  The primary domain name associated with this account (e.g. `acme.com`).
+  """
+  primaryDomain: String
+
+  """Alternate domain names associated with this account."""
+  alternateDomains: [String!]!
+
+  """
+  URL of the account's logo image. Pass an optional `size` argument (pixels) to request a resized version. Null if no logo is set.
+  """
+  logoUrl(size: Int): String
+
+  """
+  Whether customers whose email domain matches this account's primary or alternate domains are automatically added to it.
   """
   isDomainAutoJoinEnabled: Boolean!
   createdAt: DateTime!
@@ -14281,8 +15117,239 @@ type TenantField {
   updatedBy: InternalActor!
 }
 
+"""
+The data type of an account field schema, determining which value field to use when upserting an account field.
+"""
+enum AccountFieldType {
+  """A plain text string value."""
+  STRING_TYPE
+
+  """A floating-point numeric value."""
+  NUMBER_TYPE
+
+  """A true/false boolean value."""
+  BOOLEAN_TYPE
+
+  """An array of string values."""
+  STRING_ARRAY
+
+  """An ISO 8601 date-time value."""
+  DATETIME_TYPE
+
+  """One or more references to Plain users by ID."""
+  USER_REFERENCE_TYPE
+}
+
+enum AccountFieldMappingConcept {
+  TIER
+}
+
+type AccountFieldSchema {
+  id: ID!
+
+  """
+  The origin of this schema, typically the service integration key or 'api' for manually created schemas.
+  """
+  source: String!
+
+  """
+  Your identifier for this field. Together with `source` this uniquely identifies the schema and is used as the upsert key.
+  """
+  externalFieldId: ID!
+  label: String!
+  type: AccountFieldType!
+
+  """
+  For enum-style fields, the list of allowed string values. Null for all other field types.
+  """
+  options: [String!]
+
+  """Whether this field is displayed in the Plain UI."""
+  isVisible: Boolean!
+
+  """
+  Display order of this field relative to other account field schemas (lower numbers appear first).
+  """
+  order: Int!
+
+  """
+  The concept this field maps to, if any. Used for automatic tier assignment.
+  """
+  mapsTo: AccountFieldMappingConcept
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
+type AccountFieldSchemaEdge {
+  cursor: String!
+  node: AccountFieldSchema!
+}
+
+type AccountFieldSchemaConnection {
+  edges: [AccountFieldSchemaEdge!]!
+  pageInfo: PageInfo!
+}
+
+input AccountFieldSchemasFilter {
+  source: String
+  isVisible: Boolean
+}
+
+input AccountFieldSchemaInput {
+  """New schemas can only have source: 'api'."""
+  source: String!
+  externalFieldId: ID!
+  label: String!
+
+  """
+  The field type. Set when the schema is first created and immutable thereafter: for an existing schema (matched on `source` and `externalFieldId`) the type must match the stored value, otherwise the upsert is rejected. The label, options, visibility and order can still be updated.
+  """
+  type: AccountFieldType!
+  options: [String!]
+  isVisible: Boolean!
+  order: Int!
+}
+
+input UpsertAccountFieldSchemaInput {
+  accountFieldSchemas: [AccountFieldSchemaInput!]!
+}
+
+type UpsertAccountFieldSchemaOutput {
+  accountFieldSchemas: [AccountFieldSchema!]!
+
+  """
+  The outcome per input schema, ordered to match input.accountFieldSchemas.
+  """
+  results: [UpsertResult!]
+  error: MutationError
+}
+
+input AccountFieldIdentifier {
+  """
+  Plain's internal identifier for the account. Provide exactly one of `accountId` or `accountIdentifier`.
+  """
+  accountId: ID
+
+  """
+  Identify the account by Plain's internal id or your own external id. Provide exactly one of `accountId` or `accountIdentifier`.
+  """
+  accountIdentifier: AccountIdentifierInput
+  externalFieldId: ID!
+}
+
+input UpsertAccountFieldInput {
+  accountFieldIdentifier: AccountFieldIdentifier!
+  type: AccountFieldType!
+  stringValue: String
+  numberValue: Float
+  booleanValue: Boolean
+  arrayValue: [String!]
+  dateValue: String
+  userReferenceValues: [ID!]
+}
+
+type UpsertAccountFieldOutput {
+  accountField: AccountField
+  result: UpsertResult
+  error: MutationError
+}
+
+input DeleteAccountFieldInput {
+  accountFieldId: ID!
+}
+
+type DeleteAccountFieldOutput {
+  accountField: AccountField
+  error: MutationError
+}
+
+input DeleteAccountFieldSchemaInput {
+  accountFieldSchemaId: ID!
+}
+
+type DeleteAccountFieldSchemaOutput {
+  accountFieldSchema: AccountFieldSchema
+  error: MutationError
+}
+
+input SetupAccountFieldSchemaMappingInput {
+  accountFieldSchemaId: ID!
+  mapsTo: AccountFieldMappingConcept!
+}
+
+type SetupAccountFieldSchemaMappingOutput {
+  accountFieldSchema: AccountFieldSchema
+  error: MutationError
+}
+
+input RemoveAccountFieldSchemaMappingInput {
+  accountFieldSchemaId: ID!
+}
+
+type RemoveAccountFieldSchemaMappingOutput {
+  accountFieldSchema: AccountFieldSchema
+  error: MutationError
+}
+
+union AccountFieldValue = AccountFieldStringValue | AccountFieldNumberValue | AccountFieldBooleanValue | AccountFieldStringArrayValue | AccountFieldDateTimeValue | AccountFieldUserReferenceValue
+
+type AccountFieldStringValue {
+  stringValue: String!
+}
+
+type AccountFieldNumberValue {
+  numberValue: Float!
+}
+
+type AccountFieldBooleanValue {
+  booleanValue: Boolean!
+}
+
+type AccountFieldStringArrayValue {
+  arrayValue: [String!]!
+}
+
+type AccountFieldDateTimeValue {
+  dateValue: DateTime!
+}
+
+type AccountFieldUserReferenceValue {
+  userReferenceValues: [ID!]!
+  users: [User!]!
+}
+
+type AccountField {
+  id: ID!
+
+  """
+  The origin of this field value, matching the `source` of the corresponding `AccountFieldSchema`. Null for values stored before sources were recorded.
+  """
+  source: String
+
+  """
+  References the `externalFieldId` of the corresponding `AccountFieldSchema`.
+  """
+  externalFieldId: ID!
+
+  """
+  The typed value stored for this field. The concrete union member matches the schema's `type`.
+  """
+  value: AccountFieldValue!
+  createdAt: DateTime!
+  createdBy: InternalActor!
+  updatedAt: DateTime!
+  updatedBy: InternalActor!
+}
+
 input TenantIdentifierInput {
   tenantId: ID
+  externalId: String
+}
+
+input AccountIdentifierInput {
+  accountId: ID
   externalId: String
 }
 
@@ -14293,6 +15360,16 @@ input CreateTenantInput {
 
 type CreateTenantOutput {
   tenant: Tenant
+  error: MutationError
+}
+
+input CreateAccountInput {
+  name: String!
+  externalId: String!
+}
+
+type CreateAccountOutput {
+  account: Account
   error: MutationError
 }
 
@@ -14324,12 +15401,49 @@ type UpsertTenantOutput {
   error: MutationError
 }
 
+input UpsertAccountInput {
+  identifier: AccountIdentifierInput!
+  name: String!
+  externalId: String!
+  url: OptionalStringInput
+
+  """
+  The primary domain name associated with this account (e.g. `acme.com`). This field is in beta and may not be available to you by default.
+  """
+  primaryDomain: OptionalStringInput
+
+  """
+  Alternate domain names associated with this account. This field is in beta and may not be available to you by default.
+  """
+  alternateDomains: StringArrayInput
+
+  """
+  Whether customers whose email domain matches this account's primary or alternate domains are automatically added to it. This field is in beta and may not be available to you by default.
+  """
+  isDomainAutoJoinEnabled: BooleanInput
+}
+
+type UpsertAccountOutput {
+  account: Account
+  result: UpsertResult
+  error: MutationError
+}
+
 input DeleteTenantInput {
   tenantIdentifier: TenantIdentifierInput!
 }
 
 type DeleteTenantOutput {
   tenant: Tenant
+  error: MutationError
+}
+
+input DeleteAccountInput {
+  accountIdentifier: AccountIdentifierInput!
+}
+
+type DeleteAccountOutput {
+  account: Account
   error: MutationError
 }
 
@@ -14558,6 +15672,12 @@ type MarkThreadAsTodoOutput {
 input ChangeThreadPriorityInput {
   threadId: ID!
   priority: Int!
+
+  """
+  Only change priority if it is still Normal and has not been set since thread creation.
+  Otherwise return the unchanged thread. Defaults to false.
+  """
+  onlyIfDefault: Boolean
 }
 
 type ChangeThreadPriorityOutput {
@@ -14613,10 +15733,21 @@ type SnoozeThreadOutput {
   error: MutationError
 }
 
+enum AgentMode {
+  LIVE
+  SHADOW
+}
+
 input AssignThreadInput {
   threadId: ID!
   userId: ID
   machineUserId: ID
+  onlyIfUnassigned: Boolean
+
+  """
+  The mode to assign the AI agent in. LIVE replies to customers. SHADOW drafts replies without sending them.
+  """
+  agentMode: AgentMode
 }
 
 type AssignThreadOutput {
@@ -14850,6 +15981,26 @@ enum TenantMembershipPolicy {
 }
 
 """
+Controls how accounts are assigned when a message from an associated channel is received.
+"""
+enum AccountMembershipPolicy {
+  """
+  Do not add the customer to the account or assign the account to the thread
+  """
+  DO_NOT_ADD
+
+  """
+  Add the customer to the account and assign the account to the thread if the user has no email domain available
+  """
+  IF_DOMAIN_NOT_AVAILABLE
+
+  """
+  Always add the customer to the account and assign the account to the thread
+  """
+  ALWAYS_ADD
+}
+
+"""
 A link between a connected messaging channel and a company or tenant. When a message arrives in the associated channel, Plain uses this association to route threads to the correct customer context. Implemented by SlackThreadChannelAssociation.
 """
 interface ThreadChannelAssociation {
@@ -14867,6 +16018,16 @@ interface ThreadChannelAssociation {
 
   """How tenants are assigned when a message from this channel is received."""
   tenantMembershipPolicy: TenantMembershipPolicy!
+
+  """
+  The ID of the account this channel is associated with. Null if the association targets a company instead.
+  """
+  accountId: ID
+
+  """
+  How accounts are assigned when a message from this channel is received.
+  """
+  accountMembershipPolicy: AccountMembershipPolicy!
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -14879,6 +16040,8 @@ type SlackThreadChannelAssociation implements ThreadChannelAssociation {
   companyId: ID
   tenantId: ID
   tenantMembershipPolicy: TenantMembershipPolicy!
+  accountId: ID
+  accountMembershipPolicy: AccountMembershipPolicy!
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -14899,6 +16062,12 @@ input CreateThreadChannelAssociationInput {
   How tenants are assigned when a message from this channel is received. Defaults to ALWAYS_ADD.
   """
   tenantMembershipPolicy: TenantMembershipPolicy
+  accountIdentifier: AccountIdentifierInput
+
+  """
+  How accounts are assigned when a message from this channel is received. Defaults to ALWAYS_ADD.
+  """
+  accountMembershipPolicy: AccountMembershipPolicy
 }
 
 type CreateThreadChannelAssociationOutput {
@@ -14912,6 +16081,16 @@ input UpdateThreadChannelAssociationTenantMembershipPolicyInput {
 }
 
 type UpdateThreadChannelAssociationTenantMembershipPolicyOutput {
+  threadChannelAssociation: ThreadChannelAssociation
+  error: MutationError
+}
+
+input UpdateThreadChannelAssociationAccountMembershipPolicyInput {
+  threadChannelAssociationId: ID!
+  accountMembershipPolicy: AccountMembershipPolicy!
+}
+
+type UpdateThreadChannelAssociationAccountMembershipPolicyOutput {
   threadChannelAssociation: ThreadChannelAssociation
   error: MutationError
 }
@@ -15130,6 +16309,11 @@ type Thread {
   """
   additionalAssignees: [ThreadAssignee!]!
 
+  """
+  The mode the AI agent is assigned in on this thread. LIVE replies to customers. SHADOW drafts replies without sending them.
+  """
+  aiAgentMode: AgentMode
+
   """The labels attached to this thread."""
   labels: [Label!]!
 
@@ -15184,8 +16368,16 @@ type Thread {
   """
   supportEmailAddresses: [String!]!
 
+  """
+  Whether any of this thread's support email addresses is on a Plain-managed (demo) domain.
+  """
+  isFromPlainManagedDomain: Boolean!
+
   """The tenant this thread is associated with."""
   tenant: Tenant
+
+  """The account this thread is associated with."""
+  account: Account
 
   """
   The tier this thread is associated with. Tiers mandate the SLAs for this thread.
@@ -15340,17 +16532,15 @@ enum ServiceLevelAgreementStatus {
   """
   IMMINENT_BREACH
 
-  """
-  The SLA deadline has passed and no compliant response has been sent yet.
-  """
+  """The SLA deadline has passed and the SLA has not yet been met."""
   BREACHING
 
   """
-  The SLA deadline passed without a compliant response and the thread was subsequently resolved.
+  The SLA deadline passed without being met, and the tracker was subsequently completed.
   """
   BREACHED
 
-  """A compliant response was sent within the SLA deadline."""
+  """The SLA was met within the deadline."""
   ACHIEVED
 
   """
@@ -15362,11 +16552,31 @@ enum ServiceLevelAgreementStatus {
 type ServiceLevelAgreementStatusDetailPending {
   """The time when this SLA will breach."""
   breachingAt: DateTime!
+
+  """
+  When set, the SLA clock is paused at this instant. Present for resolution-time SLAs while the thread is in a pause status.
+  """
+  pausedAt: DateTime
+
+  """
+  Business minutes remaining when the SLA clock was paused. Null when the SLA is not paused. Never negative.
+  """
+  remainingMinutesAtPause: Int
 }
 
 type ServiceLevelAgreementStatusDetailImminentBreach {
   """The time when this SLA will breach."""
   breachingAt: DateTime!
+
+  """
+  When set, the SLA clock is paused at this instant. Present for resolution-time SLAs while the thread is in a pause status.
+  """
+  pausedAt: DateTime
+
+  """
+  Business minutes remaining when the SLA clock was paused. Null when the SLA is not paused. Never negative.
+  """
+  remainingMinutesAtPause: Int
 }
 
 type ServiceLevelAgreementStatusDetailBreaching {
@@ -15399,14 +16609,24 @@ A snapshot of the current SLA tracking status for a thread, broken down by SLA t
 """
 type ServiceLevelAgreementStatusSummary {
   """
-  Current tracking status for the first-response-time SLA, if one applies to this thread's tier.
+  Current tracking status for the first-response-time SLA, if one applies to this thread.
   """
   firstResponseTime: ServiceLevelAgreementStatusDetail
 
   """
-  Current tracking status for the next-response-time SLA, if one applies to this thread's tier.
+  Current tracking status for the next-response-time SLA, if one applies to this thread.
   """
   nextResponseTime: ServiceLevelAgreementStatusDetail
+
+  """
+  Current tracking status for the first-resolution-time SLA, if one applies to this thread.
+  """
+  firstResolutionTime: ServiceLevelAgreementStatusDetail
+
+  """
+  Current tracking status for the total-resolution-time SLA, if one applies to this thread.
+  """
+  totalResolutionTime: ServiceLevelAgreementStatusDetail
 }
 
 """Only one of the fields can be set."""
@@ -15464,6 +16684,9 @@ input CreateThreadInput {
 
   """A thread may be assigned to a specific tenant."""
   tenantIdentifier: TenantIdentifierInput
+
+  """A thread may be assigned to a specific account."""
+  accountIdentifier: AccountIdentifierInput
 
   """
   The channel to create the thread for. Currently supported: API, EMAIL, SLACK, MS_TEAMS, CHAT, or INTERNAL. Defaults to API.
@@ -15701,6 +16924,11 @@ type WebhookTarget {
   When false, Plain will not attempt to deliver any events to this target until it is re-enabled.
   """
   isEnabled: Boolean!
+
+  """
+  Custom HTTP headers sent with every delivery to this target, e.g. an `Authorization` header for endpoints that require bearer-token auth. Header values are stored encrypted and never returned — reads expose only the configured header names.
+  """
+  headers: [WebhookTargetHeader!]!
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -15711,8 +16939,27 @@ type WebhookTargetEventSubscription {
   eventType: String!
 }
 
+"""
+A custom HTTP header sent with every webhook delivery. Only the name is exposed — values can be auth tokens and are never returned; supply a value via an input to set or change it.
+"""
+type WebhookTargetHeader {
+  """The header name (min length: 1, max length: 100)."""
+  name: String!
+}
+
 input WebhookTargetEventSubscriptionInput {
   eventType: String!
+}
+
+"""A custom HTTP header sent with every webhook delivery."""
+input WebhookTargetHeaderInput {
+  """
+  The header name (min length: 1, max length: 100). Names are case-insensitive; reserved headers set by Plain (e.g. `Content-Type`, `User-Agent`) can't be used.
+  """
+  name: String!
+
+  """The header value (min length: 1, max length: 1000)."""
+  value: String!
 }
 
 input CreateWebhookTargetInput {
@@ -15721,6 +16968,11 @@ input CreateWebhookTargetInput {
   isEnabled: Boolean!
   description: String!
   version: String
+
+  """
+  Custom HTTP headers to send with every delivery to this target. Defaults to none.
+  """
+  headers: [WebhookTargetHeaderInput!]
 }
 
 input UpdateWebhookTargetInput {
@@ -15730,6 +16982,11 @@ input UpdateWebhookTargetInput {
   isEnabled: BooleanInput
   description: StringInput
   version: StringInput
+
+  """
+  If provided, replaces the full set of custom HTTP headers. Pass an empty list to remove all headers.
+  """
+  headers: [WebhookTargetHeaderInput!]
 }
 
 input DeleteWebhookTargetInput {
@@ -16128,6 +17385,21 @@ input CreateWorkspaceSlackIntegrationInput {
   redirectUrl: String!
 }
 
+"""
+The notification channel is chosen afterwards with the notification/slack/channel_id setting. Plain posts notifications for this integration only after that setting is present.
+"""
+input CreateWorkspaceSlackIntegrationFromAuthInput {
+  """
+  The workspace Slack channel integration whose Slack connection the notifications should use.
+  """
+  slackChannelIntegrationId: ID!
+}
+
+type CreateWorkspaceSlackIntegrationFromAuthOutput {
+  integration: WorkspaceSlackIntegration
+  error: MutationError
+}
+
 type CreateWorkspaceSlackIntegrationOutput {
   integration: WorkspaceSlackIntegration
   error: MutationError
@@ -16272,11 +17544,90 @@ type SlackChannelMembership {
   slackChannelId: ID!
 }
 
+input BulkJoinSlackChannelsRuleInput {
+  """
+  The channel name prefix of the rule. An empty string means the rule has no prefix.
+  """
+  channelNamePrefix: String!
+
+  """
+  The channel name suffix of the rule. An empty string means the rule has no suffix.
+  """
+  channelNameSuffix: String!
+}
+
 input BulkJoinSlackChannelsInput {
   integrationId: ID!
+
+  """
+  When set, join only the public channels matching this auto-join rule.
+  Omit to join channels matching every rule on the integration.
+  The rule is identified by the prefix and suffix saved on the integration.
+  """
+  rule: BulkJoinSlackChannelsRuleInput
 }
 
 type BulkJoinSlackChannelsOutput {
+  error: MutationError
+}
+
+"""
+Identifies the Slack message to ingest. Optional thread attributes are applied only when a new
+thread is created. An already-ingested message returns the existing thread and ignores them.
+When set, these values win over the Slack channel association and other inferred defaults.
+"""
+input CreateThreadFromSlackMessageInput {
+  """
+  The Slack channel the message is in, as provided by Slack (e.g. C0123ABCD).
+  """
+  slackChannelId: String!
+
+  """
+  The Slack `ts` of the top-level message to ingest. Replies are rejected.
+  """
+  slackMessageTimestamp: String!
+
+  """
+  The title of the thread. When omitted, defaults to Slack message in #channel.
+  """
+  title: String
+
+  """
+  The optional description for this thread. This is used to display a preview of the thread in the UI.
+  When omitted, the top-level Slack message text is used.
+  """
+  description: String
+
+  """Label types to attach to the thread upon creation."""
+  labelTypeIds: [ID!]
+
+  """When set, used instead of the Slack channel's tenant association."""
+  tenantIdentifier: TenantIdentifierInput
+
+  """When set, used instead of the Slack channel's account association."""
+  accountIdentifier: AccountIdentifierInput
+
+  """
+  The priority of the thread. Valid values are 0, 1, 2, 3, from most to least urgent, defaults to 2 (normal).
+  """
+  priority: Int
+
+  """
+  The external ID of this thread. You can use this field to store your own unique identifier for this thread.
+  """
+  externalId: ID
+
+  """Thread fields to attach to the thread upon creation."""
+  threadFields: [CreateThreadFieldOnThreadInput!]
+}
+
+type CreateThreadFromSlackMessageOutput {
+  """
+  The thread, when this Slack message had already been ingested. Null when the request was
+  accepted and the thread is still being created — use `threadBySlackMessage`,
+  `threadBySlackPermalink`, or the `thread.thread_created` webhook to pick it up.
+  """
+  thread: Thread
   error: MutationError
 }
 
@@ -16360,6 +17711,12 @@ input ConnectedSlackChannelsFilter {
   channelTypes: [ConnectedSlackChannelType!]
   isEnabled: BooleanInput
   name: String
+
+  """
+  `value: true` omits the workspace's Slack test channel from the page and from `totalCount`.
+  `value: false`, `null`, and omitting the field include it.
+  """
+  excludeTestChannels: BooleanInput
 }
 
 type ConnectedSlackChannelConnection {
@@ -16441,6 +17798,11 @@ enum SlackIngestionMode {
 
   """A thread is created only when a user reacts with a specific emoji."""
   MANUAL
+
+  """
+  A thread is created only when the `createThreadFromSlackMessage` mutation is called for a message.
+  """
+  API_ONLY
 }
 
 """
@@ -16900,9 +18262,7 @@ type InternalNotificationChange {
 }
 
 """
-Emitted to the current user when one of their Sidekick sessions becomes unread
-(i.e. an agent response settled into IDLE). Carries the affected discussion id;
-clients typically refetch their sessions list on receipt.
+A change to one of the current user's Sidekick sessions; the subscription that delivers it says what changed.
 """
 type SidekickSessionsChange {
   discussionId: ID!
@@ -16996,6 +18356,11 @@ type Subscription {
   Fires for the current user whenever one of their Sidekick sessions receives a new agent response and becomes unread (i.e. the session settles into IDLE). Use the returned discussionId to refetch or highlight the relevant session. The session becomes read again when it is opened or explicitly marked read.
   """
   sidekickSessionsChanged: SidekickSessionsChange!
+
+  """
+  Fires for the current user whenever a Sidekick session they created, run by Plain's Sidekick or a custom agent, changes status: its agent starts working, waits on a tool call approval or settles, or the session is resolved or reopened. Delivered only to the session's creator, and it covers sessions started outside the app, such as one a workflow the user ran started on their behalf, so a session list can show them while they work. Use the returned discussionId to refetch; unlike sidekickSessionsChanged it does not mean the session is unread.
+  """
+  sidekickSessionStatusChanged: SidekickSessionsChange!
 }
 
 input UpsertCustomerGroupInput {
@@ -17121,9 +18486,21 @@ input BroadcastsFilter {
 """Query to search for tenants."""
 input TenantsSearchQuery {
   """
-  The term to search for. It must be at least 2 characters long. The search is case-insensitive on these two fields:
+  The term to search for. It must be at least 2 characters long. The search is case-insensitive on these fields:
   - the tenant name (partial match)
   - the tenant external id (exact match)
+  - the tenant primary and alternate domains (partial match)
+  """
+  term: String!
+}
+
+"""Query to search for accounts."""
+input AccountsSearchQuery {
+  """
+  The term to search for. It must be at least 2 characters long. The search is case-insensitive on these fields:
+  - the account name (partial match)
+  - the account external id (exact match)
+  - the account primary and alternate domains (partial match)
   """
   term: String!
 }
@@ -17139,6 +18516,20 @@ type TenantSearchResultEdge {
 
 type TenantSearchResultConnection {
   edges: [TenantSearchResultEdge!]!
+  pageInfo: PageInfo!
+}
+
+type AccountSearchResult {
+  account: Account!
+}
+
+type AccountSearchResultEdge {
+  cursor: String!
+  node: AccountSearchResult!
+}
+
+type AccountSearchResultConnection {
+  edges: [AccountSearchResultEdge!]!
   pageInfo: PageInfo!
 }
 
@@ -18142,6 +19533,16 @@ type UpdateThreadTenantOutput {
   error: MutationError
 }
 
+input UpdateThreadAccountInput {
+  threadId: ID!
+  accountIdentifier: AccountIdentifierInput
+}
+
+type UpdateThreadAccountOutput {
+  thread: Thread
+  error: MutationError
+}
+
 input UpdateThreadTierInput {
   threadId: ID!
   tierIdentifier: TierIdentifierInput
@@ -18223,6 +19624,36 @@ type SetCustomerTenantsOutput {
   error: MutationError
 }
 
+input AddCustomerToAccountsInput {
+  customerIdentifier: CustomerIdentifierInput!
+  accountIdentifiers: [AccountIdentifierInput!]!
+}
+
+input RemoveCustomerFromAccountsInput {
+  customerIdentifier: CustomerIdentifierInput!
+  accountIdentifiers: [AccountIdentifierInput!]!
+}
+
+input SetCustomerAccountsInput {
+  customerIdentifier: CustomerIdentifierInput!
+  accountIdentifiers: [AccountIdentifierInput!]!
+}
+
+type AddCustomerToAccountsOutput {
+  customer: Customer
+  error: MutationError
+}
+
+type RemoveCustomerFromAccountsOutput {
+  customer: Customer
+  error: MutationError
+}
+
+type SetCustomerAccountsOutput {
+  customer: Customer
+  error: MutationError
+}
+
 input CompaniesFilter {
   companyIds: [ID!]
 
@@ -18253,6 +19684,27 @@ input TenantsFilter {
   Filter to tenants whose tenant field values match all of the given field filters.
   """
   tenantFields: [TenantFieldFilter!]
+}
+
+input AccountsFilter {
+  accountIds: [ID!]
+
+  """
+  True to only return accounts that have been deleted. False to only return accounts that have not been deleted.
+  Omit to return all accounts.
+  """
+  isDeleted: Boolean
+  updatedAt: DatetimeFilter
+
+  """
+  Filter to accounts that belong to any of the given tiers, identified by their Plain ID or external ID.
+  """
+  tierIdentifiers: [TierIdentifierInput!]
+
+  """
+  Filter to accounts whose account field values match all of the given field filters.
+  """
+  accountFields: [AccountFieldFilter!]
 }
 
 enum BillingSubscriptionStatus {
@@ -18529,6 +19981,16 @@ type BillingTopupCreditBalance {
   type: BillingCreditBalanceType!
 
   """
+  Lifetime spendable credits granted on the top-up product, excluding expired credits. Unlike the monthly allowance, this never resets. Null when the credit ledger is unavailable or does not reconcile against remaining.
+  """
+  lifetimeGranted: Int
+
+  """
+  Lifetime credits consumed from the top-up product. Null when lifetimeGranted is unavailable.
+  """
+  lifetimeUsed: Int
+
+  """
   Credits remaining from purchased top-up bundles. Top-up credits do not expire and are used after the monthly allowance is exhausted.
   """
   remaining: Int!
@@ -18546,7 +20008,7 @@ input SidekickCreditUsageByDayInput {
   to: String!
 }
 
-"""Sidekick credit usage broken down by UTC day."""
+"""Credit usage broken down by UTC day."""
 type SidekickCreditUsageByDay {
   """
   One entry per day in the range that had usage, ordered by day ascending.
@@ -18554,16 +20016,100 @@ type SidekickCreditUsageByDay {
   days: [SidekickCreditUsageDay!]!
 }
 
-"""Sidekick credit usage for a single UTC day."""
+"""Credit usage for a single UTC day."""
 type SidekickCreditUsageDay {
   """Start of the UTC day this usage falls in."""
   day: DateTime!
 
-  """Credits charged across the sessions that resolved on this day."""
+  """Credits charged across the billable items that resolved on this day."""
   credits: Int!
 
-  """Number of Sidekick sessions that resolved on this day."""
+  """
+  Number of billable items that resolved on this day, not only Sidekick sessions.
+  """
   sessionCount: Int!
+}
+
+"""What kind of work a credit charge paid for."""
+enum CreditSpendKind {
+  """
+  A Sidekick session someone started in the app, over the API, or from Slack.
+  """
+  SIDEKICK_DISCUSSION
+
+  """A Sidekick session that a workflow started as one of its actions."""
+  SIDEKICK_WORKFLOW_ACTION
+
+  """A discussion handled by one of the workspace's own agents."""
+  CUSTOM_AGENT_DISCUSSION
+
+  """A thread assigned to one of the workspace's own agents."""
+  CUSTOM_AGENT_THREAD_ASSIGNMENT
+
+  """
+  An Ari outcome: a thread Ari handled that stayed closed for 7 days without a teammate taking over.
+  """
+  ARI_OUTCOME_RESOLUTION
+}
+
+"""How far along the billing pipeline a charge is."""
+enum CreditSpendStatus {
+  """
+  Computed and counted against the workspace, not yet sent to the billing provider.
+  """
+  RECORDED
+
+  """Sent to the billing provider."""
+  BILLED
+}
+
+"""One billable item and the credits it cost."""
+type CreditSpendItem {
+  id: ID!
+  kind: CreditSpendKind!
+
+  """A short human-readable name for the item, suitable for a table cell."""
+  label: String!
+
+  """
+  Who caused the spend. Null when nobody triggered it directly, for example a workflow that ran on an event rather than by hand.
+  """
+  actor: Actor
+
+  """
+  The workflow that caused the spend, when one did. Read `workflows` for its full definition.
+  """
+  workflowId: ID
+
+  """Name of the workflow that caused the spend, when one did."""
+  workflowName: String
+
+  """Credits charged for this item."""
+  credits: Int!
+
+  """When the underlying work resolved and the charge was computed."""
+  resolvedAt: DateTime!
+  status: CreditSpendStatus!
+
+  """
+  The thread this spend belongs to, when there is one. A discussion started without a thread has none.
+  """
+  threadId: ID
+
+  """
+  The discussion this spend belongs to, when there is one. A thread assignment charge has none.
+  """
+  discussionId: ID
+}
+
+type CreditSpendConnection {
+  edges: [CreditSpendEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CreditSpendEdge {
+  cursor: String!
+  node: CreditSpendItem!
 }
 
 """Whether metered Sidekick credits apply to the workspace."""
@@ -19174,6 +20720,11 @@ type HelpCenterAccessSettings {
   tenantIds: [String!]!
 
   """
+  IDs of accounts whose members are allowed to access this PRIVATE help center.
+  """
+  accountIds: [String!]!
+
+  """
   IDs of companies whose customers are allowed to access this PRIVATE help center.
   """
   companyIds: [String!]!
@@ -19539,6 +21090,7 @@ input HelpCenterPortalSettingsInput {
 input HelpCenterAccessSettingsInput {
   tierIds: [String!]
   tenantIds: [String!]
+  accountIds: [String!]
   companyIds: [String!]
   customerIds: [String!]
 }
@@ -19558,8 +21110,18 @@ type HelpCenterPortalSettingsOverrideCustomerTenants {
   customerIds: [String!]!
 }
 
+type HelpCenterPortalSettingsOverrideCustomerAccounts {
+  accountIds: [String!]!
+  customerIds: [String!]!
+}
+
 input HelpCenterPortalSettingsOverrideCustomerTenantsInput {
   tenantIds: [String!]
+  customerIds: [String!]
+}
+
+input HelpCenterPortalSettingsOverrideCustomerAccountsInput {
+  accountIds: [String!]
   customerIds: [String!]
 }
 
@@ -19568,6 +21130,8 @@ type HelpCenterPortalSettingsThreadVisibility {
   overrideCustomerCompany: HelpCenterPortalSettingsOverrideCustomerCompany
   customerTenants: Boolean!
   overrideCustomerTenants: HelpCenterPortalSettingsOverrideCustomerTenants
+  customerAccounts: Boolean!
+  overrideCustomerAccounts: HelpCenterPortalSettingsOverrideCustomerAccounts
 }
 
 input HelpCenterPortalSettingsThreadVisibilityInput {
@@ -19575,6 +21139,8 @@ input HelpCenterPortalSettingsThreadVisibilityInput {
   overrideCustomerCompany: HelpCenterPortalSettingsOverrideCustomerCompanyInput
   customerTenants: Boolean
   overrideCustomerTenants: HelpCenterPortalSettingsOverrideCustomerTenantsInput
+  customerAccounts: Boolean
+  overrideCustomerAccounts: HelpCenterPortalSettingsOverrideCustomerAccountsInput
 }
 
 enum HelpCenterPortalSettingsFormFieldType {
