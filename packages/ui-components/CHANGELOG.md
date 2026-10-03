@@ -1,5 +1,15 @@
 # @team-plain/ui-components
 
+## 13.0.1
+
+### Patch Changes
+
+- 818d901: Build the CommonJS output with tsdown instead of tsup. Exports are unchanged.
+- Updated dependencies [b9757b8]
+- Updated dependencies [818d901]
+- Updated dependencies [3abc931]
+  - @team-plain/graphql@4.0.0
+
 ## 13.0.0
 
 ### Patch Changes
