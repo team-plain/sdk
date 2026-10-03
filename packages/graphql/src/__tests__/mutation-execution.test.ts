@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PlainClient } from "../client.js";
-import { getRequestBody, graphqlResponse, mockFetch } from "./helpers.js";
+import { getRequestBody, graphqlResponse, mockFetch, sentQuery } from "./helpers.js";
 
 describe("mutation execution", () => {
   let fetchMock: ReturnType<typeof mockFetch>;
@@ -100,7 +100,7 @@ describe("mutation execution", () => {
     });
 
     const body = getRequestBody(fetchMock);
-    const query = body.query as string;
+    const query = sentQuery(body);
 
     // Operation definition
     expect(query).toMatch(/mutation AddLabels\(\$input: AddLabelsInput!\)/);
@@ -148,7 +148,7 @@ describe("mutation execution", () => {
 
     const body = getRequestBody(fetchMock);
     expect(body.variables).toEqual({ input: { name: "Acme", externalId: "acme_1" } });
-    const query = body.query as string;
+    const query = sentQuery(body);
     expect(query).toMatch(/mutation CreateAccount\(\$input: CreateAccountInput!\)/);
     expect(query).toContain("createAccount(input: $input)");
     expect(query).toContain("...AccountFields");
@@ -168,7 +168,7 @@ describe("mutation execution", () => {
     expect(result.error).toBeNull();
     const body = getRequestBody(fetchMock);
     expect(body.variables).toEqual({});
-    const query = body.query as string;
+    const query = sentQuery(body);
     expect(query).toMatch(/mutation CreateTestThread\(\$input: CreateTestThreadInput\)/);
   });
 });

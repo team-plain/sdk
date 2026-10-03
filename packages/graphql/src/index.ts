@@ -17,6 +17,7 @@ export {
   RateLimitError,
 } from "./error.js";
 export type {
+  GraphQLDocument,
   GraphQLResponse,
   PlainGraphQLClientOptions,
 } from "./graphql-client.js";

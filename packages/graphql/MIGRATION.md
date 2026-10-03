@@ -163,7 +163,7 @@ Method names have changed. The `get` prefix is dropped, and methods use the Grap
 | `getWebhookTargetById({ ... })` | `client.query.webhookTarget({ ... })` |
 | `getCustomerGroupById({ ... })` | `client.query.customerGroup({ ... })` |
 | `getCustomerGroups({ ... })` | `client.query.customerGroups({ ... })` |
-| `rawRequest({ query, variables })` | Use `PlainGraphQLClient` directly |
+| `rawRequest({ query, variables })` | `new PlainGraphQLClient({ apiKey }).request(query, variables)`. It takes the same query string |
 
 ### Return Type Changes for Queries
 

@@ -1,3 +1,4 @@
+import { parse, print } from "graphql";
 import { vi } from "vitest";
 
 export function mockFetch() {
@@ -40,4 +41,9 @@ export function getRequestHeaders(fetchMock: ReturnType<typeof mockFetch>, callI
 
 export function getRequestUrl(fetchMock: ReturnType<typeof mockFetch>, callIndex = 0) {
   return fetchMock.mock.calls[callIndex][0];
+}
+
+/** The sent query in print()'s canonical layout, so assertions don't depend on its whitespace. */
+export function sentQuery(body: Record<string, unknown>): string {
+  return print(parse(body.query as string));
 }

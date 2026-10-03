@@ -8,6 +8,7 @@ import {
   getRequestUrl,
   graphqlResponse,
   mockFetch,
+  sentQuery,
 } from "./helpers.js";
 
 describe("query execution", () => {
@@ -116,7 +117,7 @@ describe("query execution", () => {
     await client.query.customer({ customerId: "c_123" });
 
     const body = getRequestBody(fetchMock);
-    const query = body.query as string;
+    const query = sentQuery(body);
 
     // Operation definition
     expect(query).toMatch(/query Customer\(\$customerId: ID!\)/);
