@@ -12331,7 +12331,7 @@ export interface PlainSdkMutations {
   createSnippet(variables: CreateSnippetMutationVariables): Promise<CreateSnippetMutation["createSnippet"]>;
   createTask(variables: CreateTaskMutationVariables): Promise<CreateTaskMutation["createTask"]>;
   createTenant(variables: CreateTenantMutationVariables): Promise<CreateTenantMutation["createTenant"]>;
-  createTestThread(variables?: CreateTestThreadMutationVariables): Promise<CreateTestThreadMutation["createTestThread"]>;
+  createTestThread(variables: CreateTestThreadMutationVariables): Promise<CreateTestThreadMutation["createTestThread"]>;
   createThread(variables: CreateThreadMutationVariables): Promise<CreateThreadMutation["createThread"]>;
   createThreadChannelAssociation(variables: CreateThreadChannelAssociationMutationVariables): Promise<CreateThreadChannelAssociationMutation["createThreadChannelAssociation"]>;
   createThreadDiscussion(variables: CreateThreadDiscussionMutationVariables): Promise<CreateThreadDiscussionMutation["createThreadDiscussion"]>;
@@ -15413,7 +15413,7 @@ export class PlainSdk {
       return response.createTenant;
     },
 
-    async createTestThread(variables: CreateTestThreadMutationVariables = {}): Promise<CreateTestThreadMutation["createTestThread"]> {
+    async createTestThread(variables: CreateTestThreadMutationVariables): Promise<CreateTestThreadMutation["createTestThread"]> {
       const response = await _client.request<CreateTestThreadMutation, CreateTestThreadMutationVariables>(
         CreateTestThreadDocument, variables
       );
