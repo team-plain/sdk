@@ -153,8 +153,6 @@ function applyDeprecation(
 
 const SKIP_MODEL_TYPES = new Set(["MutationError", "MutationFieldError"]);
 
-// graphql 17 puts SDL defaults in `default`; `defaultValue` is only set when a schema is built from
-// config that uses it.
 function hasSchemaDefault(arg: GraphQLArgument): boolean {
   return arg.default !== undefined || arg.defaultValue !== undefined;
 }
