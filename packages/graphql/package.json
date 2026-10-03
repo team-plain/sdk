@@ -60,7 +60,7 @@
     "@graphql-codegen/cli": "^5.0.7",
     "@graphql-codegen/typed-document-node": "^5.1.2",
     "@graphql-codegen/typescript": "^4.1.6",
-    "@graphql-codegen/typescript-operations": "^4.6.1",
+    "@graphql-codegen/typescript-operations": "^6.1.7",
     "@team-plain/graphql-codegen-plugin": "workspace:*",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2"
