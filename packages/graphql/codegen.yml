@@ -21,7 +21,9 @@ generates:
       # The typescript plugin emits the schema types into this file, and typescript-operations
       # would declare its input and enum types a second time unless it imports them.
       importSchemaTypesFrom: ./src/_generated_documents.ts
-      importExtension: .js
+      # An empty namespace drops the self-import and the Types. prefix, so schema types are named
+      # bare, as they were before codegen 6.
+      namespacedImportName: ""
       # v6 widens ID inputs to string | number. Keep them string, as the SDK has always typed them.
       scalars:
         ID: string
