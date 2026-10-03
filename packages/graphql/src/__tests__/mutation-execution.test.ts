@@ -1,3 +1,4 @@
+import { parse, print } from "graphql";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PlainClient } from "../client.js";
 import { getRequestBody, graphqlResponse, mockFetch } from "./helpers.js";
@@ -170,5 +171,36 @@ describe("mutation execution", () => {
     expect(body.variables).toEqual({});
     const query = body.query as string;
     expect(query).toMatch(/mutation CreateTestThread\(\$input: CreateTestThreadInput\)/);
+  });
+
+  it("exposes createThreadFromSlackMessage and sends the Slack ingestion mutation", async () => {
+    fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(
+      graphqlResponse({
+        createThreadFromSlackMessage: { thread: null, error: null },
+      }),
+    );
+    const client = new PlainClient({ apiKey: "test-key" });
+
+    expect(client.mutation.createThreadFromSlackMessage).toEqual(expect.any(Function));
+
+    const result = await client.mutation.createThreadFromSlackMessage({
+      input: { slackChannelId: "C0123ABCD", slackMessageTimestamp: "1234567890.123456" },
+    });
+
+    expect(result.thread).toBeNull();
+    expect(result.error).toBeNull();
+
+    const body = getRequestBody(fetchMock);
+    expect(body.variables).toEqual({
+      input: { slackChannelId: "C0123ABCD", slackMessageTimestamp: "1234567890.123456" },
+    });
+    // print(parse()) gives the same layout however the SDK formats the query text it sends.
+    const query = print(parse(body.query as string));
+    expect(query).toMatch(
+      /mutation CreateThreadFromSlackMessage\(\$input: CreateThreadFromSlackMessageInput!\)/,
+    );
+    expect(query).toContain("createThreadFromSlackMessage(input: $input)");
+    expect(query).toContain("...ThreadFields");
   });
 });
