@@ -1,5 +1,12 @@
 # @team-plain/webhooks
 
+## 1.10.1
+
+### Patch Changes
+
+- b9757b8: Update dependencies: `graphql` to ^16.14.2, `ajv` to ^8.20.0 and `ajv-formats` to ^3.0.1.
+- 818d901: Build the CommonJS output with tsdown instead of tsup. Exports are unchanged.
+
 ## 1.10.0
 
 ### Minor Changes
