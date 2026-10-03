@@ -1,3 +1,4 @@
+import { parse, print } from "graphql";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PlainClient } from "../client.js";
 import { getRequestBody, graphqlResponse, mockFetch } from "./helpers.js";
@@ -194,7 +195,8 @@ describe("mutation execution", () => {
     expect(body.variables).toEqual({
       input: { slackChannelId: "C0123ABCD", slackMessageTimestamp: "1234567890.123456" },
     });
-    const query = body.query as string;
+    // print(parse()) gives the same layout however the SDK formats the query text it sends.
+    const query = print(parse(body.query as string));
     expect(query).toMatch(
       /mutation CreateThreadFromSlackMessage\(\$input: CreateThreadFromSlackMessageInput!\)/,
     );
