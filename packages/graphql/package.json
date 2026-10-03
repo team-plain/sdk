@@ -48,7 +48,7 @@
     "generate-documents": "tsx src/generate-documents.ts",
     "download-schema": "tsx scripts/download-schema.ts",
     "codegen": "pnpm download-schema && tsx src/generate-documents.ts && graphql-codegen --config codegen.yml",
-    "build": "tsc && tsup",
+    "build": "tsc && tsdown",
     "prepublishOnly": "npm run build",
     "test": "vitest run"
   },
@@ -62,7 +62,7 @@
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-operations": "^4.6.1",
     "@team-plain/graphql-codegen-plugin": "workspace:*",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.23.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
