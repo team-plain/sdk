@@ -32959,7 +32959,7 @@ mutation DeleteThread($input: DeleteThreadInput!) {
   }
 }
 
-mutation CreateTestThread($input: CreateTestThreadInput!) {
+mutation CreateTestThread($input: CreateTestThreadInput) {
   createTestThread(input: $input) {
     thread {
       ...ThreadFields
