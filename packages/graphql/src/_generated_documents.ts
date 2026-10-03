@@ -42699,7 +42699,7 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
-export const AccountFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountFields on Account {
   id
   name
@@ -42835,7 +42835,7 @@ export const AccountFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AccountFields"}) as unknown as TypedDocumentString<AccountFieldsFragment, unknown>;
-export const AccountFieldFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountFieldFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountFieldFields on AccountField {
   id
   source
@@ -42920,12 +42920,12 @@ export const AccountFieldFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AccountFieldFields"}) as unknown as TypedDocumentString<AccountFieldFieldsFragment, unknown>;
-export const AccountFieldBooleanValueFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountFieldBooleanValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountFieldBooleanValueFields on AccountFieldBooleanValue {
   booleanValue
 }
     `, {"fragmentName":"AccountFieldBooleanValueFields"}) as unknown as TypedDocumentString<AccountFieldBooleanValueFieldsFragment, unknown>;
-export const AccountFieldDateTimeValueFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountFieldDateTimeValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountFieldDateTimeValueFields on AccountFieldDateTimeValue {
   dateValue {
     unixTimestamp
@@ -42933,12 +42933,12 @@ export const AccountFieldDateTimeValueFieldsFragmentDoc = new TypedDocumentStrin
   }
 }
     `, {"fragmentName":"AccountFieldDateTimeValueFields"}) as unknown as TypedDocumentString<AccountFieldDateTimeValueFieldsFragment, unknown>;
-export const AccountFieldNumberValueFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountFieldNumberValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountFieldNumberValueFields on AccountFieldNumberValue {
   numberValue
 }
     `, {"fragmentName":"AccountFieldNumberValueFields"}) as unknown as TypedDocumentString<AccountFieldNumberValueFieldsFragment, unknown>;
-export const AccountFieldSchemaFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountFieldSchemaFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountFieldSchemaFields on AccountFieldSchema {
   id
   source
@@ -43005,22 +43005,22 @@ export const AccountFieldSchemaFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AccountFieldSchemaFields"}) as unknown as TypedDocumentString<AccountFieldSchemaFieldsFragment, unknown>;
-export const AccountFieldStringArrayValueFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountFieldStringArrayValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountFieldStringArrayValueFields on AccountFieldStringArrayValue {
   arrayValue
 }
     `, {"fragmentName":"AccountFieldStringArrayValueFields"}) as unknown as TypedDocumentString<AccountFieldStringArrayValueFieldsFragment, unknown>;
-export const AccountFieldStringValueFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountFieldStringValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountFieldStringValueFields on AccountFieldStringValue {
   stringValue
 }
     `, {"fragmentName":"AccountFieldStringValueFields"}) as unknown as TypedDocumentString<AccountFieldStringValueFieldsFragment, unknown>;
-export const AccountFieldUserReferenceValueFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountFieldUserReferenceValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountFieldUserReferenceValueFields on AccountFieldUserReferenceValue {
   userReferenceValues
 }
     `, {"fragmentName":"AccountFieldUserReferenceValueFields"}) as unknown as TypedDocumentString<AccountFieldUserReferenceValueFieldsFragment, unknown>;
-export const AccountTierMembershipFieldsFragmentDoc = new TypedDocumentString(`
+export const AccountTierMembershipFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AccountTierMembershipFields on AccountTierMembership {
   id
   tierId
@@ -43081,23 +43081,23 @@ export const AccountTierMembershipFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AccountTierMembershipFields"}) as unknown as TypedDocumentString<AccountTierMembershipFieldsFragment, unknown>;
-export const AgentStatusDetailHandedOffFieldsFragmentDoc = new TypedDocumentString(`
+export const AgentStatusDetailHandedOffFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AgentStatusDetailHandedOffFields on AgentStatusDetailHandedOff {
   type
   reason
 }
     `, {"fragmentName":"AgentStatusDetailHandedOffFields"}) as unknown as TypedDocumentString<AgentStatusDetailHandedOffFieldsFragment, unknown>;
-export const AgentStatusDetailHandledFieldsFragmentDoc = new TypedDocumentString(`
+export const AgentStatusDetailHandledFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AgentStatusDetailHandledFields on AgentStatusDetailHandled {
   type
 }
     `, {"fragmentName":"AgentStatusDetailHandledFields"}) as unknown as TypedDocumentString<AgentStatusDetailHandledFieldsFragment, unknown>;
-export const AgentStatusDetailInProgressFieldsFragmentDoc = new TypedDocumentString(`
+export const AgentStatusDetailInProgressFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AgentStatusDetailInProgressFields on AgentStatusDetailInProgress {
   type
 }
     `, {"fragmentName":"AgentStatusDetailInProgressFields"}) as unknown as TypedDocumentString<AgentStatusDetailInProgressFieldsFragment, unknown>;
-export const AiAgentFeedbackDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const AiAgentFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AiAgentFeedbackDetailsFields on AiAgentFeedbackDetails {
   reason
   comment
@@ -43106,7 +43106,7 @@ export const AiAgentFeedbackDetailsFieldsFragmentDoc = new TypedDocumentString(`
   timelineEntryId
 }
     `, {"fragmentName":"AiAgentFeedbackDetailsFields"}) as unknown as TypedDocumentString<AiAgentFeedbackDetailsFieldsFragment, unknown>;
-export const AiFeatureFeedbackOutputFieldsFragmentDoc = new TypedDocumentString(`
+export const AiFeatureFeedbackOutputFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AiFeatureFeedbackOutputFields on AiFeatureFeedbackOutput {
   id
   feature
@@ -43148,7 +43148,7 @@ export const AiFeatureFeedbackOutputFieldsFragmentDoc = new TypedDocumentString(
   }
 }
     `, {"fragmentName":"AiFeatureFeedbackOutputFields"}) as unknown as TypedDocumentString<AiFeatureFeedbackOutputFieldsFragment, unknown>;
-export const AiFeedbackFieldsFragmentDoc = new TypedDocumentString(`
+export const AiFeedbackFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AiFeedbackFields on AiFeedback {
   id
   feature
@@ -43244,7 +43244,7 @@ export const AiFeedbackFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AiFeedbackFields"}) as unknown as TypedDocumentString<AiFeedbackFieldsFragment, unknown>;
-export const AiToneRuleFieldsFragmentDoc = new TypedDocumentString(`
+export const AiToneRuleFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AiToneRuleFields on AiToneRule {
   id
   category
@@ -43306,7 +43306,7 @@ export const AiToneRuleFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AiToneRuleFields"}) as unknown as TypedDocumentString<AiToneRuleFieldsFragment, unknown>;
-export const ApiKeyFieldsFragmentDoc = new TypedDocumentString(`
+export const ApiKeyFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ApiKeyFields on ApiKey {
   id
   description
@@ -43409,7 +43409,7 @@ export const ApiKeyFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ApiKeyFields"}) as unknown as TypedDocumentString<ApiKeyFieldsFragment, unknown>;
-export const AttachmentDownloadUrlFieldsFragmentDoc = new TypedDocumentString(`
+export const AttachmentDownloadUrlFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AttachmentDownloadUrlFields on AttachmentDownloadUrl {
   attachment {
     id
@@ -43438,7 +43438,7 @@ export const AttachmentDownloadUrlFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AttachmentDownloadUrlFields"}) as unknown as TypedDocumentString<AttachmentDownloadUrlFieldsFragment, unknown>;
-export const AttachmentUploadUrlFieldsFragmentDoc = new TypedDocumentString(`
+export const AttachmentUploadUrlFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AttachmentUploadUrlFields on AttachmentUploadUrl {
   attachment {
     id
@@ -43471,7 +43471,7 @@ export const AttachmentUploadUrlFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AttachmentUploadUrlFields"}) as unknown as TypedDocumentString<AttachmentUploadUrlFieldsFragment, unknown>;
-export const AutoresponderFieldsFragmentDoc = new TypedDocumentString(`
+export const AutoresponderFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AutoresponderFields on Autoresponder {
   id
   name
@@ -43555,32 +43555,32 @@ export const AutoresponderFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AutoresponderFields"}) as unknown as TypedDocumentString<AutoresponderFieldsFragment, unknown>;
-export const AutoresponderBusinessHoursConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const AutoresponderBusinessHoursConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AutoresponderBusinessHoursConditionFields on AutoresponderBusinessHoursCondition {
   isOutsideBusinessHours
 }
     `, {"fragmentName":"AutoresponderBusinessHoursConditionFields"}) as unknown as TypedDocumentString<AutoresponderBusinessHoursConditionFieldsFragment, unknown>;
-export const AutoresponderLabelConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const AutoresponderLabelConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AutoresponderLabelConditionFields on AutoresponderLabelCondition {
   labelTypeIds
 }
     `, {"fragmentName":"AutoresponderLabelConditionFields"}) as unknown as TypedDocumentString<AutoresponderLabelConditionFieldsFragment, unknown>;
-export const AutoresponderPrioritiesConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const AutoresponderPrioritiesConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AutoresponderPrioritiesConditionFields on AutoresponderPrioritiesCondition {
   priorities
 }
     `, {"fragmentName":"AutoresponderPrioritiesConditionFields"}) as unknown as TypedDocumentString<AutoresponderPrioritiesConditionFieldsFragment, unknown>;
-export const AutoresponderSupportEmailsConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const AutoresponderSupportEmailsConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AutoresponderSupportEmailsConditionFields on AutoresponderSupportEmailsCondition {
   supportEmailAddresses
 }
     `, {"fragmentName":"AutoresponderSupportEmailsConditionFields"}) as unknown as TypedDocumentString<AutoresponderSupportEmailsConditionFieldsFragment, unknown>;
-export const AutoresponderTierConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const AutoresponderTierConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment AutoresponderTierConditionFields on AutoresponderTierCondition {
   tierId
 }
     `, {"fragmentName":"AutoresponderTierConditionFields"}) as unknown as TypedDocumentString<AutoresponderTierConditionFieldsFragment, unknown>;
-export const BeforeBreachActionFieldsFragmentDoc = new TypedDocumentString(`
+export const BeforeBreachActionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BeforeBreachActionFields on BeforeBreachAction {
   beforeBreachMinutes
   createdAt {
@@ -43639,7 +43639,7 @@ export const BeforeBreachActionFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BeforeBreachActionFields"}) as unknown as TypedDocumentString<BeforeBreachActionFieldsFragment, unknown>;
-export const BillingMonthlyAllowanceCreditBalanceFieldsFragmentDoc = new TypedDocumentString(`
+export const BillingMonthlyAllowanceCreditBalanceFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BillingMonthlyAllowanceCreditBalanceFields on BillingMonthlyAllowanceCreditBalance {
   type
   allowance
@@ -43652,7 +43652,7 @@ export const BillingMonthlyAllowanceCreditBalanceFieldsFragmentDoc = new TypedDo
   lowBalanceThreshold
 }
     `, {"fragmentName":"BillingMonthlyAllowanceCreditBalanceFields"}) as unknown as TypedDocumentString<BillingMonthlyAllowanceCreditBalanceFieldsFragment, unknown>;
-export const BillingPlanFieldsFragmentDoc = new TypedDocumentString(`
+export const BillingPlanFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BillingPlanFields on BillingPlan {
   key
   name
@@ -43681,7 +43681,7 @@ export const BillingPlanFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BillingPlanFields"}) as unknown as TypedDocumentString<BillingPlanFieldsFragment, unknown>;
-export const BillingPlanChangePreviewFieldsFragmentDoc = new TypedDocumentString(`
+export const BillingPlanChangePreviewFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BillingPlanChangePreviewFields on BillingPlanChangePreview {
   immediateCost {
     amount
@@ -43693,7 +43693,7 @@ export const BillingPlanChangePreviewFieldsFragmentDoc = new TypedDocumentString
   }
 }
     `, {"fragmentName":"BillingPlanChangePreviewFields"}) as unknown as TypedDocumentString<BillingPlanChangePreviewFieldsFragment, unknown>;
-export const BillingSubscriptionFieldsFragmentDoc = new TypedDocumentString(`
+export const BillingSubscriptionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BillingSubscriptionFields on BillingSubscription {
   status
   planKey
@@ -43752,7 +43752,7 @@ export const BillingSubscriptionFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BillingSubscriptionFields"}) as unknown as TypedDocumentString<BillingSubscriptionFieldsFragment, unknown>;
-export const BillingTopupCreditBalanceFieldsFragmentDoc = new TypedDocumentString(`
+export const BillingTopupCreditBalanceFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BillingTopupCreditBalanceFields on BillingTopupCreditBalance {
   type
   lifetimeGranted
@@ -43760,7 +43760,7 @@ export const BillingTopupCreditBalanceFieldsFragmentDoc = new TypedDocumentStrin
   remaining
 }
     `, {"fragmentName":"BillingTopupCreditBalanceFields"}) as unknown as TypedDocumentString<BillingTopupCreditBalanceFieldsFragment, unknown>;
-export const BooleanSettingFieldsFragmentDoc = new TypedDocumentString(`
+export const BooleanSettingFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BooleanSettingFields on BooleanSetting {
   code
   booleanValue
@@ -43770,7 +43770,7 @@ export const BooleanSettingFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BooleanSettingFields"}) as unknown as TypedDocumentString<BooleanSettingFieldsFragment, unknown>;
-export const UserActorFieldsFragmentDoc = new TypedDocumentString(`
+export const UserActorFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment UserActorFields on UserActor {
   userId
   user {
@@ -43778,7 +43778,7 @@ export const UserActorFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"UserActorFields"}) as unknown as TypedDocumentString<UserActorFieldsFragment, unknown>;
-export const BroadcastFieldsFragmentDoc = new TypedDocumentString(`
+export const BroadcastFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BroadcastFields on Broadcast {
   id
   name
@@ -43946,7 +43946,7 @@ export const BroadcastFieldsFragmentDoc = new TypedDocumentString(`
     id
   }
 }`, {"fragmentName":"BroadcastFields"}) as unknown as TypedDocumentString<BroadcastFieldsFragment, unknown>;
-export const BroadcastAudienceFieldsFragmentDoc = new TypedDocumentString(`
+export const BroadcastAudienceFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BroadcastAudienceFields on BroadcastAudience {
   id
   name
@@ -44062,7 +44062,7 @@ export const BroadcastAudienceFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BroadcastAudienceFields"}) as unknown as TypedDocumentString<BroadcastAudienceFieldsFragment, unknown>;
-export const BroadcastRecipientUnsubscribeFieldsFragmentDoc = new TypedDocumentString(`
+export const BroadcastRecipientUnsubscribeFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BroadcastRecipientUnsubscribeFields on BroadcastRecipientUnsubscribe {
   id
   workspaceId
@@ -44134,14 +44134,14 @@ export const BroadcastRecipientUnsubscribeFieldsFragmentDoc = new TypedDocumentS
   }
 }
     `, {"fragmentName":"BroadcastRecipientUnsubscribeFields"}) as unknown as TypedDocumentString<BroadcastRecipientUnsubscribeFieldsFragment, unknown>;
-export const BroadcastSendTargetRecipientsFieldsFragmentDoc = new TypedDocumentString(`
+export const BroadcastSendTargetRecipientsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BroadcastSendTargetRecipientsFields on BroadcastSendTargetRecipients {
   count
   emptyReason
   unsubscribedExcludedCount
 }
     `, {"fragmentName":"BroadcastSendTargetRecipientsFields"}) as unknown as TypedDocumentString<BroadcastSendTargetRecipientsFieldsFragment, unknown>;
-export const BulkCreateThreadLinkResultFieldsFragmentDoc = new TypedDocumentString(`
+export const BulkCreateThreadLinkResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BulkCreateThreadLinkResultFields on BulkCreateThreadLinkResult {
   threadId
   threadLink {
@@ -44514,7 +44514,7 @@ export const BulkCreateThreadLinkResultFieldsFragmentDoc = new TypedDocumentStri
   }
 }
     `, {"fragmentName":"BulkCreateThreadLinkResultFields"}) as unknown as TypedDocumentString<BulkCreateThreadLinkResultFieldsFragment, unknown>;
-export const BulkDeleteThreadLinkResultFieldsFragmentDoc = new TypedDocumentString(`
+export const BulkDeleteThreadLinkResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BulkDeleteThreadLinkResultFields on BulkDeleteThreadLinkResult {
   threadLinkId
   error {
@@ -44529,7 +44529,7 @@ export const BulkDeleteThreadLinkResultFieldsFragmentDoc = new TypedDocumentStri
   }
 }
     `, {"fragmentName":"BulkDeleteThreadLinkResultFields"}) as unknown as TypedDocumentString<BulkDeleteThreadLinkResultFieldsFragment, unknown>;
-export const BulkUpdateConnectedSlackChannelResultFieldsFragmentDoc = new TypedDocumentString(`
+export const BulkUpdateConnectedSlackChannelResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BulkUpdateConnectedSlackChannelResultFields on BulkUpdateConnectedSlackChannelResult {
   connectedSlackChannelId
   connectedSlackChannel {
@@ -44547,7 +44547,7 @@ export const BulkUpdateConnectedSlackChannelResultFieldsFragmentDoc = new TypedD
   }
 }
     `, {"fragmentName":"BulkUpdateConnectedSlackChannelResultFields"}) as unknown as TypedDocumentString<BulkUpdateConnectedSlackChannelResultFieldsFragment, unknown>;
-export const BulkUpdateSlackChannelSettingResultFieldsFragmentDoc = new TypedDocumentString(`
+export const BulkUpdateSlackChannelSettingResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BulkUpdateSlackChannelSettingResultFields on BulkUpdateSlackChannelSettingResult {
   slackChannelId
   code
@@ -44598,7 +44598,7 @@ export const BulkUpdateSlackChannelSettingResultFieldsFragmentDoc = new TypedDoc
   }
 }
     `, {"fragmentName":"BulkUpdateSlackChannelSettingResultFields"}) as unknown as TypedDocumentString<BulkUpdateSlackChannelSettingResultFieldsFragment, unknown>;
-export const ThreadFieldFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadFieldFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadFieldFields on ThreadField {
   id
   threadId
@@ -44686,7 +44686,7 @@ export const ThreadFieldFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ThreadFieldFields"}) as unknown as TypedDocumentString<ThreadFieldFieldsFragment, unknown>;
-export const BulkUpsertThreadFieldResultFieldsFragmentDoc = new TypedDocumentString(`
+export const BulkUpsertThreadFieldResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BulkUpsertThreadFieldResultFields on BulkUpsertThreadFieldResult {
   threadField {
     ...ThreadFieldFields
@@ -44779,7 +44779,7 @@ export const BulkUpsertThreadFieldResultFieldsFragmentDoc = new TypedDocumentStr
     }
   }
 }`, {"fragmentName":"BulkUpsertThreadFieldResultFields"}) as unknown as TypedDocumentString<BulkUpsertThreadFieldResultFieldsFragment, unknown>;
-export const WorkflowStepFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkflowStepFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkflowStepFields on WorkflowStep {
   id
   workflowId
@@ -44845,7 +44845,7 @@ export const WorkflowStepFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WorkflowStepFields"}) as unknown as TypedDocumentString<WorkflowStepFieldsFragment, unknown>;
-export const BulkUpsertWorkflowStepResultItemFieldsFragmentDoc = new TypedDocumentString(`
+export const BulkUpsertWorkflowStepResultItemFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BulkUpsertWorkflowStepResultItemFields on BulkUpsertWorkflowStepResultItem {
   workflowStep {
     ...WorkflowStepFields
@@ -44916,7 +44916,7 @@ export const BulkUpsertWorkflowStepResultItemFieldsFragmentDoc = new TypedDocume
     }
   }
 }`, {"fragmentName":"BulkUpsertWorkflowStepResultItemFields"}) as unknown as TypedDocumentString<BulkUpsertWorkflowStepResultItemFieldsFragment, unknown>;
-export const BusinessHoursFieldsFragmentDoc = new TypedDocumentString(`
+export const BusinessHoursFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BusinessHoursFields on BusinessHours {
   createdAt {
     unixTimestamp
@@ -44974,7 +44974,7 @@ export const BusinessHoursFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BusinessHoursFields"}) as unknown as TypedDocumentString<BusinessHoursFieldsFragment, unknown>;
-export const BusinessHoursScheduleFieldsFragmentDoc = new TypedDocumentString(`
+export const BusinessHoursScheduleFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BusinessHoursScheduleFields on BusinessHoursSchedule {
   id
   name
@@ -45034,7 +45034,7 @@ export const BusinessHoursScheduleFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BusinessHoursScheduleFields"}) as unknown as TypedDocumentString<BusinessHoursScheduleFieldsFragment, unknown>;
-export const BusinessHoursSlotFieldsFragmentDoc = new TypedDocumentString(`
+export const BusinessHoursSlotFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment BusinessHoursSlotFields on BusinessHoursSlot {
   timezone {
     name
@@ -45044,7 +45044,7 @@ export const BusinessHoursSlotFieldsFragmentDoc = new TypedDocumentString(`
   closesAt
 }
     `, {"fragmentName":"BusinessHoursSlotFields"}) as unknown as TypedDocumentString<BusinessHoursSlotFieldsFragment, unknown>;
-export const ChatFieldsFragmentDoc = new TypedDocumentString(`
+export const ChatFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ChatFields on Chat {
   id
   text
@@ -45126,7 +45126,7 @@ export const ChatFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ChatFields"}) as unknown as TypedDocumentString<ChatFieldsFragment, unknown>;
-export const ChatAppFieldsFragmentDoc = new TypedDocumentString(`
+export const ChatAppFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ChatAppFields on ChatApp {
   id
   name
@@ -45206,7 +45206,7 @@ export const ChatAppFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ChatAppFields"}) as unknown as TypedDocumentString<ChatAppFieldsFragment, unknown>;
-export const ChatAppHiddenSecretFieldsFragmentDoc = new TypedDocumentString(`
+export const ChatAppHiddenSecretFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ChatAppHiddenSecretFields on ChatAppHiddenSecret {
   chatAppId
   createdAt {
@@ -45265,7 +45265,7 @@ export const ChatAppHiddenSecretFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ChatAppHiddenSecretFields"}) as unknown as TypedDocumentString<ChatAppHiddenSecretFieldsFragment, unknown>;
-export const ChatAppSecretFieldsFragmentDoc = new TypedDocumentString(`
+export const ChatAppSecretFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ChatAppSecretFields on ChatAppSecret {
   chatAppId
   secret
@@ -45325,7 +45325,7 @@ export const ChatAppSecretFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ChatAppSecretFields"}) as unknown as TypedDocumentString<ChatAppSecretFieldsFragment, unknown>;
-export const ChatEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ChatEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ChatEntryFields on ChatEntry {
   chatId
   text
@@ -45335,7 +45335,7 @@ export const ChatEntryFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ChatEntryFields"}) as unknown as TypedDocumentString<ChatEntryFieldsFragment, unknown>;
-export const ChatThreadChannelDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const ChatThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ChatThreadChannelDetailsFields on ChatThreadChannelDetails {
   customerReadAt {
     unixTimestamp
@@ -45343,7 +45343,7 @@ export const ChatThreadChannelDetailsFieldsFragmentDoc = new TypedDocumentString
   }
 }
     `, {"fragmentName":"ChatThreadChannelDetailsFields"}) as unknown as TypedDocumentString<ChatThreadChannelDetailsFieldsFragment, unknown>;
-export const CompanyFieldsFragmentDoc = new TypedDocumentString(`
+export const CompanyFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CompanyFields on Company {
   id
   name
@@ -45506,7 +45506,7 @@ export const CompanyFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"CompanyFields"}) as unknown as TypedDocumentString<CompanyFieldsFragment, unknown>;
-export const CompanyTierMembershipFieldsFragmentDoc = new TypedDocumentString(`
+export const CompanyTierMembershipFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CompanyTierMembershipFields on CompanyTierMembership {
   id
   tierId
@@ -45567,19 +45567,19 @@ export const CompanyTierMembershipFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"CompanyTierMembershipFields"}) as unknown as TypedDocumentString<CompanyTierMembershipFieldsFragment, unknown>;
-export const ComponentBadgeFieldsFragmentDoc = new TypedDocumentString(`
+export const ComponentBadgeFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ComponentBadgeFields on ComponentBadge {
   badgeLabel
   badgeColor
 }
     `, {"fragmentName":"ComponentBadgeFields"}) as unknown as TypedDocumentString<ComponentBadgeFieldsFragment, unknown>;
-export const ComponentCopyButtonFieldsFragmentDoc = new TypedDocumentString(`
+export const ComponentCopyButtonFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ComponentCopyButtonFields on ComponentCopyButton {
   copyButtonValue
   copyButtonTooltipLabel
 }
     `, {"fragmentName":"ComponentCopyButtonFields"}) as unknown as TypedDocumentString<ComponentCopyButtonFieldsFragment, unknown>;
-export const ComponentDateTimeFieldsFragmentDoc = new TypedDocumentString(`
+export const ComponentDateTimeFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ComponentDateTimeFields on ComponentDateTime {
   dateTimeIso8601 {
     unixTimestamp
@@ -45587,37 +45587,37 @@ export const ComponentDateTimeFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ComponentDateTimeFields"}) as unknown as TypedDocumentString<ComponentDateTimeFieldsFragment, unknown>;
-export const ComponentDividerFieldsFragmentDoc = new TypedDocumentString(`
+export const ComponentDividerFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ComponentDividerFields on ComponentDivider {
   dividerSpacingSize
 }
     `, {"fragmentName":"ComponentDividerFields"}) as unknown as TypedDocumentString<ComponentDividerFieldsFragment, unknown>;
-export const ComponentLinkButtonFieldsFragmentDoc = new TypedDocumentString(`
+export const ComponentLinkButtonFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ComponentLinkButtonFields on ComponentLinkButton {
   linkButtonUrl
   linkButtonLabel
 }
     `, {"fragmentName":"ComponentLinkButtonFields"}) as unknown as TypedDocumentString<ComponentLinkButtonFieldsFragment, unknown>;
-export const ComponentPlainTextFieldsFragmentDoc = new TypedDocumentString(`
+export const ComponentPlainTextFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ComponentPlainTextFields on ComponentPlainText {
   plainTextSize
   plainTextColor
   plainText
 }
     `, {"fragmentName":"ComponentPlainTextFields"}) as unknown as TypedDocumentString<ComponentPlainTextFieldsFragment, unknown>;
-export const ComponentSpacerFieldsFragmentDoc = new TypedDocumentString(`
+export const ComponentSpacerFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ComponentSpacerFields on ComponentSpacer {
   spacerSize
 }
     `, {"fragmentName":"ComponentSpacerFields"}) as unknown as TypedDocumentString<ComponentSpacerFieldsFragment, unknown>;
-export const ComponentTextFieldsFragmentDoc = new TypedDocumentString(`
+export const ComponentTextFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ComponentTextFields on ComponentText {
   textSize
   textColor
   text
 }
     `, {"fragmentName":"ComponentTextFields"}) as unknown as TypedDocumentString<ComponentTextFieldsFragment, unknown>;
-export const ComponentWorkflowButtonFieldsFragmentDoc = new TypedDocumentString(`
+export const ComponentWorkflowButtonFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ComponentWorkflowButtonFields on ComponentWorkflowButton {
   workflowButtonWorkflowIdentifier {
     workflowId
@@ -45626,7 +45626,7 @@ export const ComponentWorkflowButtonFieldsFragmentDoc = new TypedDocumentString(
   workflowButtonLabel
 }
     `, {"fragmentName":"ComponentWorkflowButtonFields"}) as unknown as TypedDocumentString<ComponentWorkflowButtonFieldsFragment, unknown>;
-export const ConnectedDiscordChannelFieldsFragmentDoc = new TypedDocumentString(`
+export const ConnectedDiscordChannelFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ConnectedDiscordChannelFields on ConnectedDiscordChannel {
   id
   discordGuildId
@@ -45689,7 +45689,7 @@ export const ConnectedDiscordChannelFieldsFragmentDoc = new TypedDocumentString(
   }
 }
     `, {"fragmentName":"ConnectedDiscordChannelFields"}) as unknown as TypedDocumentString<ConnectedDiscordChannelFieldsFragment, unknown>;
-export const ConnectedMsTeamsChannelFieldsFragmentDoc = new TypedDocumentString(`
+export const ConnectedMsTeamsChannelFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ConnectedMSTeamsChannelFields on ConnectedMSTeamsChannel {
   id
   workspaceId
@@ -45754,7 +45754,7 @@ export const ConnectedMsTeamsChannelFieldsFragmentDoc = new TypedDocumentString(
   teamName
 }
     `, {"fragmentName":"ConnectedMSTeamsChannelFields"}) as unknown as TypedDocumentString<ConnectedMsTeamsChannelFieldsFragment, unknown>;
-export const ConnectedSlackChannelFieldsFragmentDoc = new TypedDocumentString(`
+export const ConnectedSlackChannelFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ConnectedSlackChannelFields on ConnectedSlackChannel {
   id
   slackTeamId
@@ -45819,7 +45819,7 @@ export const ConnectedSlackChannelFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ConnectedSlackChannelFields"}) as unknown as TypedDocumentString<ConnectedSlackChannelFieldsFragment, unknown>;
-export const CreditSpendItemFieldsFragmentDoc = new TypedDocumentString(`
+export const CreditSpendItemFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CreditSpendItemFields on CreditSpendItem {
   id
   kind
@@ -45868,13 +45868,13 @@ export const CreditSpendItemFieldsFragmentDoc = new TypedDocumentString(`
   discussionId
 }
     `, {"fragmentName":"CreditSpendItemFields"}) as unknown as TypedDocumentString<CreditSpendItemFieldsFragment, unknown>;
-export const CsatCustomerSurveyTemplateFieldsFragmentDoc = new TypedDocumentString(`
+export const CsatCustomerSurveyTemplateFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CsatCustomerSurveyTemplateFields on CsatCustomerSurveyTemplate {
   type
   questionText
 }
     `, {"fragmentName":"CsatCustomerSurveyTemplateFields"}) as unknown as TypedDocumentString<CsatCustomerSurveyTemplateFieldsFragment, unknown>;
-export const CustomEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomEntryFields on CustomEntry {
   externalId
   title
@@ -46199,7 +46199,7 @@ export const CustomEntryFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"CustomEntryFields"}) as unknown as TypedDocumentString<CustomEntryFieldsFragment, unknown>;
-export const CustomerFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerFields on Customer {
   id
   externalId
@@ -46344,7 +46344,7 @@ export const CustomerFieldsFragmentDoc = new TypedDocumentString(`
     id
   }
 }`, {"fragmentName":"CustomerFields"}) as unknown as TypedDocumentString<CustomerFieldsFragment, unknown>;
-export const CustomerActorFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerActorFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerActorFields on CustomerActor {
   customerId
   customer {
@@ -46352,7 +46352,7 @@ export const CustomerActorFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"CustomerActorFields"}) as unknown as TypedDocumentString<CustomerActorFieldsFragment, unknown>;
-export const CustomerCardConfigFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardConfigFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardConfigFields on CustomerCardConfig {
   id
   order
@@ -46421,7 +46421,7 @@ export const CustomerCardConfigFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"CustomerCardConfigFields"}) as unknown as TypedDocumentString<CustomerCardConfigFieldsFragment, unknown>;
-export const CustomerCardInstanceCardTooBigErrorDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceCardTooBigErrorDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceCardTooBigErrorDetailFields on CustomerCardInstanceCardTooBigErrorDetail {
   message
   cardKey
@@ -46429,7 +46429,7 @@ export const CustomerCardInstanceCardTooBigErrorDetailFieldsFragmentDoc = new Ty
   maxSizeBytes
 }
     `, {"fragmentName":"CustomerCardInstanceCardTooBigErrorDetailFields"}) as unknown as TypedDocumentString<CustomerCardInstanceCardTooBigErrorDetailFieldsFragment, unknown>;
-export const CustomerCardInstanceErrorFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceErrorFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceErrorFields on CustomerCardInstanceError {
   id
   customerId
@@ -46542,7 +46542,7 @@ export const CustomerCardInstanceErrorFieldsFragmentDoc = new TypedDocumentStrin
   }
 }
     `, {"fragmentName":"CustomerCardInstanceErrorFields"}) as unknown as TypedDocumentString<CustomerCardInstanceErrorFieldsFragment, unknown>;
-export const CustomerCardInstanceLoadedFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceLoadedFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
   id
   customerId
@@ -46950,7 +46950,7 @@ export const CustomerCardInstanceLoadedFieldsFragmentDoc = new TypedDocumentStri
   }
 }
     `, {"fragmentName":"CustomerCardInstanceLoadedFields"}) as unknown as TypedDocumentString<CustomerCardInstanceLoadedFieldsFragment, unknown>;
-export const CustomerCardInstanceLoadingFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceLoadingFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceLoadingFields on CustomerCardInstanceLoading {
   id
   customerId
@@ -47032,41 +47032,41 @@ export const CustomerCardInstanceLoadingFieldsFragmentDoc = new TypedDocumentStr
   }
 }
     `, {"fragmentName":"CustomerCardInstanceLoadingFields"}) as unknown as TypedDocumentString<CustomerCardInstanceLoadingFieldsFragment, unknown>;
-export const CustomerCardInstanceMissingCardErrorDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceMissingCardErrorDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceMissingCardErrorDetailFields on CustomerCardInstanceMissingCardErrorDetail {
   message
   cardKey
 }
     `, {"fragmentName":"CustomerCardInstanceMissingCardErrorDetailFields"}) as unknown as TypedDocumentString<CustomerCardInstanceMissingCardErrorDetailFieldsFragment, unknown>;
-export const CustomerCardInstanceRequestErrorDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceRequestErrorDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceRequestErrorDetailFields on CustomerCardInstanceRequestErrorDetail {
   message
   errorCode
 }
     `, {"fragmentName":"CustomerCardInstanceRequestErrorDetailFields"}) as unknown as TypedDocumentString<CustomerCardInstanceRequestErrorDetailFieldsFragment, unknown>;
-export const CustomerCardInstanceResponseBodyErrorDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceResponseBodyErrorDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceResponseBodyErrorDetailFields on CustomerCardInstanceResponseBodyErrorDetail {
   message
 }
     `, {"fragmentName":"CustomerCardInstanceResponseBodyErrorDetailFields"}) as unknown as TypedDocumentString<CustomerCardInstanceResponseBodyErrorDetailFieldsFragment, unknown>;
-export const CustomerCardInstanceStatusCodeErrorDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceStatusCodeErrorDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceStatusCodeErrorDetailFields on CustomerCardInstanceStatusCodeErrorDetail {
   message
   statusCode
 }
     `, {"fragmentName":"CustomerCardInstanceStatusCodeErrorDetailFields"}) as unknown as TypedDocumentString<CustomerCardInstanceStatusCodeErrorDetailFieldsFragment, unknown>;
-export const CustomerCardInstanceTimeoutErrorDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceTimeoutErrorDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceTimeoutErrorDetailFields on CustomerCardInstanceTimeoutErrorDetail {
   message
   timeoutSeconds
 }
     `, {"fragmentName":"CustomerCardInstanceTimeoutErrorDetailFields"}) as unknown as TypedDocumentString<CustomerCardInstanceTimeoutErrorDetailFieldsFragment, unknown>;
-export const CustomerCardInstanceUnknownErrorDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerCardInstanceUnknownErrorDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerCardInstanceUnknownErrorDetailFields on CustomerCardInstanceUnknownErrorDetail {
   message
 }
     `, {"fragmentName":"CustomerCardInstanceUnknownErrorDetailFields"}) as unknown as TypedDocumentString<CustomerCardInstanceUnknownErrorDetailFieldsFragment, unknown>;
-export const CustomerEventFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerEventFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerEventFields on CustomerEvent {
   id
   customerId
@@ -47464,7 +47464,7 @@ export const CustomerEventFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"CustomerEventFields"}) as unknown as TypedDocumentString<CustomerEventFieldsFragment, unknown>;
-export const CustomerEventEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerEventEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerEventEntryFields on CustomerEventEntry {
   timelineEventId
   title
@@ -47791,7 +47791,7 @@ export const CustomerEventEntryFieldsFragmentDoc = new TypedDocumentString(`
   isCollapsed
 }
     `, {"fragmentName":"CustomerEventEntryFields"}) as unknown as TypedDocumentString<CustomerEventEntryFieldsFragment, unknown>;
-export const CustomerGroupFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerGroupFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerGroupFields on CustomerGroup {
   id
   name
@@ -47854,7 +47854,7 @@ export const CustomerGroupFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"CustomerGroupFields"}) as unknown as TypedDocumentString<CustomerGroupFieldsFragment, unknown>;
-export const CustomerGroupMembershipFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerGroupMembershipFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerGroupMembershipFields on CustomerGroupMembership {
   customerId
   customerGroup {
@@ -47916,7 +47916,7 @@ export const CustomerGroupMembershipFieldsFragmentDoc = new TypedDocumentString(
   }
 }
     `, {"fragmentName":"CustomerGroupMembershipFields"}) as unknown as TypedDocumentString<CustomerGroupMembershipFieldsFragment, unknown>;
-export const CustomerSurveyFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerSurveyFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerSurveyFields on CustomerSurvey {
   id
   name
@@ -48011,25 +48011,25 @@ export const CustomerSurveyFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"CustomerSurveyFields"}) as unknown as TypedDocumentString<CustomerSurveyFieldsFragment, unknown>;
-export const CustomerSurveyLabelConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerSurveyLabelConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerSurveyLabelConditionFields on CustomerSurveyLabelCondition {
   labelTypeIds
   operator
 }
     `, {"fragmentName":"CustomerSurveyLabelConditionFields"}) as unknown as TypedDocumentString<CustomerSurveyLabelConditionFieldsFragment, unknown>;
-export const CustomerSurveyMessageSourceConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerSurveyMessageSourceConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerSurveyMessageSourceConditionFields on CustomerSurveyMessageSourceCondition {
   messageSource
   operator
 }
     `, {"fragmentName":"CustomerSurveyMessageSourceConditionFields"}) as unknown as TypedDocumentString<CustomerSurveyMessageSourceConditionFieldsFragment, unknown>;
-export const CustomerSurveyPrioritiesConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerSurveyPrioritiesConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerSurveyPrioritiesConditionFields on CustomerSurveyPrioritiesCondition {
   priorities
   operator
 }
     `, {"fragmentName":"CustomerSurveyPrioritiesConditionFields"}) as unknown as TypedDocumentString<CustomerSurveyPrioritiesConditionFieldsFragment, unknown>;
-export const CustomerSurveyRequestedEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerSurveyRequestedEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerSurveyRequestedEntryFields on CustomerSurveyRequestedEntry {
   customerId
   threadId
@@ -48038,19 +48038,19 @@ export const CustomerSurveyRequestedEntryFieldsFragmentDoc = new TypedDocumentSt
   surveyResponsePublicId
 }
     `, {"fragmentName":"CustomerSurveyRequestedEntryFields"}) as unknown as TypedDocumentString<CustomerSurveyRequestedEntryFieldsFragment, unknown>;
-export const CustomerSurveySupportEmailsConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerSurveySupportEmailsConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerSurveySupportEmailsConditionFields on CustomerSurveySupportEmailsCondition {
   supportEmailAddresses
   operator
 }
     `, {"fragmentName":"CustomerSurveySupportEmailsConditionFields"}) as unknown as TypedDocumentString<CustomerSurveySupportEmailsConditionFieldsFragment, unknown>;
-export const CustomerSurveyTiersConditionFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomerSurveyTiersConditionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomerSurveyTiersConditionFields on CustomerSurveyTiersCondition {
   tierIds
   operator
 }
     `, {"fragmentName":"CustomerSurveyTiersConditionFields"}) as unknown as TypedDocumentString<CustomerSurveyTiersConditionFieldsFragment, unknown>;
-export const CustomRoleFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomRoleFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomRoleFields on CustomRole {
   id
   name
@@ -48112,7 +48112,7 @@ export const CustomRoleFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"CustomRoleFields"}) as unknown as TypedDocumentString<CustomRoleFieldsFragment, unknown>;
-export const CustomSidekickSkillFieldsFragmentDoc = new TypedDocumentString(`
+export const CustomSidekickSkillFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment CustomSidekickSkillFields on CustomSidekickSkill {
   name
   displayName
@@ -48121,18 +48121,18 @@ export const CustomSidekickSkillFieldsFragmentDoc = new TypedDocumentString(`
   customSkillId
 }
     `, {"fragmentName":"CustomSidekickSkillFields"}) as unknown as TypedDocumentString<CustomSidekickSkillFieldsFragment, unknown>;
-export const DefaultServiceIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const DefaultServiceIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment DefaultServiceIntegrationFields on DefaultServiceIntegration {
   name
   key
 }
     `, {"fragmentName":"DefaultServiceIntegrationFields"}) as unknown as TypedDocumentString<DefaultServiceIntegrationFieldsFragment, unknown>;
-export const DeletedCustomerActorFieldsFragmentDoc = new TypedDocumentString(`
+export const DeletedCustomerActorFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment DeletedCustomerActorFields on DeletedCustomerActor {
   customerId
 }
     `, {"fragmentName":"DeletedCustomerActorFields"}) as unknown as TypedDocumentString<DeletedCustomerActorFieldsFragment, unknown>;
-export const DeletedThreadFieldsFragmentDoc = new TypedDocumentString(`
+export const DeletedThreadFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment DeletedThreadFields on DeletedThread {
   threadId
   deletedAt {
@@ -48141,12 +48141,12 @@ export const DeletedThreadFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"DeletedThreadFields"}) as unknown as TypedDocumentString<DeletedThreadFieldsFragment, unknown>;
-export const DiscordCustomerIdentityFieldsFragmentDoc = new TypedDocumentString(`
+export const DiscordCustomerIdentityFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment DiscordCustomerIdentityFields on DiscordCustomerIdentity {
   discordUserId
 }
     `, {"fragmentName":"DiscordCustomerIdentityFields"}) as unknown as TypedDocumentString<DiscordCustomerIdentityFieldsFragment, unknown>;
-export const DiscordMessageFieldsFragmentDoc = new TypedDocumentString(`
+export const DiscordMessageFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment DiscordMessageFields on DiscordMessage {
   discordMessageId
   markdownContent
@@ -48233,7 +48233,7 @@ export const DiscordMessageFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"DiscordMessageFields"}) as unknown as TypedDocumentString<DiscordMessageFieldsFragment, unknown>;
-export const DiscordMessageEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const DiscordMessageEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment DiscordMessageEntryFields on DiscordMessageEntry {
   customerId
   discordMessageId
@@ -48249,20 +48249,20 @@ export const DiscordMessageEntryFieldsFragmentDoc = new TypedDocumentString(`
   discordMessageLink
 }
     `, {"fragmentName":"DiscordMessageEntryFields"}) as unknown as TypedDocumentString<DiscordMessageEntryFieldsFragment, unknown>;
-export const DiscordThreadChannelDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const DiscordThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment DiscordThreadChannelDetailsFields on DiscordThreadChannelDetails {
   discordGuildId
   discordChannelId
   discordChannelName
 }
     `, {"fragmentName":"DiscordThreadChannelDetailsFields"}) as unknown as TypedDocumentString<DiscordThreadChannelDetailsFieldsFragment, unknown>;
-export const DiscussionResolvedNotificationDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const DiscussionResolvedNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment DiscussionResolvedNotificationDetailFields on DiscussionResolvedNotificationDetail {
   threadId
   threadDiscussionId
 }
     `, {"fragmentName":"DiscussionResolvedNotificationDetailFields"}) as unknown as TypedDocumentString<DiscussionResolvedNotificationDetailFieldsFragment, unknown>;
-export const EmailFieldsFragmentDoc = new TypedDocumentString(`
+export const EmailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EmailFields on Email {
   id
   thread {
@@ -48359,17 +48359,17 @@ export const EmailFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"EmailFields"}) as unknown as TypedDocumentString<EmailFieldsFragment, unknown>;
-export const EmailBounceNotificationDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const EmailBounceNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EmailBounceNotificationDetailFields on EmailBounceNotificationDetail {
   threadId
 }
     `, {"fragmentName":"EmailBounceNotificationDetailFields"}) as unknown as TypedDocumentString<EmailBounceNotificationDetailFieldsFragment, unknown>;
-export const EmailCustomerIdentityFieldsFragmentDoc = new TypedDocumentString(`
+export const EmailCustomerIdentityFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EmailCustomerIdentityFields on EmailCustomerIdentity {
   email
 }
     `, {"fragmentName":"EmailCustomerIdentityFields"}) as unknown as TypedDocumentString<EmailCustomerIdentityFieldsFragment, unknown>;
-export const EmailEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const EmailEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EmailEntryFields on EmailEntry {
   emailId
   to {
@@ -48401,7 +48401,7 @@ export const EmailEntryFieldsFragmentDoc = new TypedDocumentString(`
   category
 }
     `, {"fragmentName":"EmailEntryFields"}) as unknown as TypedDocumentString<EmailEntryFieldsFragment, unknown>;
-export const EmailPreviewUrlFieldsFragmentDoc = new TypedDocumentString(`
+export const EmailPreviewUrlFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EmailPreviewUrlFields on EmailPreviewUrl {
   previewUrl
   expiresAt {
@@ -48410,7 +48410,7 @@ export const EmailPreviewUrlFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"EmailPreviewUrlFields"}) as unknown as TypedDocumentString<EmailPreviewUrlFieldsFragment, unknown>;
-export const EmailSignatureFieldsFragmentDoc = new TypedDocumentString(`
+export const EmailSignatureFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EmailSignatureFields on EmailSignature {
   text
   markdown
@@ -48470,7 +48470,7 @@ export const EmailSignatureFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"EmailSignatureFields"}) as unknown as TypedDocumentString<EmailSignatureFieldsFragment, unknown>;
-export const EmailSuppressionFieldsFragmentDoc = new TypedDocumentString(`
+export const EmailSuppressionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EmailSuppressionFields on EmailSuppression {
   emailAddress
   reason
@@ -48481,7 +48481,7 @@ export const EmailSuppressionFieldsFragmentDoc = new TypedDocumentString(`
   isRemovable
 }
     `, {"fragmentName":"EmailSuppressionFields"}) as unknown as TypedDocumentString<EmailSuppressionFieldsFragment, unknown>;
-export const EmbedTokenFieldsFragmentDoc = new TypedDocumentString(`
+export const EmbedTokenFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EmbedTokenFields on EmbedToken {
   token
   expiresAt {
@@ -48491,7 +48491,7 @@ export const EmbedTokenFieldsFragmentDoc = new TypedDocumentString(`
   jwksUrl
 }
     `, {"fragmentName":"EmbedTokenFields"}) as unknown as TypedDocumentString<EmbedTokenFieldsFragment, unknown>;
-export const EscalationPathFieldsFragmentDoc = new TypedDocumentString(`
+export const EscalationPathFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EscalationPathFields on EscalationPath {
   id
   name
@@ -48567,7 +48567,7 @@ export const EscalationPathFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"EscalationPathFields"}) as unknown as TypedDocumentString<EscalationPathFieldsFragment, unknown>;
-export const EscalationPathStepLabelTypeFieldsFragmentDoc = new TypedDocumentString(`
+export const EscalationPathStepLabelTypeFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EscalationPathStepLabelTypeFields on EscalationPathStepLabelType {
   id
   labelType {
@@ -48575,7 +48575,7 @@ export const EscalationPathStepLabelTypeFieldsFragmentDoc = new TypedDocumentStr
   }
 }
     `, {"fragmentName":"EscalationPathStepLabelTypeFields"}) as unknown as TypedDocumentString<EscalationPathStepLabelTypeFieldsFragment, unknown>;
-export const EscalationPathStepUserFieldsFragmentDoc = new TypedDocumentString(`
+export const EscalationPathStepUserFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment EscalationPathStepUserFields on EscalationPathStepUser {
   id
   user {
@@ -48583,7 +48583,7 @@ export const EscalationPathStepUserFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"EscalationPathStepUserFields"}) as unknown as TypedDocumentString<EscalationPathStepUserFieldsFragment, unknown>;
-export const FavoritePageFieldsFragmentDoc = new TypedDocumentString(`
+export const FavoritePageFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment FavoritePageFields on FavoritePage {
   id
   key
@@ -48643,7 +48643,7 @@ export const FavoritePageFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"FavoritePageFields"}) as unknown as TypedDocumentString<FavoritePageFieldsFragment, unknown>;
-export const FirstResolutionTimeServiceLevelAgreementFieldsFragmentDoc = new TypedDocumentString(`
+export const FirstResolutionTimeServiceLevelAgreementFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment FirstResolutionTimeServiceLevelAgreementFields on FirstResolutionTimeServiceLevelAgreement {
   id
   firstResolutionTimeMinutes
@@ -48770,7 +48770,7 @@ export const FirstResolutionTimeServiceLevelAgreementFieldsFragmentDoc = new Typ
   }
 }
     `, {"fragmentName":"FirstResolutionTimeServiceLevelAgreementFields"}) as unknown as TypedDocumentString<FirstResolutionTimeServiceLevelAgreementFieldsFragment, unknown>;
-export const FirstResponseTimeServiceLevelAgreementFieldsFragmentDoc = new TypedDocumentString(`
+export const FirstResponseTimeServiceLevelAgreementFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment FirstResponseTimeServiceLevelAgreementFields on FirstResponseTimeServiceLevelAgreement {
   id
   firstResponseTimeMinutes
@@ -48895,7 +48895,7 @@ export const FirstResponseTimeServiceLevelAgreementFieldsFragmentDoc = new Typed
   }
 }
     `, {"fragmentName":"FirstResponseTimeServiceLevelAgreementFields"}) as unknown as TypedDocumentString<FirstResponseTimeServiceLevelAgreementFieldsFragment, unknown>;
-export const GeneratedReplyFieldsFragmentDoc = new TypedDocumentString(`
+export const GeneratedReplyFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment GeneratedReplyFields on GeneratedReply {
   id
   markdown
@@ -48956,7 +48956,7 @@ export const GeneratedReplyFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"GeneratedReplyFields"}) as unknown as TypedDocumentString<GeneratedReplyFieldsFragment, unknown>;
-export const GenericThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
+export const GenericThreadLinkFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment GenericThreadLinkFields on GenericThreadLink {
   id
   title
@@ -49029,7 +49029,7 @@ export const GenericThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"GenericThreadLinkFields"}) as unknown as TypedDocumentString<GenericThreadLinkFieldsFragment, unknown>;
-export const GithubUserAuthIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const GithubUserAuthIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment GithubUserAuthIntegrationFields on GithubUserAuthIntegration {
   id
   githubUsername
@@ -49089,7 +49089,7 @@ export const GithubUserAuthIntegrationFieldsFragmentDoc = new TypedDocumentStrin
   }
 }
     `, {"fragmentName":"GithubUserAuthIntegrationFields"}) as unknown as TypedDocumentString<GithubUserAuthIntegrationFieldsFragment, unknown>;
-export const HeatmapMetricFieldsFragmentDoc = new TypedDocumentString(`
+export const HeatmapMetricFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HeatmapMetricFields on HeatmapMetric {
   days {
     percentage
@@ -49099,7 +49099,7 @@ export const HeatmapMetricFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"HeatmapMetricFields"}) as unknown as TypedDocumentString<HeatmapMetricFieldsFragment, unknown>;
-export const HelpCenterFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterFields on HelpCenter {
   id
   type
@@ -49287,7 +49287,7 @@ export const HelpCenterFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"HelpCenterFields"}) as unknown as TypedDocumentString<HelpCenterFieldsFragment, unknown>;
-export const HelpCenterAiConversationFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterAiConversationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterAiConversationFields on HelpCenterAiConversation {
   id
   title
@@ -49315,7 +49315,7 @@ export const HelpCenterAiConversationFieldsFragmentDoc = new TypedDocumentString
   messageCount
 }
     `, {"fragmentName":"HelpCenterAiConversationFields"}) as unknown as TypedDocumentString<HelpCenterAiConversationFieldsFragment, unknown>;
-export const HelpCenterAiConversationMessageEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterAiConversationMessageEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterAiConversationMessageEntryFields on HelpCenterAiConversationMessageEntry {
   helpCenterId
   helpCenterAiConversationId
@@ -49323,7 +49323,7 @@ export const HelpCenterAiConversationMessageEntryFieldsFragmentDoc = new TypedDo
   markdown
 }
     `, {"fragmentName":"HelpCenterAiConversationMessageEntryFields"}) as unknown as TypedDocumentString<HelpCenterAiConversationMessageEntryFieldsFragment, unknown>;
-export const HelpCenterArticleFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterArticleFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterArticleFields on HelpCenterArticle {
   id
   title
@@ -49421,7 +49421,7 @@ export const HelpCenterArticleFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"HelpCenterArticleFields"}) as unknown as TypedDocumentString<HelpCenterArticleFieldsFragment, unknown>;
-export const HelpCenterArticleDocumentFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterArticleDocumentFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterArticleDocumentFields on HelpCenterArticleDocument {
   id
   article {
@@ -49429,7 +49429,7 @@ export const HelpCenterArticleDocumentFieldsFragmentDoc = new TypedDocumentStrin
   }
 }
     `, {"fragmentName":"HelpCenterArticleDocumentFields"}) as unknown as TypedDocumentString<HelpCenterArticleDocumentFieldsFragment, unknown>;
-export const HelpCenterArticleGroupFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterArticleGroupFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterArticleGroupFields on HelpCenterArticleGroup {
   id
   name
@@ -49496,7 +49496,7 @@ export const HelpCenterArticleGroupFieldsFragmentDoc = new TypedDocumentString(`
   slug
 }
     `, {"fragmentName":"HelpCenterArticleGroupFields"}) as unknown as TypedDocumentString<HelpCenterArticleGroupFieldsFragment, unknown>;
-export const HelpCenterArticleSearchResultFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterArticleSearchResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterArticleSearchResultFields on HelpCenterArticleSearchResult {
   content
   helpCenterArticle {
@@ -49507,12 +49507,12 @@ export const HelpCenterArticleSearchResultFieldsFragmentDoc = new TypedDocumentS
   }
 }
     `, {"fragmentName":"HelpCenterArticleSearchResultFields"}) as unknown as TypedDocumentString<HelpCenterArticleSearchResultFieldsFragment, unknown>;
-export const HelpCenterAuthMechanismWorkosAuthkitFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterAuthMechanismWorkosAuthkitFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterAuthMechanismWorkosAuthkitFields on HelpCenterAuthMechanismWorkosAuthkit {
   type
 }
     `, {"fragmentName":"HelpCenterAuthMechanismWorkosAuthkitFields"}) as unknown as TypedDocumentString<HelpCenterAuthMechanismWorkosAuthkitFieldsFragment, unknown>;
-export const HelpCenterAuthMechanismWorkosConnectFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterAuthMechanismWorkosConnectFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterAuthMechanismWorkosConnectFields on HelpCenterAuthMechanismWorkosConnect {
   type
   appClientId
@@ -49520,7 +49520,7 @@ export const HelpCenterAuthMechanismWorkosConnectFieldsFragmentDoc = new TypedDo
   apiHost
 }
     `, {"fragmentName":"HelpCenterAuthMechanismWorkosConnectFields"}) as unknown as TypedDocumentString<HelpCenterAuthMechanismWorkosConnectFieldsFragment, unknown>;
-export const HelpCenterIndexFieldsFragmentDoc = new TypedDocumentString(`
+export const HelpCenterIndexFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment HelpCenterIndexFields on HelpCenterIndex {
   helpCenterId
   hash
@@ -49590,7 +49590,7 @@ export const HelpCenterIndexFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"HelpCenterIndexFields"}) as unknown as TypedDocumentString<HelpCenterIndexFieldsFragment, unknown>;
-export const ImportJobFieldsFragmentDoc = new TypedDocumentString(`
+export const ImportJobFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ImportJobFields on ImportJob {
   id
   status
@@ -49604,7 +49604,7 @@ export const ImportJobFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ImportJobFields"}) as unknown as TypedDocumentString<ImportJobFieldsFragment, unknown>;
-export const ImportJobDefinitionFieldsFragmentDoc = new TypedDocumentString(`
+export const ImportJobDefinitionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ImportJobDefinitionFields on ImportJobDefinition {
   id
   mode
@@ -49675,13 +49675,13 @@ export const ImportJobDefinitionFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ImportJobDefinitionFields"}) as unknown as TypedDocumentString<ImportJobDefinitionFieldsFragment, unknown>;
-export const ImportThreadChannelDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const ImportThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ImportThreadChannelDetailsFields on ImportThreadChannelDetails {
   importSourceUrl
   importIntegrationKey
 }
     `, {"fragmentName":"ImportThreadChannelDetailsFields"}) as unknown as TypedDocumentString<ImportThreadChannelDetailsFieldsFragment, unknown>;
-export const RoleFieldsFragmentDoc = new TypedDocumentString(`
+export const RoleFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment RoleFields on Role {
   id
   name
@@ -49696,7 +49696,7 @@ export const RoleFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"RoleFields"}) as unknown as TypedDocumentString<RoleFieldsFragment, unknown>;
-export const UserWorkingHoursFieldsFragmentDoc = new TypedDocumentString(`
+export const UserWorkingHoursFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment UserWorkingHoursFields on UserWorkingHours {
   id
   userId
@@ -49771,7 +49771,7 @@ export const UserWorkingHoursFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"UserWorkingHoursFields"}) as unknown as TypedDocumentString<UserWorkingHoursFieldsFragment, unknown>;
-export const ImportThreadMessageResultFieldsFragmentDoc = new TypedDocumentString(`
+export const ImportThreadMessageResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
   threadMessage {
     __typename
@@ -55152,7 +55152,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`, {"fragmentName":"ImportThreadMessageResultFields"}) as unknown as TypedDocumentString<ImportThreadMessageResultFieldsFragment, unknown>;
-export const IndexedDocumentFieldsFragmentDoc = new TypedDocumentString(`
+export const IndexedDocumentFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IndexedDocumentFields on IndexedDocument {
   id
   url
@@ -55257,7 +55257,7 @@ export const IndexedDocumentFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"IndexedDocumentFields"}) as unknown as TypedDocumentString<IndexedDocumentFieldsFragment, unknown>;
-export const IndexedDocumentSearchResultFieldsFragmentDoc = new TypedDocumentString(`
+export const IndexedDocumentSearchResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IndexedDocumentSearchResultFields on IndexedDocumentSearchResult {
   content
   indexedDocument {
@@ -55367,7 +55367,7 @@ export const IndexedDocumentSearchResultFieldsFragmentDoc = new TypedDocumentStr
     }
   }
 }`, {"fragmentName":"IndexedDocumentSearchResultFields"}) as unknown as TypedDocumentString<IndexedDocumentSearchResultFieldsFragment, unknown>;
-export const IndexedDocumentStatusFailedFieldsFragmentDoc = new TypedDocumentString(`
+export const IndexedDocumentStatusFailedFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IndexedDocumentStatusFailedFields on IndexedDocumentStatusFailed {
   reason
   failedAt {
@@ -55376,7 +55376,7 @@ export const IndexedDocumentStatusFailedFieldsFragmentDoc = new TypedDocumentStr
   }
 }
     `, {"fragmentName":"IndexedDocumentStatusFailedFields"}) as unknown as TypedDocumentString<IndexedDocumentStatusFailedFieldsFragment, unknown>;
-export const IndexedDocumentStatusIndexedFieldsFragmentDoc = new TypedDocumentString(`
+export const IndexedDocumentStatusIndexedFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IndexedDocumentStatusIndexedFields on IndexedDocumentStatusIndexed {
   indexedAt {
     unixTimestamp
@@ -55407,7 +55407,7 @@ export const IndexedDocumentStatusIndexedFieldsFragmentDoc = new TypedDocumentSt
   }
 }
     `, {"fragmentName":"IndexedDocumentStatusIndexedFields"}) as unknown as TypedDocumentString<IndexedDocumentStatusIndexedFieldsFragment, unknown>;
-export const IndexedDocumentStatusPendingFieldsFragmentDoc = new TypedDocumentString(`
+export const IndexedDocumentStatusPendingFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IndexedDocumentStatusPendingFields on IndexedDocumentStatusPending {
   startedAt {
     unixTimestamp
@@ -55415,7 +55415,7 @@ export const IndexedDocumentStatusPendingFieldsFragmentDoc = new TypedDocumentSt
   }
 }
     `, {"fragmentName":"IndexedDocumentStatusPendingFields"}) as unknown as TypedDocumentString<IndexedDocumentStatusPendingFieldsFragment, unknown>;
-export const IndexingStatusFailedFieldsFragmentDoc = new TypedDocumentString(`
+export const IndexingStatusFailedFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IndexingStatusFailedFields on IndexingStatusFailed {
   reason
   failedAt {
@@ -55424,7 +55424,7 @@ export const IndexingStatusFailedFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"IndexingStatusFailedFields"}) as unknown as TypedDocumentString<IndexingStatusFailedFieldsFragment, unknown>;
-export const IndexingStatusIndexedFieldsFragmentDoc = new TypedDocumentString(`
+export const IndexingStatusIndexedFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IndexingStatusIndexedFields on IndexingStatusIndexed {
   indexedAt {
     unixTimestamp
@@ -55455,7 +55455,7 @@ export const IndexingStatusIndexedFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"IndexingStatusIndexedFields"}) as unknown as TypedDocumentString<IndexingStatusIndexedFieldsFragment, unknown>;
-export const IndexingStatusPendingFieldsFragmentDoc = new TypedDocumentString(`
+export const IndexingStatusPendingFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IndexingStatusPendingFields on IndexingStatusPending {
   startedAt {
     unixTimestamp
@@ -55463,13 +55463,13 @@ export const IndexingStatusPendingFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"IndexingStatusPendingFields"}) as unknown as TypedDocumentString<IndexingStatusPendingFieldsFragment, unknown>;
-export const IntegrationReauthRequiredNotificationDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const IntegrationReauthRequiredNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IntegrationReauthRequiredNotificationDetailFields on IntegrationReauthRequiredNotificationDetail {
   serviceIntegrationKey
   serviceAuthorizationId
 }
     `, {"fragmentName":"IntegrationReauthRequiredNotificationDetailFields"}) as unknown as TypedDocumentString<IntegrationReauthRequiredNotificationDetailFieldsFragment, unknown>;
-export const InternalNotificationFieldsFragmentDoc = new TypedDocumentString(`
+export const InternalNotificationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment InternalNotificationFields on InternalNotification {
   id
   userId
@@ -55633,7 +55633,7 @@ export const InternalNotificationFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"InternalNotificationFields"}) as unknown as TypedDocumentString<InternalNotificationFieldsFragment, unknown>;
-export const IssueTrackerFieldFieldsFragmentDoc = new TypedDocumentString(`
+export const IssueTrackerFieldFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment IssueTrackerFieldFields on IssueTrackerField {
   name
   key
@@ -55649,7 +55649,7 @@ export const IssueTrackerFieldFieldsFragmentDoc = new TypedDocumentString(`
   isRequired
 }
     `, {"fragmentName":"IssueTrackerFieldFields"}) as unknown as TypedDocumentString<IssueTrackerFieldFieldsFragment, unknown>;
-export const JiraIntegrationTokenFieldsFragmentDoc = new TypedDocumentString(`
+export const JiraIntegrationTokenFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment JiraIntegrationTokenFields on JiraIntegrationToken {
   token
   createdAt {
@@ -55658,7 +55658,7 @@ export const JiraIntegrationTokenFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"JiraIntegrationTokenFields"}) as unknown as TypedDocumentString<JiraIntegrationTokenFieldsFragment, unknown>;
-export const JiraIssueThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
+export const JiraIssueThreadLinkFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment JiraIssueThreadLinkFields on JiraIssueThreadLink {
   id
   title
@@ -55731,7 +55731,7 @@ export const JiraIssueThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"JiraIssueThreadLinkFields"}) as unknown as TypedDocumentString<JiraIssueThreadLinkFieldsFragment, unknown>;
-export const JiraSiteIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const JiraSiteIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment JiraSiteIntegrationFields on JiraSiteIntegration {
   name
   key
@@ -55743,7 +55743,7 @@ export const JiraSiteIntegrationFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"JiraSiteIntegrationFields"}) as unknown as TypedDocumentString<JiraSiteIntegrationFieldsFragment, unknown>;
-export const KnowledgeGapFieldsFragmentDoc = new TypedDocumentString(`
+export const KnowledgeGapFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment KnowledgeGapFields on KnowledgeGap {
   id
   title
@@ -55829,7 +55829,7 @@ export const KnowledgeGapFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"KnowledgeGapFields"}) as unknown as TypedDocumentString<KnowledgeGapFieldsFragment, unknown>;
-export const KnowledgeGapFeedbackDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const KnowledgeGapFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment KnowledgeGapFeedbackDetailsFields on KnowledgeGapFeedbackDetails {
   reason
   comment
@@ -55837,7 +55837,7 @@ export const KnowledgeGapFeedbackDetailsFieldsFragmentDoc = new TypedDocumentStr
   knowledgeGapId
 }
     `, {"fragmentName":"KnowledgeGapFeedbackDetailsFields"}) as unknown as TypedDocumentString<KnowledgeGapFeedbackDetailsFieldsFragment, unknown>;
-export const KnowledgeSourceCitationFieldsFragmentDoc = new TypedDocumentString(`
+export const KnowledgeSourceCitationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment KnowledgeSourceCitationFields on KnowledgeSourceCitation {
   threadId
   timelineEntryId
@@ -55958,7 +55958,7 @@ export const KnowledgeSourceCitationFieldsFragmentDoc = new TypedDocumentString(
   }
 }
     `, {"fragmentName":"KnowledgeSourceCitationFields"}) as unknown as TypedDocumentString<KnowledgeSourceCitationFieldsFragment, unknown>;
-export const KnowledgeSourceSitemapFieldsFragmentDoc = new TypedDocumentString(`
+export const KnowledgeSourceSitemapFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment KnowledgeSourceSitemapFields on KnowledgeSourceSitemap {
   id
   type
@@ -56070,7 +56070,7 @@ export const KnowledgeSourceSitemapFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"KnowledgeSourceSitemapFields"}) as unknown as TypedDocumentString<KnowledgeSourceSitemapFieldsFragment, unknown>;
-export const KnowledgeSourceUrlFieldsFragmentDoc = new TypedDocumentString(`
+export const KnowledgeSourceUrlFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment KnowledgeSourceUrlFields on KnowledgeSourceUrl {
   id
   type
@@ -56176,7 +56176,7 @@ export const KnowledgeSourceUrlFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"KnowledgeSourceUrlFields"}) as unknown as TypedDocumentString<KnowledgeSourceUrlFieldsFragment, unknown>;
-export const LabelFieldsFragmentDoc = new TypedDocumentString(`
+export const LabelFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment LabelFields on Label {
   id
   labelType {
@@ -56256,7 +56256,7 @@ export const LabelFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"LabelFields"}) as unknown as TypedDocumentString<LabelFieldsFragment, unknown>;
-export const LabelTypeFieldsFragmentDoc = new TypedDocumentString(`
+export const LabelTypeFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment LabelTypeFields on LabelType {
   id
   name
@@ -56354,7 +56354,7 @@ export const LabelTypeFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"LabelTypeFields"}) as unknown as TypedDocumentString<LabelTypeFieldsFragment, unknown>;
-export const LinearIssueThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
+export const LinearIssueThreadLinkFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment LinearIssueThreadLinkFields on LinearIssueThreadLink {
   id
   title
@@ -56436,14 +56436,14 @@ export const LinearIssueThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"LinearIssueThreadLinkFields"}) as unknown as TypedDocumentString<LinearIssueThreadLinkFieldsFragment, unknown>;
-export const LinearIssueThreadLinkStateTransitionedEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const LinearIssueThreadLinkStateTransitionedEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment LinearIssueThreadLinkStateTransitionedEntryFields on LinearIssueThreadLinkStateTransitionedEntry {
   linearIssueId
   previousLinearStateId
   nextLinearStateId
 }
     `, {"fragmentName":"LinearIssueThreadLinkStateTransitionedEntryFields"}) as unknown as TypedDocumentString<LinearIssueThreadLinkStateTransitionedEntryFieldsFragment, unknown>;
-export const MachineUserFieldsFragmentDoc = new TypedDocumentString(`
+export const MachineUserFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment MachineUserFields on MachineUser {
   id
   fullName
@@ -56565,7 +56565,7 @@ export const MachineUserFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"MachineUserFields"}) as unknown as TypedDocumentString<MachineUserFieldsFragment, unknown>;
-export const MachineUserActorFieldsFragmentDoc = new TypedDocumentString(`
+export const MachineUserActorFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment MachineUserActorFields on MachineUserActor {
   machineUserId
   machineUser {
@@ -56573,7 +56573,7 @@ export const MachineUserActorFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"MachineUserActorFields"}) as unknown as TypedDocumentString<MachineUserActorFieldsFragment, unknown>;
-export const MergedThreadMessageEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const MergedThreadMessageEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment MergedThreadMessageEntryFields on MergedThreadMessageEntry {
   threadLinkId
   childThreadDetails {
@@ -56586,7 +56586,7 @@ export const MergedThreadMessageEntryFieldsFragmentDoc = new TypedDocumentString
   }
 }
     `, {"fragmentName":"MergedThreadMessageEntryFields"}) as unknown as TypedDocumentString<MergedThreadMessageEntryFieldsFragment, unknown>;
-export const MeteredFeatureEntitlementFieldsFragmentDoc = new TypedDocumentString(`
+export const MeteredFeatureEntitlementFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment MeteredFeatureEntitlementFields on MeteredFeatureEntitlement {
   feature
   isEntitled
@@ -56594,7 +56594,7 @@ export const MeteredFeatureEntitlementFieldsFragmentDoc = new TypedDocumentStrin
   limit
 }
     `, {"fragmentName":"MeteredFeatureEntitlementFields"}) as unknown as TypedDocumentString<MeteredFeatureEntitlementFieldsFragment, unknown>;
-export const MsTeamsChannelMembersFieldsFragmentDoc = new TypedDocumentString(`
+export const MsTeamsChannelMembersFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment MSTeamsChannelMembersFields on MSTeamsChannelMembers {
   members {
     id
@@ -56607,7 +56607,7 @@ export const MsTeamsChannelMembersFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"MSTeamsChannelMembersFields"}) as unknown as TypedDocumentString<MsTeamsChannelMembersFieldsFragment, unknown>;
-export const MsTeamsMessageFieldsFragmentDoc = new TypedDocumentString(`
+export const MsTeamsMessageFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment MSTeamsMessageFields on MSTeamsMessage {
   id
   threadId
@@ -56702,7 +56702,7 @@ export const MsTeamsMessageFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"MSTeamsMessageFields"}) as unknown as TypedDocumentString<MsTeamsMessageFieldsFragment, unknown>;
-export const MsTeamsMessageEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const MsTeamsMessageEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment MSTeamsMessageEntryFields on MSTeamsMessageEntry {
   text
   customerId
@@ -56720,7 +56720,7 @@ export const MsTeamsMessageEntryFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"MSTeamsMessageEntryFields"}) as unknown as TypedDocumentString<MsTeamsMessageEntryFieldsFragment, unknown>;
-export const MsTeamsThreadChannelDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const MsTeamsThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment MSTeamsThreadChannelDetailsFields on MSTeamsThreadChannelDetails {
   msTeamsTeamId
   msTeamsTeamName
@@ -56729,7 +56729,7 @@ export const MsTeamsThreadChannelDetailsFieldsFragmentDoc = new TypedDocumentStr
   msTeamsMessageType
 }
     `, {"fragmentName":"MSTeamsThreadChannelDetailsFields"}) as unknown as TypedDocumentString<MsTeamsThreadChannelDetailsFieldsFragment, unknown>;
-export const NextResponseTimeServiceLevelAgreementFieldsFragmentDoc = new TypedDocumentString(`
+export const NextResponseTimeServiceLevelAgreementFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment NextResponseTimeServiceLevelAgreementFields on NextResponseTimeServiceLevelAgreement {
   id
   nextResponseTimeMinutes
@@ -56854,7 +56854,7 @@ export const NextResponseTimeServiceLevelAgreementFieldsFragmentDoc = new TypedD
   }
 }
     `, {"fragmentName":"NextResponseTimeServiceLevelAgreementFields"}) as unknown as TypedDocumentString<NextResponseTimeServiceLevelAgreementFieldsFragment, unknown>;
-export const NoteFieldsFragmentDoc = new TypedDocumentString(`
+export const NoteFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment NoteFields on Note {
   id
   text
@@ -56975,7 +56975,7 @@ export const NoteFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"NoteFields"}) as unknown as TypedDocumentString<NoteFieldsFragment, unknown>;
-export const NoteEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const NoteEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment NoteEntryFields on NoteEntry {
   noteId
   text
@@ -57010,7 +57010,7 @@ export const NoteEntryFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"NoteEntryFields"}) as unknown as TypedDocumentString<NoteEntryFieldsFragment, unknown>;
-export const NoteMentionNotificationDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const NoteMentionNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment NoteMentionNotificationDetailFields on NoteMentionNotificationDetail {
   threadId
   timelineEntryId
@@ -57039,7 +57039,7 @@ export const NoteMentionNotificationDetailFieldsFragmentDoc = new TypedDocumentS
   }
 }
     `, {"fragmentName":"NoteMentionNotificationDetailFields"}) as unknown as TypedDocumentString<NoteMentionNotificationDetailFieldsFragment, unknown>;
-export const NumberSettingFieldsFragmentDoc = new TypedDocumentString(`
+export const NumberSettingFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment NumberSettingFields on NumberSetting {
   code
   numberValue
@@ -57049,7 +57049,7 @@ export const NumberSettingFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"NumberSettingFields"}) as unknown as TypedDocumentString<NumberSettingFieldsFragment, unknown>;
-export const PerSeatRecurringPriceFieldsFragmentDoc = new TypedDocumentString(`
+export const PerSeatRecurringPriceFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment PerSeatRecurringPriceFields on PerSeatRecurringPrice {
   billingIntervalUnit
   billingIntervalCount
@@ -57057,7 +57057,7 @@ export const PerSeatRecurringPriceFieldsFragmentDoc = new TypedDocumentString(`
   perSeatAmount
 }
     `, {"fragmentName":"PerSeatRecurringPriceFields"}) as unknown as TypedDocumentString<PerSeatRecurringPriceFieldsFragment, unknown>;
-export const PlainTaskThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
+export const PlainTaskThreadLinkFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment PlainTaskThreadLinkFields on PlainTaskThreadLink {
   id
   title
@@ -57125,7 +57125,7 @@ export const PlainTaskThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
   plainTaskId
 }
     `, {"fragmentName":"PlainTaskThreadLinkFields"}) as unknown as TypedDocumentString<PlainTaskThreadLinkFieldsFragment, unknown>;
-export const PlainThreadThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
+export const PlainThreadThreadLinkFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment PlainThreadThreadLinkFields on PlainThreadThreadLink {
   id
   title
@@ -57194,7 +57194,7 @@ export const PlainThreadThreadLinkFieldsFragmentDoc = new TypedDocumentString(`
   plainThreadStatusDetailType
 }
     `, {"fragmentName":"PlainThreadThreadLinkFields"}) as unknown as TypedDocumentString<PlainThreadThreadLinkFieldsFragment, unknown>;
-export const QueuedAgentSessionMessageFieldsFragmentDoc = new TypedDocumentString(`
+export const QueuedAgentSessionMessageFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment QueuedAgentSessionMessageFields on QueuedAgentSessionMessage {
   id
   text
@@ -57272,7 +57272,7 @@ export const QueuedAgentSessionMessageFieldsFragmentDoc = new TypedDocumentStrin
   }
 }
     `, {"fragmentName":"QueuedAgentSessionMessageFields"}) as unknown as TypedDocumentString<QueuedAgentSessionMessageFieldsFragment, unknown>;
-export const RoleChangeCostFieldsFragmentDoc = new TypedDocumentString(`
+export const RoleChangeCostFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment RoleChangeCostFields on RoleChangeCost {
   totalPrice {
     amount
@@ -57297,7 +57297,7 @@ export const RoleChangeCostFieldsFragmentDoc = new TypedDocumentString(`
   removingSeatType
 }
     `, {"fragmentName":"RoleChangeCostFields"}) as unknown as TypedDocumentString<RoleChangeCostFieldsFragment, unknown>;
-export const SavedThreadsViewFieldsFragmentDoc = new TypedDocumentString(`
+export const SavedThreadsViewFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SavedThreadsViewFields on SavedThreadsView {
   id
   name
@@ -57417,7 +57417,7 @@ export const SavedThreadsViewFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SavedThreadsViewFields"}) as unknown as TypedDocumentString<SavedThreadsViewFieldsFragment, unknown>;
-export const ServiceAuthorizationFieldsFragmentDoc = new TypedDocumentString(`
+export const ServiceAuthorizationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ServiceAuthorizationFields on ServiceAuthorization {
   id
   serviceIntegration {
@@ -57522,7 +57522,7 @@ export const ServiceAuthorizationFieldsFragmentDoc = new TypedDocumentString(`
   isImportRunnerIntegration
 }
     `, {"fragmentName":"ServiceAuthorizationFields"}) as unknown as TypedDocumentString<ServiceAuthorizationFieldsFragment, unknown>;
-export const ServiceLevelAgreementPolicyFieldsFragmentDoc = new TypedDocumentString(`
+export const ServiceLevelAgreementPolicyFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ServiceLevelAgreementPolicyFields on ServiceLevelAgreementPolicy {
   id
   name
@@ -57583,7 +57583,7 @@ export const ServiceLevelAgreementPolicyFieldsFragmentDoc = new TypedDocumentStr
   }
 }
     `, {"fragmentName":"ServiceLevelAgreementPolicyFields"}) as unknown as TypedDocumentString<ServiceLevelAgreementPolicyFieldsFragment, unknown>;
-export const ServiceLevelAgreementStatusTransitionedEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ServiceLevelAgreementStatusTransitionedEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgreementStatusTransitionedEntry {
   previousStatus
   nextStatus
@@ -58088,7 +58088,7 @@ export const ServiceLevelAgreementStatusTransitionedEntryFieldsFragmentDoc = new
   }
 }
     `, {"fragmentName":"ServiceLevelAgreementStatusTransitionedEntryFields"}) as unknown as TypedDocumentString<ServiceLevelAgreementStatusTransitionedEntryFieldsFragment, unknown>;
-export const SidekickAvailableToolFieldsFragmentDoc = new TypedDocumentString(`
+export const SidekickAvailableToolFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SidekickAvailableToolFields on SidekickAvailableTool {
   service
   op
@@ -58106,7 +58106,7 @@ export const SidekickAvailableToolFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SidekickAvailableToolFields"}) as unknown as TypedDocumentString<SidekickAvailableToolFieldsFragment, unknown>;
-export const SidekickCreditBalanceFieldsFragmentDoc = new TypedDocumentString(`
+export const SidekickCreditBalanceFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SidekickCreditBalanceFields on SidekickCreditBalance {
   status
   allowance {
@@ -58121,7 +58121,7 @@ export const SidekickCreditBalanceFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SidekickCreditBalanceFields"}) as unknown as TypedDocumentString<SidekickCreditBalanceFieldsFragment, unknown>;
-export const SidekickGithubServiceConfigFieldsFragmentDoc = new TypedDocumentString(`
+export const SidekickGithubServiceConfigFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SidekickGithubServiceConfigFields on SidekickGithubServiceConfig {
   selectedRepos {
     repoId
@@ -58132,7 +58132,7 @@ export const SidekickGithubServiceConfigFieldsFragmentDoc = new TypedDocumentStr
   operatingInstructions
 }
     `, {"fragmentName":"SidekickGithubServiceConfigFields"}) as unknown as TypedDocumentString<SidekickGithubServiceConfigFieldsFragment, unknown>;
-export const SidekickMcpServerFieldsFragmentDoc = new TypedDocumentString(`
+export const SidekickMcpServerFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SidekickMcpServerFields on SidekickMcpServer {
   id
   slug
@@ -58157,7 +58157,7 @@ export const SidekickMcpServerFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SidekickMcpServerFields"}) as unknown as TypedDocumentString<SidekickMcpServerFieldsFragment, unknown>;
-export const SidekickToolArgOptionsPageFieldsFragmentDoc = new TypedDocumentString(`
+export const SidekickToolArgOptionsPageFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SidekickToolArgOptionsPageFields on SidekickToolArgOptionsPage {
   options {
     id
@@ -58166,7 +58166,7 @@ export const SidekickToolArgOptionsPageFieldsFragmentDoc = new TypedDocumentStri
   nextCursor
 }
     `, {"fragmentName":"SidekickToolArgOptionsPageFields"}) as unknown as TypedDocumentString<SidekickToolArgOptionsPageFieldsFragment, unknown>;
-export const SlackAutoJoinRuleFieldsFragmentDoc = new TypedDocumentString(`
+export const SlackAutoJoinRuleFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SlackAutoJoinRuleFields on SlackAutoJoinRule {
   id
   integrationId
@@ -58182,7 +58182,7 @@ export const SlackAutoJoinRuleFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SlackAutoJoinRuleFields"}) as unknown as TypedDocumentString<SlackAutoJoinRuleFieldsFragment, unknown>;
-export const SlackBroadcastRecipientUnsubscribeRecipientFieldsFragmentDoc = new TypedDocumentString(`
+export const SlackBroadcastRecipientUnsubscribeRecipientFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SlackBroadcastRecipientUnsubscribeRecipientFields on SlackBroadcastRecipientUnsubscribeRecipient {
   slackTeamId
   slackChannelId
@@ -58191,12 +58191,12 @@ export const SlackBroadcastRecipientUnsubscribeRecipientFieldsFragmentDoc = new 
   }
 }
     `, {"fragmentName":"SlackBroadcastRecipientUnsubscribeRecipientFields"}) as unknown as TypedDocumentString<SlackBroadcastRecipientUnsubscribeRecipientFieldsFragment, unknown>;
-export const SlackCustomerIdentityFieldsFragmentDoc = new TypedDocumentString(`
+export const SlackCustomerIdentityFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SlackCustomerIdentityFields on SlackCustomerIdentity {
   slackUserId
 }
     `, {"fragmentName":"SlackCustomerIdentityFields"}) as unknown as TypedDocumentString<SlackCustomerIdentityFieldsFragment, unknown>;
-export const SlackMessageEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const SlackMessageEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SlackMessageEntryFields on SlackMessageEntry {
   slackMessageLink
   slackWebMessageLink
@@ -58215,7 +58215,7 @@ export const SlackMessageEntryFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SlackMessageEntryFields"}) as unknown as TypedDocumentString<SlackMessageEntryFieldsFragment, unknown>;
-export const SlackReplyEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const SlackReplyEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SlackReplyEntryFields on SlackReplyEntry {
   slackMessageLink
   slackWebMessageLink
@@ -58231,7 +58231,7 @@ export const SlackReplyEntryFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SlackReplyEntryFields"}) as unknown as TypedDocumentString<SlackReplyEntryFieldsFragment, unknown>;
-export const SlackThreadChannelAssociationFieldsFragmentDoc = new TypedDocumentString(`
+export const SlackThreadChannelAssociationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SlackThreadChannelAssociationFields on SlackThreadChannelAssociation {
   id
   companyId
@@ -58296,7 +58296,7 @@ export const SlackThreadChannelAssociationFieldsFragmentDoc = new TypedDocumentS
   connectedSlackChannelId
 }
     `, {"fragmentName":"SlackThreadChannelAssociationFields"}) as unknown as TypedDocumentString<SlackThreadChannelAssociationFieldsFragment, unknown>;
-export const SlackThreadChannelDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const SlackThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SlackThreadChannelDetailsFields on SlackThreadChannelDetails {
   slackChannelId
   slackChannelName
@@ -58304,7 +58304,7 @@ export const SlackThreadChannelDetailsFieldsFragmentDoc = new TypedDocumentStrin
   slackTeamName
 }
     `, {"fragmentName":"SlackThreadChannelDetailsFields"}) as unknown as TypedDocumentString<SlackThreadChannelDetailsFieldsFragment, unknown>;
-export const SlackUserFieldsFragmentDoc = new TypedDocumentString(`
+export const SlackUserFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SlackUserFields on SlackUser {
   id
   slackUserId
@@ -58368,7 +58368,7 @@ export const SlackUserFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SlackUserFields"}) as unknown as TypedDocumentString<SlackUserFieldsFragment, unknown>;
-export const SnippetFieldsFragmentDoc = new TypedDocumentString(`
+export const SnippetFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SnippetFields on Snippet {
   id
   name
@@ -58459,7 +58459,7 @@ export const SnippetFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SnippetFields"}) as unknown as TypedDocumentString<SnippetFieldsFragment, unknown>;
-export const StringArraySettingFieldsFragmentDoc = new TypedDocumentString(`
+export const StringArraySettingFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment StringArraySettingFields on StringArraySetting {
   code
   stringArrayValue
@@ -58469,7 +58469,7 @@ export const StringArraySettingFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"StringArraySettingFields"}) as unknown as TypedDocumentString<StringArraySettingFieldsFragment, unknown>;
-export const StringSettingFieldsFragmentDoc = new TypedDocumentString(`
+export const StringSettingFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment StringSettingFields on StringSetting {
   code
   stringValue
@@ -58479,7 +58479,7 @@ export const StringSettingFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"StringSettingFields"}) as unknown as TypedDocumentString<StringSettingFieldsFragment, unknown>;
-export const SuggestedLabelTypeFieldsFragmentDoc = new TypedDocumentString(`
+export const SuggestedLabelTypeFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SuggestedLabelTypeFields on SuggestedLabelType {
   id
   name
@@ -58546,12 +58546,12 @@ export const SuggestedLabelTypeFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SuggestedLabelTypeFields"}) as unknown as TypedDocumentString<SuggestedLabelTypeFieldsFragment, unknown>;
-export const SystemFieldsFragmentDoc = new TypedDocumentString(`
+export const SystemFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SystemFields on System {
   id
 }
     `, {"fragmentName":"SystemFields"}) as unknown as TypedDocumentString<SystemFieldsFragment, unknown>;
-export const SystemActorFieldsFragmentDoc = new TypedDocumentString(`
+export const SystemActorFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SystemActorFields on SystemActor {
   systemId
   workflowExecutionId
@@ -58561,7 +58561,7 @@ export const SystemActorFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"SystemActorFields"}) as unknown as TypedDocumentString<SystemActorFieldsFragment, unknown>;
-export const SystemSidekickSkillFieldsFragmentDoc = new TypedDocumentString(`
+export const SystemSidekickSkillFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment SystemSidekickSkillFields on SystemSidekickSkill {
   name
   displayName
@@ -58569,7 +58569,7 @@ export const SystemSidekickSkillFieldsFragmentDoc = new TypedDocumentString(`
   isEnabled
 }
     `, {"fragmentName":"SystemSidekickSkillFields"}) as unknown as TypedDocumentString<SystemSidekickSkillFieldsFragment, unknown>;
-export const TaskFieldsFragmentDoc = new TypedDocumentString(`
+export const TaskFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TaskFields on Task {
   id
   ref
@@ -59022,7 +59022,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`, {"fragmentName":"TaskFields"}) as unknown as TypedDocumentString<TaskFieldsFragment, unknown>;
-export const TeamSettingsFieldsFragmentDoc = new TypedDocumentString(`
+export const TeamSettingsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TeamSettingsFields on TeamSettings {
   id
   labelTypeId
@@ -59084,7 +59084,7 @@ export const TeamSettingsFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"TeamSettingsFields"}) as unknown as TypedDocumentString<TeamSettingsFieldsFragment, unknown>;
-export const TenantFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantFields on Tenant {
   id
   name
@@ -59220,7 +59220,7 @@ export const TenantFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"TenantFields"}) as unknown as TypedDocumentString<TenantFieldsFragment, unknown>;
-export const TenantFieldFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantFieldFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantFieldFields on TenantField {
   id
   source
@@ -59305,12 +59305,12 @@ export const TenantFieldFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"TenantFieldFields"}) as unknown as TypedDocumentString<TenantFieldFieldsFragment, unknown>;
-export const TenantFieldBooleanValueFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantFieldBooleanValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantFieldBooleanValueFields on TenantFieldBooleanValue {
   booleanValue
 }
     `, {"fragmentName":"TenantFieldBooleanValueFields"}) as unknown as TypedDocumentString<TenantFieldBooleanValueFieldsFragment, unknown>;
-export const TenantFieldDateTimeValueFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantFieldDateTimeValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantFieldDateTimeValueFields on TenantFieldDateTimeValue {
   dateValue {
     unixTimestamp
@@ -59318,12 +59318,12 @@ export const TenantFieldDateTimeValueFieldsFragmentDoc = new TypedDocumentString
   }
 }
     `, {"fragmentName":"TenantFieldDateTimeValueFields"}) as unknown as TypedDocumentString<TenantFieldDateTimeValueFieldsFragment, unknown>;
-export const TenantFieldNumberValueFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantFieldNumberValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantFieldNumberValueFields on TenantFieldNumberValue {
   numberValue
 }
     `, {"fragmentName":"TenantFieldNumberValueFields"}) as unknown as TypedDocumentString<TenantFieldNumberValueFieldsFragment, unknown>;
-export const TenantFieldSchemaFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantFieldSchemaFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantFieldSchemaFields on TenantFieldSchema {
   id
   source
@@ -59390,22 +59390,22 @@ export const TenantFieldSchemaFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"TenantFieldSchemaFields"}) as unknown as TypedDocumentString<TenantFieldSchemaFieldsFragment, unknown>;
-export const TenantFieldStringArrayValueFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantFieldStringArrayValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantFieldStringArrayValueFields on TenantFieldStringArrayValue {
   arrayValue
 }
     `, {"fragmentName":"TenantFieldStringArrayValueFields"}) as unknown as TypedDocumentString<TenantFieldStringArrayValueFieldsFragment, unknown>;
-export const TenantFieldStringValueFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantFieldStringValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantFieldStringValueFields on TenantFieldStringValue {
   stringValue
 }
     `, {"fragmentName":"TenantFieldStringValueFields"}) as unknown as TypedDocumentString<TenantFieldStringValueFieldsFragment, unknown>;
-export const TenantFieldUserReferenceValueFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantFieldUserReferenceValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantFieldUserReferenceValueFields on TenantFieldUserReferenceValue {
   userReferenceValues
 }
     `, {"fragmentName":"TenantFieldUserReferenceValueFields"}) as unknown as TypedDocumentString<TenantFieldUserReferenceValueFieldsFragment, unknown>;
-export const TenantTierMembershipFieldsFragmentDoc = new TypedDocumentString(`
+export const TenantTierMembershipFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TenantTierMembershipFields on TenantTierMembership {
   id
   tierId
@@ -59466,7 +59466,7 @@ export const TenantTierMembershipFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"TenantTierMembershipFields"}) as unknown as TypedDocumentString<TenantTierMembershipFieldsFragment, unknown>;
-export const ThreadFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadFields on Thread {
   id
   ref
@@ -60506,7 +60506,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`, {"fragmentName":"ThreadFields"}) as unknown as TypedDocumentString<ThreadFieldsFragment, unknown>;
-export const ThreadAssignmentNotificationDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadAssignmentNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadAssignmentNotificationDetailFields on ThreadAssignmentNotificationDetail {
   threadId
   assignedBy {
@@ -60534,7 +60534,7 @@ export const ThreadAssignmentNotificationDetailFieldsFragmentDoc = new TypedDocu
   }
 }
     `, {"fragmentName":"ThreadAssignmentNotificationDetailFields"}) as unknown as TypedDocumentString<ThreadAssignmentNotificationDetailFieldsFragment, unknown>;
-export const ThreadCatchupFeedbackDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadCatchupFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadCatchupFeedbackDetailsFields on ThreadCatchupFeedbackDetails {
   reason
   comment
@@ -60542,7 +60542,7 @@ export const ThreadCatchupFeedbackDetailsFieldsFragmentDoc = new TypedDocumentSt
   threadId
 }
     `, {"fragmentName":"ThreadCatchupFeedbackDetailsFields"}) as unknown as TypedDocumentString<ThreadCatchupFeedbackDetailsFieldsFragment, unknown>;
-export const ThreadClusterFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadClusterFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadClusterFields on ThreadCluster {
   id
   title
@@ -60631,7 +60631,7 @@ export const ThreadClusterFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ThreadClusterFields"}) as unknown as TypedDocumentString<ThreadClusterFieldsFragment, unknown>;
-export const ThreadClustersFeedbackDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadClustersFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadClustersFeedbackDetailsFields on ThreadClustersFeedbackDetails {
   reason
   comment
@@ -60639,7 +60639,7 @@ export const ThreadClustersFeedbackDetailsFieldsFragmentDoc = new TypedDocumentS
   clusterId
 }
     `, {"fragmentName":"ThreadClustersFeedbackDetailsFields"}) as unknown as TypedDocumentString<ThreadClustersFeedbackDetailsFieldsFragment, unknown>;
-export const ThreadDiscussionFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionFields on ThreadDiscussion {
   id
   threadId
@@ -60758,7 +60758,7 @@ export const ThreadDiscussionFieldsFragmentDoc = new TypedDocumentString(`
   sourcePageAnchor
 }
     `, {"fragmentName":"ThreadDiscussionFields"}) as unknown as TypedDocumentString<ThreadDiscussionFieldsFragment, unknown>;
-export const ThreadDiscussionApprovalRequestEntryPayloadFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionApprovalRequestEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionApprovalRequestEntryPayloadFields on ThreadDiscussionApprovalRequestEntryPayload {
   approvalId
   leaseId
@@ -60795,7 +60795,7 @@ export const ThreadDiscussionApprovalRequestEntryPayloadFieldsFragmentDoc = new 
   calls
 }
     `, {"fragmentName":"ThreadDiscussionApprovalRequestEntryPayloadFields"}) as unknown as TypedDocumentString<ThreadDiscussionApprovalRequestEntryPayloadFieldsFragment, unknown>;
-export const ThreadDiscussionConnectRequestEntryPayloadFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionConnectRequestEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionConnectRequestEntryPayloadFields on ThreadDiscussionConnectRequestEntryPayload {
   connectRequestId
   justification
@@ -60811,18 +60811,18 @@ export const ThreadDiscussionConnectRequestEntryPayloadFieldsFragmentDoc = new T
   }
 }
     `, {"fragmentName":"ThreadDiscussionConnectRequestEntryPayloadFields"}) as unknown as TypedDocumentString<ThreadDiscussionConnectRequestEntryPayloadFieldsFragment, unknown>;
-export const ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFields on ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails {
   cursorWorkspaceIntegrationId
   repositoryUrl
 }
     `, {"fragmentName":"ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFields"}) as unknown as TypedDocumentString<ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment, unknown>;
-export const ThreadDiscussionEmailChannelDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionEmailChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionEmailChannelDetailsFields on ThreadDiscussionEmailChannelDetails {
   emailRecipients
 }
     `, {"fragmentName":"ThreadDiscussionEmailChannelDetailsFields"}) as unknown as TypedDocumentString<ThreadDiscussionEmailChannelDetailsFieldsFragment, unknown>;
-export const ThreadDiscussionEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionEntryFields on ThreadDiscussionEntry {
   customerId
   threadDiscussionId
@@ -60832,7 +60832,7 @@ export const ThreadDiscussionEntryFieldsFragmentDoc = new TypedDocumentString(`
   slackMessageLink
 }
     `, {"fragmentName":"ThreadDiscussionEntryFields"}) as unknown as TypedDocumentString<ThreadDiscussionEntryFieldsFragment, unknown>;
-export const ThreadDiscussionMessageFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionMessageFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
   id
   threadDiscussionId
@@ -61059,7 +61059,7 @@ export const ThreadDiscussionMessageFieldsFragmentDoc = new TypedDocumentString(
   }
 }
     `, {"fragmentName":"ThreadDiscussionMessageFields"}) as unknown as TypedDocumentString<ThreadDiscussionMessageFieldsFragment, unknown>;
-export const ThreadDiscussionMessageEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionMessageEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionMessageEntryFields on ThreadDiscussionMessageEntry {
   customerId
   threadDiscussionId
@@ -61081,7 +61081,7 @@ export const ThreadDiscussionMessageEntryFieldsFragmentDoc = new TypedDocumentSt
   }
 }
     `, {"fragmentName":"ThreadDiscussionMessageEntryFields"}) as unknown as TypedDocumentString<ThreadDiscussionMessageEntryFieldsFragment, unknown>;
-export const ThreadDiscussionMessageEntryPayloadFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionMessageEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionMessageEntryPayloadFields on ThreadDiscussionMessageEntryPayload {
   text
   type
@@ -61089,7 +61089,7 @@ export const ThreadDiscussionMessageEntryPayloadFieldsFragmentDoc = new TypedDoc
   slackBlocks
 }
     `, {"fragmentName":"ThreadDiscussionMessageEntryPayloadFields"}) as unknown as TypedDocumentString<ThreadDiscussionMessageEntryPayloadFieldsFragment, unknown>;
-export const ThreadDiscussionResolvedEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionResolvedEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionResolvedEntryFields on ThreadDiscussionResolvedEntry {
   customerId
   threadDiscussionId
@@ -61103,7 +61103,7 @@ export const ThreadDiscussionResolvedEntryFieldsFragmentDoc = new TypedDocumentS
   }
 }
     `, {"fragmentName":"ThreadDiscussionResolvedEntryFields"}) as unknown as TypedDocumentString<ThreadDiscussionResolvedEntryFieldsFragment, unknown>;
-export const ThreadDiscussionSlackChannelDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionSlackChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionSlackChannelDetailsFields on ThreadDiscussionSlackChannelDetails {
   slackTeamId
   slackChannelId
@@ -61111,7 +61111,7 @@ export const ThreadDiscussionSlackChannelDetailsFieldsFragmentDoc = new TypedDoc
   slackMessageLink
 }
     `, {"fragmentName":"ThreadDiscussionSlackChannelDetailsFields"}) as unknown as TypedDocumentString<ThreadDiscussionSlackChannelDetailsFieldsFragment, unknown>;
-export const ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionToolCallApprovalEntryPayloadFields on ThreadDiscussionToolCallApprovalEntryPayload {
   approvalId
   toolCallId
@@ -61147,7 +61147,7 @@ export const ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragmentDoc = new
   }
 }
     `, {"fragmentName":"ThreadDiscussionToolCallApprovalEntryPayloadFields"}) as unknown as TypedDocumentString<ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment, unknown>;
-export const ThreadDiscussionToolCallEntryPayloadFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadDiscussionToolCallEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadDiscussionToolCallEntryPayloadFields on ThreadDiscussionToolCallEntryPayload {
   toolCallId
   service
@@ -61159,7 +61159,7 @@ export const ThreadDiscussionToolCallEntryPayloadFieldsFragmentDoc = new TypedDo
   durationMs
 }
     `, {"fragmentName":"ThreadDiscussionToolCallEntryPayloadFields"}) as unknown as TypedDocumentString<ThreadDiscussionToolCallEntryPayloadFieldsFragment, unknown>;
-export const ThreadEventFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadEventFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadEventFields on ThreadEvent {
   id
   customerId
@@ -61558,7 +61558,7 @@ export const ThreadEventFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ThreadEventFields"}) as unknown as TypedDocumentString<ThreadEventFieldsFragment, unknown>;
-export const ThreadEventEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadEventEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadEventEntryFields on ThreadEventEntry {
   timelineEventId
   title
@@ -61885,7 +61885,7 @@ export const ThreadEventEntryFieldsFragmentDoc = new TypedDocumentString(`
   isCollapsed
 }
     `, {"fragmentName":"ThreadEventEntryFields"}) as unknown as TypedDocumentString<ThreadEventEntryFieldsFragment, unknown>;
-export const ThreadFieldSchemaFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadFieldSchemaFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadFieldSchemaFields on ThreadFieldSchema {
   id
   label
@@ -61968,7 +61968,7 @@ export const ThreadFieldSchemaFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ThreadFieldSchemaFields"}) as unknown as TypedDocumentString<ThreadFieldSchemaFieldsFragment, unknown>;
-export const ThreadHeatmapMetricFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadHeatmapMetricFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadHeatmapMetricFields on ThreadHeatmapMetric {
   days {
     total
@@ -61977,7 +61977,7 @@ export const ThreadHeatmapMetricFieldsFragmentDoc = new TypedDocumentString(`
   threadIds
 }
     `, {"fragmentName":"ThreadHeatmapMetricFields"}) as unknown as TypedDocumentString<ThreadHeatmapMetricFieldsFragment, unknown>;
-export const ThreadLinkCandidateFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadLinkCandidateFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadLinkCandidateFields on ThreadLinkCandidate {
   sourceId
   sourceType
@@ -61993,7 +61993,7 @@ export const ThreadLinkCandidateFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ThreadLinkCandidateFields"}) as unknown as TypedDocumentString<ThreadLinkCandidateFieldsFragment, unknown>;
-export const ThreadLinkGroupFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadLinkGroupFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadLinkGroupFields on ThreadLinkGroup {
   id
   tierMetrics {
@@ -62020,7 +62020,7 @@ export const ThreadLinkGroupFieldsFragmentDoc = new TypedDocumentString(`
   currentViewRank
 }
     `, {"fragmentName":"ThreadLinkGroupFields"}) as unknown as TypedDocumentString<ThreadLinkGroupFieldsFragment, unknown>;
-export const ThreadLinkTargetCreatedEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadLinkTargetCreatedEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadLinkTargetCreatedEntryFields on ThreadLinkTargetCreatedEntry {
   threadLink {
     __typename
@@ -62387,7 +62387,7 @@ export const ThreadLinkTargetCreatedEntryFieldsFragmentDoc = new TypedDocumentSt
   }
 }
     `, {"fragmentName":"ThreadLinkTargetCreatedEntryFields"}) as unknown as TypedDocumentString<ThreadLinkTargetCreatedEntryFieldsFragment, unknown>;
-export const ThreadLinkTargetDeletedEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadLinkTargetDeletedEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadLinkTargetDeletedEntryFields on ThreadLinkTargetDeletedEntry {
   threadLink {
     __typename
@@ -62754,13 +62754,13 @@ export const ThreadLinkTargetDeletedEntryFieldsFragmentDoc = new TypedDocumentSt
   }
 }
     `, {"fragmentName":"ThreadLinkTargetDeletedEntryFields"}) as unknown as TypedDocumentString<ThreadLinkTargetDeletedEntryFieldsFragment, unknown>;
-export const ThreadPriorityChangedEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadPriorityChangedEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadPriorityChangedEntryFields on ThreadPriorityChangedEntry {
   previousPriority
   nextPriority
 }
     `, {"fragmentName":"ThreadPriorityChangedEntryFields"}) as unknown as TypedDocumentString<ThreadPriorityChangedEntryFieldsFragment, unknown>;
-export const ThreadServiceLevelAgreementPolicyChangedEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadServiceLevelAgreementPolicyChangedEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadServiceLevelAgreementPolicyChangedEntryFields on ThreadServiceLevelAgreementPolicyChangedEntry {
   previousServiceLevelAgreementPolicy {
     id
@@ -62772,12 +62772,12 @@ export const ThreadServiceLevelAgreementPolicyChangedEntryFieldsFragmentDoc = ne
   }
 }
     `, {"fragmentName":"ThreadServiceLevelAgreementPolicyChangedEntryFields"}) as unknown as TypedDocumentString<ThreadServiceLevelAgreementPolicyChangedEntryFieldsFragment, unknown>;
-export const ThreadSingleValueMetricFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadSingleValueMetricFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadSingleValueMetricFields on ThreadSingleValueMetric {
   threadIds
 }
     `, {"fragmentName":"ThreadSingleValueMetricFields"}) as unknown as TypedDocumentString<ThreadSingleValueMetricFieldsFragment, unknown>;
-export const ThreadStatusDetailCreatedFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailCreatedFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailCreatedFields on ThreadStatusDetailCreated {
   statusChangedAt {
     unixTimestamp
@@ -62789,7 +62789,7 @@ export const ThreadStatusDetailCreatedFieldsFragmentDoc = new TypedDocumentStrin
   }
 }
     `, {"fragmentName":"ThreadStatusDetailCreatedFields"}) as unknown as TypedDocumentString<ThreadStatusDetailCreatedFieldsFragment, unknown>;
-export const ThreadStatusDetailDoneAutomaticallySetFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailDoneAutomaticallySetFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailDoneAutomaticallySetFields on ThreadStatusDetailDoneAutomaticallySet {
   statusChangedAt {
     unixTimestamp
@@ -62798,7 +62798,7 @@ export const ThreadStatusDetailDoneAutomaticallySetFieldsFragmentDoc = new Typed
   afterSeconds
 }
     `, {"fragmentName":"ThreadStatusDetailDoneAutomaticallySetFields"}) as unknown as TypedDocumentString<ThreadStatusDetailDoneAutomaticallySetFieldsFragment, unknown>;
-export const ThreadStatusDetailDoneManuallySetFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailDoneManuallySetFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailDoneManuallySetFields on ThreadStatusDetailDoneManuallySet {
   statusChangedAt {
     unixTimestamp
@@ -62806,7 +62806,7 @@ export const ThreadStatusDetailDoneManuallySetFieldsFragmentDoc = new TypedDocum
   }
 }
     `, {"fragmentName":"ThreadStatusDetailDoneManuallySetFields"}) as unknown as TypedDocumentString<ThreadStatusDetailDoneManuallySetFieldsFragment, unknown>;
-export const ThreadStatusDetailIgnoredFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailIgnoredFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailIgnoredFields on ThreadStatusDetailIgnored {
   statusChangedAt {
     unixTimestamp
@@ -62814,7 +62814,7 @@ export const ThreadStatusDetailIgnoredFieldsFragmentDoc = new TypedDocumentStrin
   }
 }
     `, {"fragmentName":"ThreadStatusDetailIgnoredFields"}) as unknown as TypedDocumentString<ThreadStatusDetailIgnoredFieldsFragment, unknown>;
-export const ThreadStatusDetailInProgressFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailInProgressFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailInProgressFields on ThreadStatusDetailInProgress {
   statusChangedAt {
     unixTimestamp
@@ -62822,7 +62822,7 @@ export const ThreadStatusDetailInProgressFieldsFragmentDoc = new TypedDocumentSt
   }
 }
     `, {"fragmentName":"ThreadStatusDetailInProgressFields"}) as unknown as TypedDocumentString<ThreadStatusDetailInProgressFieldsFragment, unknown>;
-export const ThreadStatusDetailNewReplyFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailNewReplyFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailNewReplyFields on ThreadStatusDetailNewReply {
   statusChangedAt {
     unixTimestamp
@@ -62830,7 +62830,7 @@ export const ThreadStatusDetailNewReplyFieldsFragmentDoc = new TypedDocumentStri
   }
 }
     `, {"fragmentName":"ThreadStatusDetailNewReplyFields"}) as unknown as TypedDocumentString<ThreadStatusDetailNewReplyFieldsFragment, unknown>;
-export const ThreadStatusDetailThreadDiscussionResolvedFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailThreadDiscussionResolvedFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailThreadDiscussionResolvedFields on ThreadStatusDetailThreadDiscussionResolved {
   statusChangedAt {
     unixTimestamp
@@ -62839,7 +62839,7 @@ export const ThreadStatusDetailThreadDiscussionResolvedFieldsFragmentDoc = new T
   threadDiscussionId
 }
     `, {"fragmentName":"ThreadStatusDetailThreadDiscussionResolvedFields"}) as unknown as TypedDocumentString<ThreadStatusDetailThreadDiscussionResolvedFieldsFragment, unknown>;
-export const ThreadStatusDetailThreadLinkUpdatedFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailThreadLinkUpdatedFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailThreadLinkUpdatedFields on ThreadStatusDetailThreadLinkUpdated {
   statusChangedAt {
     unixTimestamp
@@ -62848,7 +62848,7 @@ export const ThreadStatusDetailThreadLinkUpdatedFieldsFragmentDoc = new TypedDoc
   linearIssueId
 }
     `, {"fragmentName":"ThreadStatusDetailThreadLinkUpdatedFields"}) as unknown as TypedDocumentString<ThreadStatusDetailThreadLinkUpdatedFieldsFragment, unknown>;
-export const ThreadStatusDetailWaitingForCustomerFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailWaitingForCustomerFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailWaitingForCustomerFields on ThreadStatusDetailWaitingForCustomer {
   statusChangedAt {
     unixTimestamp
@@ -62856,7 +62856,7 @@ export const ThreadStatusDetailWaitingForCustomerFieldsFragmentDoc = new TypedDo
   }
 }
     `, {"fragmentName":"ThreadStatusDetailWaitingForCustomerFields"}) as unknown as TypedDocumentString<ThreadStatusDetailWaitingForCustomerFieldsFragment, unknown>;
-export const ThreadStatusDetailWaitingForDurationFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailWaitingForDurationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailWaitingForDurationFields on ThreadStatusDetailWaitingForDuration {
   statusChangedAt {
     unixTimestamp
@@ -62868,7 +62868,7 @@ export const ThreadStatusDetailWaitingForDurationFieldsFragmentDoc = new TypedDo
   }
 }
     `, {"fragmentName":"ThreadStatusDetailWaitingForDurationFields"}) as unknown as TypedDocumentString<ThreadStatusDetailWaitingForDurationFieldsFragment, unknown>;
-export const ThreadStatusDetailWaitingIndefinitelyFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusDetailWaitingIndefinitelyFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusDetailWaitingIndefinitelyFields on ThreadStatusDetailWaitingIndefinitely {
   statusChangedAt {
     unixTimestamp
@@ -62876,7 +62876,7 @@ export const ThreadStatusDetailWaitingIndefinitelyFieldsFragmentDoc = new TypedD
   }
 }
     `, {"fragmentName":"ThreadStatusDetailWaitingIndefinitelyFields"}) as unknown as TypedDocumentString<ThreadStatusDetailWaitingIndefinitelyFieldsFragment, unknown>;
-export const ThreadStatusTransitionedEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadStatusTransitionedEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadStatusTransitionedEntryFields on ThreadStatusTransitionedEntry {
   previousStatus
   previousStatusDetail {
@@ -63042,7 +63042,7 @@ export const ThreadStatusTransitionedEntryFieldsFragmentDoc = new TypedDocumentS
   }
 }
     `, {"fragmentName":"ThreadStatusTransitionedEntryFields"}) as unknown as TypedDocumentString<ThreadStatusTransitionedEntryFieldsFragment, unknown>;
-export const ThreadTimeSeriesMetricFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadTimeSeriesMetricFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadTimeSeriesMetricFields on ThreadTimeSeriesMetric {
   timestamps {
     unixTimestamp
@@ -63051,7 +63051,7 @@ export const ThreadTimeSeriesMetricFieldsFragmentDoc = new TypedDocumentString(`
   threadIds
 }
     `, {"fragmentName":"ThreadTimeSeriesMetricFields"}) as unknown as TypedDocumentString<ThreadTimeSeriesMetricFieldsFragment, unknown>;
-export const ThreadWithDistanceFieldsFragmentDoc = new TypedDocumentString(`
+export const ThreadWithDistanceFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ThreadWithDistanceFields on ThreadWithDistance {
   thread {
     id
@@ -63059,7 +63059,7 @@ export const ThreadWithDistanceFieldsFragmentDoc = new TypedDocumentString(`
   distance
 }
     `, {"fragmentName":"ThreadWithDistanceFields"}) as unknown as TypedDocumentString<ThreadWithDistanceFieldsFragment, unknown>;
-export const TierFieldsFragmentDoc = new TypedDocumentString(`
+export const TierFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TierFields on Tier {
   id
   name
@@ -63623,7 +63623,7 @@ export const TierFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"TierFields"}) as unknown as TypedDocumentString<TierFieldsFragment, unknown>;
-export const TieredRecurringPriceFieldsFragmentDoc = new TypedDocumentString(`
+export const TieredRecurringPriceFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TieredRecurringPriceFields on TieredRecurringPrice {
   billingIntervalUnit
   billingIntervalCount
@@ -63635,7 +63635,7 @@ export const TieredRecurringPriceFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"TieredRecurringPriceFields"}) as unknown as TypedDocumentString<TieredRecurringPriceFieldsFragment, unknown>;
-export const TimelineEntryFieldsFragmentDoc = new TypedDocumentString(`
+export const TimelineEntryFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TimelineEntryFields on TimelineEntry {
   id
   customerId
@@ -68881,7 +68881,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`, {"fragmentName":"TimelineEntryFields"}) as unknown as TypedDocumentString<TimelineEntryFieldsFragment, unknown>;
-export const TimeSeriesMetricFieldsFragmentDoc = new TypedDocumentString(`
+export const TimeSeriesMetricFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TimeSeriesMetricFields on TimeSeriesMetric {
   timestamps {
     unixTimestamp
@@ -68889,13 +68889,13 @@ export const TimeSeriesMetricFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"TimeSeriesMetricFields"}) as unknown as TypedDocumentString<TimeSeriesMetricFieldsFragment, unknown>;
-export const ToggleFeatureEntitlementFieldsFragmentDoc = new TypedDocumentString(`
+export const ToggleFeatureEntitlementFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ToggleFeatureEntitlementFields on ToggleFeatureEntitlement {
   feature
   isEntitled
 }
     `, {"fragmentName":"ToggleFeatureEntitlementFields"}) as unknown as TypedDocumentString<ToggleFeatureEntitlementFieldsFragment, unknown>;
-export const ToneRuleFeedbackDetailsFieldsFragmentDoc = new TypedDocumentString(`
+export const ToneRuleFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment ToneRuleFeedbackDetailsFields on ToneRuleFeedbackDetails {
   reason
   comment
@@ -68905,7 +68905,7 @@ export const ToneRuleFeedbackDetailsFieldsFragmentDoc = new TypedDocumentString(
   toneRuleDescription
 }
     `, {"fragmentName":"ToneRuleFeedbackDetailsFields"}) as unknown as TypedDocumentString<ToneRuleFeedbackDetailsFieldsFragment, unknown>;
-export const TotalResolutionTimeServiceLevelAgreementFieldsFragmentDoc = new TypedDocumentString(`
+export const TotalResolutionTimeServiceLevelAgreementFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment TotalResolutionTimeServiceLevelAgreementFields on TotalResolutionTimeServiceLevelAgreement {
   id
   totalResolutionTimeMinutes
@@ -69032,7 +69032,7 @@ export const TotalResolutionTimeServiceLevelAgreementFieldsFragmentDoc = new Typ
   }
 }
     `, {"fragmentName":"TotalResolutionTimeServiceLevelAgreementFields"}) as unknown as TypedDocumentString<TotalResolutionTimeServiceLevelAgreementFieldsFragment, unknown>;
-export const UserFieldsFragmentDoc = new TypedDocumentString(`
+export const UserFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment UserFields on User {
   id
   fullName
@@ -69256,7 +69256,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`, {"fragmentName":"UserFields"}) as unknown as TypedDocumentString<UserFieldsFragment, unknown>;
-export const UserAuthDiscordChannelIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const UserAuthDiscordChannelIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment UserAuthDiscordChannelIntegrationFields on UserAuthDiscordChannelIntegration {
   id
   discordGuildId
@@ -69320,7 +69320,7 @@ export const UserAuthDiscordChannelIntegrationFieldsFragmentDoc = new TypedDocum
   }
 }
     `, {"fragmentName":"UserAuthDiscordChannelIntegrationFields"}) as unknown as TypedDocumentString<UserAuthDiscordChannelIntegrationFieldsFragment, unknown>;
-export const UserAuthSlackIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const UserAuthSlackIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment UserAuthSlackIntegrationFields on UserAuthSlackIntegration {
   integrationId
   slackTeamId
@@ -69382,7 +69382,7 @@ export const UserAuthSlackIntegrationFieldsFragmentDoc = new TypedDocumentString
   }
 }
     `, {"fragmentName":"UserAuthSlackIntegrationFields"}) as unknown as TypedDocumentString<UserAuthSlackIntegrationFieldsFragment, unknown>;
-export const UserLinearIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const UserLinearIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment UserLinearIntegrationFields on UserLinearIntegration {
   integrationId
   linearOrganisationName
@@ -69443,7 +69443,7 @@ export const UserLinearIntegrationFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"UserLinearIntegrationFields"}) as unknown as TypedDocumentString<UserLinearIntegrationFieldsFragment, unknown>;
-export const UserMsTeamsIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const UserMsTeamsIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment UserMSTeamsIntegrationFields on UserMSTeamsIntegration {
   id
   msTeamsTenantId
@@ -69505,7 +69505,7 @@ export const UserMsTeamsIntegrationFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"UserMSTeamsIntegrationFields"}) as unknown as TypedDocumentString<UserMsTeamsIntegrationFieldsFragment, unknown>;
-export const UserSlackIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const UserSlackIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment UserSlackIntegrationFields on UserSlackIntegration {
   integrationId
   slackTeamName
@@ -69566,7 +69566,7 @@ export const UserSlackIntegrationFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"UserSlackIntegrationFields"}) as unknown as TypedDocumentString<UserSlackIntegrationFieldsFragment, unknown>;
-export const WebhookDeliveryAttemptFieldsFragmentDoc = new TypedDocumentString(`
+export const WebhookDeliveryAttemptFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WebhookDeliveryAttemptFields on WebhookDeliveryAttempt {
   id
   webhookTargetId
@@ -69603,38 +69603,38 @@ export const WebhookDeliveryAttemptFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WebhookDeliveryAttemptFields"}) as unknown as TypedDocumentString<WebhookDeliveryAttemptFieldsFragment, unknown>;
-export const WebhookDeliveryAttemptErrorResultFieldsFragmentDoc = new TypedDocumentString(`
+export const WebhookDeliveryAttemptErrorResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WebhookDeliveryAttemptErrorResultFields on WebhookDeliveryAttemptErrorResult {
   status
   errorCode
   errorMessage
 }
     `, {"fragmentName":"WebhookDeliveryAttemptErrorResultFields"}) as unknown as TypedDocumentString<WebhookDeliveryAttemptErrorResultFieldsFragment, unknown>;
-export const WebhookDeliveryAttemptFailedResultFieldsFragmentDoc = new TypedDocumentString(`
+export const WebhookDeliveryAttemptFailedResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WebhookDeliveryAttemptFailedResultFields on WebhookDeliveryAttemptFailedResult {
   status
   httpStatusCode
 }
     `, {"fragmentName":"WebhookDeliveryAttemptFailedResultFields"}) as unknown as TypedDocumentString<WebhookDeliveryAttemptFailedResultFieldsFragment, unknown>;
-export const WebhookDeliveryAttemptRejectedResultFieldsFragmentDoc = new TypedDocumentString(`
+export const WebhookDeliveryAttemptRejectedResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WebhookDeliveryAttemptRejectedResultFields on WebhookDeliveryAttemptRejectedResult {
   status
   rejectedMessage
 }
     `, {"fragmentName":"WebhookDeliveryAttemptRejectedResultFields"}) as unknown as TypedDocumentString<WebhookDeliveryAttemptRejectedResultFieldsFragment, unknown>;
-export const WebhookDeliveryAttemptSchemaValidationFailedResultFieldsFragmentDoc = new TypedDocumentString(`
+export const WebhookDeliveryAttemptSchemaValidationFailedResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WebhookDeliveryAttemptSchemaValidationFailedResultFields on WebhookDeliveryAttemptSchemaValidationFailedResult {
   status
   errorMessage
 }
     `, {"fragmentName":"WebhookDeliveryAttemptSchemaValidationFailedResultFields"}) as unknown as TypedDocumentString<WebhookDeliveryAttemptSchemaValidationFailedResultFieldsFragment, unknown>;
-export const WebhookDeliveryAttemptSuccessfulResultFieldsFragmentDoc = new TypedDocumentString(`
+export const WebhookDeliveryAttemptSuccessfulResultFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WebhookDeliveryAttemptSuccessfulResultFields on WebhookDeliveryAttemptSuccessfulResult {
   status
   httpStatusCode
 }
     `, {"fragmentName":"WebhookDeliveryAttemptSuccessfulResultFields"}) as unknown as TypedDocumentString<WebhookDeliveryAttemptSuccessfulResultFieldsFragment, unknown>;
-export const WebhookTargetFieldsFragmentDoc = new TypedDocumentString(`
+export const WebhookTargetFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WebhookTargetFields on WebhookTarget {
   id
   url
@@ -69703,12 +69703,12 @@ export const WebhookTargetFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WebhookTargetFields"}) as unknown as TypedDocumentString<WebhookTargetFieldsFragment, unknown>;
-export const WebhookTargetNotificationDetailFieldsFragmentDoc = new TypedDocumentString(`
+export const WebhookTargetNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WebhookTargetNotificationDetailFields on WebhookTargetNotificationDetail {
   webhookTargetId
 }
     `, {"fragmentName":"WebhookTargetNotificationDetailFields"}) as unknown as TypedDocumentString<WebhookTargetNotificationDetailFieldsFragment, unknown>;
-export const WorkflowFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkflowFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkflowFields on Workflow {
   id
   name
@@ -69784,7 +69784,7 @@ export const WorkflowFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WorkflowFields"}) as unknown as TypedDocumentString<WorkflowFieldsFragment, unknown>;
-export const WorkflowExecutionFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkflowExecutionFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkflowExecutionFields on WorkflowExecution {
   id
   workflowId
@@ -69830,7 +69830,7 @@ export const WorkflowExecutionFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WorkflowExecutionFields"}) as unknown as TypedDocumentString<WorkflowExecutionFieldsFragment, unknown>;
-export const WorkflowRuleFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkflowRuleFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkflowRuleFields on WorkflowRule {
   id
   name
@@ -69896,7 +69896,7 @@ export const WorkflowRuleFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WorkflowRuleFields"}) as unknown as TypedDocumentString<WorkflowRuleFieldsFragment, unknown>;
-export const WorkflowShareLinkFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkflowShareLinkFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkflowShareLinkFields on WorkflowShareLink {
   name
   trigger
@@ -69912,7 +69912,7 @@ export const WorkflowShareLinkFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WorkflowShareLinkFields"}) as unknown as TypedDocumentString<WorkflowShareLinkFieldsFragment, unknown>;
-export const WorkflowTemplateFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkflowTemplateFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkflowTemplateFields on WorkflowTemplate {
   id
   title
@@ -69930,7 +69930,7 @@ export const WorkflowTemplateFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WorkflowTemplateFields"}) as unknown as TypedDocumentString<WorkflowTemplateFieldsFragment, unknown>;
-export const WorkflowTemplateGalleryItemFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkflowTemplateGalleryItemFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkflowTemplateGalleryItemFields on WorkflowTemplateGalleryItem {
   id
   title
@@ -69948,7 +69948,7 @@ export const WorkflowTemplateGalleryItemFieldsFragmentDoc = new TypedDocumentStr
   }
 }
     `, {"fragmentName":"WorkflowTemplateGalleryItemFields"}) as unknown as TypedDocumentString<WorkflowTemplateGalleryItemFieldsFragment, unknown>;
-export const WorkspaceEmailDomainSettingsFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceEmailDomainSettingsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceEmailDomainSettingsFields on WorkspaceEmailDomainSettings {
   domainName
   supportEmailAddress
@@ -69987,7 +69987,7 @@ export const WorkspaceEmailDomainSettingsFieldsFragmentDoc = new TypedDocumentSt
   }
 }
     `, {"fragmentName":"WorkspaceEmailDomainSettingsFields"}) as unknown as TypedDocumentString<WorkspaceEmailDomainSettingsFieldsFragment, unknown>;
-export const WorkspaceEmailSettingsFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceEmailSettingsFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
   isEnabled
   workspaceEmailDomainSettings {
@@ -70032,7 +70032,7 @@ export const WorkspaceEmailSettingsFieldsFragmentDoc = new TypedDocumentString(`
     }
   }
 }`, {"fragmentName":"WorkspaceEmailSettingsFields"}) as unknown as TypedDocumentString<WorkspaceEmailSettingsFieldsFragment, unknown>;
-export const WorkspaceFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceFields on Workspace {
   id
   name
@@ -70168,7 +70168,7 @@ fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
   }
   bccEmailAddresses
 }`, {"fragmentName":"WorkspaceFields"}) as unknown as TypedDocumentString<WorkspaceFieldsFragment, unknown>;
-export const WorkspaceCursorIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceCursorIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceCursorIntegrationFields on WorkspaceCursorIntegration {
   id
   tokenPreview
@@ -70228,7 +70228,7 @@ export const WorkspaceCursorIntegrationFieldsFragmentDoc = new TypedDocumentStri
   }
 }
     `, {"fragmentName":"WorkspaceCursorIntegrationFields"}) as unknown as TypedDocumentString<WorkspaceCursorIntegrationFieldsFragment, unknown>;
-export const WorkspaceDiscordChannelIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceDiscordChannelIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceDiscordChannelIntegrationFields on WorkspaceDiscordChannelIntegration {
   id
   discordGuildId
@@ -70289,7 +70289,7 @@ export const WorkspaceDiscordChannelIntegrationFieldsFragmentDoc = new TypedDocu
   }
 }
     `, {"fragmentName":"WorkspaceDiscordChannelIntegrationFields"}) as unknown as TypedDocumentString<WorkspaceDiscordChannelIntegrationFieldsFragment, unknown>;
-export const WorkspaceDiscordIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceDiscordIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceDiscordIntegrationFields on WorkspaceDiscordIntegration {
   integrationId
   name
@@ -70350,7 +70350,7 @@ export const WorkspaceDiscordIntegrationFieldsFragmentDoc = new TypedDocumentStr
   }
 }
     `, {"fragmentName":"WorkspaceDiscordIntegrationFields"}) as unknown as TypedDocumentString<WorkspaceDiscordIntegrationFieldsFragment, unknown>;
-export const WorkspaceFileDownloadUrlFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceFileDownloadUrlFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceFileDownloadUrlFields on WorkspaceFileDownloadUrl {
   downloadUrl
   expiresAt {
@@ -70359,7 +70359,7 @@ export const WorkspaceFileDownloadUrlFieldsFragmentDoc = new TypedDocumentString
   }
 }
     `, {"fragmentName":"WorkspaceFileDownloadUrlFields"}) as unknown as TypedDocumentString<WorkspaceFileDownloadUrlFieldsFragment, unknown>;
-export const WorkspaceFileUploadUrlFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceFileUploadUrlFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceFileUploadUrlFields on WorkspaceFileUploadUrl {
   workspaceFile {
     id
@@ -70392,7 +70392,7 @@ export const WorkspaceFileUploadUrlFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WorkspaceFileUploadUrlFields"}) as unknown as TypedDocumentString<WorkspaceFileUploadUrlFieldsFragment, unknown>;
-export const WorkspaceHmacFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceHmacFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceHmacFields on WorkspaceHmac {
   hmacSecret
   createdAt {
@@ -70451,7 +70451,7 @@ export const WorkspaceHmacFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WorkspaceHmacFields"}) as unknown as TypedDocumentString<WorkspaceHmacFieldsFragment, unknown>;
-export const WorkspaceInviteFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceInviteFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceInviteFields on WorkspaceInvite {
   id
   createdBy {
@@ -70534,7 +70534,7 @@ export const WorkspaceInviteFieldsFragmentDoc = new TypedDocumentString(`
     id
   }
 }`, {"fragmentName":"WorkspaceInviteFields"}) as unknown as TypedDocumentString<WorkspaceInviteFieldsFragment, unknown>;
-export const WorkspaceLinearIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceLinearIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceLinearIntegrationFields on WorkspaceLinearIntegration {
   integrationId
   linearOrganisationName
@@ -70595,7 +70595,7 @@ export const WorkspaceLinearIntegrationFieldsFragmentDoc = new TypedDocumentStri
   }
 }
     `, {"fragmentName":"WorkspaceLinearIntegrationFields"}) as unknown as TypedDocumentString<WorkspaceLinearIntegrationFieldsFragment, unknown>;
-export const WorkspaceMsTeamsIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceMsTeamsIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceMSTeamsIntegrationFields on WorkspaceMSTeamsIntegration {
   id
   msTeamsTenantId
@@ -70656,7 +70656,7 @@ export const WorkspaceMsTeamsIntegrationFieldsFragmentDoc = new TypedDocumentStr
   }
 }
     `, {"fragmentName":"WorkspaceMSTeamsIntegrationFields"}) as unknown as TypedDocumentString<WorkspaceMsTeamsIntegrationFieldsFragment, unknown>;
-export const WorkspaceSetupFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceSetupFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceSetupFields on WorkspaceSetup {
   connectedChannelKeys
   hasConnectedChannel
@@ -70675,7 +70675,7 @@ export const WorkspaceSetupFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"WorkspaceSetupFields"}) as unknown as TypedDocumentString<WorkspaceSetupFieldsFragment, unknown>;
-export const WorkspaceSlackChannelIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceSlackChannelIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceSlackChannelIntegrationFields on WorkspaceSlackChannelIntegration {
   integrationId
   slackTeamId
@@ -70738,7 +70738,7 @@ export const WorkspaceSlackChannelIntegrationFieldsFragmentDoc = new TypedDocume
   }
 }
     `, {"fragmentName":"WorkspaceSlackChannelIntegrationFields"}) as unknown as TypedDocumentString<WorkspaceSlackChannelIntegrationFieldsFragment, unknown>;
-export const WorkspaceSlackIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceSlackIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceSlackIntegrationFields on WorkspaceSlackIntegration {
   integrationId
   slackChannelName
@@ -70802,7 +70802,7 @@ export const WorkspaceSlackIntegrationFieldsFragmentDoc = new TypedDocumentStrin
   }
 }
     `, {"fragmentName":"WorkspaceSlackIntegrationFields"}) as unknown as TypedDocumentString<WorkspaceSlackIntegrationFieldsFragment, unknown>;
-export const WorkspaceSlackSidekickIntegrationFieldsFragmentDoc = new TypedDocumentString(`
+export const WorkspaceSlackSidekickIntegrationFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`
     fragment WorkspaceSlackSidekickIntegrationFields on WorkspaceSlackSidekickIntegration {
   integrationId
   slackTeamId
@@ -70867,7 +70867,7 @@ export const WorkspaceSlackSidekickIntegrationFieldsFragmentDoc = new TypedDocum
   }
 }
     `, {"fragmentName":"WorkspaceSlackSidekickIntegrationFields"}) as unknown as TypedDocumentString<WorkspaceSlackSidekickIntegrationFieldsFragment, unknown>;
-export const MyUserAccountDocument = new TypedDocumentString(`
+export const MyUserAccountDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyUserAccount {
   myUserAccount {
     id
@@ -70877,7 +70877,7 @@ export const MyUserAccountDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<MyUserAccountQuery, MyUserAccountQueryVariables>;
-export const MyUserDocument = new TypedDocumentString(`
+export const MyUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyUser {
   myUser {
     ...UserFields
@@ -71106,7 +71106,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<MyUserQuery, MyUserQueryVariables>;
-export const MyMachineUserDocument = new TypedDocumentString(`
+export const MyMachineUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyMachineUser {
   myMachineUser {
     ...MachineUserFields
@@ -71232,7 +71232,7 @@ export const MyMachineUserDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MyMachineUserQuery, MyMachineUserQueryVariables>;
-export const MyWorkspaceDocument = new TypedDocumentString(`
+export const MyWorkspaceDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyWorkspace {
   myWorkspace {
     ...WorkspaceFields
@@ -71373,14 +71373,14 @@ fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
   }
   bccEmailAddresses
 }`) as unknown as TypedDocumentString<MyWorkspaceQuery, MyWorkspaceQueryVariables>;
-export const MyPermissionsDocument = new TypedDocumentString(`
+export const MyPermissionsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyPermissions {
   myPermissions {
     permissions
   }
 }
     `) as unknown as TypedDocumentString<MyPermissionsQuery, MyPermissionsQueryVariables>;
-export const MyWorkspacesDocument = new TypedDocumentString(`
+export const MyWorkspacesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyWorkspaces($first: Int, $after: String, $last: Int, $before: String) {
   myWorkspaces(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -71532,7 +71532,7 @@ fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
   }
   bccEmailAddresses
 }`) as unknown as TypedDocumentString<MyWorkspacesQuery, MyWorkspacesQueryVariables>;
-export const MyWorkspaceInvitesDocument = new TypedDocumentString(`
+export const MyWorkspaceInvitesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyWorkspaceInvites($first: Int, $after: String, $last: Int, $before: String) {
   myWorkspaceInvites(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -71631,7 +71631,7 @@ fragment WorkspaceInviteFields on WorkspaceInvite {
     id
   }
 }`) as unknown as TypedDocumentString<MyWorkspaceInvitesQuery, MyWorkspaceInvitesQueryVariables>;
-export const MySlackIntegrationDocument = new TypedDocumentString(`
+export const MySlackIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MySlackIntegration {
   mySlackIntegration {
     ...UserSlackIntegrationFields
@@ -71696,14 +71696,14 @@ export const MySlackIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MySlackIntegrationQuery, MySlackIntegrationQueryVariables>;
-export const MySlackInstallationInfoDocument = new TypedDocumentString(`
+export const MySlackInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MySlackInstallationInfo($redirectUrl: String!) {
   mySlackInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<MySlackInstallationInfoQuery, MySlackInstallationInfoQueryVariables>;
-export const MyLinearIntegrationDocument = new TypedDocumentString(`
+export const MyLinearIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyLinearIntegration {
   myLinearIntegration {
     ...UserLinearIntegrationFields
@@ -71768,21 +71768,21 @@ export const MyLinearIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MyLinearIntegrationQuery, MyLinearIntegrationQueryVariables>;
-export const MyLinearInstallationInfoDocument = new TypedDocumentString(`
+export const MyLinearInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyLinearInstallationInfo($redirectUrl: String!) {
   myLinearInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<MyLinearInstallationInfoQuery, MyLinearInstallationInfoQueryVariables>;
-export const MyLinearIntegrationTokenDocument = new TypedDocumentString(`
+export const MyLinearIntegrationTokenDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyLinearIntegrationToken {
   myLinearIntegrationToken {
     token
   }
 }
     `) as unknown as TypedDocumentString<MyLinearIntegrationTokenQuery, MyLinearIntegrationTokenQueryVariables>;
-export const LinearAppIntegrationDocument = new TypedDocumentString(`
+export const LinearAppIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query LinearAppIntegration {
   linearAppIntegration {
     ...WorkspaceLinearIntegrationFields
@@ -71847,14 +71847,14 @@ export const LinearAppIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<LinearAppIntegrationQuery, LinearAppIntegrationQueryVariables>;
-export const WorkspaceLinearInstallationInfoDocument = new TypedDocumentString(`
+export const WorkspaceLinearInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceLinearInstallationInfo($redirectUrl: String!) {
   workspaceLinearInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<WorkspaceLinearInstallationInfoQuery, WorkspaceLinearInstallationInfoQueryVariables>;
-export const GithubUserAuthIntegrationDocument = new TypedDocumentString(`
+export const GithubUserAuthIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query GithubUserAuthIntegration {
   githubUserAuthIntegration {
     ...GithubUserAuthIntegrationFields
@@ -71918,7 +71918,7 @@ export const GithubUserAuthIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<GithubUserAuthIntegrationQuery, GithubUserAuthIntegrationQueryVariables>;
-export const WorkspaceCursorIntegrationDocument = new TypedDocumentString(`
+export const WorkspaceCursorIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceCursorIntegration {
   workspaceCursorIntegration {
     ...WorkspaceCursorIntegrationFields
@@ -71982,7 +71982,7 @@ export const WorkspaceCursorIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceCursorIntegrationQuery, WorkspaceCursorIntegrationQueryVariables>;
-export const CursorRepositoriesDocument = new TypedDocumentString(`
+export const CursorRepositoriesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CursorRepositories($integrationId: ID!) {
   cursorRepositories(integrationId: $integrationId) {
     owner
@@ -71991,7 +71991,7 @@ export const CursorRepositoriesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CursorRepositoriesQuery, CursorRepositoriesQueryVariables>;
-export const MyJiraIntegrationTokenDocument = new TypedDocumentString(`
+export const MyJiraIntegrationTokenDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyJiraIntegrationToken {
   myJiraIntegrationToken {
     ...JiraIntegrationTokenFields
@@ -72004,7 +72004,7 @@ export const MyJiraIntegrationTokenDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<MyJiraIntegrationTokenQuery, MyJiraIntegrationTokenQueryVariables>;
-export const MyEmailSignatureDocument = new TypedDocumentString(`
+export const MyEmailSignatureDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyEmailSignature {
   myEmailSignature {
     ...EmailSignatureFields
@@ -72068,7 +72068,7 @@ export const MyEmailSignatureDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MyEmailSignatureQuery, MyEmailSignatureQueryVariables>;
-export const MyFavoritePagesDocument = new TypedDocumentString(`
+export const MyFavoritePagesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyFavoritePages($first: Int, $after: String, $last: Int, $before: String) {
   myFavoritePages(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -72143,7 +72143,7 @@ export const MyFavoritePagesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MyFavoritePagesQuery, MyFavoritePagesQueryVariables>;
-export const BillingPlansDocument = new TypedDocumentString(`
+export const BillingPlansDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BillingPlans($first: Int, $after: String, $last: Int, $before: String) {
   billingPlans(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -72187,7 +72187,7 @@ export const BillingPlansDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BillingPlansQuery, BillingPlansQueryVariables>;
-export const MyBillingSubscriptionDocument = new TypedDocumentString(`
+export const MyBillingSubscriptionDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyBillingSubscription {
   myBillingSubscription {
     ...BillingSubscriptionFields
@@ -72250,7 +72250,7 @@ export const MyBillingSubscriptionDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MyBillingSubscriptionQuery, MyBillingSubscriptionQueryVariables>;
-export const MyBillingRotaDocument = new TypedDocumentString(`
+export const MyBillingRotaDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyBillingRota {
   myBillingRota {
     onRotaUserIds
@@ -72258,7 +72258,7 @@ export const MyBillingRotaDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<MyBillingRotaQuery, MyBillingRotaQueryVariables>;
-export const SidekickCreditUsageByDayDocument = new TypedDocumentString(`
+export const SidekickCreditUsageByDayDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickCreditUsageByDay($input: SidekickCreditUsageByDayInput!) {
   sidekickCreditUsageByDay(input: $input) {
     days {
@@ -72272,7 +72272,7 @@ export const SidekickCreditUsageByDayDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SidekickCreditUsageByDayQuery, SidekickCreditUsageByDayQueryVariables>;
-export const SidekickCreditBalanceDocument = new TypedDocumentString(`
+export const SidekickCreditBalanceDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickCreditBalance {
   sidekickCreditBalance {
     ...SidekickCreditBalanceFields
@@ -72291,7 +72291,7 @@ export const SidekickCreditBalanceDocument = new TypedDocumentString(`
     remaining
   }
 }`) as unknown as TypedDocumentString<SidekickCreditBalanceQuery, SidekickCreditBalanceQueryVariables>;
-export const CreditSpendDocument = new TypedDocumentString(`
+export const CreditSpendDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CreditSpend($first: Int, $after: String, $last: Int, $before: String) {
   creditSpend(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -72355,7 +72355,7 @@ export const CreditSpendDocument = new TypedDocumentString(`
   threadId
   discussionId
 }`) as unknown as TypedDocumentString<CreditSpendQuery, CreditSpendQueryVariables>;
-export const WorkOsConfigurationDocument = new TypedDocumentString(`
+export const WorkOsConfigurationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkOSConfiguration {
   workOSConfiguration {
     ssoUrl
@@ -72365,7 +72365,7 @@ export const WorkOsConfigurationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<WorkOsConfigurationQuery, WorkOsConfigurationQueryVariables>;
-export const LabelTypesDocument = new TypedDocumentString(`
+export const LabelTypesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query LabelTypes($filters: LabelTypeFilter, $first: Int, $after: String, $last: Int, $before: String) {
   labelTypes(
     filters: $filters
@@ -72484,7 +72484,7 @@ export const LabelTypesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<LabelTypesQuery, LabelTypesQueryVariables>;
-export const LabelTypeDocument = new TypedDocumentString(`
+export const LabelTypeDocument = /*#__PURE__*/ new TypedDocumentString(`
     query LabelType($labelTypeId: ID!) {
   labelType(labelTypeId: $labelTypeId) {
     ...LabelTypeFields
@@ -72586,7 +72586,7 @@ export const LabelTypeDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<LabelTypeQuery, LabelTypeQueryVariables>;
-export const LabelTypeByExternalIdDocument = new TypedDocumentString(`
+export const LabelTypeByExternalIdDocument = /*#__PURE__*/ new TypedDocumentString(`
     query LabelTypeByExternalId($externalId: ID!) {
   labelTypeByExternalId(externalId: $externalId) {
     ...LabelTypeFields
@@ -72688,7 +72688,7 @@ export const LabelTypeByExternalIdDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<LabelTypeByExternalIdQuery, LabelTypeByExternalIdQueryVariables>;
-export const SuggestedLabelTypesDocument = new TypedDocumentString(`
+export const SuggestedLabelTypesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SuggestedLabelTypes {
   suggestedLabelTypes {
     ...SuggestedLabelTypeFields
@@ -72759,7 +72759,7 @@ export const SuggestedLabelTypesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SuggestedLabelTypesQuery, SuggestedLabelTypesQueryVariables>;
-export const RolesDocument = new TypedDocumentString(`
+export const RolesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Roles($first: Int, $after: String, $last: Int, $before: String, $filters: RoleFilter) {
   roles(
     first: $first
@@ -72795,7 +72795,7 @@ export const RolesDocument = new TypedDocumentString(`
     id
   }
 }`) as unknown as TypedDocumentString<RolesQuery, RolesQueryVariables>;
-export const CustomRolesDocument = new TypedDocumentString(`
+export const CustomRolesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomRoles($first: Int, $after: String, $last: Int, $before: String) {
   customRoles(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -72872,7 +72872,7 @@ export const CustomRolesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CustomRolesQuery, CustomRolesQueryVariables>;
-export const CustomRoleDocument = new TypedDocumentString(`
+export const CustomRoleDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomRole($customRoleId: ID!) {
   customRole(customRoleId: $customRoleId) {
     ...CustomRoleFields
@@ -72938,7 +72938,7 @@ export const CustomRoleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CustomRoleQuery, CustomRoleQueryVariables>;
-export const TimelineEntriesDocument = new TypedDocumentString(`
+export const TimelineEntriesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TimelineEntries($customerId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   timelineEntries(
     customerId: $customerId
@@ -78206,7 +78206,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<TimelineEntriesQuery, TimelineEntriesQueryVariables>;
-export const TimelineEntryDocument = new TypedDocumentString(`
+export const TimelineEntryDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TimelineEntry($customerId: ID!, $timelineEntryId: ID!) {
   timelineEntry(customerId: $customerId, timelineEntryId: $timelineEntryId) {
     ...TimelineEntryFields
@@ -83457,7 +83457,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<TimelineEntryQuery, TimelineEntryQueryVariables>;
-export const WorkspaceDocument = new TypedDocumentString(`
+export const WorkspaceDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Workspace($workspaceId: ID!) {
   workspace(workspaceId: $workspaceId) {
     ...WorkspaceFields
@@ -83598,7 +83598,7 @@ fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
   }
   bccEmailAddresses
 }`) as unknown as TypedDocumentString<WorkspaceQuery, WorkspaceQueryVariables>;
-export const UserDocument = new TypedDocumentString(`
+export const UserDocument = /*#__PURE__*/ new TypedDocumentString(`
     query User($userId: ID!) {
   user(userId: $userId) {
     ...UserFields
@@ -83827,7 +83827,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UserQuery, UserQueryVariables>;
-export const UserByEmailDocument = new TypedDocumentString(`
+export const UserByEmailDocument = /*#__PURE__*/ new TypedDocumentString(`
     query UserByEmail($email: String!) {
   userByEmail(email: $email) {
     ...UserFields
@@ -84056,7 +84056,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UserByEmailQuery, UserByEmailQueryVariables>;
-export const UsersDocument = new TypedDocumentString(`
+export const UsersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Users($filters: UsersFilter, $first: Int, $after: String, $last: Int, $before: String) {
   users(
     filters: $filters
@@ -84302,7 +84302,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UsersQuery, UsersQueryVariables>;
-export const WorkspaceInvitesDocument = new TypedDocumentString(`
+export const WorkspaceInvitesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceInvites($first: Int, $after: String, $last: Int, $before: String) {
   workspaceInvites(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -84401,7 +84401,7 @@ fragment WorkspaceInviteFields on WorkspaceInvite {
     id
   }
 }`) as unknown as TypedDocumentString<WorkspaceInvitesQuery, WorkspaceInvitesQueryVariables>;
-export const CustomerDocument = new TypedDocumentString(`
+export const CustomerDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Customer($customerId: ID!) {
   customer(customerId: $customerId) {
     ...CustomerFields
@@ -84551,7 +84551,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<CustomerQuery, CustomerQueryVariables>;
-export const CustomersDocument = new TypedDocumentString(`
+export const CustomersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Customers($filters: CustomersFilter, $sortBy: CustomersSort, $first: Int, $after: String, $last: Int, $before: String) {
   customers(
     filters: $filters
@@ -84720,7 +84720,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<CustomersQuery, CustomersQueryVariables>;
-export const CustomerByEmailDocument = new TypedDocumentString(`
+export const CustomerByEmailDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerByEmail($email: String!) {
   customerByEmail(email: $email) {
     ...CustomerFields
@@ -84870,7 +84870,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<CustomerByEmailQuery, CustomerByEmailQueryVariables>;
-export const CustomerByExternalIdDocument = new TypedDocumentString(`
+export const CustomerByExternalIdDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerByExternalId($externalId: ID!) {
   customerByExternalId(externalId: $externalId) {
     ...CustomerFields
@@ -85020,7 +85020,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<CustomerByExternalIdQuery, CustomerByExternalIdQueryVariables>;
-export const CustomerGroupDocument = new TypedDocumentString(`
+export const CustomerGroupDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerGroup($customerGroupId: ID!) {
   customerGroup(customerGroupId: $customerGroupId) {
     ...CustomerGroupFields
@@ -85087,7 +85087,7 @@ export const CustomerGroupDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CustomerGroupQuery, CustomerGroupQueryVariables>;
-export const CustomerGroupsDocument = new TypedDocumentString(`
+export const CustomerGroupsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerGroups($filters: CustomerGroupsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   customerGroups(
     filters: $filters
@@ -85171,7 +85171,7 @@ export const CustomerGroupsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CustomerGroupsQuery, CustomerGroupsQueryVariables>;
-export const ThreadFieldSchemasDocument = new TypedDocumentString(`
+export const ThreadFieldSchemasDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadFieldSchemas($first: Int, $after: String, $last: Int, $before: String) {
   threadFieldSchemas(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -85269,7 +85269,7 @@ export const ThreadFieldSchemasDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ThreadFieldSchemasQuery, ThreadFieldSchemasQueryVariables>;
-export const ThreadFieldSchemaDocument = new TypedDocumentString(`
+export const ThreadFieldSchemaDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadFieldSchema($threadFieldSchemaId: ID!) {
   threadFieldSchema(threadFieldSchemaId: $threadFieldSchemaId) {
     ...ThreadFieldSchemaFields
@@ -85356,7 +85356,7 @@ export const ThreadFieldSchemaDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ThreadFieldSchemaQuery, ThreadFieldSchemaQueryVariables>;
-export const CustomerCardInstancesDocument = new TypedDocumentString(`
+export const CustomerCardInstancesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerCardInstances($customerId: ID!, $threadId: ID) {
   customerCardInstances(customerId: $customerId, threadId: $threadId) {
     __typename
@@ -85968,7 +85968,7 @@ fragment CustomerCardInstanceLoadingFields on CustomerCardInstanceLoading {
     }
   }
 }`) as unknown as TypedDocumentString<CustomerCardInstancesQuery, CustomerCardInstancesQueryVariables>;
-export const SearchCustomersDocument = new TypedDocumentString(`
+export const SearchCustomersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchCustomers($searchQuery: CustomersSearchQuery!, $filters: CustomersFilter, $first: Int, $after: String, $last: Int, $before: String) {
   searchCustomers(
     searchQuery: $searchQuery
@@ -86136,7 +86136,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<SearchCustomersQuery, SearchCustomersQueryVariables>;
-export const SnippetsDocument = new TypedDocumentString(`
+export const SnippetsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Snippets($first: Int, $after: String, $last: Int, $before: String) {
   snippets(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -86242,7 +86242,7 @@ export const SnippetsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SnippetsQuery, SnippetsQueryVariables>;
-export const SnippetDocument = new TypedDocumentString(`
+export const SnippetDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Snippet($snippetId: ID!) {
   snippet(snippetId: $snippetId) {
     ...SnippetFields
@@ -86337,7 +86337,7 @@ export const SnippetDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SnippetQuery, SnippetQueryVariables>;
-export const BroadcastsDocument = new TypedDocumentString(`
+export const BroadcastsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Broadcasts($filters: BroadcastsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   broadcasts(
     filters: $filters
@@ -86528,7 +86528,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<BroadcastsQuery, BroadcastsQueryVariables>;
-export const SearchBroadcastsDocument = new TypedDocumentString(`
+export const SearchBroadcastsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchBroadcasts($searchQuery: BroadcastsSearchQuery!, $filters: BroadcastsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   searchBroadcasts(
     searchQuery: $searchQuery
@@ -86720,7 +86720,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<SearchBroadcastsQuery, SearchBroadcastsQueryVariables>;
-export const BroadcastDocument = new TypedDocumentString(`
+export const BroadcastDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Broadcast($broadcastId: ID!) {
   broadcast(broadcastId: $broadcastId) {
     ...BroadcastFields
@@ -86893,7 +86893,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<BroadcastQuery, BroadcastQueryVariables>;
-export const BroadcastRecipientUnsubscribesDocument = new TypedDocumentString(`
+export const BroadcastRecipientUnsubscribesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BroadcastRecipientUnsubscribes($searchQuery: String, $first: Int, $after: String, $last: Int, $before: String) {
   broadcastRecipientUnsubscribes(
     searchQuery: $searchQuery
@@ -86986,7 +86986,7 @@ export const BroadcastRecipientUnsubscribesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BroadcastRecipientUnsubscribesQuery, BroadcastRecipientUnsubscribesQueryVariables>;
-export const BroadcastAudiencesDocument = new TypedDocumentString(`
+export const BroadcastAudiencesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BroadcastAudiences($searchQuery: String, $first: Int, $after: String, $last: Int, $before: String) {
   broadcastAudiences(
     searchQuery: $searchQuery
@@ -87123,7 +87123,7 @@ export const BroadcastAudiencesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BroadcastAudiencesQuery, BroadcastAudiencesQueryVariables>;
-export const BroadcastAudienceDocument = new TypedDocumentString(`
+export const BroadcastAudienceDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BroadcastAudience($broadcastAudienceId: ID!) {
   broadcastAudience(broadcastAudienceId: $broadcastAudienceId) {
     ...BroadcastAudienceFields
@@ -87243,7 +87243,7 @@ export const BroadcastAudienceDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BroadcastAudienceQuery, BroadcastAudienceQueryVariables>;
-export const BroadcastSendTargetRecipientsDocument = new TypedDocumentString(`
+export const BroadcastSendTargetRecipientsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BroadcastSendTargetRecipients($input: BroadcastSendTargetRecipientsInput!) {
   broadcastSendTargetRecipients(input: $input) {
     ...BroadcastSendTargetRecipientsFields
@@ -87254,7 +87254,7 @@ export const BroadcastSendTargetRecipientsDocument = new TypedDocumentString(`
   emptyReason
   unsubscribedExcludedCount
 }`) as unknown as TypedDocumentString<BroadcastSendTargetRecipientsQuery, BroadcastSendTargetRecipientsQueryVariables>;
-export const WorkspaceEmailSettingsDocument = new TypedDocumentString(`
+export const WorkspaceEmailSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceEmailSettings {
   workspaceEmailSettings {
     ...WorkspaceEmailSettingsFields
@@ -87304,7 +87304,7 @@ fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
   }
   bccEmailAddresses
 }`) as unknown as TypedDocumentString<WorkspaceEmailSettingsQuery, WorkspaceEmailSettingsQueryVariables>;
-export const EmailSuppressionDocument = new TypedDocumentString(`
+export const EmailSuppressionDocument = /*#__PURE__*/ new TypedDocumentString(`
     query EmailSuppression($emailAddress: String!) {
   emailSuppression(emailAddress: $emailAddress) {
     ...EmailSuppressionFields
@@ -87319,14 +87319,14 @@ export const EmailSuppressionDocument = new TypedDocumentString(`
   }
   isRemovable
 }`) as unknown as TypedDocumentString<EmailSuppressionQuery, EmailSuppressionQueryVariables>;
-export const WorkspaceChatSettingsDocument = new TypedDocumentString(`
+export const WorkspaceChatSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceChatSettings {
   workspaceChatSettings {
     isEnabled
   }
 }
     `) as unknown as TypedDocumentString<WorkspaceChatSettingsQuery, WorkspaceChatSettingsQueryVariables>;
-export const WorkspaceSetupDocument = new TypedDocumentString(`
+export const WorkspaceSetupDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceSetup {
   workspaceSetup {
     ...WorkspaceSetupFields
@@ -87349,7 +87349,7 @@ export const WorkspaceSetupDocument = new TypedDocumentString(`
     isComplete
   }
 }`) as unknown as TypedDocumentString<WorkspaceSetupQuery, WorkspaceSetupQueryVariables>;
-export const MachineUserDocument = new TypedDocumentString(`
+export const MachineUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MachineUser($machineUserId: ID!) {
   machineUser(machineUserId: $machineUserId) {
     ...MachineUserFields
@@ -87475,7 +87475,7 @@ export const MachineUserDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MachineUserQuery, MachineUserQueryVariables>;
-export const MachineUsersDocument = new TypedDocumentString(`
+export const MachineUsersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MachineUsers($filters: MachineUsersFilter, $first: Int, $after: String, $last: Int, $before: String) {
   machineUsers(
     filters: $filters
@@ -87618,21 +87618,21 @@ export const MachineUsersDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MachineUsersQuery, MachineUsersQueryVariables>;
-export const PermissionsDocument = new TypedDocumentString(`
+export const PermissionsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Permissions {
   permissions {
     permissions
   }
 }
     `) as unknown as TypedDocumentString<PermissionsQuery, PermissionsQueryVariables>;
-export const WorkspaceMsTeamsInstallationInfoDocument = new TypedDocumentString(`
+export const WorkspaceMsTeamsInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceMSTeamsInstallationInfo($redirectUrl: String!) {
   workspaceMSTeamsInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<WorkspaceMsTeamsInstallationInfoQuery, WorkspaceMsTeamsInstallationInfoQueryVariables>;
-export const WorkspaceMsTeamsIntegrationDocument = new TypedDocumentString(`
+export const WorkspaceMsTeamsIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceMSTeamsIntegration {
   workspaceMSTeamsIntegration {
     ...WorkspaceMSTeamsIntegrationFields
@@ -87697,14 +87697,14 @@ export const WorkspaceMsTeamsIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceMsTeamsIntegrationQuery, WorkspaceMsTeamsIntegrationQueryVariables>;
-export const MyMsTeamsInstallationInfoDocument = new TypedDocumentString(`
+export const MyMsTeamsInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyMSTeamsInstallationInfo($redirectUrl: String!) {
   myMSTeamsInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<MyMsTeamsInstallationInfoQuery, MyMsTeamsInstallationInfoQueryVariables>;
-export const MyMsTeamsIntegrationDocument = new TypedDocumentString(`
+export const MyMsTeamsIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyMSTeamsIntegration {
   myMSTeamsIntegration {
     ...UserMSTeamsIntegrationFields
@@ -87770,7 +87770,7 @@ export const MyMsTeamsIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MyMsTeamsIntegrationQuery, MyMsTeamsIntegrationQueryVariables>;
-export const ConnectedMsTeamsChannelsDocument = new TypedDocumentString(`
+export const ConnectedMsTeamsChannelsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ConnectedMSTeamsChannels($first: Int, $after: String, $last: Int, $before: String) {
   connectedMSTeamsChannels(
     first: $first
@@ -87856,7 +87856,7 @@ export const ConnectedMsTeamsChannelsDocument = new TypedDocumentString(`
   }
   teamName
 }`) as unknown as TypedDocumentString<ConnectedMsTeamsChannelsQuery, ConnectedMsTeamsChannelsQueryVariables>;
-export const GetMsTeamsMembersForChannelDocument = new TypedDocumentString(`
+export const GetMsTeamsMembersForChannelDocument = /*#__PURE__*/ new TypedDocumentString(`
     query GetMSTeamsMembersForChannel($msTeamsChannelId: ID!, $msTeamsTeamId: ID!) {
   getMSTeamsMembersForChannel(
     msTeamsChannelId: $msTeamsChannelId
@@ -87876,14 +87876,14 @@ export const GetMsTeamsMembersForChannelDocument = new TypedDocumentString(`
     tenantId
   }
 }`) as unknown as TypedDocumentString<GetMsTeamsMembersForChannelQuery, GetMsTeamsMembersForChannelQueryVariables>;
-export const WorkspaceSlackInstallationInfoDocument = new TypedDocumentString(`
+export const WorkspaceSlackInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceSlackInstallationInfo($redirectUrl: String!) {
   workspaceSlackInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<WorkspaceSlackInstallationInfoQuery, WorkspaceSlackInstallationInfoQueryVariables>;
-export const WorkspaceSlackIntegrationsDocument = new TypedDocumentString(`
+export const WorkspaceSlackIntegrationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceSlackIntegrations($first: Int, $after: String, $last: Int, $before: String) {
   workspaceSlackIntegrations(
     first: $first
@@ -87967,7 +87967,7 @@ export const WorkspaceSlackIntegrationsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceSlackIntegrationsQuery, WorkspaceSlackIntegrationsQueryVariables>;
-export const WorkspaceSlackIntegrationDocument = new TypedDocumentString(`
+export const WorkspaceSlackIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceSlackIntegration($integrationId: ID!) {
   workspaceSlackIntegration(integrationId: $integrationId) {
     ...WorkspaceSlackIntegrationFields
@@ -88035,14 +88035,14 @@ export const WorkspaceSlackIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceSlackIntegrationQuery, WorkspaceSlackIntegrationQueryVariables>;
-export const WorkspaceSlackChannelInstallationInfoDocument = new TypedDocumentString(`
+export const WorkspaceSlackChannelInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceSlackChannelInstallationInfo($redirectUrl: String!) {
   workspaceSlackChannelInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<WorkspaceSlackChannelInstallationInfoQuery, WorkspaceSlackChannelInstallationInfoQueryVariables>;
-export const WorkspaceSlackChannelIntegrationDocument = new TypedDocumentString(`
+export const WorkspaceSlackChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceSlackChannelIntegration($integrationId: ID!) {
   workspaceSlackChannelIntegration(integrationId: $integrationId) {
     ...WorkspaceSlackChannelIntegrationFields
@@ -88109,7 +88109,7 @@ export const WorkspaceSlackChannelIntegrationDocument = new TypedDocumentString(
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceSlackChannelIntegrationQuery, WorkspaceSlackChannelIntegrationQueryVariables>;
-export const WorkspaceSlackChannelIntegrationsDocument = new TypedDocumentString(`
+export const WorkspaceSlackChannelIntegrationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceSlackChannelIntegrations($first: Int, $after: String, $last: Int, $before: String) {
   workspaceSlackChannelIntegrations(
     first: $first
@@ -88192,14 +88192,14 @@ export const WorkspaceSlackChannelIntegrationsDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceSlackChannelIntegrationsQuery, WorkspaceSlackChannelIntegrationsQueryVariables>;
-export const WorkspaceSlackSidekickInstallationInfoDocument = new TypedDocumentString(`
+export const WorkspaceSlackSidekickInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceSlackSidekickInstallationInfo($redirectUrl: String!) {
   workspaceSlackSidekickInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<WorkspaceSlackSidekickInstallationInfoQuery, WorkspaceSlackSidekickInstallationInfoQueryVariables>;
-export const WorkspaceSlackSidekickIntegrationDocument = new TypedDocumentString(`
+export const WorkspaceSlackSidekickIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceSlackSidekickIntegration {
   workspaceSlackSidekickIntegration {
     ...WorkspaceSlackSidekickIntegrationFields
@@ -88268,14 +88268,14 @@ export const WorkspaceSlackSidekickIntegrationDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceSlackSidekickIntegrationQuery, WorkspaceSlackSidekickIntegrationQueryVariables>;
-export const WorkspaceDiscordChannelInstallationInfoDocument = new TypedDocumentString(`
+export const WorkspaceDiscordChannelInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceDiscordChannelInstallationInfo($redirectUrl: String!) {
   workspaceDiscordChannelInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<WorkspaceDiscordChannelInstallationInfoQuery, WorkspaceDiscordChannelInstallationInfoQueryVariables>;
-export const WorkspaceDiscordChannelIntegrationDocument = new TypedDocumentString(`
+export const WorkspaceDiscordChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceDiscordChannelIntegration($integrationId: ID!) {
   workspaceDiscordChannelIntegration(integrationId: $integrationId) {
     ...WorkspaceDiscordChannelIntegrationFields
@@ -88340,7 +88340,7 @@ export const WorkspaceDiscordChannelIntegrationDocument = new TypedDocumentStrin
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceDiscordChannelIntegrationQuery, WorkspaceDiscordChannelIntegrationQueryVariables>;
-export const WorkspaceDiscordChannelIntegrationsDocument = new TypedDocumentString(`
+export const WorkspaceDiscordChannelIntegrationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceDiscordChannelIntegrations($first: Int, $after: String, $last: Int, $before: String) {
   workspaceDiscordChannelIntegrations(
     first: $first
@@ -88421,7 +88421,7 @@ export const WorkspaceDiscordChannelIntegrationsDocument = new TypedDocumentStri
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceDiscordChannelIntegrationsQuery, WorkspaceDiscordChannelIntegrationsQueryVariables>;
-export const UserAuthDiscordChannelIntegrationDocument = new TypedDocumentString(`
+export const UserAuthDiscordChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query UserAuthDiscordChannelIntegration($discordGuildId: String!) {
   userAuthDiscordChannelIntegration(discordGuildId: $discordGuildId) {
     ...UserAuthDiscordChannelIntegrationFields
@@ -88489,7 +88489,7 @@ export const UserAuthDiscordChannelIntegrationDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<UserAuthDiscordChannelIntegrationQuery, UserAuthDiscordChannelIntegrationQueryVariables>;
-export const UserAuthDiscordChannelIntegrationsDocument = new TypedDocumentString(`
+export const UserAuthDiscordChannelIntegrationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query UserAuthDiscordChannelIntegrations($first: Int, $after: String, $last: Int, $before: String) {
   userAuthDiscordChannelIntegrations(
     first: $first
@@ -88573,14 +88573,14 @@ export const UserAuthDiscordChannelIntegrationsDocument = new TypedDocumentStrin
     }
   }
 }`) as unknown as TypedDocumentString<UserAuthDiscordChannelIntegrationsQuery, UserAuthDiscordChannelIntegrationsQueryVariables>;
-export const UserAuthDiscordChannelInstallationInfoDocument = new TypedDocumentString(`
+export const UserAuthDiscordChannelInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query UserAuthDiscordChannelInstallationInfo($redirectUrl: String!) {
   userAuthDiscordChannelInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
   }
 }
     `) as unknown as TypedDocumentString<UserAuthDiscordChannelInstallationInfoQuery, UserAuthDiscordChannelInstallationInfoQueryVariables>;
-export const SearchThreadSlackUsersDocument = new TypedDocumentString(`
+export const SearchThreadSlackUsersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchThreadSlackUsers($threadId: ID!, $searchQuery: String!, $first: Int, $after: String, $last: Int, $before: String) {
   searchThreadSlackUsers(
     threadId: $threadId
@@ -88666,7 +88666,7 @@ export const SearchThreadSlackUsersDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SearchThreadSlackUsersQuery, SearchThreadSlackUsersQueryVariables>;
-export const SearchSlackUsersDocument = new TypedDocumentString(`
+export const SearchSlackUsersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchSlackUsers($slackTeamId: String!, $slackChannelId: String!, $searchQuery: String!, $first: Int, $after: String, $last: Int, $before: String) {
   searchSlackUsers(
     slackTeamId: $slackTeamId
@@ -88753,7 +88753,7 @@ export const SearchSlackUsersDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SearchSlackUsersQuery, SearchSlackUsersQueryVariables>;
-export const SuggestedSlackTeammatesDocument = new TypedDocumentString(`
+export const SuggestedSlackTeammatesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SuggestedSlackTeammates($slackTeamId: String!) {
   suggestedSlackTeammates(slackTeamId: $slackTeamId) {
     slackUserId
@@ -88764,7 +88764,7 @@ export const SuggestedSlackTeammatesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SuggestedSlackTeammatesQuery, SuggestedSlackTeammatesQueryVariables>;
-export const ConnectedSlackChannelsDocument = new TypedDocumentString(`
+export const ConnectedSlackChannelsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ConnectedSlackChannels($filters: ConnectedSlackChannelsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   connectedSlackChannels(
     filters: $filters
@@ -88851,7 +88851,7 @@ export const ConnectedSlackChannelsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ConnectedSlackChannelsQuery, ConnectedSlackChannelsQueryVariables>;
-export const ConnectedSlackChannelDocument = new TypedDocumentString(`
+export const ConnectedSlackChannelDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ConnectedSlackChannel($connectedSlackChannelId: ID!) {
   connectedSlackChannel(connectedSlackChannelId: $connectedSlackChannelId) {
     ...ConnectedSlackChannelFields
@@ -88920,7 +88920,7 @@ export const ConnectedSlackChannelDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ConnectedSlackChannelQuery, ConnectedSlackChannelQueryVariables>;
-export const TestChannelDocument = new TypedDocumentString(`
+export const TestChannelDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TestChannel($slackIntegrationId: ID!) {
   testChannel(slackIntegrationId: $slackIntegrationId) {
     ...ConnectedSlackChannelFields
@@ -88989,7 +88989,7 @@ export const TestChannelDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<TestChannelQuery, TestChannelQueryVariables>;
-export const SlackAutoJoinRulesDocument = new TypedDocumentString(`
+export const SlackAutoJoinRulesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SlackAutoJoinRules($integrationId: ID!) {
   slackAutoJoinRules(integrationId: $integrationId) {
     ...SlackAutoJoinRuleFields
@@ -89009,7 +89009,7 @@ export const SlackAutoJoinRulesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SlackAutoJoinRulesQuery, SlackAutoJoinRulesQueryVariables>;
-export const ThreadSlackUserDocument = new TypedDocumentString(`
+export const ThreadSlackUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadSlackUser($threadId: ID!, $slackUserId: ID!) {
   threadSlackUser(threadId: $threadId, slackUserId: $slackUserId) {
     ...SlackUserFields
@@ -89077,7 +89077,7 @@ export const ThreadSlackUserDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ThreadSlackUserQuery, ThreadSlackUserQueryVariables>;
-export const SlackUserDocument = new TypedDocumentString(`
+export const SlackUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SlackUser($slackTeamId: String!, $slackChannelId: String!, $slackUserId: ID!) {
   slackUser(
     slackTeamId: $slackTeamId
@@ -89149,7 +89149,7 @@ export const SlackUserDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SlackUserQuery, SlackUserQueryVariables>;
-export const ThreadBySlackPermalinkDocument = new TypedDocumentString(`
+export const ThreadBySlackPermalinkDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadBySlackPermalink($slackPermalink: String!) {
   threadBySlackPermalink(slackPermalink: $slackPermalink) {
     ...ThreadFields
@@ -90194,7 +90194,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ThreadBySlackPermalinkQuery, ThreadBySlackPermalinkQueryVariables>;
-export const ThreadBySlackMessageDocument = new TypedDocumentString(`
+export const ThreadBySlackMessageDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadBySlackMessage($slackChannelId: String!, $slackMessageTimestamp: String!) {
   threadBySlackMessage(
     slackChannelId: $slackChannelId
@@ -91242,14 +91242,14 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ThreadBySlackMessageQuery, ThreadBySlackMessageQueryVariables>;
-export const UserSlackChannelMembershipsDocument = new TypedDocumentString(`
+export const UserSlackChannelMembershipsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query UserSlackChannelMemberships($slackTeamId: String!) {
   userSlackChannelMemberships(slackTeamId: $slackTeamId) {
     slackChannelId
   }
 }
     `) as unknown as TypedDocumentString<UserSlackChannelMembershipsQuery, UserSlackChannelMembershipsQueryVariables>;
-export const UserAuthSlackIntegrationDocument = new TypedDocumentString(`
+export const UserAuthSlackIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query UserAuthSlackIntegration($slackTeamId: String!) {
   userAuthSlackIntegration(slackTeamId: $slackTeamId) {
     ...UserAuthSlackIntegrationFields
@@ -91315,7 +91315,7 @@ export const UserAuthSlackIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UserAuthSlackIntegrationQuery, UserAuthSlackIntegrationQueryVariables>;
-export const UserAuthSlackIntegrationByThreadIdDocument = new TypedDocumentString(`
+export const UserAuthSlackIntegrationByThreadIdDocument = /*#__PURE__*/ new TypedDocumentString(`
     query UserAuthSlackIntegrationByThreadId($threadId: ID!) {
   userAuthSlackIntegrationByThreadId(threadId: $threadId) {
     ...UserAuthSlackIntegrationFields
@@ -91381,7 +91381,7 @@ export const UserAuthSlackIntegrationByThreadIdDocument = new TypedDocumentStrin
     }
   }
 }`) as unknown as TypedDocumentString<UserAuthSlackIntegrationByThreadIdQuery, UserAuthSlackIntegrationByThreadIdQueryVariables>;
-export const UserAuthSlackInstallationInfoDocument = new TypedDocumentString(`
+export const UserAuthSlackInstallationInfoDocument = /*#__PURE__*/ new TypedDocumentString(`
     query UserAuthSlackInstallationInfo($redirectUrl: String!, $slackTeamId: String) {
   userAuthSlackInstallationInfo(
     redirectUrl: $redirectUrl
@@ -91391,7 +91391,7 @@ export const UserAuthSlackInstallationInfoDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<UserAuthSlackInstallationInfoQuery, UserAuthSlackInstallationInfoQueryVariables>;
-export const WorkspaceDiscordIntegrationsDocument = new TypedDocumentString(`
+export const WorkspaceDiscordIntegrationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceDiscordIntegrations($first: Int, $after: String, $last: Int, $before: String) {
   workspaceDiscordIntegrations(
     first: $first
@@ -91472,7 +91472,7 @@ export const WorkspaceDiscordIntegrationsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceDiscordIntegrationsQuery, WorkspaceDiscordIntegrationsQueryVariables>;
-export const WorkspaceDiscordIntegrationDocument = new TypedDocumentString(`
+export const WorkspaceDiscordIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceDiscordIntegration($integrationId: ID!) {
   workspaceDiscordIntegration(integrationId: $integrationId) {
     ...WorkspaceDiscordIntegrationFields
@@ -91537,7 +91537,7 @@ export const WorkspaceDiscordIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceDiscordIntegrationQuery, WorkspaceDiscordIntegrationQueryVariables>;
-export const ConnectedDiscordChannelsDocument = new TypedDocumentString(`
+export const ConnectedDiscordChannelsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ConnectedDiscordChannels($discordGuildId: String!, $first: Int, $after: String, $last: Int, $before: String) {
   connectedDiscordChannels(
     discordGuildId: $discordGuildId
@@ -91621,7 +91621,7 @@ export const ConnectedDiscordChannelsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ConnectedDiscordChannelsQuery, ConnectedDiscordChannelsQueryVariables>;
-export const CustomerCardConfigsDocument = new TypedDocumentString(`
+export const CustomerCardConfigsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerCardConfigs {
   customerCardConfigs {
     ...CustomerCardConfigFields
@@ -91694,7 +91694,7 @@ export const CustomerCardConfigsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CustomerCardConfigsQuery, CustomerCardConfigsQueryVariables>;
-export const CustomerCardConfigDocument = new TypedDocumentString(`
+export const CustomerCardConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerCardConfig($customerCardConfigId: ID!) {
   customerCardConfig(customerCardConfigId: $customerCardConfigId) {
     ...CustomerCardConfigFields
@@ -91767,7 +91767,7 @@ export const CustomerCardConfigDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CustomerCardConfigQuery, CustomerCardConfigQueryVariables>;
-export const SettingDocument = new TypedDocumentString(`
+export const SettingDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Setting($code: String!, $scope: SettingScopeInput!) {
   setting(code: $code, scope: $scope) {
     __typename
@@ -91817,7 +91817,7 @@ fragment StringSettingFields on StringSetting {
     scopeType
   }
 }`) as unknown as TypedDocumentString<SettingQuery, SettingQueryVariables>;
-export const WebhookVersionsDocument = new TypedDocumentString(`
+export const WebhookVersionsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WebhookVersions($first: Int, $after: String, $last: Int, $before: String) {
   webhookVersions(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -91837,7 +91837,7 @@ export const WebhookVersionsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<WebhookVersionsQuery, WebhookVersionsQueryVariables>;
-export const WebhookTargetDocument = new TypedDocumentString(`
+export const WebhookTargetDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WebhookTarget($webhookTargetId: ID!) {
   webhookTarget(webhookTargetId: $webhookTargetId) {
     ...WebhookTargetFields
@@ -91910,7 +91910,7 @@ export const WebhookTargetDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WebhookTargetQuery, WebhookTargetQueryVariables>;
-export const WebhookTargetsDocument = new TypedDocumentString(`
+export const WebhookTargetsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WebhookTargets($first: Int, $after: String, $last: Int, $before: String) {
   webhookTargets(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -91994,7 +91994,7 @@ export const WebhookTargetsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WebhookTargetsQuery, WebhookTargetsQueryVariables>;
-export const WebhookDeliveryAttemptsDocument = new TypedDocumentString(`
+export const WebhookDeliveryAttemptsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WebhookDeliveryAttempts($webhookTargetId: ID!, $filters: WebhookDeliveryAttemptFilter, $first: Int, $after: String, $last: Int, $before: String) {
   webhookDeliveryAttempts(
     webhookTargetId: $webhookTargetId
@@ -92053,12 +92053,12 @@ export const WebhookDeliveryAttemptsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WebhookDeliveryAttemptsQuery, WebhookDeliveryAttemptsQueryVariables>;
-export const PublicEventRequestBodyDocument = new TypedDocumentString(`
+export const PublicEventRequestBodyDocument = /*#__PURE__*/ new TypedDocumentString(`
     query PublicEventRequestBody($publicEventId: ID!) {
   publicEventRequestBody(publicEventId: $publicEventId)
 }
     `) as unknown as TypedDocumentString<PublicEventRequestBodyQuery, PublicEventRequestBodyQueryVariables>;
-export const SubscriptionEventTypesDocument = new TypedDocumentString(`
+export const SubscriptionEventTypesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SubscriptionEventTypes {
   subscriptionEventTypes {
     eventType
@@ -92066,7 +92066,7 @@ export const SubscriptionEventTypesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SubscriptionEventTypesQuery, SubscriptionEventTypesQueryVariables>;
-export const WorkflowRuleDocument = new TypedDocumentString(`
+export const WorkflowRuleDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowRule($workflowRuleId: ID!) {
   workflowRule(workflowRuleId: $workflowRuleId) {
     ...WorkflowRuleFields
@@ -92136,7 +92136,7 @@ export const WorkflowRuleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkflowRuleQuery, WorkflowRuleQueryVariables>;
-export const WorkflowRulesDocument = new TypedDocumentString(`
+export const WorkflowRulesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowRules($first: Int, $after: String, $last: Int, $before: String) {
   workflowRules(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -92217,7 +92217,7 @@ export const WorkflowRulesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkflowRulesQuery, WorkflowRulesQueryVariables>;
-export const WorkflowDocument = new TypedDocumentString(`
+export const WorkflowDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Workflow($workflowId: ID!) {
   workflow(workflowId: $workflowId) {
     ...WorkflowFields
@@ -92297,7 +92297,7 @@ export const WorkflowDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkflowQuery, WorkflowQueryVariables>;
-export const WorkflowsDocument = new TypedDocumentString(`
+export const WorkflowsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Workflows($first: Int, $after: String, $last: Int, $before: String, $filters: WorkflowsFilter, $sortBy: WorkflowsSort) {
   workflows(
     first: $first
@@ -92395,7 +92395,7 @@ export const WorkflowsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkflowsQuery, WorkflowsQueryVariables>;
-export const WorkflowCapabilitiesDocument = new TypedDocumentString(`
+export const WorkflowCapabilitiesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowCapabilities($triggerType: WorkflowTriggerType!) {
   workflowCapabilities(triggerType: $triggerType) {
     hasConditionSupport
@@ -92405,7 +92405,7 @@ export const WorkflowCapabilitiesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<WorkflowCapabilitiesQuery, WorkflowCapabilitiesQueryVariables>;
-export const WorkflowExecutionDocument = new TypedDocumentString(`
+export const WorkflowExecutionDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowExecution($workflowExecutionId: ID!) {
   workflowExecution(workflowExecutionId: $workflowExecutionId) {
     ...WorkflowExecutionFields
@@ -92455,7 +92455,7 @@ export const WorkflowExecutionDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkflowExecutionQuery, WorkflowExecutionQueryVariables>;
-export const WorkflowExecutionsDocument = new TypedDocumentString(`
+export const WorkflowExecutionsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowExecutions($workflowId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   workflowExecutions(
     workflowId: $workflowId
@@ -92522,7 +92522,7 @@ export const WorkflowExecutionsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkflowExecutionsQuery, WorkflowExecutionsQueryVariables>;
-export const WorkflowExecutionsForWorkspaceDocument = new TypedDocumentString(`
+export const WorkflowExecutionsForWorkspaceDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowExecutionsForWorkspace($filters: WorkflowExecutionsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   workflowExecutionsForWorkspace(
     filters: $filters
@@ -92589,7 +92589,7 @@ export const WorkflowExecutionsForWorkspaceDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkflowExecutionsForWorkspaceQuery, WorkflowExecutionsForWorkspaceQueryVariables>;
-export const WorkflowExecutionsByEntityDocument = new TypedDocumentString(`
+export const WorkflowExecutionsByEntityDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowExecutionsByEntity($filters: WorkflowExecutionByEntityFilter!, $first: Int, $after: String, $last: Int, $before: String) {
   workflowExecutionsByEntity(
     filters: $filters
@@ -92656,7 +92656,7 @@ export const WorkflowExecutionsByEntityDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkflowExecutionsByEntityQuery, WorkflowExecutionsByEntityQueryVariables>;
-export const WorkflowShareLinkDocument = new TypedDocumentString(`
+export const WorkflowShareLinkDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowShareLink($token: String!) {
   workflowShareLink(token: $token) {
     ...WorkflowShareLinkFields
@@ -92676,7 +92676,7 @@ export const WorkflowShareLinkDocument = new TypedDocumentString(`
     positionY
   }
 }`) as unknown as TypedDocumentString<WorkflowShareLinkQuery, WorkflowShareLinkQueryVariables>;
-export const WorkflowTemplateGalleryDocument = new TypedDocumentString(`
+export const WorkflowTemplateGalleryDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowTemplateGallery {
   workflowTemplateGallery {
     ...WorkflowTemplateGalleryItemFields
@@ -92698,7 +92698,7 @@ export const WorkflowTemplateGalleryDocument = new TypedDocumentString(`
     features
   }
 }`) as unknown as TypedDocumentString<WorkflowTemplateGalleryQuery, WorkflowTemplateGalleryQueryVariables>;
-export const WorkflowTemplateDocument = new TypedDocumentString(`
+export const WorkflowTemplateDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkflowTemplate($templateId: ID!) {
   workflowTemplate(templateId: $templateId) {
     ...WorkflowTemplateFields
@@ -92720,7 +92720,7 @@ export const WorkflowTemplateDocument = new TypedDocumentString(`
     features
   }
 }`) as unknown as TypedDocumentString<WorkflowTemplateQuery, WorkflowTemplateQueryVariables>;
-export const ChatAppDocument = new TypedDocumentString(`
+export const ChatAppDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ChatApp($chatAppId: ID!) {
   chatApp(chatAppId: $chatAppId) {
     ...ChatAppFields
@@ -92804,7 +92804,7 @@ export const ChatAppDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ChatAppQuery, ChatAppQueryVariables>;
-export const ChatAppsDocument = new TypedDocumentString(`
+export const ChatAppsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ChatApps($first: Int, $after: String, $last: Int, $before: String) {
   chatApps(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -92899,7 +92899,7 @@ export const ChatAppsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ChatAppsQuery, ChatAppsQueryVariables>;
-export const ChatAppSecretDocument = new TypedDocumentString(`
+export const ChatAppSecretDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ChatAppSecret($chatAppId: ID!) {
   chatAppSecret(chatAppId: $chatAppId) {
     ...ChatAppHiddenSecretFields
@@ -92962,7 +92962,7 @@ export const ChatAppSecretDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ChatAppSecretQuery, ChatAppSecretQueryVariables>;
-export const ThreadDocument = new TypedDocumentString(`
+export const ThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Thread($threadId: ID!) {
   thread(threadId: $threadId) {
     ...ThreadFields
@@ -94007,7 +94007,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ThreadQuery, ThreadQueryVariables>;
-export const ThreadByRefDocument = new TypedDocumentString(`
+export const ThreadByRefDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadByRef($ref: String!) {
   threadByRef(ref: $ref) {
     ...ThreadFields
@@ -95052,7 +95052,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ThreadByRefQuery, ThreadByRefQueryVariables>;
-export const ThreadByExternalIdDocument = new TypedDocumentString(`
+export const ThreadByExternalIdDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadByExternalId($customerId: ID!, $externalId: ID!) {
   threadByExternalId(customerId: $customerId, externalId: $externalId) {
     ...ThreadFields
@@ -96097,7 +96097,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ThreadByExternalIdQuery, ThreadByExternalIdQueryVariables>;
-export const ThreadsByExternalIdDocument = new TypedDocumentString(`
+export const ThreadsByExternalIdDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadsByExternalId($externalId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   threadsByExternalId(
     externalId: $externalId
@@ -97159,7 +97159,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ThreadsByExternalIdQuery, ThreadsByExternalIdQueryVariables>;
-export const ThreadsDocument = new TypedDocumentString(`
+export const ThreadsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Threads($filters: ThreadsFilter, $sortBy: ThreadsSort, $first: Int, $after: String, $last: Int, $before: String) {
   threads(
     filters: $filters
@@ -98223,7 +98223,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ThreadsQuery, ThreadsQueryVariables>;
-export const TestThreadsDocument = new TypedDocumentString(`
+export const TestThreadsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TestThreads {
   testThreads {
     ...ThreadFields
@@ -99268,7 +99268,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<TestThreadsQuery, TestThreadsQueryVariables>;
-export const SearchThreadsDocument = new TypedDocumentString(`
+export const SearchThreadsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchThreads($searchQuery: ThreadsSearchQuery!, $filters: ThreadsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   searchThreads(
     searchQuery: $searchQuery
@@ -100333,7 +100333,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<SearchThreadsQuery, SearchThreadsQueryVariables>;
-export const DeletedThreadsDocument = new TypedDocumentString(`
+export const DeletedThreadsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query DeletedThreads($filters: DeletedThreadsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   deletedThreads(
     filters: $filters
@@ -100363,7 +100363,7 @@ export const DeletedThreadsDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<DeletedThreadsQuery, DeletedThreadsQueryVariables>;
-export const AutoresponderDocument = new TypedDocumentString(`
+export const AutoresponderDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Autoresponder($autoresponderId: ID!) {
   autoresponder(autoresponderId: $autoresponderId) {
     ...AutoresponderFields
@@ -100451,7 +100451,7 @@ export const AutoresponderDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AutoresponderQuery, AutoresponderQueryVariables>;
-export const AutorespondersDocument = new TypedDocumentString(`
+export const AutorespondersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Autoresponders($first: Int, $after: String, $last: Int, $before: String) {
   autoresponders(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -100550,7 +100550,7 @@ export const AutorespondersDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AutorespondersQuery, AutorespondersQueryVariables>;
-export const TimeSeriesMetricDocument = new TypedDocumentString(`
+export const TimeSeriesMetricDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TimeSeriesMetric($name: String!, $options: TimeSeriesMetricOptions) {
   timeSeriesMetric(name: $name, options: $options) {
     ...TimeSeriesMetricFields
@@ -100562,7 +100562,7 @@ export const TimeSeriesMetricDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<TimeSeriesMetricQuery, TimeSeriesMetricQueryVariables>;
-export const SingleValueMetricDocument = new TypedDocumentString(`
+export const SingleValueMetricDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SingleValueMetric($name: String!, $options: SingleValueMetricOptions) {
   singleValueMetric(name: $name, options: $options) {
     values {
@@ -100576,7 +100576,7 @@ export const SingleValueMetricDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SingleValueMetricQuery, SingleValueMetricQueryVariables>;
-export const HeatmapMetricDocument = new TypedDocumentString(`
+export const HeatmapMetricDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HeatmapMetric($name: String!, $options: HeatmapMetricOptionsInput) {
   heatmapMetric(name: $name, options: $options) {
     ...HeatmapMetricFields
@@ -100590,7 +100590,7 @@ export const HeatmapMetricDocument = new TypedDocumentString(`
     messageCount
   }
 }`) as unknown as TypedDocumentString<HeatmapMetricQuery, HeatmapMetricQueryVariables>;
-export const ThreadTimeSeriesMetricDocument = new TypedDocumentString(`
+export const ThreadTimeSeriesMetricDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadTimeSeriesMetric($input: ThreadTimeSeriesMetricInput!) {
   threadTimeSeriesMetric(input: $input) {
     ...ThreadTimeSeriesMetricFields
@@ -100603,7 +100603,7 @@ export const ThreadTimeSeriesMetricDocument = new TypedDocumentString(`
   }
   threadIds
 }`) as unknown as TypedDocumentString<ThreadTimeSeriesMetricQuery, ThreadTimeSeriesMetricQueryVariables>;
-export const ThreadSingleValueMetricDocument = new TypedDocumentString(`
+export const ThreadSingleValueMetricDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadSingleValueMetric($input: ThreadSingleValueMetricInput!) {
   threadSingleValueMetric(input: $input) {
     ...ThreadSingleValueMetricFields
@@ -100612,7 +100612,7 @@ export const ThreadSingleValueMetricDocument = new TypedDocumentString(`
     fragment ThreadSingleValueMetricFields on ThreadSingleValueMetric {
   threadIds
 }`) as unknown as TypedDocumentString<ThreadSingleValueMetricQuery, ThreadSingleValueMetricQueryVariables>;
-export const ThreadHeatmapMetricDocument = new TypedDocumentString(`
+export const ThreadHeatmapMetricDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadHeatmapMetric($input: ThreadHeatmapMetricInput!) {
   threadHeatmapMetric(input: $input) {
     ...ThreadHeatmapMetricFields
@@ -100625,7 +100625,7 @@ export const ThreadHeatmapMetricDocument = new TypedDocumentString(`
   }
   threadIds
 }`) as unknown as TypedDocumentString<ThreadHeatmapMetricQuery, ThreadHeatmapMetricQueryVariables>;
-export const CompaniesDocument = new TypedDocumentString(`
+export const CompaniesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Companies($first: Int, $after: String, $last: Int, $before: String, $filters: CompaniesFilter) {
   companies(
     first: $first
@@ -100809,7 +100809,7 @@ export const CompaniesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CompaniesQuery, CompaniesQueryVariables>;
-export const CompanyDocument = new TypedDocumentString(`
+export const CompanyDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Company($companyId: ID!) {
   company(companyId: $companyId) {
     ...CompanyFields
@@ -100976,7 +100976,7 @@ export const CompanyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CompanyQuery, CompanyQueryVariables>;
-export const SearchCompaniesDocument = new TypedDocumentString(`
+export const SearchCompaniesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchCompanies($searchQuery: CompaniesSearchQuery!, $filters: CompaniesFilter, $first: Int, $after: String, $last: Int, $before: String) {
   searchCompanies(
     searchQuery: $searchQuery
@@ -101163,7 +101163,7 @@ export const SearchCompaniesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SearchCompaniesQuery, SearchCompaniesQueryVariables>;
-export const TeamSettingsDocument = new TypedDocumentString(`
+export const TeamSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TeamSettings($labelTypeId: ID!) {
   teamSettings(labelTypeId: $labelTypeId) {
     ...TeamSettingsFields
@@ -101229,7 +101229,7 @@ export const TeamSettingsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<TeamSettingsQuery, TeamSettingsQueryVariables>;
-export const TenantsDocument = new TypedDocumentString(`
+export const TenantsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Tenants($first: Int, $after: String, $last: Int, $before: String, $filters: TenantsFilter) {
   tenants(
     first: $first
@@ -101386,7 +101386,7 @@ export const TenantsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<TenantsQuery, TenantsQueryVariables>;
-export const TenantDocument = new TypedDocumentString(`
+export const TenantDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Tenant($tenantId: ID!) {
   tenant(tenantId: $tenantId) {
     ...TenantFields
@@ -101526,7 +101526,7 @@ export const TenantDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<TenantQuery, TenantQueryVariables>;
-export const AccountsDocument = new TypedDocumentString(`
+export const AccountsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Accounts($first: Int, $after: String, $last: Int, $before: String, $filters: AccountsFilter) {
   accounts(
     first: $first
@@ -101683,7 +101683,7 @@ export const AccountsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AccountsQuery, AccountsQueryVariables>;
-export const AccountDocument = new TypedDocumentString(`
+export const AccountDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Account($accountId: ID!) {
   account(accountId: $accountId) {
     ...AccountFields
@@ -101823,7 +101823,7 @@ export const AccountDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AccountQuery, AccountQueryVariables>;
-export const TaskDocument = new TypedDocumentString(`
+export const TaskDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Task($taskId: ID!) {
   task(taskId: $taskId) {
     ...TaskFields
@@ -102281,7 +102281,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<TaskQuery, TaskQueryVariables>;
-export const TaskByRefDocument = new TypedDocumentString(`
+export const TaskByRefDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TaskByRef($ref: String!) {
   taskByRef(ref: $ref) {
     ...TaskFields
@@ -102739,7 +102739,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<TaskByRefQuery, TaskByRefQueryVariables>;
-export const TasksDocument = new TypedDocumentString(`
+export const TasksDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Tasks($first: Int, $after: String, $last: Int, $before: String, $filters: TasksFilter, $sortBy: TasksSort) {
   tasks(
     first: $first
@@ -103216,7 +103216,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<TasksQuery, TasksQueryVariables>;
-export const TenantFieldSchemasDocument = new TypedDocumentString(`
+export const TenantFieldSchemasDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TenantFieldSchemas($filters: TenantFieldSchemasFilter, $first: Int, $after: String, $last: Int, $before: String) {
   tenantFieldSchemas(
     filters: $filters
@@ -103304,7 +103304,7 @@ export const TenantFieldSchemasDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<TenantFieldSchemasQuery, TenantFieldSchemasQueryVariables>;
-export const AccountFieldSchemasDocument = new TypedDocumentString(`
+export const AccountFieldSchemasDocument = /*#__PURE__*/ new TypedDocumentString(`
     query AccountFieldSchemas($filters: AccountFieldSchemasFilter, $first: Int, $after: String, $last: Int, $before: String) {
   accountFieldSchemas(
     filters: $filters
@@ -103392,7 +103392,7 @@ export const AccountFieldSchemasDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AccountFieldSchemasQuery, AccountFieldSchemasQueryVariables>;
-export const SearchTenantsDocument = new TypedDocumentString(`
+export const SearchTenantsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchTenants($searchQuery: TenantsSearchQuery!, $filters: TenantsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   searchTenants(
     searchQuery: $searchQuery
@@ -103552,7 +103552,7 @@ export const SearchTenantsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SearchTenantsQuery, SearchTenantsQueryVariables>;
-export const SearchAccountsDocument = new TypedDocumentString(`
+export const SearchAccountsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchAccounts($searchQuery: AccountsSearchQuery!, $filters: AccountsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   searchAccounts(
     searchQuery: $searchQuery
@@ -103712,7 +103712,7 @@ export const SearchAccountsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SearchAccountsQuery, SearchAccountsQueryVariables>;
-export const ThreadDiscussionDocument = new TypedDocumentString(`
+export const ThreadDiscussionDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadDiscussion($threadDiscussionId: ID!) {
   threadDiscussion(threadDiscussionId: $threadDiscussionId) {
     ...ThreadDiscussionFields
@@ -103835,7 +103835,7 @@ export const ThreadDiscussionDocument = new TypedDocumentString(`
   sourcePageLink
   sourcePageAnchor
 }`) as unknown as TypedDocumentString<ThreadDiscussionQuery, ThreadDiscussionQueryVariables>;
-export const DiscussionDocument = new TypedDocumentString(`
+export const DiscussionDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Discussion($discussionId: ID!) {
   discussion(discussionId: $discussionId) {
     ...ThreadDiscussionFields
@@ -103958,7 +103958,7 @@ export const DiscussionDocument = new TypedDocumentString(`
   sourcePageLink
   sourcePageAnchor
 }`) as unknown as TypedDocumentString<DiscussionQuery, DiscussionQueryVariables>;
-export const DiscussionsDocument = new TypedDocumentString(`
+export const DiscussionsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Discussions($filters: DiscussionsFilter, $sortBy: DiscussionsSort, $first: Int, $after: String, $last: Int, $before: String) {
   discussions(
     filters: $filters
@@ -104099,7 +104099,7 @@ export const DiscussionsDocument = new TypedDocumentString(`
   sourcePageLink
   sourcePageAnchor
 }`) as unknown as TypedDocumentString<DiscussionsQuery, DiscussionsQueryVariables>;
-export const ServiceAuthorizationDocument = new TypedDocumentString(`
+export const ServiceAuthorizationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ServiceAuthorization($serviceAuthorizationId: ID!) {
   serviceAuthorization(serviceAuthorizationId: $serviceAuthorizationId) {
     ...ServiceAuthorizationFields
@@ -104208,7 +104208,7 @@ export const ServiceAuthorizationDocument = new TypedDocumentString(`
   }
   isImportRunnerIntegration
 }`) as unknown as TypedDocumentString<ServiceAuthorizationQuery, ServiceAuthorizationQueryVariables>;
-export const ServiceAuthorizationsDocument = new TypedDocumentString(`
+export const ServiceAuthorizationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ServiceAuthorizations($first: Int, $after: String, $last: Int, $before: String, $filters: ServiceAuthorizationsFilter) {
   serviceAuthorizations(
     first: $first
@@ -104334,7 +104334,7 @@ export const ServiceAuthorizationsDocument = new TypedDocumentString(`
   }
   isImportRunnerIntegration
 }`) as unknown as TypedDocumentString<ServiceAuthorizationsQuery, ServiceAuthorizationsQueryVariables>;
-export const SidekickGithubAccessibleReposDocument = new TypedDocumentString(`
+export const SidekickGithubAccessibleReposDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickGithubAccessibleRepos($serviceAuthorizationId: ID!) {
   sidekickGithubAccessibleRepos(serviceAuthorizationId: $serviceAuthorizationId) {
     repoId
@@ -104343,7 +104343,7 @@ export const SidekickGithubAccessibleReposDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SidekickGithubAccessibleReposQuery, SidekickGithubAccessibleReposQueryVariables>;
-export const SidekickGithubServiceConfigDocument = new TypedDocumentString(`
+export const SidekickGithubServiceConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickGithubServiceConfig($serviceAuthorizationId: ID!) {
   sidekickGithubServiceConfig(serviceAuthorizationId: $serviceAuthorizationId) {
     ...SidekickGithubServiceConfigFields
@@ -104358,7 +104358,7 @@ export const SidekickGithubServiceConfigDocument = new TypedDocumentString(`
   }
   operatingInstructions
 }`) as unknown as TypedDocumentString<SidekickGithubServiceConfigQuery, SidekickGithubServiceConfigQueryVariables>;
-export const SidekickServiceConfigDocument = new TypedDocumentString(`
+export const SidekickServiceConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickServiceConfig($serviceAuthorizationId: ID!) {
   sidekickServiceConfig(serviceAuthorizationId: $serviceAuthorizationId) {
     serviceAuthorizationId
@@ -104366,7 +104366,7 @@ export const SidekickServiceConfigDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SidekickServiceConfigQuery, SidekickServiceConfigQueryVariables>;
-export const SidekickPosthogServiceConfigDocument = new TypedDocumentString(`
+export const SidekickPosthogServiceConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickPosthogServiceConfig($serviceAuthorizationId: ID!) {
   sidekickPosthogServiceConfig(serviceAuthorizationId: $serviceAuthorizationId) {
     operatingInstructions
@@ -104374,14 +104374,14 @@ export const SidekickPosthogServiceConfigDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SidekickPosthogServiceConfigQuery, SidekickPosthogServiceConfigQueryVariables>;
-export const SidekickSettingsDocument = new TypedDocumentString(`
+export const SidekickSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickSettings {
   sidekickSettings {
     customPrompt
   }
 }
     `) as unknown as TypedDocumentString<SidekickSettingsQuery, SidekickSettingsQueryVariables>;
-export const AgentSandboxToolPoliciesDocument = new TypedDocumentString(`
+export const AgentSandboxToolPoliciesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query AgentSandboxToolPolicies($service: String) {
   agentSandboxToolPolicies(service: $service) {
     service
@@ -104394,7 +104394,7 @@ export const AgentSandboxToolPoliciesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<AgentSandboxToolPoliciesQuery, AgentSandboxToolPoliciesQueryVariables>;
-export const SidekickSkillsDocument = new TypedDocumentString(`
+export const SidekickSkillsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickSkills {
   sidekickSkills {
     __typename
@@ -104419,7 +104419,7 @@ fragment SystemSidekickSkillFields on SystemSidekickSkill {
   description
   isEnabled
 }`) as unknown as TypedDocumentString<SidekickSkillsQuery, SidekickSkillsQueryVariables>;
-export const SidekickCustomSkillDocument = new TypedDocumentString(`
+export const SidekickCustomSkillDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickCustomSkill($id: ID!) {
   sidekickCustomSkill(id: $id) {
     id
@@ -104431,7 +104431,7 @@ export const SidekickCustomSkillDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SidekickCustomSkillQuery, SidekickCustomSkillQueryVariables>;
-export const SidekickMcpServersDocument = new TypedDocumentString(`
+export const SidekickMcpServersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickMcpServers {
   sidekickMcpServers {
     ...SidekickMcpServerFields
@@ -104460,7 +104460,7 @@ export const SidekickMcpServersDocument = new TypedDocumentString(`
     sizes
   }
 }`) as unknown as TypedDocumentString<SidekickMcpServersQuery, SidekickMcpServersQueryVariables>;
-export const SidekickMcpServerDocument = new TypedDocumentString(`
+export const SidekickMcpServerDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickMcpServer($id: ID!) {
   sidekickMcpServer(id: $id) {
     ...SidekickMcpServerFields
@@ -104489,7 +104489,7 @@ export const SidekickMcpServerDocument = new TypedDocumentString(`
     sizes
   }
 }`) as unknown as TypedDocumentString<SidekickMcpServerQuery, SidekickMcpServerQueryVariables>;
-export const ImporterTenantListsDocument = new TypedDocumentString(`
+export const ImporterTenantListsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ImporterTenantLists($serviceAuthorizationId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   importerTenantLists(
     serviceAuthorizationId: $serviceAuthorizationId
@@ -104514,7 +104514,7 @@ export const ImporterTenantListsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ImporterTenantListsQuery, ImporterTenantListsQueryVariables>;
-export const ImportJobDefinitionDocument = new TypedDocumentString(`
+export const ImportJobDefinitionDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ImportJobDefinition($serviceIntegrationKey: String!, $isEnabled: Boolean) {
   importJobDefinition(
     serviceIntegrationKey: $serviceIntegrationKey
@@ -104592,7 +104592,7 @@ export const ImportJobDefinitionDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ImportJobDefinitionQuery, ImportJobDefinitionQueryVariables>;
-export const ImportJobsDocument = new TypedDocumentString(`
+export const ImportJobsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ImportJobs($filters: ImportJobsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   importJobs(
     filters: $filters
@@ -104627,7 +104627,7 @@ export const ImportJobsDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<ImportJobsQuery, ImportJobsQueryVariables>;
-export const TiersDocument = new TypedDocumentString(`
+export const TiersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Tiers($first: Int, $after: String, $last: Int, $before: String) {
   tiers(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -105206,7 +105206,7 @@ export const TiersDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<TiersQuery, TiersQueryVariables>;
-export const TierDocument = new TypedDocumentString(`
+export const TierDocument = /*#__PURE__*/ new TypedDocumentString(`
     query Tier($tierId: ID!) {
   tier(tierId: $tierId) {
     ...TierFields
@@ -105774,7 +105774,7 @@ export const TierDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<TierQuery, TierQueryVariables>;
-export const ServiceLevelAgreementPoliciesDocument = new TypedDocumentString(`
+export const ServiceLevelAgreementPoliciesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ServiceLevelAgreementPolicies($filters: ServiceLevelAgreementPoliciesFilter, $first: Int, $after: String, $last: Int, $before: String) {
   serviceLevelAgreementPolicies(
     filters: $filters
@@ -105856,7 +105856,7 @@ export const ServiceLevelAgreementPoliciesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ServiceLevelAgreementPoliciesQuery, ServiceLevelAgreementPoliciesQueryVariables>;
-export const ServiceLevelAgreementPolicyDocument = new TypedDocumentString(`
+export const ServiceLevelAgreementPolicyDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ServiceLevelAgreementPolicy($serviceLevelAgreementPolicyId: ID!) {
   serviceLevelAgreementPolicy(
     serviceLevelAgreementPolicyId: $serviceLevelAgreementPolicyId
@@ -105923,7 +105923,7 @@ export const ServiceLevelAgreementPolicyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ServiceLevelAgreementPolicyQuery, ServiceLevelAgreementPolicyQueryVariables>;
-export const BusinessHoursDocument = new TypedDocumentString(`
+export const BusinessHoursDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BusinessHours {
   businessHours {
     ...BusinessHoursFields
@@ -105985,7 +105985,7 @@ export const BusinessHoursDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BusinessHoursQuery, BusinessHoursQueryVariables>;
-export const BusinessHoursSlotsDocument = new TypedDocumentString(`
+export const BusinessHoursSlotsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BusinessHoursSlots {
   businessHoursSlots {
     ...BusinessHoursSlotFields
@@ -105999,7 +105999,7 @@ export const BusinessHoursSlotsDocument = new TypedDocumentString(`
   opensAt
   closesAt
 }`) as unknown as TypedDocumentString<BusinessHoursSlotsQuery, BusinessHoursSlotsQueryVariables>;
-export const BusinessHoursScheduleDocument = new TypedDocumentString(`
+export const BusinessHoursScheduleDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BusinessHoursSchedule($businessHoursScheduleId: ID!) {
   businessHoursSchedule(businessHoursScheduleId: $businessHoursScheduleId) {
     ...BusinessHoursScheduleFields
@@ -106063,7 +106063,7 @@ export const BusinessHoursScheduleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BusinessHoursScheduleQuery, BusinessHoursScheduleQueryVariables>;
-export const BusinessHoursSchedulesDocument = new TypedDocumentString(`
+export const BusinessHoursSchedulesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BusinessHoursSchedules($first: Int, $after: String, $last: Int, $before: String) {
   businessHoursSchedules(
     first: $first
@@ -106143,7 +106143,7 @@ export const BusinessHoursSchedulesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BusinessHoursSchedulesQuery, BusinessHoursSchedulesQueryVariables>;
-export const WorkspaceHmacDocument = new TypedDocumentString(`
+export const WorkspaceHmacDocument = /*#__PURE__*/ new TypedDocumentString(`
     query WorkspaceHmac {
   workspaceHmac {
     ...WorkspaceHmacFields
@@ -106206,7 +106206,7 @@ export const WorkspaceHmacDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<WorkspaceHmacQuery, WorkspaceHmacQueryVariables>;
-export const ThreadLinkGroupsDocument = new TypedDocumentString(`
+export const ThreadLinkGroupsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadLinkGroups($first: Int, $after: String, $last: Int, $before: String, $filters: ThreadLinkGroupFilter) {
   threadLinkGroups(
     first: $first
@@ -106254,7 +106254,7 @@ export const ThreadLinkGroupsDocument = new TypedDocumentString(`
   defaultViewRank
   currentViewRank
 }`) as unknown as TypedDocumentString<ThreadLinkGroupsQuery, ThreadLinkGroupsQueryVariables>;
-export const RelatedThreadsDocument = new TypedDocumentString(`
+export const RelatedThreadsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query RelatedThreads($threadId: ID!) {
   relatedThreads(threadId: $threadId) {
     ...ThreadWithDistanceFields
@@ -106266,7 +106266,7 @@ export const RelatedThreadsDocument = new TypedDocumentString(`
   }
   distance
 }`) as unknown as TypedDocumentString<RelatedThreadsQuery, RelatedThreadsQueryVariables>;
-export const SearchKnowledgeSourcesDocument = new TypedDocumentString(`
+export const SearchKnowledgeSourcesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchKnowledgeSources($searchQuery: String!, $pageSize: Int, $options: SearchKnowledgeSourcesOptions) {
   searchKnowledgeSources(
     searchQuery: $searchQuery
@@ -106400,7 +106400,7 @@ fragment IndexedDocumentSearchResultFields on IndexedDocumentSearchResult {
     ...IndexedDocumentFields
   }
 }`) as unknown as TypedDocumentString<SearchKnowledgeSourcesQuery, SearchKnowledgeSourcesQueryVariables>;
-export const SearchPlainHelpCenterDocument = new TypedDocumentString(`
+export const SearchPlainHelpCenterDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchPlainHelpCenter($searchQuery: String!, $pageSize: Int) {
   searchPlainHelpCenter(searchQuery: $searchQuery, pageSize: $pageSize) {
     content
@@ -106409,7 +106409,7 @@ export const SearchPlainHelpCenterDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SearchPlainHelpCenterQuery, SearchPlainHelpCenterQueryVariables>;
-export const SidekickAvailableToolsDocument = new TypedDocumentString(`
+export const SidekickAvailableToolsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickAvailableTools {
   sidekickAvailableTools {
     ...SidekickAvailableToolFields
@@ -106431,7 +106431,7 @@ export const SidekickAvailableToolsDocument = new TypedDocumentString(`
     isMultiValued
   }
 }`) as unknown as TypedDocumentString<SidekickAvailableToolsQuery, SidekickAvailableToolsQueryVariables>;
-export const SidekickToolArgOptionsDocument = new TypedDocumentString(`
+export const SidekickToolArgOptionsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SidekickToolArgOptions($source: SidekickToolArgOptionSource!, $parent: ID, $query: String, $first: Int, $after: String) {
   sidekickToolArgOptions(
     source: $source
@@ -106450,7 +106450,7 @@ export const SidekickToolArgOptionsDocument = new TypedDocumentString(`
   }
   nextCursor
 }`) as unknown as TypedDocumentString<SidekickToolArgOptionsQuery, SidekickToolArgOptionsQueryVariables>;
-export const ThreadClustersDocument = new TypedDocumentString(`
+export const ThreadClustersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadClusters($variant: String) {
   threadClusters(variant: $variant) {
     ...ThreadClusterFields
@@ -106543,7 +106543,7 @@ export const ThreadClustersDocument = new TypedDocumentString(`
     distance
   }
 }`) as unknown as TypedDocumentString<ThreadClustersQuery, ThreadClustersQueryVariables>;
-export const ThreadClusterDocument = new TypedDocumentString(`
+export const ThreadClusterDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadCluster($id: ID!) {
   threadCluster(id: $id) {
     ...ThreadClusterFields
@@ -106636,7 +106636,7 @@ export const ThreadClusterDocument = new TypedDocumentString(`
     distance
   }
 }`) as unknown as TypedDocumentString<ThreadClusterQuery, ThreadClusterQueryVariables>;
-export const ActiveThreadClusterDocument = new TypedDocumentString(`
+export const ActiveThreadClusterDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ActiveThreadCluster($threadId: ID!) {
   activeThreadCluster(threadId: $threadId) {
     ...ThreadClusterFields
@@ -106729,7 +106729,7 @@ export const ActiveThreadClusterDocument = new TypedDocumentString(`
     distance
   }
 }`) as unknown as TypedDocumentString<ActiveThreadClusterQuery, ActiveThreadClusterQueryVariables>;
-export const ThreadClustersPaginatedDocument = new TypedDocumentString(`
+export const ThreadClustersPaginatedDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadClustersPaginated($first: Int, $after: String, $last: Int, $before: String, $filters: ThreadClustersFilter) {
   threadClustersPaginated(
     first: $first
@@ -106839,7 +106839,7 @@ export const ThreadClustersPaginatedDocument = new TypedDocumentString(`
     distance
   }
 }`) as unknown as TypedDocumentString<ThreadClustersPaginatedQuery, ThreadClustersPaginatedQueryVariables>;
-export const GeneratedRepliesDocument = new TypedDocumentString(`
+export const GeneratedRepliesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query GeneratedReplies($threadId: ID!, $options: [GenerateReplyOption!]) {
   generatedReplies(threadId: $threadId, options: $options) {
     ...GeneratedReplyFields
@@ -106904,7 +106904,7 @@ export const GeneratedRepliesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<GeneratedRepliesQuery, GeneratedRepliesQueryVariables>;
-export const IndexedDocumentsDocument = new TypedDocumentString(`
+export const IndexedDocumentsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query IndexedDocuments($first: Int, $after: String, $last: Int, $before: String, $filters: IndexedDocumentsFilter) {
   indexedDocuments(
     first: $first
@@ -107030,7 +107030,7 @@ export const IndexedDocumentsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<IndexedDocumentsQuery, IndexedDocumentsQueryVariables>;
-export const KnowledgeSourceDocument = new TypedDocumentString(`
+export const KnowledgeSourceDocument = /*#__PURE__*/ new TypedDocumentString(`
     query KnowledgeSource($knowledgeSourceId: ID!) {
   knowledgeSource(knowledgeSourceId: $knowledgeSourceId) {
     __typename
@@ -107256,7 +107256,7 @@ fragment KnowledgeSourceUrlFields on KnowledgeSourceUrl {
     }
   }
 }`) as unknown as TypedDocumentString<KnowledgeSourceQuery, KnowledgeSourceQueryVariables>;
-export const KnowledgeSourcesDocument = new TypedDocumentString(`
+export const KnowledgeSourcesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query KnowledgeSources($first: Int, $after: String, $last: Int, $before: String, $filters: KnowledgeSourcesFilter) {
   knowledgeSources(
     first: $first
@@ -107499,7 +107499,7 @@ fragment KnowledgeSourceUrlFields on KnowledgeSourceUrl {
     }
   }
 }`) as unknown as TypedDocumentString<KnowledgeSourcesQuery, KnowledgeSourcesQueryVariables>;
-export const KnowledgeSourceCitationsByThreadDocument = new TypedDocumentString(`
+export const KnowledgeSourceCitationsByThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     query KnowledgeSourceCitationsByThread($threadId: ID!) {
   knowledgeSourceCitationsByThread(threadId: $threadId) {
     ...KnowledgeSourceCitationFields
@@ -107624,7 +107624,7 @@ export const KnowledgeSourceCitationsByThreadDocument = new TypedDocumentString(
     }
   }
 }`) as unknown as TypedDocumentString<KnowledgeSourceCitationsByThreadQuery, KnowledgeSourceCitationsByThreadQueryVariables>;
-export const AiToneRulesDocument = new TypedDocumentString(`
+export const AiToneRulesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query AiToneRules($first: Int, $after: String, $last: Int, $before: String, $filters: AiToneRulesFilter) {
   aiToneRules(
     first: $first
@@ -107707,12 +107707,12 @@ export const AiToneRulesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AiToneRulesQuery, AiToneRulesQueryVariables>;
-export const EnabledAiToneRulesTextDocument = new TypedDocumentString(`
+export const EnabledAiToneRulesTextDocument = /*#__PURE__*/ new TypedDocumentString(`
     query EnabledAiToneRulesText {
   enabledAiToneRulesText
 }
     `) as unknown as TypedDocumentString<EnabledAiToneRulesTextQuery, EnabledAiToneRulesTextQueryVariables>;
-export const SavedThreadsViewsDocument = new TypedDocumentString(`
+export const SavedThreadsViewsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SavedThreadsViews($first: Int, $after: String, $last: Int, $before: String) {
   savedThreadsViews(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -107847,7 +107847,7 @@ export const SavedThreadsViewsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SavedThreadsViewsQuery, SavedThreadsViewsQueryVariables>;
-export const SavedThreadsViewDocument = new TypedDocumentString(`
+export const SavedThreadsViewDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SavedThreadsView($savedThreadsViewId: ID!) {
   savedThreadsView(savedThreadsViewId: $savedThreadsViewId) {
     ...SavedThreadsViewFields
@@ -107971,7 +107971,7 @@ export const SavedThreadsViewDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SavedThreadsViewQuery, SavedThreadsViewQueryVariables>;
-export const SearchThreadLinkCandidatesDocument = new TypedDocumentString(`
+export const SearchThreadLinkCandidatesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query SearchThreadLinkCandidates($filters: ThreadLinkCandidateFilter!, $searchQuery: String!, $first: Int, $after: String, $last: Int, $before: String) {
   searchThreadLinkCandidates(
     filters: $filters
@@ -108009,7 +108009,7 @@ export const SearchThreadLinkCandidatesDocument = new TypedDocumentString(`
     icon
   }
 }`) as unknown as TypedDocumentString<SearchThreadLinkCandidatesQuery, SearchThreadLinkCandidatesQueryVariables>;
-export const HelpCentersDocument = new TypedDocumentString(`
+export const HelpCentersDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenters($first: Int, $after: String, $last: Int, $before: String, $filters: HelpCentersFilter) {
   helpCenters(
     first: $first
@@ -108218,7 +108218,7 @@ export const HelpCentersDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<HelpCentersQuery, HelpCentersQueryVariables>;
-export const HelpCenterDocument = new TypedDocumentString(`
+export const HelpCenterDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenter($id: ID!) {
   helpCenter(id: $id) {
     ...HelpCenterFields
@@ -108410,7 +108410,7 @@ export const HelpCenterDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<HelpCenterQuery, HelpCenterQueryVariables>;
-export const HelpCenterAiConversationsDocument = new TypedDocumentString(`
+export const HelpCenterAiConversationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterAiConversations($first: Int, $after: String, $last: Int, $before: String, $filters: HelpCenterAiConversationsFilter, $sortBy: HelpCenterAiConversationsSort) {
   helpCenterAiConversations(
     first: $first
@@ -108460,7 +108460,7 @@ export const HelpCenterAiConversationsDocument = new TypedDocumentString(`
   }
   messageCount
 }`) as unknown as TypedDocumentString<HelpCenterAiConversationsQuery, HelpCenterAiConversationsQueryVariables>;
-export const HelpCenterAiConversationDocument = new TypedDocumentString(`
+export const HelpCenterAiConversationDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterAiConversation($id: ID!) {
   helpCenterAiConversation(id: $id) {
     ...HelpCenterAiConversationFields
@@ -108492,7 +108492,7 @@ export const HelpCenterAiConversationDocument = new TypedDocumentString(`
   }
   messageCount
 }`) as unknown as TypedDocumentString<HelpCenterAiConversationQuery, HelpCenterAiConversationQueryVariables>;
-export const HelpCenterArticleDocument = new TypedDocumentString(`
+export const HelpCenterArticleDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterArticle($id: ID!) {
   helpCenterArticle(id: $id) {
     ...HelpCenterArticleFields
@@ -108594,7 +108594,7 @@ export const HelpCenterArticleDocument = new TypedDocumentString(`
     id
   }
 }`) as unknown as TypedDocumentString<HelpCenterArticleQuery, HelpCenterArticleQueryVariables>;
-export const HelpCenterArticleGroupDocument = new TypedDocumentString(`
+export const HelpCenterArticleGroupDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterArticleGroup($id: ID!) {
   helpCenterArticleGroup(id: $id) {
     ...HelpCenterArticleGroupFields
@@ -108665,7 +108665,7 @@ export const HelpCenterArticleGroupDocument = new TypedDocumentString(`
   }
   slug
 }`) as unknown as TypedDocumentString<HelpCenterArticleGroupQuery, HelpCenterArticleGroupQueryVariables>;
-export const HelpCenterIndexDocument = new TypedDocumentString(`
+export const HelpCenterIndexDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterIndex($id: ID!) {
   helpCenterIndex(id: $id) {
     ...HelpCenterIndexFields
@@ -108739,7 +108739,7 @@ export const HelpCenterIndexDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<HelpCenterIndexQuery, HelpCenterIndexQueryVariables>;
-export const HelpCenterArticleBySlugDocument = new TypedDocumentString(`
+export const HelpCenterArticleBySlugDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterArticleBySlug($helpCenterId: ID!, $slug: String!) {
   helpCenterArticleBySlug(helpCenterId: $helpCenterId, slug: $slug) {
     ...HelpCenterArticleFields
@@ -108841,7 +108841,7 @@ export const HelpCenterArticleBySlugDocument = new TypedDocumentString(`
     id
   }
 }`) as unknown as TypedDocumentString<HelpCenterArticleBySlugQuery, HelpCenterArticleBySlugQueryVariables>;
-export const HelpCenterArticleGroupBySlugDocument = new TypedDocumentString(`
+export const HelpCenterArticleGroupBySlugDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterArticleGroupBySlug($helpCenterId: ID!, $slug: String!) {
   helpCenterArticleGroupBySlug(helpCenterId: $helpCenterId, slug: $slug) {
     ...HelpCenterArticleGroupFields
@@ -108912,7 +108912,7 @@ export const HelpCenterArticleGroupBySlugDocument = new TypedDocumentString(`
   }
   slug
 }`) as unknown as TypedDocumentString<HelpCenterArticleGroupBySlugQuery, HelpCenterArticleGroupBySlugQueryVariables>;
-export const IssueTrackerFieldsDocument = new TypedDocumentString(`
+export const IssueTrackerFieldsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query IssueTrackerFields($issueTrackerType: String!, $selectedFields: [SelectedIssueTrackerField!]!) {
   issueTrackerFields(
     issueTrackerType: $issueTrackerType
@@ -108935,7 +108935,7 @@ export const IssueTrackerFieldsDocument = new TypedDocumentString(`
   selectedValue
   isRequired
 }`) as unknown as TypedDocumentString<IssueTrackerFieldsQuery, IssueTrackerFieldsQueryVariables>;
-export const CustomerSurveysDocument = new TypedDocumentString(`
+export const CustomerSurveysDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerSurveys($first: Int, $after: String, $last: Int, $before: String) {
   customerSurveys(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -109045,7 +109045,7 @@ export const CustomerSurveysDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CustomerSurveysQuery, CustomerSurveysQueryVariables>;
-export const CustomerSurveyDocument = new TypedDocumentString(`
+export const CustomerSurveyDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerSurvey($id: ID!) {
   customerSurvey(id: $id) {
     ...CustomerSurveyFields
@@ -109144,7 +109144,7 @@ export const CustomerSurveyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CustomerSurveyQuery, CustomerSurveyQueryVariables>;
-export const EscalationPathsDocument = new TypedDocumentString(`
+export const EscalationPathsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query EscalationPaths($first: Int, $after: String, $last: Int, $before: String) {
   escalationPaths(first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -109235,7 +109235,7 @@ export const EscalationPathsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<EscalationPathsQuery, EscalationPathsQueryVariables>;
-export const EscalationPathDocument = new TypedDocumentString(`
+export const EscalationPathDocument = /*#__PURE__*/ new TypedDocumentString(`
     query EscalationPath($id: ID!) {
   escalationPath(id: $id) {
     ...EscalationPathFields
@@ -109315,7 +109315,7 @@ export const EscalationPathDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<EscalationPathQuery, EscalationPathQueryVariables>;
-export const MyInternalNotificationsDocument = new TypedDocumentString(`
+export const MyInternalNotificationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MyInternalNotifications($filters: InternalNotificationsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   myInternalNotifications(
     filters: $filters
@@ -109501,7 +109501,7 @@ export const MyInternalNotificationsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MyInternalNotificationsQuery, MyInternalNotificationsQueryVariables>;
-export const KnowledgeGapDocument = new TypedDocumentString(`
+export const KnowledgeGapDocument = /*#__PURE__*/ new TypedDocumentString(`
     query KnowledgeGap($knowledgeGapId: ID!) {
   knowledgeGap(knowledgeGapId: $knowledgeGapId) {
     ...KnowledgeGapFields
@@ -109591,7 +109591,7 @@ export const KnowledgeGapDocument = new TypedDocumentString(`
     id
   }
 }`) as unknown as TypedDocumentString<KnowledgeGapQuery, KnowledgeGapQueryVariables>;
-export const KnowledgeGapsDocument = new TypedDocumentString(`
+export const KnowledgeGapsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query KnowledgeGaps($filters: KnowledgeGapsFilter, $sortBy: KnowledgeGapsSort, $first: Int, $after: String, $last: Int, $before: String) {
   knowledgeGaps(
     filters: $filters
@@ -109700,7 +109700,7 @@ export const KnowledgeGapsDocument = new TypedDocumentString(`
     id
   }
 }`) as unknown as TypedDocumentString<KnowledgeGapsQuery, KnowledgeGapsQueryVariables>;
-export const AiFeedbackDocument = new TypedDocumentString(`
+export const AiFeedbackDocument = /*#__PURE__*/ new TypedDocumentString(`
     query AiFeedback($filters: AiFeedbackFilter, $first: Int, $after: String, $last: Int, $before: String) {
   aiFeedback(
     filters: $filters
@@ -109818,7 +109818,7 @@ export const AiFeedbackDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AiFeedbackQuery, AiFeedbackQueryVariables>;
-export const CreateUserAccountDocument = new TypedDocumentString(`
+export const CreateUserAccountDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateUserAccount($input: CreateUserAccountInput!) {
   createUserAccount(input: $input) {
     userAccount {
@@ -109840,7 +109840,7 @@ export const CreateUserAccountDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateUserAccountMutation, CreateUserAccountMutationVariables>;
-export const ChangeUserStatusDocument = new TypedDocumentString(`
+export const ChangeUserStatusDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ChangeUserStatus($input: ChangeUserStatusInput!) {
   changeUserStatus(input: $input) {
     user {
@@ -110081,7 +110081,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ChangeUserStatusMutation, ChangeUserStatusMutationVariables>;
-export const UpdateMyUserDocument = new TypedDocumentString(`
+export const UpdateMyUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateMyUser($input: UpdateMyUserInput!) {
   updateMyUser(input: $input) {
     user {
@@ -110322,7 +110322,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateMyUserMutation, UpdateMyUserMutationVariables>;
-export const UpdateUserDefaultSavedThreadsViewDocument = new TypedDocumentString(`
+export const UpdateUserDefaultSavedThreadsViewDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateUserDefaultSavedThreadsView($input: UpdateUserDefaultSavedThreadsViewInput!) {
   updateUserDefaultSavedThreadsView(input: $input) {
     user {
@@ -110563,7 +110563,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateUserDefaultSavedThreadsViewMutation, UpdateUserDefaultSavedThreadsViewMutationVariables>;
-export const CreateWorkspaceDocument = new TypedDocumentString(`
+export const CreateWorkspaceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspace($input: CreateWorkspaceInput!) {
   createWorkspace(input: $input) {
     workspace {
@@ -110716,7 +110716,7 @@ fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
   }
   bccEmailAddresses
 }`) as unknown as TypedDocumentString<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>;
-export const UpdateWorkspaceDocument = new TypedDocumentString(`
+export const UpdateWorkspaceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateWorkspace($input: UpdateWorkspaceInput!) {
   updateWorkspace(input: $input) {
     workspace {
@@ -110869,7 +110869,7 @@ fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
   }
   bccEmailAddresses
 }`) as unknown as TypedDocumentString<UpdateWorkspaceMutation, UpdateWorkspaceMutationVariables>;
-export const InviteUserToWorkspaceDocument = new TypedDocumentString(`
+export const InviteUserToWorkspaceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation InviteUserToWorkspace($input: InviteUserToWorkspaceInput!) {
   inviteUserToWorkspace(input: $input) {
     invite {
@@ -110969,7 +110969,7 @@ fragment WorkspaceInviteFields on WorkspaceInvite {
     id
   }
 }`) as unknown as TypedDocumentString<InviteUserToWorkspaceMutation, InviteUserToWorkspaceMutationVariables>;
-export const AcceptWorkspaceInviteDocument = new TypedDocumentString(`
+export const AcceptWorkspaceInviteDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AcceptWorkspaceInvite($input: AcceptWorkspaceInviteInput!) {
   acceptWorkspaceInvite(input: $input) {
     invite {
@@ -111069,7 +111069,7 @@ fragment WorkspaceInviteFields on WorkspaceInvite {
     id
   }
 }`) as unknown as TypedDocumentString<AcceptWorkspaceInviteMutation, AcceptWorkspaceInviteMutationVariables>;
-export const DeleteWorkspaceInviteDocument = new TypedDocumentString(`
+export const DeleteWorkspaceInviteDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceInvite($input: DeleteWorkspaceInviteInput!) {
   deleteWorkspaceInvite(input: $input) {
     invite {
@@ -111169,7 +111169,7 @@ fragment WorkspaceInviteFields on WorkspaceInvite {
     id
   }
 }`) as unknown as TypedDocumentString<DeleteWorkspaceInviteMutation, DeleteWorkspaceInviteMutationVariables>;
-export const DeleteUserDocument = new TypedDocumentString(`
+export const DeleteUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteUser($input: DeleteUserInput!) {
   deleteUser(input: $input) {
     error {
@@ -111185,7 +111185,7 @@ export const DeleteUserDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteUserMutation, DeleteUserMutationVariables>;
-export const AssignRolesToUserDocument = new TypedDocumentString(`
+export const AssignRolesToUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AssignRolesToUser($input: AssignRolesToUserInput!) {
   assignRolesToUser(input: $input) {
     error {
@@ -111201,7 +111201,7 @@ export const AssignRolesToUserDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<AssignRolesToUserMutation, AssignRolesToUserMutationVariables>;
-export const CreateCustomRoleDocument = new TypedDocumentString(`
+export const CreateCustomRoleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateCustomRole($input: CreateCustomRoleInput!) {
   createCustomRole(input: $input) {
     role {
@@ -111279,7 +111279,7 @@ export const CreateCustomRoleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateCustomRoleMutation, CreateCustomRoleMutationVariables>;
-export const UpdateCustomRoleDocument = new TypedDocumentString(`
+export const UpdateCustomRoleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateCustomRole($input: UpdateCustomRoleInput!) {
   updateCustomRole(input: $input) {
     role {
@@ -111357,7 +111357,7 @@ export const UpdateCustomRoleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateCustomRoleMutation, UpdateCustomRoleMutationVariables>;
-export const DeleteCustomRoleDocument = new TypedDocumentString(`
+export const DeleteCustomRoleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteCustomRole($input: DeleteCustomRoleInput!) {
   deleteCustomRole(input: $input) {
     deletedCustomRoleId
@@ -111374,7 +111374,7 @@ export const DeleteCustomRoleDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteCustomRoleMutation, DeleteCustomRoleMutationVariables>;
-export const UpsertRoleScopesDocument = new TypedDocumentString(`
+export const UpsertRoleScopesDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertRoleScopes($input: UpsertRoleScopesInput!) {
   upsertRoleScopes(input: $input) {
     role {
@@ -111452,7 +111452,7 @@ export const UpsertRoleScopesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertRoleScopesMutation, UpsertRoleScopesMutationVariables>;
-export const CreateLabelTypeDocument = new TypedDocumentString(`
+export const CreateLabelTypeDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateLabelType($input: CreateLabelTypeInput!) {
   createLabelType(input: $input) {
     labelType {
@@ -111566,7 +111566,7 @@ export const CreateLabelTypeDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateLabelTypeMutation, CreateLabelTypeMutationVariables>;
-export const ArchiveLabelTypeDocument = new TypedDocumentString(`
+export const ArchiveLabelTypeDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ArchiveLabelType($input: ArchiveLabelTypeInput!) {
   archiveLabelType(input: $input) {
     labelType {
@@ -111680,7 +111680,7 @@ export const ArchiveLabelTypeDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ArchiveLabelTypeMutation, ArchiveLabelTypeMutationVariables>;
-export const UnarchiveLabelTypeDocument = new TypedDocumentString(`
+export const UnarchiveLabelTypeDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UnarchiveLabelType($input: UnarchiveLabelTypeInput!) {
   unarchiveLabelType(input: $input) {
     labelType {
@@ -111794,7 +111794,7 @@ export const UnarchiveLabelTypeDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UnarchiveLabelTypeMutation, UnarchiveLabelTypeMutationVariables>;
-export const UpdateLabelTypeDocument = new TypedDocumentString(`
+export const UpdateLabelTypeDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateLabelType($input: UpdateLabelTypeInput!) {
   updateLabelType(input: $input) {
     labelType {
@@ -111908,7 +111908,7 @@ export const UpdateLabelTypeDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateLabelTypeMutation, UpdateLabelTypeMutationVariables>;
-export const MoveLabelTypeDocument = new TypedDocumentString(`
+export const MoveLabelTypeDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation MoveLabelType($input: MoveLabelTypeInput!) {
   moveLabelType(input: $input) {
     labelType {
@@ -112022,7 +112022,7 @@ export const MoveLabelTypeDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MoveLabelTypeMutation, MoveLabelTypeMutationVariables>;
-export const AcceptSuggestedLabelTypesDocument = new TypedDocumentString(`
+export const AcceptSuggestedLabelTypesDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AcceptSuggestedLabelTypes($input: AcceptSuggestedLabelTypesInput!) {
   acceptSuggestedLabelTypes(input: $input) {
     labelTypes {
@@ -112136,7 +112136,7 @@ export const AcceptSuggestedLabelTypesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AcceptSuggestedLabelTypesMutation, AcceptSuggestedLabelTypesMutationVariables>;
-export const DismissSuggestedLabelTypesDocument = new TypedDocumentString(`
+export const DismissSuggestedLabelTypesDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DismissSuggestedLabelTypes($input: DismissSuggestedLabelTypesInput!) {
   dismissSuggestedLabelTypes(input: $input) {
     suggestedLabelTypes {
@@ -112219,7 +112219,7 @@ export const DismissSuggestedLabelTypesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DismissSuggestedLabelTypesMutation, DismissSuggestedLabelTypesMutationVariables>;
-export const AddLabelsDocument = new TypedDocumentString(`
+export const AddLabelsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddLabels($input: AddLabelsInput!) {
   addLabels(input: $input) {
     labels {
@@ -113357,7 +113357,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<AddLabelsMutation, AddLabelsMutationVariables>;
-export const AddLabelsToUserDocument = new TypedDocumentString(`
+export const AddLabelsToUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddLabelsToUser($input: AddLabelsToUserInput!) {
   addLabelsToUser(input: $input) {
     labels {
@@ -113679,7 +113679,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<AddLabelsToUserMutation, AddLabelsToUserMutationVariables>;
-export const RemoveLabelsDocument = new TypedDocumentString(`
+export const RemoveLabelsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveLabels($input: RemoveLabelsInput!) {
   removeLabels(input: $input) {
     thread {
@@ -114736,7 +114736,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<RemoveLabelsMutation, RemoveLabelsMutationVariables>;
-export const RemoveLabelsFromUserDocument = new TypedDocumentString(`
+export const RemoveLabelsFromUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveLabelsFromUser($input: RemoveLabelsFromUserInput!) {
   removeLabelsFromUser(input: $input) {
     labels {
@@ -115058,7 +115058,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<RemoveLabelsFromUserMutation, RemoveLabelsFromUserMutationVariables>;
-export const CreateThreadLinkDocument = new TypedDocumentString(`
+export const CreateThreadLinkDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateThreadLink($input: CreateThreadLinkInput!) {
   createThreadLink(input: $input) {
     threadLink {
@@ -115446,7 +115446,7 @@ fragment PlainThreadThreadLinkFields on PlainThreadThreadLink {
   plainThreadId
   plainThreadStatusDetailType
 }`) as unknown as TypedDocumentString<CreateThreadLinkMutation, CreateThreadLinkMutationVariables>;
-export const BulkCreateThreadLinksDocument = new TypedDocumentString(`
+export const BulkCreateThreadLinksDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation BulkCreateThreadLinks($input: BulkCreateThreadLinksInput!) {
   bulkCreateThreadLinks(input: $input) {
     results {
@@ -115835,7 +115835,7 @@ export const BulkCreateThreadLinksDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BulkCreateThreadLinksMutation, BulkCreateThreadLinksMutationVariables>;
-export const BulkDeleteThreadLinksDocument = new TypedDocumentString(`
+export const BulkDeleteThreadLinksDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation BulkDeleteThreadLinks($input: BulkDeleteThreadLinksInput!) {
   bulkDeleteThreadLinks(input: $input) {
     results {
@@ -115866,7 +115866,7 @@ export const BulkDeleteThreadLinksDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BulkDeleteThreadLinksMutation, BulkDeleteThreadLinksMutationVariables>;
-export const DeleteThreadLinkDocument = new TypedDocumentString(`
+export const DeleteThreadLinkDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteThreadLink($input: DeleteThreadLinkInput!) {
   deleteThreadLink(input: $input) {
     error {
@@ -115882,7 +115882,7 @@ export const DeleteThreadLinkDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteThreadLinkMutation, DeleteThreadLinkMutationVariables>;
-export const CreateNoteDocument = new TypedDocumentString(`
+export const CreateNoteDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateNote($input: CreateNoteInput!) {
   createNote(input: $input) {
     note {
@@ -116019,7 +116019,7 @@ export const CreateNoteDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateNoteMutation, CreateNoteMutationVariables>;
-export const UpdateNoteDocument = new TypedDocumentString(`
+export const UpdateNoteDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateNote($input: UpdateNoteInput!) {
   updateNote(input: $input) {
     note {
@@ -116156,7 +116156,7 @@ export const UpdateNoteDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateNoteMutation, UpdateNoteMutationVariables>;
-export const DeleteNoteDocument = new TypedDocumentString(`
+export const DeleteNoteDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteNote($input: DeleteNoteInput!) {
   deleteNote(input: $input) {
     note {
@@ -116293,7 +116293,7 @@ export const DeleteNoteDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteNoteMutation, DeleteNoteMutationVariables>;
-export const CreateSavedThreadsViewDocument = new TypedDocumentString(`
+export const CreateSavedThreadsViewDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateSavedThreadsView($input: CreateSavedThreadsViewInput!) {
   createSavedThreadsView(input: $input) {
     savedThreadsView {
@@ -116429,7 +116429,7 @@ export const CreateSavedThreadsViewDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateSavedThreadsViewMutation, CreateSavedThreadsViewMutationVariables>;
-export const UpdateSavedThreadsViewDocument = new TypedDocumentString(`
+export const UpdateSavedThreadsViewDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSavedThreadsView($input: UpdateSavedThreadsViewInput!) {
   updateSavedThreadsView(input: $input) {
     savedThreadsView {
@@ -116565,7 +116565,7 @@ export const UpdateSavedThreadsViewDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateSavedThreadsViewMutation, UpdateSavedThreadsViewMutationVariables>;
-export const DeleteSavedThreadsViewDocument = new TypedDocumentString(`
+export const DeleteSavedThreadsViewDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteSavedThreadsView($input: DeleteSavedThreadsViewInput!) {
   deleteSavedThreadsView(input: $input) {
     error {
@@ -116581,7 +116581,7 @@ export const DeleteSavedThreadsViewDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteSavedThreadsViewMutation, DeleteSavedThreadsViewMutationVariables>;
-export const CreateMyFavoritePageDocument = new TypedDocumentString(`
+export const CreateMyFavoritePageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateMyFavoritePage($input: CreateMyFavoritePageInput!) {
   createMyFavoritePage(input: $input) {
     favoritePage {
@@ -116657,7 +116657,7 @@ export const CreateMyFavoritePageDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateMyFavoritePageMutation, CreateMyFavoritePageMutationVariables>;
-export const DeleteMyFavoritePageDocument = new TypedDocumentString(`
+export const DeleteMyFavoritePageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteMyFavoritePage($input: DeleteMyFavoritePageInput!) {
   deleteMyFavoritePage(input: $input) {
     error {
@@ -116673,7 +116673,7 @@ export const DeleteMyFavoritePageDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteMyFavoritePageMutation, DeleteMyFavoritePageMutationVariables>;
-export const CreateSnippetDocument = new TypedDocumentString(`
+export const CreateSnippetDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateSnippet($input: CreateSnippetInput!) {
   createSnippet(input: $input) {
     snippet {
@@ -116780,7 +116780,7 @@ export const CreateSnippetDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateSnippetMutation, CreateSnippetMutationVariables>;
-export const DeleteSnippetDocument = new TypedDocumentString(`
+export const DeleteSnippetDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteSnippet($input: DeleteSnippetInput!) {
   deleteSnippet(input: $input) {
     snippet {
@@ -116887,7 +116887,7 @@ export const DeleteSnippetDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteSnippetMutation, DeleteSnippetMutationVariables>;
-export const UpdateSnippetDocument = new TypedDocumentString(`
+export const UpdateSnippetDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSnippet($input: UpdateSnippetInput!) {
   updateSnippet(input: $input) {
     snippet {
@@ -116994,7 +116994,7 @@ export const UpdateSnippetDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateSnippetMutation, UpdateSnippetMutationVariables>;
-export const CreateBroadcastDocument = new TypedDocumentString(`
+export const CreateBroadcastDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateBroadcast($input: CreateBroadcastInput!) {
   createBroadcast(input: $input) {
     broadcast {
@@ -117179,7 +117179,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<CreateBroadcastMutation, CreateBroadcastMutationVariables>;
-export const UpdateBroadcastDocument = new TypedDocumentString(`
+export const UpdateBroadcastDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateBroadcast($input: UpdateBroadcastInput!) {
   updateBroadcast(input: $input) {
     broadcast {
@@ -117364,7 +117364,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<UpdateBroadcastMutation, UpdateBroadcastMutationVariables>;
-export const DeleteBroadcastDocument = new TypedDocumentString(`
+export const DeleteBroadcastDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteBroadcast($input: DeleteBroadcastInput!) {
   deleteBroadcast(input: $input) {
     broadcast {
@@ -117549,7 +117549,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<DeleteBroadcastMutation, DeleteBroadcastMutationVariables>;
-export const UnsubscribeBroadcastRecipientDocument = new TypedDocumentString(`
+export const UnsubscribeBroadcastRecipientDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UnsubscribeBroadcastRecipient($input: UnsubscribeBroadcastRecipientInput!) {
   unsubscribeBroadcastRecipient(input: $input) {
     unsubscribe {
@@ -117637,7 +117637,7 @@ export const UnsubscribeBroadcastRecipientDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UnsubscribeBroadcastRecipientMutation, UnsubscribeBroadcastRecipientMutationVariables>;
-export const ResubscribeBroadcastRecipientDocument = new TypedDocumentString(`
+export const ResubscribeBroadcastRecipientDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ResubscribeBroadcastRecipient($input: ResubscribeBroadcastRecipientInput!) {
   resubscribeBroadcastRecipient(input: $input) {
     unsubscribe {
@@ -117725,7 +117725,7 @@ export const ResubscribeBroadcastRecipientDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ResubscribeBroadcastRecipientMutation, ResubscribeBroadcastRecipientMutationVariables>;
-export const CreateBroadcastAudienceDocument = new TypedDocumentString(`
+export const CreateBroadcastAudienceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateBroadcastAudience($input: CreateBroadcastAudienceInput!) {
   createBroadcastAudience(input: $input) {
     broadcastAudience {
@@ -117857,7 +117857,7 @@ export const CreateBroadcastAudienceDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateBroadcastAudienceMutation, CreateBroadcastAudienceMutationVariables>;
-export const UpdateBroadcastAudienceDocument = new TypedDocumentString(`
+export const UpdateBroadcastAudienceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateBroadcastAudience($input: UpdateBroadcastAudienceInput!) {
   updateBroadcastAudience(input: $input) {
     broadcastAudience {
@@ -117989,7 +117989,7 @@ export const UpdateBroadcastAudienceDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateBroadcastAudienceMutation, UpdateBroadcastAudienceMutationVariables>;
-export const DeleteBroadcastAudienceDocument = new TypedDocumentString(`
+export const DeleteBroadcastAudienceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteBroadcastAudience($input: DeleteBroadcastAudienceInput!) {
   deleteBroadcastAudience(input: $input) {
     broadcastAudience {
@@ -118121,7 +118121,7 @@ export const DeleteBroadcastAudienceDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteBroadcastAudienceMutation, DeleteBroadcastAudienceMutationVariables>;
-export const ScheduleBroadcastDocument = new TypedDocumentString(`
+export const ScheduleBroadcastDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ScheduleBroadcast($input: ScheduleBroadcastInput!) {
   scheduleBroadcast(input: $input) {
     broadcast {
@@ -118306,7 +118306,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<ScheduleBroadcastMutation, ScheduleBroadcastMutationVariables>;
-export const SendTestBroadcastDocument = new TypedDocumentString(`
+export const SendTestBroadcastDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendTestBroadcast($input: SendTestBroadcastInput!) {
   sendTestBroadcast(input: $input) {
     broadcast {
@@ -118491,7 +118491,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<SendTestBroadcastMutation, SendTestBroadcastMutationVariables>;
-export const UpsertTeamSettingsDocument = new TypedDocumentString(`
+export const UpsertTeamSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertTeamSettings($input: UpsertTeamSettingsInput!) {
   upsertTeamSettings(input: $input) {
     teamSettings {
@@ -118569,7 +118569,7 @@ export const UpsertTeamSettingsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertTeamSettingsMutation, UpsertTeamSettingsMutationVariables>;
-export const CreateTaskDocument = new TypedDocumentString(`
+export const CreateTaskDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateTask($input: CreateTaskInput!) {
   createTask(input: $input) {
     task {
@@ -119039,7 +119039,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<CreateTaskMutation, CreateTaskMutationVariables>;
-export const UpdateTaskDocument = new TypedDocumentString(`
+export const UpdateTaskDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateTask($input: UpdateTaskInput!) {
   updateTask(input: $input) {
     task {
@@ -119509,7 +119509,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateTaskMutation, UpdateTaskMutationVariables>;
-export const DeleteTaskDocument = new TypedDocumentString(`
+export const DeleteTaskDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteTask($input: DeleteTaskInput!) {
   deleteTask(input: $input) {
     task {
@@ -119979,7 +119979,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<DeleteTaskMutation, DeleteTaskMutationVariables>;
-export const UpsertCustomerDocument = new TypedDocumentString(`
+export const UpsertCustomerDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertCustomer($input: UpsertCustomerInput!) {
   upsertCustomer(input: $input) {
     result
@@ -120142,7 +120142,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<UpsertCustomerMutation, UpsertCustomerMutationVariables>;
-export const UpdateCustomerCompanyDocument = new TypedDocumentString(`
+export const UpdateCustomerCompanyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateCustomerCompany($input: UpdateCustomerCompanyInput!) {
   updateCustomerCompany(input: $input) {
     customer {
@@ -120304,7 +120304,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<UpdateCustomerCompanyMutation, UpdateCustomerCompanyMutationVariables>;
-export const DeleteCustomerDocument = new TypedDocumentString(`
+export const DeleteCustomerDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteCustomer($input: DeleteCustomerInput!) {
   deleteCustomer(input: $input) {
     error {
@@ -120320,7 +120320,7 @@ export const DeleteCustomerDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteCustomerMutation, DeleteCustomerMutationVariables>;
-export const MarkCustomerAsSpamDocument = new TypedDocumentString(`
+export const MarkCustomerAsSpamDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation MarkCustomerAsSpam($input: MarkCustomerAsSpamInput!) {
   markCustomerAsSpam(input: $input) {
     customer {
@@ -120482,7 +120482,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<MarkCustomerAsSpamMutation, MarkCustomerAsSpamMutationVariables>;
-export const UnmarkCustomerAsSpamDocument = new TypedDocumentString(`
+export const UnmarkCustomerAsSpamDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UnmarkCustomerAsSpam($input: UnmarkCustomerAsSpamInput!) {
   unmarkCustomerAsSpam(input: $input) {
     customer {
@@ -120644,7 +120644,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<UnmarkCustomerAsSpamMutation, UnmarkCustomerAsSpamMutationVariables>;
-export const UpsertCustomerGroupDocument = new TypedDocumentString(`
+export const UpsertCustomerGroupDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertCustomerGroup($input: UpsertCustomerGroupInput!) {
   upsertCustomerGroup(input: $input) {
     customerGroup {
@@ -120724,7 +120724,7 @@ export const UpsertCustomerGroupDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertCustomerGroupMutation, UpsertCustomerGroupMutationVariables>;
-export const CreateCustomerGroupDocument = new TypedDocumentString(`
+export const CreateCustomerGroupDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateCustomerGroup($input: CreateCustomerGroupInput!) {
   createCustomerGroup(input: $input) {
     customerGroup {
@@ -120803,7 +120803,7 @@ export const CreateCustomerGroupDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateCustomerGroupMutation, CreateCustomerGroupMutationVariables>;
-export const UpdateCustomerGroupDocument = new TypedDocumentString(`
+export const UpdateCustomerGroupDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateCustomerGroup($input: UpdateCustomerGroupInput!) {
   updateCustomerGroup(input: $input) {
     customerGroup {
@@ -120882,7 +120882,7 @@ export const UpdateCustomerGroupDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateCustomerGroupMutation, UpdateCustomerGroupMutationVariables>;
-export const DeleteCustomerGroupDocument = new TypedDocumentString(`
+export const DeleteCustomerGroupDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteCustomerGroup($input: DeleteCustomerGroupInput!) {
   deleteCustomerGroup(input: $input) {
     error {
@@ -120898,7 +120898,7 @@ export const DeleteCustomerGroupDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteCustomerGroupMutation, DeleteCustomerGroupMutationVariables>;
-export const AddCustomerToCustomerGroupsDocument = new TypedDocumentString(`
+export const AddCustomerToCustomerGroupsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddCustomerToCustomerGroups($input: AddCustomerToCustomerGroupsInput!) {
   addCustomerToCustomerGroups(input: $input) {
     customerGroupMemberships {
@@ -120976,7 +120976,7 @@ export const AddCustomerToCustomerGroupsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AddCustomerToCustomerGroupsMutation, AddCustomerToCustomerGroupsMutationVariables>;
-export const RemoveCustomerFromCustomerGroupsDocument = new TypedDocumentString(`
+export const RemoveCustomerFromCustomerGroupsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveCustomerFromCustomerGroups($input: RemoveCustomerFromCustomerGroupsInput!) {
   removeCustomerFromCustomerGroups(input: $input) {
     error {
@@ -120992,7 +120992,7 @@ export const RemoveCustomerFromCustomerGroupsDocument = new TypedDocumentString(
   }
 }
     `) as unknown as TypedDocumentString<RemoveCustomerFromCustomerGroupsMutation, RemoveCustomerFromCustomerGroupsMutationVariables>;
-export const CreateThreadFieldSchemaDocument = new TypedDocumentString(`
+export const CreateThreadFieldSchemaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateThreadFieldSchema($input: CreateThreadFieldSchemaInput!) {
   createThreadFieldSchema(input: $input) {
     threadFieldSchema {
@@ -121091,7 +121091,7 @@ export const CreateThreadFieldSchemaDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateThreadFieldSchemaMutation, CreateThreadFieldSchemaMutationVariables>;
-export const UpdateThreadFieldSchemaDocument = new TypedDocumentString(`
+export const UpdateThreadFieldSchemaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadFieldSchema($input: UpdateThreadFieldSchemaInput!) {
   updateThreadFieldSchema(input: $input) {
     threadFieldSchema {
@@ -121190,7 +121190,7 @@ export const UpdateThreadFieldSchemaDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadFieldSchemaMutation, UpdateThreadFieldSchemaMutationVariables>;
-export const DeleteThreadFieldSchemaDocument = new TypedDocumentString(`
+export const DeleteThreadFieldSchemaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteThreadFieldSchema($input: DeleteThreadFieldSchemaInput!) {
   deleteThreadFieldSchema(input: $input) {
     error {
@@ -121206,7 +121206,7 @@ export const DeleteThreadFieldSchemaDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteThreadFieldSchemaMutation, DeleteThreadFieldSchemaMutationVariables>;
-export const ReorderThreadFieldSchemasDocument = new TypedDocumentString(`
+export const ReorderThreadFieldSchemasDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ReorderThreadFieldSchemas($input: ReorderThreadFieldSchemasInput!) {
   reorderThreadFieldSchemas(input: $input) {
     threadFieldSchemas {
@@ -121305,7 +121305,7 @@ export const ReorderThreadFieldSchemasDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ReorderThreadFieldSchemasMutation, ReorderThreadFieldSchemasMutationVariables>;
-export const UpsertThreadFieldDocument = new TypedDocumentString(`
+export const UpsertThreadFieldDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertThreadField($input: UpsertThreadFieldInput!) {
   upsertThreadField(input: $input) {
     threadField {
@@ -121410,7 +121410,7 @@ export const UpsertThreadFieldDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertThreadFieldMutation, UpsertThreadFieldMutationVariables>;
-export const BulkUpsertThreadFieldsDocument = new TypedDocumentString(`
+export const BulkUpsertThreadFieldsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation BulkUpsertThreadFields($input: BulkUpsertThreadFieldsInput!) {
   bulkUpsertThreadFields(input: $input) {
     results {
@@ -121520,7 +121520,7 @@ fragment ThreadFieldFields on ThreadField {
     }
   }
 }`) as unknown as TypedDocumentString<BulkUpsertThreadFieldsMutation, BulkUpsertThreadFieldsMutationVariables>;
-export const DeleteThreadFieldDocument = new TypedDocumentString(`
+export const DeleteThreadFieldDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteThreadField($input: DeleteThreadFieldInput!) {
   deleteThreadField(input: $input) {
     error {
@@ -121536,7 +121536,7 @@ export const DeleteThreadFieldDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteThreadFieldMutation, DeleteThreadFieldMutationVariables>;
-export const CreateEscalationPathDocument = new TypedDocumentString(`
+export const CreateEscalationPathDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateEscalationPath($input: CreateEscalationPathInput!) {
   createEscalationPath(input: $input) {
     escalationPath {
@@ -121628,7 +121628,7 @@ export const CreateEscalationPathDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateEscalationPathMutation, CreateEscalationPathMutationVariables>;
-export const UpdateEscalationPathDocument = new TypedDocumentString(`
+export const UpdateEscalationPathDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateEscalationPath($input: UpdateEscalationPathInput!) {
   updateEscalationPath(input: $input) {
     escalationPath {
@@ -121720,7 +121720,7 @@ export const UpdateEscalationPathDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateEscalationPathMutation, UpdateEscalationPathMutationVariables>;
-export const DeleteEscalationPathDocument = new TypedDocumentString(`
+export const DeleteEscalationPathDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteEscalationPath($input: DeleteEscalationPathInput!) {
   deleteEscalationPath(input: $input) {
     error {
@@ -121736,7 +121736,7 @@ export const DeleteEscalationPathDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteEscalationPathMutation, DeleteEscalationPathMutationVariables>;
-export const CreateWorkflowRuleDocument = new TypedDocumentString(`
+export const CreateWorkflowRuleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkflowRule($input: CreateWorkflowRuleInput!) {
   createWorkflowRule(input: $input) {
     workflowRule {
@@ -121818,7 +121818,7 @@ export const CreateWorkflowRuleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkflowRuleMutation, CreateWorkflowRuleMutationVariables>;
-export const UpdateWorkflowRuleDocument = new TypedDocumentString(`
+export const UpdateWorkflowRuleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateWorkflowRule($input: UpdateWorkflowRuleInput!) {
   updateWorkflowRule(input: $input) {
     workflowRule {
@@ -121900,7 +121900,7 @@ export const UpdateWorkflowRuleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateWorkflowRuleMutation, UpdateWorkflowRuleMutationVariables>;
-export const ToggleWorkflowRulePublishedDocument = new TypedDocumentString(`
+export const ToggleWorkflowRulePublishedDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ToggleWorkflowRulePublished($input: ToggleWorkflowRulePublishedInput!) {
   toggleWorkflowRulePublished(input: $input) {
     workflowRule {
@@ -121982,7 +121982,7 @@ export const ToggleWorkflowRulePublishedDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ToggleWorkflowRulePublishedMutation, ToggleWorkflowRulePublishedMutationVariables>;
-export const DeleteWorkflowRuleDocument = new TypedDocumentString(`
+export const DeleteWorkflowRuleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkflowRule($input: DeleteWorkflowRuleInput!) {
   deleteWorkflowRule(input: $input) {
     error {
@@ -121998,7 +121998,7 @@ export const DeleteWorkflowRuleDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteWorkflowRuleMutation, DeleteWorkflowRuleMutationVariables>;
-export const TriggerWorkflowRuleDocument = new TypedDocumentString(`
+export const TriggerWorkflowRuleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation TriggerWorkflowRule($input: TriggerWorkflowRuleInput!) {
   triggerWorkflowRule(input: $input) {
     error {
@@ -122014,7 +122014,7 @@ export const TriggerWorkflowRuleDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<TriggerWorkflowRuleMutation, TriggerWorkflowRuleMutationVariables>;
-export const CreateWorkflowDocument = new TypedDocumentString(`
+export const CreateWorkflowDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkflow($input: CreateWorkflowInput!) {
   createWorkflow(input: $input) {
     workflow {
@@ -122106,7 +122106,7 @@ export const CreateWorkflowDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkflowMutation, CreateWorkflowMutationVariables>;
-export const UpdateWorkflowDocument = new TypedDocumentString(`
+export const UpdateWorkflowDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateWorkflow($input: UpdateWorkflowInput!) {
   updateWorkflow(input: $input) {
     workflow {
@@ -122198,7 +122198,7 @@ export const UpdateWorkflowDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateWorkflowMutation, UpdateWorkflowMutationVariables>;
-export const MoveWorkflowDocument = new TypedDocumentString(`
+export const MoveWorkflowDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation MoveWorkflow($input: MoveWorkflowInput!) {
   moveWorkflow(input: $input) {
     workflow {
@@ -122290,7 +122290,7 @@ export const MoveWorkflowDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MoveWorkflowMutation, MoveWorkflowMutationVariables>;
-export const DeleteWorkflowDocument = new TypedDocumentString(`
+export const DeleteWorkflowDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkflow($input: DeleteWorkflowInput!) {
   deleteWorkflow(input: $input) {
     error {
@@ -122306,7 +122306,7 @@ export const DeleteWorkflowDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteWorkflowMutation, DeleteWorkflowMutationVariables>;
-export const TriggerWorkflowDocument = new TypedDocumentString(`
+export const TriggerWorkflowDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation TriggerWorkflow($input: TriggerWorkflowInput!) {
   triggerWorkflow(input: $input) {
     workflowExecution {
@@ -122368,7 +122368,7 @@ export const TriggerWorkflowDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<TriggerWorkflowMutation, TriggerWorkflowMutationVariables>;
-export const CreateWorkflowShareLinkDocument = new TypedDocumentString(`
+export const CreateWorkflowShareLinkDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkflowShareLink($input: CreateWorkflowShareLinkInput!) {
   createWorkflowShareLink(input: $input) {
     token
@@ -122385,7 +122385,7 @@ export const CreateWorkflowShareLinkDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateWorkflowShareLinkMutation, CreateWorkflowShareLinkMutationVariables>;
-export const ExportWorkflowTemplateDocument = new TypedDocumentString(`
+export const ExportWorkflowTemplateDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ExportWorkflowTemplate($input: ExportWorkflowTemplateInput!) {
   exportWorkflowTemplate(input: $input) {
     files {
@@ -122405,7 +122405,7 @@ export const ExportWorkflowTemplateDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ExportWorkflowTemplateMutation, ExportWorkflowTemplateMutationVariables>;
-export const CreateWorkflowStepDocument = new TypedDocumentString(`
+export const CreateWorkflowStepDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkflowStep($input: CreateWorkflowStepInput!) {
   createWorkflowStep(input: $input) {
     workflowStep {
@@ -122487,7 +122487,7 @@ export const CreateWorkflowStepDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkflowStepMutation, CreateWorkflowStepMutationVariables>;
-export const UpdateWorkflowStepDocument = new TypedDocumentString(`
+export const UpdateWorkflowStepDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateWorkflowStep($input: UpdateWorkflowStepInput!) {
   updateWorkflowStep(input: $input) {
     workflowStep {
@@ -122569,7 +122569,7 @@ export const UpdateWorkflowStepDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateWorkflowStepMutation, UpdateWorkflowStepMutationVariables>;
-export const DeleteWorkflowStepDocument = new TypedDocumentString(`
+export const DeleteWorkflowStepDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkflowStep($input: DeleteWorkflowStepInput!) {
   deleteWorkflowStep(input: $input) {
     error {
@@ -122585,7 +122585,7 @@ export const DeleteWorkflowStepDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteWorkflowStepMutation, DeleteWorkflowStepMutationVariables>;
-export const BulkUpsertWorkflowStepsDocument = new TypedDocumentString(`
+export const BulkUpsertWorkflowStepsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation BulkUpsertWorkflowSteps($input: BulkUpsertWorkflowStepsInput!) {
   bulkUpsertWorkflowSteps(input: $input) {
     results {
@@ -122751,7 +122751,7 @@ fragment WorkflowStepFields on WorkflowStep {
     }
   }
 }`) as unknown as TypedDocumentString<BulkUpsertWorkflowStepsMutation, BulkUpsertWorkflowStepsMutationVariables>;
-export const SendChatDocument = new TypedDocumentString(`
+export const SendChatDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendChat($input: SendChatInput!) {
   sendChat(input: $input) {
     chat {
@@ -122849,7 +122849,7 @@ export const SendChatDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SendChatMutation, SendChatMutationVariables>;
-export const SendCustomerChatDocument = new TypedDocumentString(`
+export const SendCustomerChatDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendCustomerChat($input: SendCustomerChatInput!) {
   sendCustomerChat(input: $input) {
     chat {
@@ -122947,7 +122947,7 @@ export const SendCustomerChatDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SendCustomerChatMutation, SendCustomerChatMutationVariables>;
-export const CreateChatAppDocument = new TypedDocumentString(`
+export const CreateChatAppDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateChatApp($input: CreateChatAppInput!) {
   createChatApp(input: $input) {
     chatApp {
@@ -123043,7 +123043,7 @@ export const CreateChatAppDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateChatAppMutation, CreateChatAppMutationVariables>;
-export const UpdateChatAppDocument = new TypedDocumentString(`
+export const UpdateChatAppDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateChatApp($input: UpdateChatAppInput!) {
   updateChatApp(input: $input) {
     chatApp {
@@ -123139,7 +123139,7 @@ export const UpdateChatAppDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateChatAppMutation, UpdateChatAppMutationVariables>;
-export const DeleteChatAppDocument = new TypedDocumentString(`
+export const DeleteChatAppDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteChatApp($input: DeleteChatAppInput!) {
   deleteChatApp(input: $input) {
     error {
@@ -123155,7 +123155,7 @@ export const DeleteChatAppDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteChatAppMutation, DeleteChatAppMutationVariables>;
-export const CreateChatAppSecretDocument = new TypedDocumentString(`
+export const CreateChatAppSecretDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateChatAppSecret($input: CreateChatAppSecretInput!) {
   createChatAppSecret(input: $input) {
     chatAppSecret {
@@ -123231,7 +123231,7 @@ export const CreateChatAppSecretDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateChatAppSecretMutation, CreateChatAppSecretMutationVariables>;
-export const DeleteChatAppSecretDocument = new TypedDocumentString(`
+export const DeleteChatAppSecretDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteChatAppSecret($input: DeleteChatAppSecretInput!) {
   deleteChatAppSecret(input: $input) {
     error {
@@ -123247,7 +123247,7 @@ export const DeleteChatAppSecretDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteChatAppSecretMutation, DeleteChatAppSecretMutationVariables>;
-export const SendMsTeamsMessageDocument = new TypedDocumentString(`
+export const SendMsTeamsMessageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendMSTeamsMessage($input: SendMSTeamsMessageInput!) {
   sendMSTeamsMessage(input: $input) {
     msTeamsMessage {
@@ -123358,7 +123358,7 @@ export const SendMsTeamsMessageDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<SendMsTeamsMessageMutation, SendMsTeamsMessageMutationVariables>;
-export const SendSlackMessageDocument = new TypedDocumentString(`
+export const SendSlackMessageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendSlackMessage($input: SendSlackMessageInput!) {
   sendSlackMessage(input: $input) {
     error {
@@ -123374,7 +123374,7 @@ export const SendSlackMessageDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SendSlackMessageMutation, SendSlackMessageMutationVariables>;
-export const ShareThreadToUserInSlackDocument = new TypedDocumentString(`
+export const ShareThreadToUserInSlackDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ShareThreadToUserInSlack($input: ShareThreadToUserInSlackInput!) {
   shareThreadToUserInSlack(input: $input) {
     error {
@@ -123390,7 +123390,7 @@ export const ShareThreadToUserInSlackDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ShareThreadToUserInSlackMutation, ShareThreadToUserInSlackMutationVariables>;
-export const SendDiscordMessageDocument = new TypedDocumentString(`
+export const SendDiscordMessageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendDiscordMessage($input: SendDiscordMessageInput!) {
   sendDiscordMessage(input: $input) {
     discordMessage {
@@ -123493,7 +123493,7 @@ export const SendDiscordMessageDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SendDiscordMessageMutation, SendDiscordMessageMutationVariables>;
-export const ToggleSlackMessageReactionDocument = new TypedDocumentString(`
+export const ToggleSlackMessageReactionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ToggleSlackMessageReaction($input: ToggleSlackMessageReactionInput!) {
   toggleSlackMessageReaction(input: $input) {
     error {
@@ -123509,7 +123509,7 @@ export const ToggleSlackMessageReactionDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ToggleSlackMessageReactionMutation, ToggleSlackMessageReactionMutationVariables>;
-export const ForkThreadDocument = new TypedDocumentString(`
+export const ForkThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ForkThread($input: ForkThreadInput!) {
   forkThread(input: $input) {
     thread {
@@ -124566,7 +124566,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ForkThreadMutation, ForkThreadMutationVariables>;
-export const UpdateConnectedSlackChannelDocument = new TypedDocumentString(`
+export const UpdateConnectedSlackChannelDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateConnectedSlackChannel($input: UpdateConnectedSlackChannelInput!) {
   updateConnectedSlackChannel(input: $input) {
     connectedSlackChannel {
@@ -124647,7 +124647,7 @@ export const UpdateConnectedSlackChannelDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateConnectedSlackChannelMutation, UpdateConnectedSlackChannelMutationVariables>;
-export const BulkUpdateConnectedSlackChannelsDocument = new TypedDocumentString(`
+export const BulkUpdateConnectedSlackChannelsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation BulkUpdateConnectedSlackChannels($input: BulkUpdateConnectedSlackChannelsInput!) {
   bulkUpdateConnectedSlackChannels(input: $input) {
     results {
@@ -124681,7 +124681,7 @@ export const BulkUpdateConnectedSlackChannelsDocument = new TypedDocumentString(
     }
   }
 }`) as unknown as TypedDocumentString<BulkUpdateConnectedSlackChannelsMutation, BulkUpdateConnectedSlackChannelsMutationVariables>;
-export const BulkJoinSlackChannelsDocument = new TypedDocumentString(`
+export const BulkJoinSlackChannelsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation BulkJoinSlackChannels($input: BulkJoinSlackChannelsInput!) {
   bulkJoinSlackChannels(input: $input) {
     error {
@@ -124697,7 +124697,7 @@ export const BulkJoinSlackChannelsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<BulkJoinSlackChannelsMutation, BulkJoinSlackChannelsMutationVariables>;
-export const CreateThreadFromSlackMessageDocument = new TypedDocumentString(`
+export const CreateThreadFromSlackMessageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateThreadFromSlackMessage($input: CreateThreadFromSlackMessageInput!) {
   createThreadFromSlackMessage(input: $input) {
     thread {
@@ -125754,7 +125754,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<CreateThreadFromSlackMessageMutation, CreateThreadFromSlackMessageMutationVariables>;
-export const SetSlackAutoJoinRulesDocument = new TypedDocumentString(`
+export const SetSlackAutoJoinRulesDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SetSlackAutoJoinRules($input: SetSlackAutoJoinRulesInput!) {
   setSlackAutoJoinRules(input: $input) {
     rules {
@@ -125786,7 +125786,7 @@ export const SetSlackAutoJoinRulesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SetSlackAutoJoinRulesMutation, SetSlackAutoJoinRulesMutationVariables>;
-export const CreateDemoChannelDocument = new TypedDocumentString(`
+export const CreateDemoChannelDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateDemoChannel($input: CreateDemoChannelInput!) {
   createDemoChannel(input: $input) {
     error {
@@ -125802,7 +125802,7 @@ export const CreateDemoChannelDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateDemoChannelMutation, CreateDemoChannelMutationVariables>;
-export const CreateCustomerEventDocument = new TypedDocumentString(`
+export const CreateCustomerEventDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateCustomerEvent($input: CreateCustomerEventInput!) {
   createCustomerEvent(input: $input) {
     customerEvent {
@@ -126216,7 +126216,7 @@ export const CreateCustomerEventDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateCustomerEventMutation, CreateCustomerEventMutationVariables>;
-export const CreateThreadEventDocument = new TypedDocumentString(`
+export const CreateThreadEventDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateThreadEvent($input: CreateThreadEventInput!) {
   createThreadEvent(input: $input) {
     threadEvent {
@@ -126631,7 +126631,7 @@ export const CreateThreadEventDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateThreadEventMutation, CreateThreadEventMutationVariables>;
-export const CreateWorkspaceEmailDomainSettingsDocument = new TypedDocumentString(`
+export const CreateWorkspaceEmailDomainSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceEmailDomainSettings($input: CreateWorkspaceEmailDomainSettingsInput!) {
   createWorkspaceEmailDomainSettings(input: $input) {
     workspaceEmailDomainSettings {
@@ -126686,7 +126686,7 @@ export const CreateWorkspaceEmailDomainSettingsDocument = new TypedDocumentStrin
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceEmailDomainSettingsMutation, CreateWorkspaceEmailDomainSettingsMutationVariables>;
-export const DeleteWorkspaceEmailDomainSettingsDocument = new TypedDocumentString(`
+export const DeleteWorkspaceEmailDomainSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceEmailDomainSettings {
   deleteWorkspaceEmailDomainSettings {
     error {
@@ -126702,7 +126702,7 @@ export const DeleteWorkspaceEmailDomainSettingsDocument = new TypedDocumentStrin
   }
 }
     `) as unknown as TypedDocumentString<DeleteWorkspaceEmailDomainSettingsMutation, DeleteWorkspaceEmailDomainSettingsMutationVariables>;
-export const DeleteEmailSuppressionDocument = new TypedDocumentString(`
+export const DeleteEmailSuppressionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteEmailSuppression($input: DeleteEmailSuppressionInput!) {
   deleteEmailSuppression(input: $input) {
     error {
@@ -126718,7 +126718,7 @@ export const DeleteEmailSuppressionDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteEmailSuppressionMutation, DeleteEmailSuppressionMutationVariables>;
-export const VerifyWorkspaceEmailForwardingSettingsDocument = new TypedDocumentString(`
+export const VerifyWorkspaceEmailForwardingSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation VerifyWorkspaceEmailForwardingSettings($input: VerifyWorkspaceEmailForwardingSettingsInput!) {
   verifyWorkspaceEmailForwardingSettings(input: $input) {
     workspaceEmailDomainSettings {
@@ -126773,7 +126773,7 @@ export const VerifyWorkspaceEmailForwardingSettingsDocument = new TypedDocumentS
     }
   }
 }`) as unknown as TypedDocumentString<VerifyWorkspaceEmailForwardingSettingsMutation, VerifyWorkspaceEmailForwardingSettingsMutationVariables>;
-export const VerifyWorkspaceEmailDnsSettingsDocument = new TypedDocumentString(`
+export const VerifyWorkspaceEmailDnsSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation VerifyWorkspaceEmailDnsSettings {
   verifyWorkspaceEmailDnsSettings {
     workspaceEmailDomainSettings {
@@ -126828,7 +126828,7 @@ export const VerifyWorkspaceEmailDnsSettingsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<VerifyWorkspaceEmailDnsSettingsMutation, VerifyWorkspaceEmailDnsSettingsMutationVariables>;
-export const UpdateWorkspaceEmailSettingsDocument = new TypedDocumentString(`
+export const UpdateWorkspaceEmailSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateWorkspaceEmailSettings($input: UpdateWorkspaceEmailSettingsInput!) {
   updateWorkspaceEmailSettings(input: $input) {
     workspaceEmailSettings {
@@ -126890,7 +126890,7 @@ fragment WorkspaceEmailSettingsFields on WorkspaceEmailSettings {
   }
   bccEmailAddresses
 }`) as unknown as TypedDocumentString<UpdateWorkspaceEmailSettingsMutation, UpdateWorkspaceEmailSettingsMutationVariables>;
-export const AddWorkspaceAlternateSupportEmailAddressDocument = new TypedDocumentString(`
+export const AddWorkspaceAlternateSupportEmailAddressDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddWorkspaceAlternateSupportEmailAddress($input: AddWorkspaceAlternateSupportEmailAddressInput!) {
   addWorkspaceAlternateSupportEmailAddress(input: $input) {
     workspaceEmailDomainSettings {
@@ -126945,7 +126945,7 @@ export const AddWorkspaceAlternateSupportEmailAddressDocument = new TypedDocumen
     }
   }
 }`) as unknown as TypedDocumentString<AddWorkspaceAlternateSupportEmailAddressMutation, AddWorkspaceAlternateSupportEmailAddressMutationVariables>;
-export const RemoveWorkspaceAlternateSupportEmailAddressDocument = new TypedDocumentString(`
+export const RemoveWorkspaceAlternateSupportEmailAddressDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveWorkspaceAlternateSupportEmailAddress($input: RemoveWorkspaceAlternateSupportEmailAddressInput!) {
   removeWorkspaceAlternateSupportEmailAddress(input: $input) {
     workspaceEmailDomainSettings {
@@ -127000,7 +127000,7 @@ export const RemoveWorkspaceAlternateSupportEmailAddressDocument = new TypedDocu
     }
   }
 }`) as unknown as TypedDocumentString<RemoveWorkspaceAlternateSupportEmailAddressMutation, RemoveWorkspaceAlternateSupportEmailAddressMutationVariables>;
-export const SendNewEmailDocument = new TypedDocumentString(`
+export const SendNewEmailDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendNewEmail($input: SendNewEmailInput!) {
   sendNewEmail(input: $input) {
     email {
@@ -127113,7 +127113,7 @@ export const SendNewEmailDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SendNewEmailMutation, SendNewEmailMutationVariables>;
-export const ReplyToEmailDocument = new TypedDocumentString(`
+export const ReplyToEmailDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ReplyToEmail($input: ReplyToEmailInput!) {
   replyToEmail(input: $input) {
     email {
@@ -127226,7 +127226,7 @@ export const ReplyToEmailDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ReplyToEmailMutation, ReplyToEmailMutationVariables>;
-export const CreateEmailPreviewUrlDocument = new TypedDocumentString(`
+export const CreateEmailPreviewUrlDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateEmailPreviewUrl($input: CreateEmailPreviewUrlInput!) {
   createEmailPreviewUrl(input: $input) {
     emailPreviewUrl {
@@ -127251,7 +127251,7 @@ export const CreateEmailPreviewUrlDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<CreateEmailPreviewUrlMutation, CreateEmailPreviewUrlMutationVariables>;
-export const SendBulkEmailDocument = new TypedDocumentString(`
+export const SendBulkEmailDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendBulkEmail($input: SendBulkEmailInput!) {
   sendBulkEmail(input: $input) {
     error {
@@ -127271,7 +127271,7 @@ export const SendBulkEmailDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<SendBulkEmailMutation, SendBulkEmailMutationVariables>;
-export const CreateAttachmentDownloadUrlDocument = new TypedDocumentString(`
+export const CreateAttachmentDownloadUrlDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateAttachmentDownloadUrl($input: CreateAttachmentDownloadUrlInput!) {
   createAttachmentDownloadUrl(input: $input) {
     attachmentDownloadUrl {
@@ -127317,7 +127317,7 @@ export const CreateAttachmentDownloadUrlDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<CreateAttachmentDownloadUrlMutation, CreateAttachmentDownloadUrlMutationVariables>;
-export const CreateAttachmentUploadUrlDocument = new TypedDocumentString(`
+export const CreateAttachmentUploadUrlDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateAttachmentUploadUrl($input: CreateAttachmentUploadUrlInput!) {
   createAttachmentUploadUrl(input: $input) {
     attachmentUploadUrl {
@@ -127366,7 +127366,7 @@ export const CreateAttachmentUploadUrlDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<CreateAttachmentUploadUrlMutation, CreateAttachmentUploadUrlMutationVariables>;
-export const CreateMachineUserDocument = new TypedDocumentString(`
+export const CreateMachineUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateMachineUser($input: CreateMachineUserInput!) {
   createMachineUser(input: $input) {
     machineUser {
@@ -127504,7 +127504,7 @@ export const CreateMachineUserDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateMachineUserMutation, CreateMachineUserMutationVariables>;
-export const DeleteMachineUserDocument = new TypedDocumentString(`
+export const DeleteMachineUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteMachineUser($input: DeleteMachineUserInput!) {
   deleteMachineUser(input: $input) {
     machineUser {
@@ -127642,7 +127642,7 @@ export const DeleteMachineUserDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteMachineUserMutation, DeleteMachineUserMutationVariables>;
-export const UpdateMachineUserDocument = new TypedDocumentString(`
+export const UpdateMachineUserDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateMachineUser($input: UpdateMachineUserInput!) {
   updateMachineUser(input: $input) {
     machineUser {
@@ -127780,7 +127780,7 @@ export const UpdateMachineUserDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateMachineUserMutation, UpdateMachineUserMutationVariables>;
-export const CreateApiKeyDocument = new TypedDocumentString(`
+export const CreateApiKeyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateApiKey($input: CreateApiKeyInput!) {
   createApiKey(input: $input) {
     apiKey {
@@ -127900,7 +127900,7 @@ export const CreateApiKeyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateApiKeyMutation, CreateApiKeyMutationVariables>;
-export const UpdateApiKeyDocument = new TypedDocumentString(`
+export const UpdateApiKeyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateApiKey($input: UpdateApiKeyInput!) {
   updateApiKey(input: $input) {
     apiKey {
@@ -128019,7 +128019,7 @@ export const UpdateApiKeyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateApiKeyMutation, UpdateApiKeyMutationVariables>;
-export const DeleteApiKeyDocument = new TypedDocumentString(`
+export const DeleteApiKeyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteApiKey($input: DeleteApiKeyInput!) {
   deleteApiKey(input: $input) {
     apiKey {
@@ -128138,7 +128138,7 @@ export const DeleteApiKeyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteApiKeyMutation, DeleteApiKeyMutationVariables>;
-export const CreateMySlackIntegrationDocument = new TypedDocumentString(`
+export const CreateMySlackIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateMySlackIntegration($input: CreateMySlackIntegrationInput!) {
   createMySlackIntegration(input: $input) {
     integration {
@@ -128215,7 +128215,7 @@ export const CreateMySlackIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateMySlackIntegrationMutation, CreateMySlackIntegrationMutationVariables>;
-export const DeleteMySlackIntegrationDocument = new TypedDocumentString(`
+export const DeleteMySlackIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteMySlackIntegration {
   deleteMySlackIntegration {
     error {
@@ -128231,7 +128231,7 @@ export const DeleteMySlackIntegrationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteMySlackIntegrationMutation, DeleteMySlackIntegrationMutationVariables>;
-export const CreateUserAuthSlackIntegrationDocument = new TypedDocumentString(`
+export const CreateUserAuthSlackIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateUserAuthSlackIntegration($input: CreateUserAuthSlackIntegrationInput!) {
   createUserAuthSlackIntegration(input: $input) {
     integration {
@@ -128309,7 +128309,7 @@ export const CreateUserAuthSlackIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateUserAuthSlackIntegrationMutation, CreateUserAuthSlackIntegrationMutationVariables>;
-export const DeleteUserAuthSlackIntegrationDocument = new TypedDocumentString(`
+export const DeleteUserAuthSlackIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteUserAuthSlackIntegration($input: DeleteUserAuthSlackIntegrationInput!) {
   deleteUserAuthSlackIntegration(input: $input) {
     error {
@@ -128325,7 +128325,7 @@ export const DeleteUserAuthSlackIntegrationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteUserAuthSlackIntegrationMutation, DeleteUserAuthSlackIntegrationMutationVariables>;
-export const CreateWorkspaceSlackIntegrationDocument = new TypedDocumentString(`
+export const CreateWorkspaceSlackIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceSlackIntegration($input: CreateWorkspaceSlackIntegrationInput!) {
   createWorkspaceSlackIntegration(input: $input) {
     integration {
@@ -128405,7 +128405,7 @@ export const CreateWorkspaceSlackIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceSlackIntegrationMutation, CreateWorkspaceSlackIntegrationMutationVariables>;
-export const CreateWorkspaceSlackIntegrationFromAuthDocument = new TypedDocumentString(`
+export const CreateWorkspaceSlackIntegrationFromAuthDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceSlackIntegrationFromAuth($input: CreateWorkspaceSlackIntegrationFromAuthInput!) {
   createWorkspaceSlackIntegrationFromAuth(input: $input) {
     integration {
@@ -128485,7 +128485,7 @@ export const CreateWorkspaceSlackIntegrationFromAuthDocument = new TypedDocument
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceSlackIntegrationFromAuthMutation, CreateWorkspaceSlackIntegrationFromAuthMutationVariables>;
-export const DeleteWorkspaceSlackIntegrationDocument = new TypedDocumentString(`
+export const DeleteWorkspaceSlackIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceSlackIntegration($input: DeleteWorkspaceSlackIntegrationInput!) {
   deleteWorkspaceSlackIntegration(input: $input) {
     integration {
@@ -128565,7 +128565,7 @@ export const DeleteWorkspaceSlackIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteWorkspaceSlackIntegrationMutation, DeleteWorkspaceSlackIntegrationMutationVariables>;
-export const CreateWorkspaceSlackChannelIntegrationDocument = new TypedDocumentString(`
+export const CreateWorkspaceSlackChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceSlackChannelIntegration($input: CreateWorkspaceSlackChannelIntegrationInput!) {
   createWorkspaceSlackChannelIntegration(input: $input) {
     integration {
@@ -128644,7 +128644,7 @@ export const CreateWorkspaceSlackChannelIntegrationDocument = new TypedDocumentS
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceSlackChannelIntegrationMutation, CreateWorkspaceSlackChannelIntegrationMutationVariables>;
-export const RefreshWorkspaceSlackChannelIntegrationDocument = new TypedDocumentString(`
+export const RefreshWorkspaceSlackChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RefreshWorkspaceSlackChannelIntegration($input: RefreshWorkspaceSlackChannelIntegrationInput!) {
   refreshWorkspaceSlackChannelIntegration(input: $input) {
     integration {
@@ -128723,7 +128723,7 @@ export const RefreshWorkspaceSlackChannelIntegrationDocument = new TypedDocument
     }
   }
 }`) as unknown as TypedDocumentString<RefreshWorkspaceSlackChannelIntegrationMutation, RefreshWorkspaceSlackChannelIntegrationMutationVariables>;
-export const DeleteWorkspaceSlackChannelIntegrationDocument = new TypedDocumentString(`
+export const DeleteWorkspaceSlackChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceSlackChannelIntegration($input: DeleteWorkspaceSlackChannelIntegrationInput!) {
   deleteWorkspaceSlackChannelIntegration(input: $input) {
     integration {
@@ -128802,7 +128802,7 @@ export const DeleteWorkspaceSlackChannelIntegrationDocument = new TypedDocumentS
     }
   }
 }`) as unknown as TypedDocumentString<DeleteWorkspaceSlackChannelIntegrationMutation, DeleteWorkspaceSlackChannelIntegrationMutationVariables>;
-export const CreateWorkspaceSlackSidekickIntegrationDocument = new TypedDocumentString(`
+export const CreateWorkspaceSlackSidekickIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceSlackSidekickIntegration($input: CreateWorkspaceSlackSidekickIntegrationInput!) {
   createWorkspaceSlackSidekickIntegration(input: $input) {
     integration {
@@ -128883,7 +128883,7 @@ export const CreateWorkspaceSlackSidekickIntegrationDocument = new TypedDocument
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceSlackSidekickIntegrationMutation, CreateWorkspaceSlackSidekickIntegrationMutationVariables>;
-export const RefreshWorkspaceSlackSidekickIntegrationDocument = new TypedDocumentString(`
+export const RefreshWorkspaceSlackSidekickIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RefreshWorkspaceSlackSidekickIntegration($input: RefreshWorkspaceSlackSidekickIntegrationInput!) {
   refreshWorkspaceSlackSidekickIntegration(input: $input) {
     integration {
@@ -128964,7 +128964,7 @@ export const RefreshWorkspaceSlackSidekickIntegrationDocument = new TypedDocumen
     }
   }
 }`) as unknown as TypedDocumentString<RefreshWorkspaceSlackSidekickIntegrationMutation, RefreshWorkspaceSlackSidekickIntegrationMutationVariables>;
-export const DeleteWorkspaceSlackSidekickIntegrationDocument = new TypedDocumentString(`
+export const DeleteWorkspaceSlackSidekickIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceSlackSidekickIntegration {
   deleteWorkspaceSlackSidekickIntegration {
     integration {
@@ -129045,7 +129045,7 @@ export const DeleteWorkspaceSlackSidekickIntegrationDocument = new TypedDocument
     }
   }
 }`) as unknown as TypedDocumentString<DeleteWorkspaceSlackSidekickIntegrationMutation, DeleteWorkspaceSlackSidekickIntegrationMutationVariables>;
-export const UpdateSidekickSlackConfigDocument = new TypedDocumentString(`
+export const UpdateSidekickSlackConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSidekickSlackConfig($input: UpdateSidekickSlackConfigInput!) {
   updateSidekickSlackConfig(input: $input) {
     integration {
@@ -129126,7 +129126,7 @@ export const UpdateSidekickSlackConfigDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateSidekickSlackConfigMutation, UpdateSidekickSlackConfigMutationVariables>;
-export const CreateWorkspaceDiscordChannelIntegrationDocument = new TypedDocumentString(`
+export const CreateWorkspaceDiscordChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceDiscordChannelIntegration($input: CreateWorkspaceDiscordChannelIntegrationInput!) {
   createWorkspaceDiscordChannelIntegration(input: $input) {
     integration {
@@ -129203,7 +129203,7 @@ export const CreateWorkspaceDiscordChannelIntegrationDocument = new TypedDocumen
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceDiscordChannelIntegrationMutation, CreateWorkspaceDiscordChannelIntegrationMutationVariables>;
-export const DeleteWorkspaceDiscordChannelIntegrationDocument = new TypedDocumentString(`
+export const DeleteWorkspaceDiscordChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceDiscordChannelIntegration($input: DeleteWorkspaceDiscordChannelIntegrationInput!) {
   deleteWorkspaceDiscordChannelIntegration(input: $input) {
     error {
@@ -129219,7 +129219,7 @@ export const DeleteWorkspaceDiscordChannelIntegrationDocument = new TypedDocumen
   }
 }
     `) as unknown as TypedDocumentString<DeleteWorkspaceDiscordChannelIntegrationMutation, DeleteWorkspaceDiscordChannelIntegrationMutationVariables>;
-export const CreateUserAuthDiscordChannelIntegrationDocument = new TypedDocumentString(`
+export const CreateUserAuthDiscordChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateUserAuthDiscordChannelIntegration($input: CreateUserAuthDiscordChannelIntegrationInput!) {
   createUserAuthDiscordChannelIntegration(input: $input) {
     integration {
@@ -129299,7 +129299,7 @@ export const CreateUserAuthDiscordChannelIntegrationDocument = new TypedDocument
     }
   }
 }`) as unknown as TypedDocumentString<CreateUserAuthDiscordChannelIntegrationMutation, CreateUserAuthDiscordChannelIntegrationMutationVariables>;
-export const DeleteUserAuthDiscordChannelIntegrationDocument = new TypedDocumentString(`
+export const DeleteUserAuthDiscordChannelIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteUserAuthDiscordChannelIntegration($input: DeleteUserAuthDiscordChannelIntegrationInput!) {
   deleteUserAuthDiscordChannelIntegration(input: $input) {
     error {
@@ -129315,7 +129315,7 @@ export const DeleteUserAuthDiscordChannelIntegrationDocument = new TypedDocument
   }
 }
     `) as unknown as TypedDocumentString<DeleteUserAuthDiscordChannelIntegrationMutation, DeleteUserAuthDiscordChannelIntegrationMutationVariables>;
-export const RefreshConnectedDiscordChannelsDocument = new TypedDocumentString(`
+export const RefreshConnectedDiscordChannelsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RefreshConnectedDiscordChannels($input: RefreshConnectedDiscordChannelsInput!) {
   refreshConnectedDiscordChannels(input: $input) {
     error {
@@ -129331,7 +129331,7 @@ export const RefreshConnectedDiscordChannelsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<RefreshConnectedDiscordChannelsMutation, RefreshConnectedDiscordChannelsMutationVariables>;
-export const UpdateConnectedDiscordChannelDocument = new TypedDocumentString(`
+export const UpdateConnectedDiscordChannelDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateConnectedDiscordChannel($input: UpdateConnectedDiscordChannelInput!) {
   updateConnectedDiscordChannel(input: $input) {
     connectedDiscordChannel {
@@ -129410,7 +129410,7 @@ export const UpdateConnectedDiscordChannelDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateConnectedDiscordChannelMutation, UpdateConnectedDiscordChannelMutationVariables>;
-export const CreateWorkspaceDiscordIntegrationDocument = new TypedDocumentString(`
+export const CreateWorkspaceDiscordIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceDiscordIntegration($input: CreateWorkspaceDiscordIntegrationInput!) {
   createWorkspaceDiscordIntegration(input: $input) {
     integration {
@@ -129487,7 +129487,7 @@ export const CreateWorkspaceDiscordIntegrationDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceDiscordIntegrationMutation, CreateWorkspaceDiscordIntegrationMutationVariables>;
-export const DeleteWorkspaceDiscordIntegrationDocument = new TypedDocumentString(`
+export const DeleteWorkspaceDiscordIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceDiscordIntegration($input: DeleteWorkspaceDiscordIntegrationInput!) {
   deleteWorkspaceDiscordIntegration(input: $input) {
     integration {
@@ -129564,7 +129564,7 @@ export const DeleteWorkspaceDiscordIntegrationDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<DeleteWorkspaceDiscordIntegrationMutation, DeleteWorkspaceDiscordIntegrationMutationVariables>;
-export const CreateMyLinearIntegrationDocument = new TypedDocumentString(`
+export const CreateMyLinearIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateMyLinearIntegration($input: CreateMyLinearIntegrationInput!) {
   createMyLinearIntegration(input: $input) {
     integration {
@@ -129641,7 +129641,7 @@ export const CreateMyLinearIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateMyLinearIntegrationMutation, CreateMyLinearIntegrationMutationVariables>;
-export const DeleteMyLinearIntegrationDocument = new TypedDocumentString(`
+export const DeleteMyLinearIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteMyLinearIntegration {
   deleteMyLinearIntegration {
     error {
@@ -129657,7 +129657,7 @@ export const DeleteMyLinearIntegrationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteMyLinearIntegrationMutation, DeleteMyLinearIntegrationMutationVariables>;
-export const CreateLinearAppIntegrationDocument = new TypedDocumentString(`
+export const CreateLinearAppIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateLinearAppIntegration($input: CreateLinearAppIntegrationInput!) {
   createLinearAppIntegration(input: $input) {
     integration {
@@ -129734,7 +129734,7 @@ export const CreateLinearAppIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateLinearAppIntegrationMutation, CreateLinearAppIntegrationMutationVariables>;
-export const DeleteLinearAppIntegrationDocument = new TypedDocumentString(`
+export const DeleteLinearAppIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteLinearAppIntegration {
   deleteLinearAppIntegration {
     error {
@@ -129750,7 +129750,7 @@ export const DeleteLinearAppIntegrationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteLinearAppIntegrationMutation, DeleteLinearAppIntegrationMutationVariables>;
-export const CreateGithubUserAuthIntegrationDocument = new TypedDocumentString(`
+export const CreateGithubUserAuthIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateGithubUserAuthIntegration($input: CreateGithubUserAuthIntegrationInput!) {
   createGithubUserAuthIntegration(input: $input) {
     integration {
@@ -129826,7 +129826,7 @@ export const CreateGithubUserAuthIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateGithubUserAuthIntegrationMutation, CreateGithubUserAuthIntegrationMutationVariables>;
-export const DeleteGithubUserAuthIntegrationDocument = new TypedDocumentString(`
+export const DeleteGithubUserAuthIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteGithubUserAuthIntegration {
   deleteGithubUserAuthIntegration {
     deletedIntegrationId
@@ -129843,7 +129843,7 @@ export const DeleteGithubUserAuthIntegrationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteGithubUserAuthIntegrationMutation, DeleteGithubUserAuthIntegrationMutationVariables>;
-export const CreateWorkspaceCursorIntegrationDocument = new TypedDocumentString(`
+export const CreateWorkspaceCursorIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceCursorIntegration($input: CreateWorkspaceCursorIntegrationInput!) {
   createWorkspaceCursorIntegration(input: $input) {
     integration {
@@ -129919,7 +129919,7 @@ export const CreateWorkspaceCursorIntegrationDocument = new TypedDocumentString(
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceCursorIntegrationMutation, CreateWorkspaceCursorIntegrationMutationVariables>;
-export const DeleteWorkspaceCursorIntegrationDocument = new TypedDocumentString(`
+export const DeleteWorkspaceCursorIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceCursorIntegration($id: ID!) {
   deleteWorkspaceCursorIntegration(id: $id) {
     id
@@ -129936,7 +129936,7 @@ export const DeleteWorkspaceCursorIntegrationDocument = new TypedDocumentString(
   }
 }
     `) as unknown as TypedDocumentString<DeleteWorkspaceCursorIntegrationMutation, DeleteWorkspaceCursorIntegrationMutationVariables>;
-export const CreateMyMsTeamsIntegrationDocument = new TypedDocumentString(`
+export const CreateMyMsTeamsIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateMyMSTeamsIntegration($input: CreateMyMSTeamsIntegrationInput!) {
   createMyMSTeamsIntegration(input: $input) {
     integration {
@@ -130014,7 +130014,7 @@ export const CreateMyMsTeamsIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateMyMsTeamsIntegrationMutation, CreateMyMsTeamsIntegrationMutationVariables>;
-export const DeleteMyMsTeamsIntegrationDocument = new TypedDocumentString(`
+export const DeleteMyMsTeamsIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteMyMSTeamsIntegration {
   deleteMyMSTeamsIntegration {
     integration {
@@ -130092,7 +130092,7 @@ export const DeleteMyMsTeamsIntegrationDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteMyMsTeamsIntegrationMutation, DeleteMyMsTeamsIntegrationMutationVariables>;
-export const CreateWorkspaceMsTeamsIntegrationDocument = new TypedDocumentString(`
+export const CreateWorkspaceMsTeamsIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceMSTeamsIntegration($input: CreateWorkspaceMSTeamsIntegrationInput!) {
   createWorkspaceMSTeamsIntegration(input: $input) {
     integration {
@@ -130169,7 +130169,7 @@ export const CreateWorkspaceMsTeamsIntegrationDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceMsTeamsIntegrationMutation, CreateWorkspaceMsTeamsIntegrationMutationVariables>;
-export const DeleteWorkspaceMsTeamsIntegrationDocument = new TypedDocumentString(`
+export const DeleteWorkspaceMsTeamsIntegrationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceMSTeamsIntegration($input: DeleteWorkspaceMSTeamsIntegrationInput!) {
   deleteWorkspaceMSTeamsIntegration(input: $input) {
     integration {
@@ -130246,7 +130246,7 @@ export const DeleteWorkspaceMsTeamsIntegrationDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<DeleteWorkspaceMsTeamsIntegrationMutation, DeleteWorkspaceMsTeamsIntegrationMutationVariables>;
-export const UpdateSettingDocument = new TypedDocumentString(`
+export const UpdateSettingDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSetting($input: UpdateSettingInput!) {
   updateSetting(input: $input) {
     setting {
@@ -130308,7 +130308,7 @@ fragment StringSettingFields on StringSetting {
     scopeType
   }
 }`) as unknown as TypedDocumentString<UpdateSettingMutation, UpdateSettingMutationVariables>;
-export const DeleteSettingDocument = new TypedDocumentString(`
+export const DeleteSettingDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteSetting($input: DeleteSettingInput!) {
   deleteSetting(input: $input) {
     previousSetting {
@@ -130370,7 +130370,7 @@ fragment StringSettingFields on StringSetting {
     scopeType
   }
 }`) as unknown as TypedDocumentString<DeleteSettingMutation, DeleteSettingMutationVariables>;
-export const BulkUpdateSlackChannelSettingsDocument = new TypedDocumentString(`
+export const BulkUpdateSlackChannelSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation BulkUpdateSlackChannelSettings($input: BulkUpdateSlackChannelSettingsInput!) {
   bulkUpdateSlackChannelSettings(input: $input) {
     results {
@@ -130437,7 +130437,7 @@ export const BulkUpdateSlackChannelSettingsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<BulkUpdateSlackChannelSettingsMutation, BulkUpdateSlackChannelSettingsMutationVariables>;
-export const CreateCustomerCardConfigDocument = new TypedDocumentString(`
+export const CreateCustomerCardConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateCustomerCardConfig($input: CreateCustomerCardConfigInput!) {
   createCustomerCardConfig(input: $input) {
     customerCardConfig {
@@ -130522,7 +130522,7 @@ export const CreateCustomerCardConfigDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateCustomerCardConfigMutation, CreateCustomerCardConfigMutationVariables>;
-export const UpdateCustomerCardConfigDocument = new TypedDocumentString(`
+export const UpdateCustomerCardConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateCustomerCardConfig($input: UpdateCustomerCardConfigInput!) {
   updateCustomerCardConfig(input: $input) {
     customerCardConfig {
@@ -130607,7 +130607,7 @@ export const UpdateCustomerCardConfigDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateCustomerCardConfigMutation, UpdateCustomerCardConfigMutationVariables>;
-export const DeleteCustomerCardConfigDocument = new TypedDocumentString(`
+export const DeleteCustomerCardConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteCustomerCardConfig($input: DeleteCustomerCardConfigInput!) {
   deleteCustomerCardConfig(input: $input) {
     error {
@@ -130623,7 +130623,7 @@ export const DeleteCustomerCardConfigDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteCustomerCardConfigMutation, DeleteCustomerCardConfigMutationVariables>;
-export const ReorderCustomerCardConfigsDocument = new TypedDocumentString(`
+export const ReorderCustomerCardConfigsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ReorderCustomerCardConfigs($input: ReorderCustomerCardConfigsInput!) {
   reorderCustomerCardConfigs(input: $input) {
     customerCardConfigs {
@@ -130708,7 +130708,7 @@ export const ReorderCustomerCardConfigsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ReorderCustomerCardConfigsMutation, ReorderCustomerCardConfigsMutationVariables>;
-export const ReloadCustomerCardInstanceDocument = new TypedDocumentString(`
+export const ReloadCustomerCardInstanceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ReloadCustomerCardInstance($input: ReloadCustomerCardInstanceInput!) {
   reloadCustomerCardInstance(input: $input) {
     customerCardInstance {
@@ -131332,7 +131332,7 @@ fragment CustomerCardInstanceLoadingFields on CustomerCardInstanceLoading {
     }
   }
 }`) as unknown as TypedDocumentString<ReloadCustomerCardInstanceMutation, ReloadCustomerCardInstanceMutationVariables>;
-export const CreateWebhookTargetDocument = new TypedDocumentString(`
+export const CreateWebhookTargetDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWebhookTarget($input: CreateWebhookTargetInput!) {
   createWebhookTarget(input: $input) {
     webhookTarget {
@@ -131417,7 +131417,7 @@ export const CreateWebhookTargetDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateWebhookTargetMutation, CreateWebhookTargetMutationVariables>;
-export const UpdateWebhookTargetDocument = new TypedDocumentString(`
+export const UpdateWebhookTargetDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateWebhookTarget($input: UpdateWebhookTargetInput!) {
   updateWebhookTarget(input: $input) {
     webhookTarget {
@@ -131502,7 +131502,7 @@ export const UpdateWebhookTargetDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateWebhookTargetMutation, UpdateWebhookTargetMutationVariables>;
-export const DeleteWebhookTargetDocument = new TypedDocumentString(`
+export const DeleteWebhookTargetDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWebhookTarget($input: DeleteWebhookTargetInput!) {
   deleteWebhookTarget(input: $input) {
     error {
@@ -131518,7 +131518,7 @@ export const DeleteWebhookTargetDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteWebhookTargetMutation, DeleteWebhookTargetMutationVariables>;
-export const CreateThreadDocument = new TypedDocumentString(`
+export const CreateThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateThread($input: CreateThreadInput!) {
   createThread(input: $input) {
     thread {
@@ -132575,7 +132575,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<CreateThreadMutation, CreateThreadMutationVariables>;
-export const ImportThreadDocument = new TypedDocumentString(`
+export const ImportThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ImportThread($input: ImportThreadInput!) {
   importThread(input: $input) {
     thread {
@@ -133633,7 +133633,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ImportThreadMutation, ImportThreadMutationVariables>;
-export const ImportThreadMessagesDocument = new TypedDocumentString(`
+export const ImportThreadMessagesDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ImportThreadMessages($input: ImportThreadMessagesInput!) {
   importThreadMessages(input: $input) {
     results {
@@ -139031,7 +139031,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ImportThreadMessagesMutation, ImportThreadMessagesMutationVariables>;
-export const AssignThreadDocument = new TypedDocumentString(`
+export const AssignThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AssignThread($input: AssignThreadInput!) {
   assignThread(input: $input) {
     thread {
@@ -140088,7 +140088,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<AssignThreadMutation, AssignThreadMutationVariables>;
-export const UnassignThreadDocument = new TypedDocumentString(`
+export const UnassignThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UnassignThread($input: UnassignThreadInput!) {
   unassignThread(input: $input) {
     thread {
@@ -141145,7 +141145,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UnassignThreadMutation, UnassignThreadMutationVariables>;
-export const AddAdditionalAssigneesDocument = new TypedDocumentString(`
+export const AddAdditionalAssigneesDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddAdditionalAssignees($input: AddAdditionalAssigneesInput!) {
   addAdditionalAssignees(input: $input) {
     thread {
@@ -142202,7 +142202,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<AddAdditionalAssigneesMutation, AddAdditionalAssigneesMutationVariables>;
-export const RemoveAdditionalAssigneesDocument = new TypedDocumentString(`
+export const RemoveAdditionalAssigneesDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveAdditionalAssignees($input: RemoveAdditionalAssigneesInput!) {
   removeAdditionalAssignees(input: $input) {
     thread {
@@ -143259,7 +143259,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<RemoveAdditionalAssigneesMutation, RemoveAdditionalAssigneesMutationVariables>;
-export const SnoozeThreadDocument = new TypedDocumentString(`
+export const SnoozeThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SnoozeThread($input: SnoozeThreadInput!) {
   snoozeThread(input: $input) {
     thread {
@@ -144316,7 +144316,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<SnoozeThreadMutation, SnoozeThreadMutationVariables>;
-export const MarkThreadAsDoneDocument = new TypedDocumentString(`
+export const MarkThreadAsDoneDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation MarkThreadAsDone($input: MarkThreadAsDoneInput!) {
   markThreadAsDone(input: $input) {
     thread {
@@ -145373,7 +145373,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<MarkThreadAsDoneMutation, MarkThreadAsDoneMutationVariables>;
-export const MarkThreadAsTodoDocument = new TypedDocumentString(`
+export const MarkThreadAsTodoDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation MarkThreadAsTodo($input: MarkThreadAsTodoInput!) {
   markThreadAsTodo(input: $input) {
     thread {
@@ -146430,7 +146430,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<MarkThreadAsTodoMutation, MarkThreadAsTodoMutationVariables>;
-export const ChangeThreadCustomerDocument = new TypedDocumentString(`
+export const ChangeThreadCustomerDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ChangeThreadCustomer($input: ChangeThreadCustomerInput!) {
   changeThreadCustomer(input: $input) {
     thread {
@@ -147487,7 +147487,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ChangeThreadCustomerMutation, ChangeThreadCustomerMutationVariables>;
-export const ChangeThreadPriorityDocument = new TypedDocumentString(`
+export const ChangeThreadPriorityDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ChangeThreadPriority($input: ChangeThreadPriorityInput!) {
   changeThreadPriority(input: $input) {
     thread {
@@ -148544,7 +148544,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ChangeThreadPriorityMutation, ChangeThreadPriorityMutationVariables>;
-export const UpdateThreadTitleDocument = new TypedDocumentString(`
+export const UpdateThreadTitleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadTitle($input: UpdateThreadTitleInput!) {
   updateThreadTitle(input: $input) {
     thread {
@@ -149601,7 +149601,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadTitleMutation, UpdateThreadTitleMutationVariables>;
-export const UpdateThreadExternalIdDocument = new TypedDocumentString(`
+export const UpdateThreadExternalIdDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadExternalId($input: UpdateThreadExternalIdInput!) {
   updateThreadExternalId(input: $input) {
     thread {
@@ -150658,7 +150658,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadExternalIdMutation, UpdateThreadExternalIdMutationVariables>;
-export const UpdateThreadTenantDocument = new TypedDocumentString(`
+export const UpdateThreadTenantDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadTenant($input: UpdateThreadTenantInput!) {
   updateThreadTenant(input: $input) {
     thread {
@@ -151715,7 +151715,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadTenantMutation, UpdateThreadTenantMutationVariables>;
-export const UpdateThreadAccountDocument = new TypedDocumentString(`
+export const UpdateThreadAccountDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadAccount($input: UpdateThreadAccountInput!) {
   updateThreadAccount(input: $input) {
     thread {
@@ -152772,7 +152772,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadAccountMutation, UpdateThreadAccountMutationVariables>;
-export const UpdateThreadTierDocument = new TypedDocumentString(`
+export const UpdateThreadTierDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadTier($input: UpdateThreadTierInput!) {
   updateThreadTier(input: $input) {
     thread {
@@ -153829,7 +153829,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadTierMutation, UpdateThreadTierMutationVariables>;
-export const UpdateThreadServiceLevelAgreementPolicyDocument = new TypedDocumentString(`
+export const UpdateThreadServiceLevelAgreementPolicyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadServiceLevelAgreementPolicy($input: UpdateThreadServiceLevelAgreementPolicyInput!) {
   updateThreadServiceLevelAgreementPolicy(input: $input) {
     thread {
@@ -154886,7 +154886,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadServiceLevelAgreementPolicyMutation, UpdateThreadServiceLevelAgreementPolicyMutationVariables>;
-export const UpdateThreadEscalationPathDocument = new TypedDocumentString(`
+export const UpdateThreadEscalationPathDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadEscalationPath($input: UpdateThreadEscalationPathInput!) {
   updateThreadEscalationPath(input: $input) {
     thread {
@@ -155943,7 +155943,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadEscalationPathMutation, UpdateThreadEscalationPathMutationVariables>;
-export const LockThreadDocument = new TypedDocumentString(`
+export const LockThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation LockThread($input: LockThreadInput!) {
   lockThread(input: $input) {
     thread {
@@ -157000,7 +157000,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<LockThreadMutation, LockThreadMutationVariables>;
-export const UpdateThreadAgentStatusDocument = new TypedDocumentString(`
+export const UpdateThreadAgentStatusDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadAgentStatus($input: UpdateThreadAgentStatusInput!) {
   updateThreadAgentStatus(input: $input) {
     thread {
@@ -158057,7 +158057,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadAgentStatusMutation, UpdateThreadAgentStatusMutationVariables>;
-export const UpdateThreadSuggestedActionStatusDocument = new TypedDocumentString(`
+export const UpdateThreadSuggestedActionStatusDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadSuggestedActionStatus($input: UpdateThreadSuggestedActionStatusInput!) {
   updateThreadSuggestedActionStatus(input: $input) {
     thread {
@@ -159114,7 +159114,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<UpdateThreadSuggestedActionStatusMutation, UpdateThreadSuggestedActionStatusMutationVariables>;
-export const DeleteThreadDocument = new TypedDocumentString(`
+export const DeleteThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteThread($input: DeleteThreadInput!) {
   deleteThread(input: $input) {
     error {
@@ -159130,7 +159130,7 @@ export const DeleteThreadDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteThreadMutation, DeleteThreadMutationVariables>;
-export const CreateTestThreadDocument = new TypedDocumentString(`
+export const CreateTestThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateTestThread($input: CreateTestThreadInput) {
   createTestThread(input: $input) {
     thread {
@@ -160187,7 +160187,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<CreateTestThreadMutation, CreateTestThreadMutationVariables>;
-export const CreateAllTestThreadsDocument = new TypedDocumentString(`
+export const CreateAllTestThreadsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateAllTestThreads {
   createAllTestThreads {
     threads {
@@ -161244,7 +161244,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<CreateAllTestThreadsMutation, CreateAllTestThreadsMutationVariables>;
-export const DeleteTestThreadDocument = new TypedDocumentString(`
+export const DeleteTestThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteTestThread($input: DeleteTestThreadInput!) {
   deleteTestThread(input: $input) {
     error {
@@ -161260,7 +161260,7 @@ export const DeleteTestThreadDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteTestThreadMutation, DeleteTestThreadMutationVariables>;
-export const DeleteAllTestThreadsDocument = new TypedDocumentString(`
+export const DeleteAllTestThreadsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteAllTestThreads {
   deleteAllTestThreads {
     error {
@@ -161276,7 +161276,7 @@ export const DeleteAllTestThreadsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteAllTestThreadsMutation, DeleteAllTestThreadsMutationVariables>;
-export const CreateThreadDiscussionDocument = new TypedDocumentString(`
+export const CreateThreadDiscussionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateThreadDiscussion($input: CreateThreadDiscussionInput!) {
   createThreadDiscussion(input: $input) {
     threadDiscussion {
@@ -161411,7 +161411,7 @@ export const CreateThreadDiscussionDocument = new TypedDocumentString(`
   sourcePageLink
   sourcePageAnchor
 }`) as unknown as TypedDocumentString<CreateThreadDiscussionMutation, CreateThreadDiscussionMutationVariables>;
-export const ImportThreadDiscussionDocument = new TypedDocumentString(`
+export const ImportThreadDiscussionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ImportThreadDiscussion($input: ImportThreadDiscussionInput!) {
   importThreadDiscussion(input: $input) {
     threadDiscussion {
@@ -161546,7 +161546,7 @@ export const ImportThreadDiscussionDocument = new TypedDocumentString(`
   sourcePageLink
   sourcePageAnchor
 }`) as unknown as TypedDocumentString<ImportThreadDiscussionMutation, ImportThreadDiscussionMutationVariables>;
-export const CreateDiscussionDocument = new TypedDocumentString(`
+export const CreateDiscussionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateDiscussion($input: CreateDiscussionInput!) {
   createDiscussion(input: $input) {
     discussion {
@@ -161681,7 +161681,7 @@ export const CreateDiscussionDocument = new TypedDocumentString(`
   sourcePageLink
   sourcePageAnchor
 }`) as unknown as TypedDocumentString<CreateDiscussionMutation, CreateDiscussionMutationVariables>;
-export const SendThreadDiscussionMessageDocument = new TypedDocumentString(`
+export const SendThreadDiscussionMessageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendThreadDiscussionMessage($input: SendThreadDiscussionMessageInput!) {
   sendThreadDiscussionMessage(input: $input) {
     threadDiscussionMessage {
@@ -161924,7 +161924,7 @@ export const SendThreadDiscussionMessageDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SendThreadDiscussionMessageMutation, SendThreadDiscussionMessageMutationVariables>;
-export const SendDiscussionMessageDocument = new TypedDocumentString(`
+export const SendDiscussionMessageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SendDiscussionMessage($input: SendDiscussionMessageInput!) {
   sendDiscussionMessage(input: $input) {
     discussionMessage {
@@ -162167,7 +162167,7 @@ export const SendDiscussionMessageDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SendDiscussionMessageMutation, SendDiscussionMessageMutationVariables>;
-export const UpdateDiscussionAgentStatusDocument = new TypedDocumentString(`
+export const UpdateDiscussionAgentStatusDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateDiscussionAgentStatus($input: UpdateDiscussionAgentStatusInput!) {
   updateDiscussionAgentStatus(input: $input) {
     discussion {
@@ -162302,7 +162302,7 @@ export const UpdateDiscussionAgentStatusDocument = new TypedDocumentString(`
   sourcePageLink
   sourcePageAnchor
 }`) as unknown as TypedDocumentString<UpdateDiscussionAgentStatusMutation, UpdateDiscussionAgentStatusMutationVariables>;
-export const UpsertDiscussionToolCallDocument = new TypedDocumentString(`
+export const UpsertDiscussionToolCallDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertDiscussionToolCall($input: UpsertDiscussionToolCallInput!) {
   upsertDiscussionToolCall(input: $input) {
     toolCall {
@@ -162329,7 +162329,7 @@ export const UpsertDiscussionToolCallDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<UpsertDiscussionToolCallMutation, UpsertDiscussionToolCallMutationVariables>;
-export const RequestDiscussionToolCallApprovalDocument = new TypedDocumentString(`
+export const RequestDiscussionToolCallApprovalDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RequestDiscussionToolCallApproval($input: RequestDiscussionToolCallApprovalInput!) {
   requestDiscussionToolCallApproval(input: $input) {
     approval {
@@ -162381,7 +162381,7 @@ export const RequestDiscussionToolCallApprovalDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<RequestDiscussionToolCallApprovalMutation, RequestDiscussionToolCallApprovalMutationVariables>;
-export const ResolveDiscussionApprovalDocument = new TypedDocumentString(`
+export const ResolveDiscussionApprovalDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ResolveDiscussionApproval($input: ResolveDiscussionApprovalInput!) {
   resolveDiscussionApproval(input: $input) {
     error {
@@ -162397,7 +162397,7 @@ export const ResolveDiscussionApprovalDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ResolveDiscussionApprovalMutation, ResolveDiscussionApprovalMutationVariables>;
-export const StopDiscussionTurnDocument = new TypedDocumentString(`
+export const StopDiscussionTurnDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation StopDiscussionTurn($input: StopDiscussionTurnInput!) {
   stopDiscussionTurn(input: $input) {
     error {
@@ -162413,7 +162413,7 @@ export const StopDiscussionTurnDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<StopDiscussionTurnMutation, StopDiscussionTurnMutationVariables>;
-export const ChangeThreadDiscussionStatusDocument = new TypedDocumentString(`
+export const ChangeThreadDiscussionStatusDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ChangeThreadDiscussionStatus($input: ChangeThreadDiscussionStatusInput!) {
   changeThreadDiscussionStatus(input: $input) {
     error {
@@ -162429,7 +162429,7 @@ export const ChangeThreadDiscussionStatusDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ChangeThreadDiscussionStatusMutation, ChangeThreadDiscussionStatusMutationVariables>;
-export const MarkThreadDiscussionReadDocument = new TypedDocumentString(`
+export const MarkThreadDiscussionReadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation MarkThreadDiscussionRead($input: MarkThreadDiscussionReadInput!) {
   markThreadDiscussionRead(input: $input) {
     threadDiscussion {
@@ -162564,7 +162564,7 @@ export const MarkThreadDiscussionReadDocument = new TypedDocumentString(`
   sourcePageLink
   sourcePageAnchor
 }`) as unknown as TypedDocumentString<MarkThreadDiscussionReadMutation, MarkThreadDiscussionReadMutationVariables>;
-export const DeleteThreadDiscussionDocument = new TypedDocumentString(`
+export const DeleteThreadDiscussionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteThreadDiscussion($input: DeleteThreadDiscussionInput!) {
   deleteThreadDiscussion(input: $input) {
     error {
@@ -162580,7 +162580,7 @@ export const DeleteThreadDiscussionDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteThreadDiscussionMutation, DeleteThreadDiscussionMutationVariables>;
-export const ResolveAgentApprovalDocument = new TypedDocumentString(`
+export const ResolveAgentApprovalDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ResolveAgentApproval($input: ResolveAgentApprovalInput!) {
   resolveAgentApproval(input: $input) {
     error {
@@ -162596,7 +162596,7 @@ export const ResolveAgentApprovalDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ResolveAgentApprovalMutation, ResolveAgentApprovalMutationVariables>;
-export const DeleteQueuedAgentSessionMessageDocument = new TypedDocumentString(`
+export const DeleteQueuedAgentSessionMessageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteQueuedAgentSessionMessage($input: DeleteQueuedAgentSessionMessageInput!) {
   deleteQueuedAgentSessionMessage(input: $input) {
     error {
@@ -162612,7 +162612,7 @@ export const DeleteQueuedAgentSessionMessageDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteQueuedAgentSessionMessageMutation, DeleteQueuedAgentSessionMessageMutationVariables>;
-export const EditQueuedAgentSessionMessageDocument = new TypedDocumentString(`
+export const EditQueuedAgentSessionMessageDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation EditQueuedAgentSessionMessage($input: EditQueuedAgentSessionMessageInput!) {
   editQueuedAgentSessionMessage(input: $input) {
     queuedAgentSessionMessage {
@@ -162706,7 +162706,7 @@ export const EditQueuedAgentSessionMessageDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<EditQueuedAgentSessionMessageMutation, EditQueuedAgentSessionMessageMutationVariables>;
-export const StopAgentSessionTurnDocument = new TypedDocumentString(`
+export const StopAgentSessionTurnDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation StopAgentSessionTurn($input: StopAgentSessionTurnInput!) {
   stopAgentSessionTurn(input: $input) {
     error {
@@ -162722,7 +162722,7 @@ export const StopAgentSessionTurnDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<StopAgentSessionTurnMutation, StopAgentSessionTurnMutationVariables>;
-export const ReplyToThreadDocument = new TypedDocumentString(`
+export const ReplyToThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ReplyToThread($input: ReplyToThreadInput!) {
   replyToThread(input: $input) {
     error {
@@ -162738,7 +162738,7 @@ export const ReplyToThreadDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ReplyToThreadMutation, ReplyToThreadMutationVariables>;
-export const MintEmbedTokenDocument = new TypedDocumentString(`
+export const MintEmbedTokenDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation MintEmbedToken($input: MintEmbedTokenInput!) {
   mintEmbedToken(input: $input) {
     token {
@@ -162764,7 +162764,7 @@ export const MintEmbedTokenDocument = new TypedDocumentString(`
   }
   jwksUrl
 }`) as unknown as TypedDocumentString<MintEmbedTokenMutation, MintEmbedTokenMutationVariables>;
-export const UpsertMyEmailSignatureDocument = new TypedDocumentString(`
+export const UpsertMyEmailSignatureDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertMyEmailSignature($input: UpsertMyEmailSignatureInput!) {
   upsertMyEmailSignature(input: $input) {
     emailSignature {
@@ -162841,7 +162841,7 @@ export const UpsertMyEmailSignatureDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertMyEmailSignatureMutation, UpsertMyEmailSignatureMutationVariables>;
-export const CreateAutoresponderDocument = new TypedDocumentString(`
+export const CreateAutoresponderDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateAutoresponder($input: CreateAutoresponderInput!) {
   createAutoresponder(input: $input) {
     autoresponder {
@@ -162941,7 +162941,7 @@ export const CreateAutoresponderDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateAutoresponderMutation, CreateAutoresponderMutationVariables>;
-export const UpdateAutoresponderDocument = new TypedDocumentString(`
+export const UpdateAutoresponderDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateAutoresponder($input: UpdateAutoresponderInput!) {
   updateAutoresponder(input: $input) {
     autoresponder {
@@ -163041,7 +163041,7 @@ export const UpdateAutoresponderDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateAutoresponderMutation, UpdateAutoresponderMutationVariables>;
-export const DeleteAutoresponderDocument = new TypedDocumentString(`
+export const DeleteAutoresponderDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteAutoresponder($input: DeleteAutoresponderInput!) {
   deleteAutoresponder(input: $input) {
     autoresponder {
@@ -163141,7 +163141,7 @@ export const DeleteAutoresponderDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteAutoresponderMutation, DeleteAutoresponderMutationVariables>;
-export const ReorderAutorespondersDocument = new TypedDocumentString(`
+export const ReorderAutorespondersDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ReorderAutoresponders($input: ReorderAutorespondersInput!) {
   reorderAutoresponders(input: $input) {
     autoresponders {
@@ -163241,7 +163241,7 @@ export const ReorderAutorespondersDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ReorderAutorespondersMutation, ReorderAutorespondersMutationVariables>;
-export const CreateTenantDocument = new TypedDocumentString(`
+export const CreateTenantDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateTenant($input: CreateTenantInput!) {
   createTenant(input: $input) {
     tenant {
@@ -163393,7 +163393,7 @@ export const CreateTenantDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateTenantMutation, CreateTenantMutationVariables>;
-export const CreateAccountDocument = new TypedDocumentString(`
+export const CreateAccountDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateAccount($input: CreateAccountInput!) {
   createAccount(input: $input) {
     account {
@@ -163545,7 +163545,7 @@ export const CreateAccountDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateAccountMutation, CreateAccountMutationVariables>;
-export const UpsertTenantDocument = new TypedDocumentString(`
+export const UpsertTenantDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertTenant($input: UpsertTenantInput!) {
   upsertTenant(input: $input) {
     tenant {
@@ -163698,7 +163698,7 @@ export const UpsertTenantDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertTenantMutation, UpsertTenantMutationVariables>;
-export const UpsertAccountDocument = new TypedDocumentString(`
+export const UpsertAccountDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertAccount($input: UpsertAccountInput!) {
   upsertAccount(input: $input) {
     account {
@@ -163851,7 +163851,7 @@ export const UpsertAccountDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertAccountMutation, UpsertAccountMutationVariables>;
-export const DeleteTenantDocument = new TypedDocumentString(`
+export const DeleteTenantDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteTenant($input: DeleteTenantInput!) {
   deleteTenant(input: $input) {
     tenant {
@@ -164003,7 +164003,7 @@ export const DeleteTenantDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteTenantMutation, DeleteTenantMutationVariables>;
-export const DeleteAccountDocument = new TypedDocumentString(`
+export const DeleteAccountDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteAccount($input: DeleteAccountInput!) {
   deleteAccount(input: $input) {
     account {
@@ -164155,7 +164155,7 @@ export const DeleteAccountDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteAccountMutation, DeleteAccountMutationVariables>;
-export const AddCustomerToTenantsDocument = new TypedDocumentString(`
+export const AddCustomerToTenantsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddCustomerToTenants($input: AddCustomerToTenantsInput!) {
   addCustomerToTenants(input: $input) {
     customer {
@@ -164317,7 +164317,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<AddCustomerToTenantsMutation, AddCustomerToTenantsMutationVariables>;
-export const AddCustomerToAccountsDocument = new TypedDocumentString(`
+export const AddCustomerToAccountsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddCustomerToAccounts($input: AddCustomerToAccountsInput!) {
   addCustomerToAccounts(input: $input) {
     customer {
@@ -164479,7 +164479,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<AddCustomerToAccountsMutation, AddCustomerToAccountsMutationVariables>;
-export const RemoveCustomerFromTenantsDocument = new TypedDocumentString(`
+export const RemoveCustomerFromTenantsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveCustomerFromTenants($input: RemoveCustomerFromTenantsInput!) {
   removeCustomerFromTenants(input: $input) {
     customer {
@@ -164641,7 +164641,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<RemoveCustomerFromTenantsMutation, RemoveCustomerFromTenantsMutationVariables>;
-export const RemoveCustomerFromAccountsDocument = new TypedDocumentString(`
+export const RemoveCustomerFromAccountsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveCustomerFromAccounts($input: RemoveCustomerFromAccountsInput!) {
   removeCustomerFromAccounts(input: $input) {
     customer {
@@ -164803,7 +164803,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<RemoveCustomerFromAccountsMutation, RemoveCustomerFromAccountsMutationVariables>;
-export const SetCustomerTenantsDocument = new TypedDocumentString(`
+export const SetCustomerTenantsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SetCustomerTenants($input: SetCustomerTenantsInput!) {
   setCustomerTenants(input: $input) {
     customer {
@@ -164965,7 +164965,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<SetCustomerTenantsMutation, SetCustomerTenantsMutationVariables>;
-export const SetCustomerAccountsDocument = new TypedDocumentString(`
+export const SetCustomerAccountsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SetCustomerAccounts($input: SetCustomerAccountsInput!) {
   setCustomerAccounts(input: $input) {
     customer {
@@ -165127,7 +165127,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<SetCustomerAccountsMutation, SetCustomerAccountsMutationVariables>;
-export const UpsertTenantFieldSchemaDocument = new TypedDocumentString(`
+export const UpsertTenantFieldSchemaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertTenantFieldSchema($input: UpsertTenantFieldSchemaInput!) {
   upsertTenantFieldSchema(input: $input) {
     tenantFieldSchemas {
@@ -165211,7 +165211,7 @@ export const UpsertTenantFieldSchemaDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertTenantFieldSchemaMutation, UpsertTenantFieldSchemaMutationVariables>;
-export const UpsertAccountFieldSchemaDocument = new TypedDocumentString(`
+export const UpsertAccountFieldSchemaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertAccountFieldSchema($input: UpsertAccountFieldSchemaInput!) {
   upsertAccountFieldSchema(input: $input) {
     accountFieldSchemas {
@@ -165295,7 +165295,7 @@ export const UpsertAccountFieldSchemaDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertAccountFieldSchemaMutation, UpsertAccountFieldSchemaMutationVariables>;
-export const DeleteTenantFieldSchemaDocument = new TypedDocumentString(`
+export const DeleteTenantFieldSchemaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteTenantFieldSchema($input: DeleteTenantFieldSchemaInput!) {
   deleteTenantFieldSchema(input: $input) {
     tenantFieldSchema {
@@ -165378,7 +165378,7 @@ export const DeleteTenantFieldSchemaDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteTenantFieldSchemaMutation, DeleteTenantFieldSchemaMutationVariables>;
-export const DeleteAccountFieldSchemaDocument = new TypedDocumentString(`
+export const DeleteAccountFieldSchemaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteAccountFieldSchema($input: DeleteAccountFieldSchemaInput!) {
   deleteAccountFieldSchema(input: $input) {
     accountFieldSchema {
@@ -165461,7 +165461,7 @@ export const DeleteAccountFieldSchemaDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteAccountFieldSchemaMutation, DeleteAccountFieldSchemaMutationVariables>;
-export const UpsertTenantFieldDocument = new TypedDocumentString(`
+export const UpsertTenantFieldDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertTenantField($input: UpsertTenantFieldInput!) {
   upsertTenantField(input: $input) {
     tenantField {
@@ -165563,7 +165563,7 @@ export const UpsertTenantFieldDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertTenantFieldMutation, UpsertTenantFieldMutationVariables>;
-export const UpsertAccountFieldDocument = new TypedDocumentString(`
+export const UpsertAccountFieldDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertAccountField($input: UpsertAccountFieldInput!) {
   upsertAccountField(input: $input) {
     accountField {
@@ -165665,7 +165665,7 @@ export const UpsertAccountFieldDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertAccountFieldMutation, UpsertAccountFieldMutationVariables>;
-export const DeleteTenantFieldDocument = new TypedDocumentString(`
+export const DeleteTenantFieldDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteTenantField($input: DeleteTenantFieldInput!) {
   deleteTenantField(input: $input) {
     tenantField {
@@ -165766,7 +165766,7 @@ export const DeleteTenantFieldDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteTenantFieldMutation, DeleteTenantFieldMutationVariables>;
-export const DeleteAccountFieldDocument = new TypedDocumentString(`
+export const DeleteAccountFieldDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteAccountField($input: DeleteAccountFieldInput!) {
   deleteAccountField(input: $input) {
     accountField {
@@ -165867,7 +165867,7 @@ export const DeleteAccountFieldDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteAccountFieldMutation, DeleteAccountFieldMutationVariables>;
-export const SetupTenantFieldSchemaMappingDocument = new TypedDocumentString(`
+export const SetupTenantFieldSchemaMappingDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SetupTenantFieldSchemaMapping($input: SetupTenantFieldSchemaMappingInput!) {
   setupTenantFieldSchemaMapping(input: $input) {
     tenantFieldSchema {
@@ -165950,7 +165950,7 @@ export const SetupTenantFieldSchemaMappingDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SetupTenantFieldSchemaMappingMutation, SetupTenantFieldSchemaMappingMutationVariables>;
-export const SetupAccountFieldSchemaMappingDocument = new TypedDocumentString(`
+export const SetupAccountFieldSchemaMappingDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SetupAccountFieldSchemaMapping($input: SetupAccountFieldSchemaMappingInput!) {
   setupAccountFieldSchemaMapping(input: $input) {
     accountFieldSchema {
@@ -166033,7 +166033,7 @@ export const SetupAccountFieldSchemaMappingDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SetupAccountFieldSchemaMappingMutation, SetupAccountFieldSchemaMappingMutationVariables>;
-export const RemoveTenantFieldSchemaMappingDocument = new TypedDocumentString(`
+export const RemoveTenantFieldSchemaMappingDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveTenantFieldSchemaMapping($input: RemoveTenantFieldSchemaMappingInput!) {
   removeTenantFieldSchemaMapping(input: $input) {
     tenantFieldSchema {
@@ -166116,7 +166116,7 @@ export const RemoveTenantFieldSchemaMappingDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<RemoveTenantFieldSchemaMappingMutation, RemoveTenantFieldSchemaMappingMutationVariables>;
-export const RemoveAccountFieldSchemaMappingDocument = new TypedDocumentString(`
+export const RemoveAccountFieldSchemaMappingDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveAccountFieldSchemaMapping($input: RemoveAccountFieldSchemaMappingInput!) {
   removeAccountFieldSchemaMapping(input: $input) {
     accountFieldSchema {
@@ -166199,7 +166199,7 @@ export const RemoveAccountFieldSchemaMappingDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<RemoveAccountFieldSchemaMappingMutation, RemoveAccountFieldSchemaMappingMutationVariables>;
-export const UpsertCompanyDocument = new TypedDocumentString(`
+export const UpsertCompanyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertCompany($input: UpsertCompanyInput!) {
   upsertCompany(input: $input) {
     company {
@@ -166379,7 +166379,7 @@ export const UpsertCompanyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertCompanyMutation, UpsertCompanyMutationVariables>;
-export const DeleteCompanyDocument = new TypedDocumentString(`
+export const DeleteCompanyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteCompany($input: DeleteCompanyInput!) {
   deleteCompany(input: $input) {
     company {
@@ -166558,7 +166558,7 @@ export const DeleteCompanyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteCompanyMutation, DeleteCompanyMutationVariables>;
-export const StartServiceAuthorizationDocument = new TypedDocumentString(`
+export const StartServiceAuthorizationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation StartServiceAuthorization($input: StartServiceAuthorizationInput!) {
   startServiceAuthorization(input: $input) {
     connectionDetails {
@@ -166579,7 +166579,7 @@ export const StartServiceAuthorizationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<StartServiceAuthorizationMutation, StartServiceAuthorizationMutationVariables>;
-export const CompleteServiceAuthorizationDocument = new TypedDocumentString(`
+export const CompleteServiceAuthorizationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CompleteServiceAuthorization($input: CompleteServiceAuthorizationInput!) {
   completeServiceAuthorization(input: $input) {
     serviceAuthorization {
@@ -166700,7 +166700,7 @@ export const CompleteServiceAuthorizationDocument = new TypedDocumentString(`
   }
   isImportRunnerIntegration
 }`) as unknown as TypedDocumentString<CompleteServiceAuthorizationMutation, CompleteServiceAuthorizationMutationVariables>;
-export const DeleteServiceAuthorizationDocument = new TypedDocumentString(`
+export const DeleteServiceAuthorizationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteServiceAuthorization($input: DeleteServiceAuthorizationInput!) {
   deleteServiceAuthorization(input: $input) {
     error {
@@ -166716,7 +166716,7 @@ export const DeleteServiceAuthorizationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteServiceAuthorizationMutation, DeleteServiceAuthorizationMutationVariables>;
-export const DeleteMyServiceAuthorizationDocument = new TypedDocumentString(`
+export const DeleteMyServiceAuthorizationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteMyServiceAuthorization($input: DeleteMyServiceAuthorizationInput!) {
   deleteMyServiceAuthorization(input: $input) {
     error {
@@ -166732,7 +166732,7 @@ export const DeleteMyServiceAuthorizationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteMyServiceAuthorizationMutation, DeleteMyServiceAuthorizationMutationVariables>;
-export const UpdateSidekickGithubConfigDocument = new TypedDocumentString(`
+export const UpdateSidekickGithubConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSidekickGithubConfig($input: UpdateSidekickGithubConfigInput!) {
   updateSidekickGithubConfig(input: $input) {
     serviceAuthorization {
@@ -166853,7 +166853,7 @@ export const UpdateSidekickGithubConfigDocument = new TypedDocumentString(`
   }
   isImportRunnerIntegration
 }`) as unknown as TypedDocumentString<UpdateSidekickGithubConfigMutation, UpdateSidekickGithubConfigMutationVariables>;
-export const UpdateSidekickServiceConfigDocument = new TypedDocumentString(`
+export const UpdateSidekickServiceConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSidekickServiceConfig($input: UpdateSidekickServiceConfigInput!) {
   updateSidekickServiceConfig(input: $input) {
     serviceAuthorization {
@@ -166974,7 +166974,7 @@ export const UpdateSidekickServiceConfigDocument = new TypedDocumentString(`
   }
   isImportRunnerIntegration
 }`) as unknown as TypedDocumentString<UpdateSidekickServiceConfigMutation, UpdateSidekickServiceConfigMutationVariables>;
-export const UpdateSidekickPosthogConfigDocument = new TypedDocumentString(`
+export const UpdateSidekickPosthogConfigDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSidekickPosthogConfig($input: UpdateSidekickPosthogConfigInput!) {
   updateSidekickPosthogConfig(input: $input) {
     serviceAuthorization {
@@ -167095,7 +167095,7 @@ export const UpdateSidekickPosthogConfigDocument = new TypedDocumentString(`
   }
   isImportRunnerIntegration
 }`) as unknown as TypedDocumentString<UpdateSidekickPosthogConfigMutation, UpdateSidekickPosthogConfigMutationVariables>;
-export const UpdateSidekickSettingsDocument = new TypedDocumentString(`
+export const UpdateSidekickSettingsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSidekickSettings($input: UpdateSidekickSettingsInput!) {
   updateSidekickSettings(input: $input) {
     sidekickSettings {
@@ -167114,7 +167114,7 @@ export const UpdateSidekickSettingsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<UpdateSidekickSettingsMutation, UpdateSidekickSettingsMutationVariables>;
-export const UpdateAgentSandboxToolPolicyDocument = new TypedDocumentString(`
+export const UpdateAgentSandboxToolPolicyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateAgentSandboxToolPolicy($input: UpdateAgentSandboxToolPolicyInput!) {
   updateAgentSandboxToolPolicy(input: $input) {
     policy {
@@ -167139,7 +167139,7 @@ export const UpdateAgentSandboxToolPolicyDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<UpdateAgentSandboxToolPolicyMutation, UpdateAgentSandboxToolPolicyMutationVariables>;
-export const CreateSidekickCustomSkillDocument = new TypedDocumentString(`
+export const CreateSidekickCustomSkillDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateSidekickCustomSkill($input: CreateSidekickCustomSkillInput!) {
   createSidekickCustomSkill(input: $input) {
     customSkill {
@@ -167163,7 +167163,7 @@ export const CreateSidekickCustomSkillDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateSidekickCustomSkillMutation, CreateSidekickCustomSkillMutationVariables>;
-export const UpdateSidekickCustomSkillDocument = new TypedDocumentString(`
+export const UpdateSidekickCustomSkillDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSidekickCustomSkill($input: UpdateSidekickCustomSkillInput!) {
   updateSidekickCustomSkill(input: $input) {
     customSkill {
@@ -167187,7 +167187,7 @@ export const UpdateSidekickCustomSkillDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<UpdateSidekickCustomSkillMutation, UpdateSidekickCustomSkillMutationVariables>;
-export const DeleteSidekickCustomSkillDocument = new TypedDocumentString(`
+export const DeleteSidekickCustomSkillDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteSidekickCustomSkill($input: DeleteSidekickCustomSkillInput!) {
   deleteSidekickCustomSkill(input: $input) {
     deletedCustomSkillId
@@ -167204,7 +167204,7 @@ export const DeleteSidekickCustomSkillDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteSidekickCustomSkillMutation, DeleteSidekickCustomSkillMutationVariables>;
-export const CreateSidekickMcpServerDocument = new TypedDocumentString(`
+export const CreateSidekickMcpServerDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateSidekickMcpServer($input: CreateSidekickMcpServerInput!) {
   createSidekickMcpServer(input: $input) {
     server {
@@ -167246,7 +167246,7 @@ export const CreateSidekickMcpServerDocument = new TypedDocumentString(`
     sizes
   }
 }`) as unknown as TypedDocumentString<CreateSidekickMcpServerMutation, CreateSidekickMcpServerMutationVariables>;
-export const CompleteSidekickMcpServerConnectionDocument = new TypedDocumentString(`
+export const CompleteSidekickMcpServerConnectionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CompleteSidekickMcpServerConnection($input: CompleteSidekickMcpServerConnectionInput!) {
   completeSidekickMcpServerConnection(input: $input) {
     server {
@@ -167287,7 +167287,7 @@ export const CompleteSidekickMcpServerConnectionDocument = new TypedDocumentStri
     sizes
   }
 }`) as unknown as TypedDocumentString<CompleteSidekickMcpServerConnectionMutation, CompleteSidekickMcpServerConnectionMutationVariables>;
-export const UpdateSidekickMcpServerDocument = new TypedDocumentString(`
+export const UpdateSidekickMcpServerDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateSidekickMcpServer($input: UpdateSidekickMcpServerInput!) {
   updateSidekickMcpServer(input: $input) {
     server {
@@ -167328,7 +167328,7 @@ export const UpdateSidekickMcpServerDocument = new TypedDocumentString(`
     sizes
   }
 }`) as unknown as TypedDocumentString<UpdateSidekickMcpServerMutation, UpdateSidekickMcpServerMutationVariables>;
-export const DeleteSidekickMcpServerDocument = new TypedDocumentString(`
+export const DeleteSidekickMcpServerDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteSidekickMcpServer($input: DeleteSidekickMcpServerInput!) {
   deleteSidekickMcpServer(input: $input) {
     server {
@@ -167369,7 +167369,7 @@ export const DeleteSidekickMcpServerDocument = new TypedDocumentString(`
     sizes
   }
 }`) as unknown as TypedDocumentString<DeleteSidekickMcpServerMutation, DeleteSidekickMcpServerMutationVariables>;
-export const RefreshSidekickMcpServerToolsDocument = new TypedDocumentString(`
+export const RefreshSidekickMcpServerToolsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RefreshSidekickMcpServerTools($input: RefreshSidekickMcpServerToolsInput!) {
   refreshSidekickMcpServerTools(input: $input) {
     server {
@@ -167410,7 +167410,7 @@ export const RefreshSidekickMcpServerToolsDocument = new TypedDocumentString(`
     sizes
   }
 }`) as unknown as TypedDocumentString<RefreshSidekickMcpServerToolsMutation, RefreshSidekickMcpServerToolsMutationVariables>;
-export const CreateImportSyncDocument = new TypedDocumentString(`
+export const CreateImportSyncDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateImportSync($input: CreateImportSyncInput!) {
   createImportSync(input: $input) {
     importJobDefinition {
@@ -167497,7 +167497,7 @@ export const CreateImportSyncDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateImportSyncMutation, CreateImportSyncMutationVariables>;
-export const ImportTenantFieldSchemasFromServiceDocument = new TypedDocumentString(`
+export const ImportTenantFieldSchemasFromServiceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ImportTenantFieldSchemasFromService($input: ImportTenantFieldSchemasFromServiceInput!) {
   importTenantFieldSchemasFromService(input: $input) {
     tenantFieldSchemas {
@@ -167580,7 +167580,7 @@ export const ImportTenantFieldSchemasFromServiceDocument = new TypedDocumentStri
     }
   }
 }`) as unknown as TypedDocumentString<ImportTenantFieldSchemasFromServiceMutation, ImportTenantFieldSchemasFromServiceMutationVariables>;
-export const UpdateImportJobDefinitionDocument = new TypedDocumentString(`
+export const UpdateImportJobDefinitionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateImportJobDefinition($input: UpdateImportJobDefinitionInput!) {
   updateImportJobDefinition(input: $input) {
     importJobDefinition {
@@ -167667,7 +167667,7 @@ export const UpdateImportJobDefinitionDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateImportJobDefinitionMutation, UpdateImportJobDefinitionMutationVariables>;
-export const CreateTierDocument = new TypedDocumentString(`
+export const CreateTierDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateTier($input: CreateTierInput!) {
   createTier(input: $input) {
     tier {
@@ -168247,7 +168247,7 @@ export const CreateTierDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateTierMutation, CreateTierMutationVariables>;
-export const UpdateTierDocument = new TypedDocumentString(`
+export const UpdateTierDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateTier($input: UpdateTierInput!) {
   updateTier(input: $input) {
     tier {
@@ -168827,7 +168827,7 @@ export const UpdateTierDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateTierMutation, UpdateTierMutationVariables>;
-export const DeleteTierDocument = new TypedDocumentString(`
+export const DeleteTierDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteTier($input: DeleteTierInput!) {
   deleteTier(input: $input) {
     tier {
@@ -169407,7 +169407,7 @@ export const DeleteTierDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<DeleteTierMutation, DeleteTierMutationVariables>;
-export const CreateServiceLevelAgreementDocument = new TypedDocumentString(`
+export const CreateServiceLevelAgreementDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateServiceLevelAgreement($input: CreateServiceLevelAgreementInput!) {
   createServiceLevelAgreement(input: $input) {
     serviceLevelAgreement {
@@ -169933,7 +169933,7 @@ fragment TotalResolutionTimeServiceLevelAgreementFields on TotalResolutionTimeSe
     }
   }
 }`) as unknown as TypedDocumentString<CreateServiceLevelAgreementMutation, CreateServiceLevelAgreementMutationVariables>;
-export const UpdateServiceLevelAgreementDocument = new TypedDocumentString(`
+export const UpdateServiceLevelAgreementDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateServiceLevelAgreement($input: UpdateServiceLevelAgreementInput!) {
   updateServiceLevelAgreement(input: $input) {
     serviceLevelAgreement {
@@ -170459,7 +170459,7 @@ fragment TotalResolutionTimeServiceLevelAgreementFields on TotalResolutionTimeSe
     }
   }
 }`) as unknown as TypedDocumentString<UpdateServiceLevelAgreementMutation, UpdateServiceLevelAgreementMutationVariables>;
-export const DeleteServiceLevelAgreementDocument = new TypedDocumentString(`
+export const DeleteServiceLevelAgreementDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteServiceLevelAgreement($input: DeleteServiceLevelAgreementInput!) {
   deleteServiceLevelAgreement(input: $input) {
     serviceLevelAgreement {
@@ -170985,7 +170985,7 @@ fragment TotalResolutionTimeServiceLevelAgreementFields on TotalResolutionTimeSe
     }
   }
 }`) as unknown as TypedDocumentString<DeleteServiceLevelAgreementMutation, DeleteServiceLevelAgreementMutationVariables>;
-export const CreateServiceLevelAgreementPolicyDocument = new TypedDocumentString(`
+export const CreateServiceLevelAgreementPolicyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateServiceLevelAgreementPolicy($input: CreateServiceLevelAgreementPolicyInput!) {
   createServiceLevelAgreementPolicy(input: $input) {
     serviceLevelAgreementPolicy {
@@ -171062,7 +171062,7 @@ export const CreateServiceLevelAgreementPolicyDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<CreateServiceLevelAgreementPolicyMutation, CreateServiceLevelAgreementPolicyMutationVariables>;
-export const UpdateServiceLevelAgreementPolicyDocument = new TypedDocumentString(`
+export const UpdateServiceLevelAgreementPolicyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateServiceLevelAgreementPolicy($input: UpdateServiceLevelAgreementPolicyInput!) {
   updateServiceLevelAgreementPolicy(input: $input) {
     serviceLevelAgreementPolicy {
@@ -171139,7 +171139,7 @@ export const UpdateServiceLevelAgreementPolicyDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<UpdateServiceLevelAgreementPolicyMutation, UpdateServiceLevelAgreementPolicyMutationVariables>;
-export const DeleteServiceLevelAgreementPolicyDocument = new TypedDocumentString(`
+export const DeleteServiceLevelAgreementPolicyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteServiceLevelAgreementPolicy($input: DeleteServiceLevelAgreementPolicyInput!) {
   deleteServiceLevelAgreementPolicy(input: $input) {
     serviceLevelAgreementPolicy {
@@ -171216,7 +171216,7 @@ export const DeleteServiceLevelAgreementPolicyDocument = new TypedDocumentString
     }
   }
 }`) as unknown as TypedDocumentString<DeleteServiceLevelAgreementPolicyMutation, DeleteServiceLevelAgreementPolicyMutationVariables>;
-export const AddMembersToTierDocument = new TypedDocumentString(`
+export const AddMembersToTierDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddMembersToTier($input: AddMembersToTierInput!) {
   addMembersToTier(input: $input) {
     memberships {
@@ -171358,7 +171358,7 @@ fragment TenantTierMembershipFields on TenantTierMembership {
     }
   }
 }`) as unknown as TypedDocumentString<AddMembersToTierMutation, AddMembersToTierMutationVariables>;
-export const RemoveMembersFromTierDocument = new TypedDocumentString(`
+export const RemoveMembersFromTierDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveMembersFromTier($input: RemoveMembersFromTierInput!) {
   removeMembersFromTier(input: $input) {
     memberships {
@@ -171500,7 +171500,7 @@ fragment TenantTierMembershipFields on TenantTierMembership {
     }
   }
 }`) as unknown as TypedDocumentString<RemoveMembersFromTierMutation, RemoveMembersFromTierMutationVariables>;
-export const UpdateCompanyTierDocument = new TypedDocumentString(`
+export const UpdateCompanyTierDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateCompanyTier($input: UpdateCompanyTierInput!) {
   updateCompanyTier(input: $input) {
     companyTierMembership {
@@ -171577,7 +171577,7 @@ export const UpdateCompanyTierDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateCompanyTierMutation, UpdateCompanyTierMutationVariables>;
-export const UpdateTenantTierDocument = new TypedDocumentString(`
+export const UpdateTenantTierDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateTenantTier($input: UpdateTenantTierInput!) {
   updateTenantTier(input: $input) {
     tenantTierMembership {
@@ -171654,7 +171654,7 @@ export const UpdateTenantTierDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateTenantTierMutation, UpdateTenantTierMutationVariables>;
-export const UpdateAccountTierDocument = new TypedDocumentString(`
+export const UpdateAccountTierDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateAccountTier($input: UpdateAccountTierInput!) {
   updateAccountTier(input: $input) {
     accountTierMembership {
@@ -171731,7 +171731,7 @@ export const UpdateAccountTierDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateAccountTierMutation, UpdateAccountTierMutationVariables>;
-export const UpsertBusinessHoursDocument = new TypedDocumentString(`
+export const UpsertBusinessHoursDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertBusinessHours($input: UpsertBusinessHoursInput!) {
   upsertBusinessHours(input: $input) {
     businessHours {
@@ -171806,7 +171806,7 @@ export const UpsertBusinessHoursDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpsertBusinessHoursMutation, UpsertBusinessHoursMutationVariables>;
-export const DeleteBusinessHoursDocument = new TypedDocumentString(`
+export const DeleteBusinessHoursDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteBusinessHours {
   deleteBusinessHours {
     error {
@@ -171822,7 +171822,7 @@ export const DeleteBusinessHoursDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteBusinessHoursMutation, DeleteBusinessHoursMutationVariables>;
-export const SyncBusinessHoursSlotsDocument = new TypedDocumentString(`
+export const SyncBusinessHoursSlotsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SyncBusinessHoursSlots($input: SyncBusinessHoursSlotsInput!) {
   syncBusinessHoursSlots(input: $input) {
     slots {
@@ -171848,7 +171848,7 @@ export const SyncBusinessHoursSlotsDocument = new TypedDocumentString(`
   opensAt
   closesAt
 }`) as unknown as TypedDocumentString<SyncBusinessHoursSlotsMutation, SyncBusinessHoursSlotsMutationVariables>;
-export const CreateBusinessHoursScheduleDocument = new TypedDocumentString(`
+export const CreateBusinessHoursScheduleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateBusinessHoursSchedule($input: CreateBusinessHoursScheduleInput!) {
   createBusinessHoursSchedule(input: $input) {
     businessHoursSchedule {
@@ -171924,7 +171924,7 @@ export const CreateBusinessHoursScheduleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateBusinessHoursScheduleMutation, CreateBusinessHoursScheduleMutationVariables>;
-export const UpdateBusinessHoursScheduleDocument = new TypedDocumentString(`
+export const UpdateBusinessHoursScheduleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateBusinessHoursSchedule($input: UpdateBusinessHoursScheduleInput!) {
   updateBusinessHoursSchedule(input: $input) {
     businessHoursSchedule {
@@ -172000,7 +172000,7 @@ export const UpdateBusinessHoursScheduleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateBusinessHoursScheduleMutation, UpdateBusinessHoursScheduleMutationVariables>;
-export const DeleteBusinessHoursScheduleDocument = new TypedDocumentString(`
+export const DeleteBusinessHoursScheduleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteBusinessHoursSchedule($input: DeleteBusinessHoursScheduleInput!) {
   deleteBusinessHoursSchedule(input: $input) {
     error {
@@ -172016,7 +172016,7 @@ export const DeleteBusinessHoursScheduleDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteBusinessHoursScheduleMutation, DeleteBusinessHoursScheduleMutationVariables>;
-export const SyncUserWorkingHoursDocument = new TypedDocumentString(`
+export const SyncUserWorkingHoursDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation SyncUserWorkingHours($input: SyncUserWorkingHoursInput!) {
   syncUserWorkingHours(input: $input) {
     userWorkingHours {
@@ -172107,7 +172107,7 @@ export const SyncUserWorkingHoursDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<SyncUserWorkingHoursMutation, SyncUserWorkingHoursMutationVariables>;
-export const CreateHyperlineCheckoutSessionDocument = new TypedDocumentString(`
+export const CreateHyperlineCheckoutSessionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateHyperlineCheckoutSession($input: CreateHyperlineCheckoutSessionInput!) {
   createHyperlineCheckoutSession(input: $input) {
     checkoutUrl
@@ -172124,7 +172124,7 @@ export const CreateHyperlineCheckoutSessionDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateHyperlineCheckoutSessionMutation, CreateHyperlineCheckoutSessionMutationVariables>;
-export const CreateHyperlineBillingPortalSessionDocument = new TypedDocumentString(`
+export const CreateHyperlineBillingPortalSessionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateHyperlineBillingPortalSession {
   createHyperlineBillingPortalSession {
     billingPortalSessionUrl
@@ -172141,7 +172141,7 @@ export const CreateHyperlineBillingPortalSessionDocument = new TypedDocumentStri
   }
 }
     `) as unknown as TypedDocumentString<CreateHyperlineBillingPortalSessionMutation, CreateHyperlineBillingPortalSessionMutationVariables>;
-export const CreateHyperlineComponentsAuthTokenDocument = new TypedDocumentString(`
+export const CreateHyperlineComponentsAuthTokenDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateHyperlineComponentsAuthToken {
   createHyperlineComponentsAuthToken {
     token
@@ -172158,7 +172158,7 @@ export const CreateHyperlineComponentsAuthTokenDocument = new TypedDocumentStrin
   }
 }
     `) as unknown as TypedDocumentString<CreateHyperlineComponentsAuthTokenMutation, CreateHyperlineComponentsAuthTokenMutationVariables>;
-export const CancelHyperlineSubscriptionDocument = new TypedDocumentString(`
+export const CancelHyperlineSubscriptionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CancelHyperlineSubscription {
   cancelHyperlineSubscription {
     error {
@@ -172174,7 +172174,7 @@ export const CancelHyperlineSubscriptionDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CancelHyperlineSubscriptionMutation, CancelHyperlineSubscriptionMutationVariables>;
-export const CalculateRoleChangeCostDocument = new TypedDocumentString(`
+export const CalculateRoleChangeCostDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CalculateRoleChangeCost($input: CalculateRoleChangeCostInput!) {
   calculateRoleChangeCost(input: $input) {
     roleChangeCost {
@@ -172215,7 +172215,7 @@ export const CalculateRoleChangeCostDocument = new TypedDocumentString(`
   addingSeatType
   removingSeatType
 }`) as unknown as TypedDocumentString<CalculateRoleChangeCostMutation, CalculateRoleChangeCostMutationVariables>;
-export const AddUserToActiveBillingRotaDocument = new TypedDocumentString(`
+export const AddUserToActiveBillingRotaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddUserToActiveBillingRota($input: AddUserToActiveBillingRotaInput!) {
   addUserToActiveBillingRota(input: $input) {
     billingRota {
@@ -172235,7 +172235,7 @@ export const AddUserToActiveBillingRotaDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<AddUserToActiveBillingRotaMutation, AddUserToActiveBillingRotaMutationVariables>;
-export const RemoveUserFromActiveBillingRotaDocument = new TypedDocumentString(`
+export const RemoveUserFromActiveBillingRotaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RemoveUserFromActiveBillingRota($input: RemoveUserFromActiveBillingRotaInput!) {
   removeUserFromActiveBillingRota(input: $input) {
     billingRota {
@@ -172255,7 +172255,7 @@ export const RemoveUserFromActiveBillingRotaDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<RemoveUserFromActiveBillingRotaMutation, RemoveUserFromActiveBillingRotaMutationVariables>;
-export const UpdateActiveBillingRotaDocument = new TypedDocumentString(`
+export const UpdateActiveBillingRotaDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateActiveBillingRota($input: UpdateActiveBillingRotaInput!) {
   updateActiveBillingRota(input: $input) {
     billingRota {
@@ -172275,7 +172275,7 @@ export const UpdateActiveBillingRotaDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<UpdateActiveBillingRotaMutation, UpdateActiveBillingRotaMutationVariables>;
-export const ChangeBillingPlanDocument = new TypedDocumentString(`
+export const ChangeBillingPlanDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ChangeBillingPlan($input: ChangeBillingPlanInput!) {
   changeBillingPlan(input: $input) {
     error {
@@ -172291,7 +172291,7 @@ export const ChangeBillingPlanDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ChangeBillingPlanMutation, ChangeBillingPlanMutationVariables>;
-export const PreviewBillingPlanChangeDocument = new TypedDocumentString(`
+export const PreviewBillingPlanChangeDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation PreviewBillingPlanChange($input: PreviewBillingPlanChangeInput!) {
   previewBillingPlanChange(input: $input) {
     preview {
@@ -172319,7 +172319,7 @@ export const PreviewBillingPlanChangeDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<PreviewBillingPlanChangeMutation, PreviewBillingPlanChangeMutationVariables>;
-export const PurchaseCreditsDocument = new TypedDocumentString(`
+export const PurchaseCreditsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation PurchaseCredits($input: PurchaseCreditsInput!) {
   purchaseCredits(input: $input) {
     creditBalance {
@@ -172341,7 +172341,7 @@ export const PurchaseCreditsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<PurchaseCreditsMutation, PurchaseCreditsMutationVariables>;
-export const RegenerateWorkspaceHmacDocument = new TypedDocumentString(`
+export const RegenerateWorkspaceHmacDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation RegenerateWorkspaceHmac {
   regenerateWorkspaceHmac {
     workspaceHmac {
@@ -172416,7 +172416,7 @@ export const RegenerateWorkspaceHmacDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<RegenerateWorkspaceHmacMutation, RegenerateWorkspaceHmacMutationVariables>;
-export const CreateIndexedDocumentDocument = new TypedDocumentString(`
+export const CreateIndexedDocumentDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateIndexedDocument($input: CreateIndexedDocumentInput!) {
   createIndexedDocument(input: $input) {
     error {
@@ -172537,7 +172537,7 @@ export const CreateIndexedDocumentDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateIndexedDocumentMutation, CreateIndexedDocumentMutationVariables>;
-export const UpdateGeneratedReplyDocument = new TypedDocumentString(`
+export const UpdateGeneratedReplyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateGeneratedReply($input: UpdateGeneratedReplyInput!) {
   updateGeneratedReply(input: $input) {
     generatedReply {
@@ -172614,7 +172614,7 @@ export const UpdateGeneratedReplyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateGeneratedReplyMutation, UpdateGeneratedReplyMutationVariables>;
-export const CreateKnowledgeSourceDocument = new TypedDocumentString(`
+export const CreateKnowledgeSourceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateKnowledgeSource($input: CreateKnowledgeSourceInput!) {
   createKnowledgeSource(input: $input) {
     knowledgeSource {
@@ -172852,7 +172852,7 @@ fragment KnowledgeSourceUrlFields on KnowledgeSourceUrl {
     }
   }
 }`) as unknown as TypedDocumentString<CreateKnowledgeSourceMutation, CreateKnowledgeSourceMutationVariables>;
-export const DeleteKnowledgeSourceDocument = new TypedDocumentString(`
+export const DeleteKnowledgeSourceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteKnowledgeSource($input: DeleteKnowledgeSourceInput!) {
   deleteKnowledgeSource(input: $input) {
     error {
@@ -172868,7 +172868,7 @@ export const DeleteKnowledgeSourceDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteKnowledgeSourceMutation, DeleteKnowledgeSourceMutationVariables>;
-export const ReindexKnowledgeSourceDocument = new TypedDocumentString(`
+export const ReindexKnowledgeSourceDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ReindexKnowledgeSource($input: ReindexKnowledgeSourceInput!) {
   reindexKnowledgeSource(input: $input) {
     knowledgeSource {
@@ -173106,7 +173106,7 @@ fragment KnowledgeSourceUrlFields on KnowledgeSourceUrl {
     }
   }
 }`) as unknown as TypedDocumentString<ReindexKnowledgeSourceMutation, ReindexKnowledgeSourceMutationVariables>;
-export const CreateThreadChannelAssociationDocument = new TypedDocumentString(`
+export const CreateThreadChannelAssociationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateThreadChannelAssociation($input: CreateThreadChannelAssociationInput!) {
   createThreadChannelAssociation(input: $input) {
     threadChannelAssociation {
@@ -173190,7 +173190,7 @@ export const CreateThreadChannelAssociationDocument = new TypedDocumentString(`
   }
   connectedSlackChannelId
 }`) as unknown as TypedDocumentString<CreateThreadChannelAssociationMutation, CreateThreadChannelAssociationMutationVariables>;
-export const UpdateThreadChannelAssociationTenantMembershipPolicyDocument = new TypedDocumentString(`
+export const UpdateThreadChannelAssociationTenantMembershipPolicyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadChannelAssociationTenantMembershipPolicy($input: UpdateThreadChannelAssociationTenantMembershipPolicyInput!) {
   updateThreadChannelAssociationTenantMembershipPolicy(input: $input) {
     threadChannelAssociation {
@@ -173274,7 +173274,7 @@ export const UpdateThreadChannelAssociationTenantMembershipPolicyDocument = new 
   }
   connectedSlackChannelId
 }`) as unknown as TypedDocumentString<UpdateThreadChannelAssociationTenantMembershipPolicyMutation, UpdateThreadChannelAssociationTenantMembershipPolicyMutationVariables>;
-export const UpdateThreadChannelAssociationAccountMembershipPolicyDocument = new TypedDocumentString(`
+export const UpdateThreadChannelAssociationAccountMembershipPolicyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateThreadChannelAssociationAccountMembershipPolicy($input: UpdateThreadChannelAssociationAccountMembershipPolicyInput!) {
   updateThreadChannelAssociationAccountMembershipPolicy(input: $input) {
     threadChannelAssociation {
@@ -173358,7 +173358,7 @@ export const UpdateThreadChannelAssociationAccountMembershipPolicyDocument = new
   }
   connectedSlackChannelId
 }`) as unknown as TypedDocumentString<UpdateThreadChannelAssociationAccountMembershipPolicyMutation, UpdateThreadChannelAssociationAccountMembershipPolicyMutationVariables>;
-export const DeleteThreadChannelAssociationDocument = new TypedDocumentString(`
+export const DeleteThreadChannelAssociationDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteThreadChannelAssociation($input: DeleteThreadChannelAssociationInput!) {
   deleteThreadChannelAssociation(input: $input) {
     error {
@@ -173374,7 +173374,7 @@ export const DeleteThreadChannelAssociationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteThreadChannelAssociationMutation, DeleteThreadChannelAssociationMutationVariables>;
-export const CreateWorkspaceFileUploadUrlDocument = new TypedDocumentString(`
+export const CreateWorkspaceFileUploadUrlDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceFileUploadUrl($input: CreateWorkspaceFileUploadUrlInput!) {
   createWorkspaceFileUploadUrl(input: $input) {
     workspaceFileUploadUrl {
@@ -173423,7 +173423,7 @@ export const CreateWorkspaceFileUploadUrlDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceFileUploadUrlMutation, CreateWorkspaceFileUploadUrlMutationVariables>;
-export const CreateWorkspaceFileDownloadUrlDocument = new TypedDocumentString(`
+export const CreateWorkspaceFileDownloadUrlDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateWorkspaceFileDownloadUrl($input: CreateWorkspaceFileDownloadUrlInput!) {
   createWorkspaceFileDownloadUrl(input: $input) {
     workspaceFileDownloadUrl {
@@ -173448,7 +173448,7 @@ export const CreateWorkspaceFileDownloadUrlDocument = new TypedDocumentString(`
     iso8601
   }
 }`) as unknown as TypedDocumentString<CreateWorkspaceFileDownloadUrlMutation, CreateWorkspaceFileDownloadUrlMutationVariables>;
-export const DeleteWorkspaceFileDocument = new TypedDocumentString(`
+export const DeleteWorkspaceFileDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteWorkspaceFile($input: DeleteWorkspaceFileInput!) {
   deleteWorkspaceFile(input: $input) {
     error {
@@ -173464,7 +173464,7 @@ export const DeleteWorkspaceFileDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteWorkspaceFileMutation, DeleteWorkspaceFileMutationVariables>;
-export const ResolveCustomerForSlackChannelDocument = new TypedDocumentString(`
+export const ResolveCustomerForSlackChannelDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ResolveCustomerForSlackChannel($input: ResolveCustomerForSlackChannelInput!) {
   resolveCustomerForSlackChannel(input: $input) {
     error {
@@ -173626,7 +173626,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<ResolveCustomerForSlackChannelMutation, ResolveCustomerForSlackChannelMutationVariables>;
-export const ResolveCustomerForMsTeamsChannelDocument = new TypedDocumentString(`
+export const ResolveCustomerForMsTeamsChannelDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ResolveCustomerForMSTeamsChannel($input: ResolveCustomerForMSTeamsChannelInput!) {
   resolveCustomerForMSTeamsChannel(input: $input) {
     error {
@@ -173788,7 +173788,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<ResolveCustomerForMsTeamsChannelMutation, ResolveCustomerForMsTeamsChannelMutationVariables>;
-export const CreateHelpCenterDocument = new TypedDocumentString(`
+export const CreateHelpCenterDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateHelpCenter($input: CreateHelpCenterInput!) {
   createHelpCenter(input: $input) {
     helpCenter {
@@ -173992,7 +173992,7 @@ export const CreateHelpCenterDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateHelpCenterMutation, CreateHelpCenterMutationVariables>;
-export const UpdateHelpCenterDocument = new TypedDocumentString(`
+export const UpdateHelpCenterDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateHelpCenter($input: UpdateHelpCenterInput!) {
   updateHelpCenter(input: $input) {
     helpCenter {
@@ -174196,7 +174196,7 @@ export const UpdateHelpCenterDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateHelpCenterMutation, UpdateHelpCenterMutationVariables>;
-export const DeleteHelpCenterDocument = new TypedDocumentString(`
+export const DeleteHelpCenterDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteHelpCenter($input: DeleteHelpCenterInput!) {
   deleteHelpCenter(input: $input) {
     error {
@@ -174212,7 +174212,7 @@ export const DeleteHelpCenterDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteHelpCenterMutation, DeleteHelpCenterMutationVariables>;
-export const UpdateHelpCenterCustomDomainNameDocument = new TypedDocumentString(`
+export const UpdateHelpCenterCustomDomainNameDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateHelpCenterCustomDomainName($input: UpdateHelpCenterCustomDomainNameInput!) {
   updateHelpCenterCustomDomainName(input: $input) {
     helpCenter {
@@ -174416,7 +174416,7 @@ export const UpdateHelpCenterCustomDomainNameDocument = new TypedDocumentString(
     }
   }
 }`) as unknown as TypedDocumentString<UpdateHelpCenterCustomDomainNameMutation, UpdateHelpCenterCustomDomainNameMutationVariables>;
-export const VerifyHelpCenterCustomDomainNameDocument = new TypedDocumentString(`
+export const VerifyHelpCenterCustomDomainNameDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation VerifyHelpCenterCustomDomainName($input: VerifyHelpCenterCustomDomainNameInput!) {
   verifyHelpCenterCustomDomainName(input: $input) {
     helpCenter {
@@ -174620,7 +174620,7 @@ export const VerifyHelpCenterCustomDomainNameDocument = new TypedDocumentString(
     }
   }
 }`) as unknown as TypedDocumentString<VerifyHelpCenterCustomDomainNameMutation, VerifyHelpCenterCustomDomainNameMutationVariables>;
-export const UpdateHelpCenterIndexDocument = new TypedDocumentString(`
+export const UpdateHelpCenterIndexDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateHelpCenterIndex($input: UpdateHelpCenterIndexInput!) {
   updateHelpCenterIndex(input: $input) {
     helpCenterIndex {
@@ -174706,7 +174706,7 @@ export const UpdateHelpCenterIndexDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateHelpCenterIndexMutation, UpdateHelpCenterIndexMutationVariables>;
-export const UpsertHelpCenterArticleDocument = new TypedDocumentString(`
+export const UpsertHelpCenterArticleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpsertHelpCenterArticle($input: UpsertHelpCenterArticleInput!) {
   upsertHelpCenterArticle(input: $input) {
     helpCenterArticle {
@@ -174820,7 +174820,7 @@ export const UpsertHelpCenterArticleDocument = new TypedDocumentString(`
     id
   }
 }`) as unknown as TypedDocumentString<UpsertHelpCenterArticleMutation, UpsertHelpCenterArticleMutationVariables>;
-export const DeleteHelpCenterArticleDocument = new TypedDocumentString(`
+export const DeleteHelpCenterArticleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteHelpCenterArticle($input: DeleteHelpCenterArticleInput!) {
   deleteHelpCenterArticle(input: $input) {
     error {
@@ -174836,7 +174836,7 @@ export const DeleteHelpCenterArticleDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteHelpCenterArticleMutation, DeleteHelpCenterArticleMutationVariables>;
-export const GenerateHelpCenterArticleDocument = new TypedDocumentString(`
+export const GenerateHelpCenterArticleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation GenerateHelpCenterArticle($input: GenerateHelpCenterArticleInput!) {
   generateHelpCenterArticle(input: $input) {
     helpCenterArticles {
@@ -174950,7 +174950,7 @@ export const GenerateHelpCenterArticleDocument = new TypedDocumentString(`
     id
   }
 }`) as unknown as TypedDocumentString<GenerateHelpCenterArticleMutation, GenerateHelpCenterArticleMutationVariables>;
-export const CreateHelpCenterArticleGroupDocument = new TypedDocumentString(`
+export const CreateHelpCenterArticleGroupDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateHelpCenterArticleGroup($input: CreateHelpCenterArticleGroupInput!) {
   createHelpCenterArticleGroup(input: $input) {
     helpCenterArticleGroup {
@@ -175033,7 +175033,7 @@ export const CreateHelpCenterArticleGroupDocument = new TypedDocumentString(`
   }
   slug
 }`) as unknown as TypedDocumentString<CreateHelpCenterArticleGroupMutation, CreateHelpCenterArticleGroupMutationVariables>;
-export const UpdateHelpCenterArticleGroupDocument = new TypedDocumentString(`
+export const UpdateHelpCenterArticleGroupDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateHelpCenterArticleGroup($input: UpdateHelpCenterArticleGroupInput!) {
   updateHelpCenterArticleGroup(input: $input) {
     helpCenterArticleGroup {
@@ -175116,7 +175116,7 @@ export const UpdateHelpCenterArticleGroupDocument = new TypedDocumentString(`
   }
   slug
 }`) as unknown as TypedDocumentString<UpdateHelpCenterArticleGroupMutation, UpdateHelpCenterArticleGroupMutationVariables>;
-export const DeleteHelpCenterArticleGroupDocument = new TypedDocumentString(`
+export const DeleteHelpCenterArticleGroupDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteHelpCenterArticleGroup($input: DeleteHelpCenterArticleGroupInput!) {
   deleteHelpCenterArticleGroup(input: $input) {
     error {
@@ -175132,7 +175132,7 @@ export const DeleteHelpCenterArticleGroupDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteHelpCenterArticleGroupMutation, DeleteHelpCenterArticleGroupMutationVariables>;
-export const CreateIssueTrackerIssueDocument = new TypedDocumentString(`
+export const CreateIssueTrackerIssueDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateIssueTrackerIssue($input: CreateIssueTrackerIssueInput!) {
   createIssueTrackerIssue(input: $input) {
     error {
@@ -175164,7 +175164,7 @@ export const CreateIssueTrackerIssueDocument = new TypedDocumentString(`
     icon
   }
 }`) as unknown as TypedDocumentString<CreateIssueTrackerIssueMutation, CreateIssueTrackerIssueMutationVariables>;
-export const CreateCustomerSurveyDocument = new TypedDocumentString(`
+export const CreateCustomerSurveyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateCustomerSurvey($input: CreateCustomerSurveyInput!) {
   createCustomerSurvey(input: $input) {
     customerSurvey {
@@ -175275,7 +175275,7 @@ export const CreateCustomerSurveyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateCustomerSurveyMutation, CreateCustomerSurveyMutationVariables>;
-export const UpdateCustomerSurveyDocument = new TypedDocumentString(`
+export const UpdateCustomerSurveyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateCustomerSurvey($input: UpdateCustomerSurveyInput!) {
   updateCustomerSurvey(input: $input) {
     customerSurvey {
@@ -175386,7 +175386,7 @@ export const UpdateCustomerSurveyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateCustomerSurveyMutation, UpdateCustomerSurveyMutationVariables>;
-export const DeleteCustomerSurveyDocument = new TypedDocumentString(`
+export const DeleteCustomerSurveyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteCustomerSurvey($input: DeleteCustomerSurveyInput!) {
   deleteCustomerSurvey(input: $input) {
     error {
@@ -175402,7 +175402,7 @@ export const DeleteCustomerSurveyDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteCustomerSurveyMutation, DeleteCustomerSurveyMutationVariables>;
-export const ReorderCustomerSurveysDocument = new TypedDocumentString(`
+export const ReorderCustomerSurveysDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ReorderCustomerSurveys($input: ReorderCustomerSurveysInput!) {
   reorderCustomerSurveys(input: $input) {
     customerSurveys {
@@ -175513,7 +175513,7 @@ export const ReorderCustomerSurveysDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ReorderCustomerSurveysMutation, ReorderCustomerSurveysMutationVariables>;
-export const AddGeneratedReplyDocument = new TypedDocumentString(`
+export const AddGeneratedReplyDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation AddGeneratedReply($input: AddGeneratedReplyInput!) {
   addGeneratedReply(input: $input) {
     generatedReply {
@@ -175590,7 +175590,7 @@ export const AddGeneratedReplyDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<AddGeneratedReplyMutation, AddGeneratedReplyMutationVariables>;
-export const EscalateThreadDocument = new TypedDocumentString(`
+export const EscalateThreadDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation EscalateThread($input: EscalateThreadInput!) {
   escalateThread(input: $input) {
     thread {
@@ -176647,7 +176647,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<EscalateThreadMutation, EscalateThreadMutationVariables>;
-export const CreateAiFeatureFeedbackDocument = new TypedDocumentString(`
+export const CreateAiFeatureFeedbackDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateAiFeatureFeedback($input: CreateAiFeatureFeedbackInput!) {
   createAiFeatureFeedback(input: $input) {
     aiFeatureFeedback {
@@ -176705,7 +176705,7 @@ export const CreateAiFeatureFeedbackDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateAiFeatureFeedbackMutation, CreateAiFeatureFeedbackMutationVariables>;
-export const CreateAiFeedbackDocument = new TypedDocumentString(`
+export const CreateAiFeedbackDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateAiFeedback($input: CreateAiFeedbackInput!) {
   createAiFeedback(input: $input) {
     error {
@@ -176721,7 +176721,7 @@ export const CreateAiFeedbackDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateAiFeedbackMutation, CreateAiFeedbackMutationVariables>;
-export const GenerateAiToneRulesFromDescriptionDocument = new TypedDocumentString(`
+export const GenerateAiToneRulesFromDescriptionDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation GenerateAiToneRulesFromDescription($input: GenerateAiToneRulesFromDescriptionInput!) {
   generateAiToneRulesFromDescription(input: $input) {
     aiToneRules {
@@ -176799,7 +176799,7 @@ export const GenerateAiToneRulesFromDescriptionDocument = new TypedDocumentStrin
     }
   }
 }`) as unknown as TypedDocumentString<GenerateAiToneRulesFromDescriptionMutation, GenerateAiToneRulesFromDescriptionMutationVariables>;
-export const CreateAiToneRuleDocument = new TypedDocumentString(`
+export const CreateAiToneRuleDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation CreateAiToneRule($input: CreateAiToneRuleInput!) {
   createAiToneRule(input: $input) {
     aiToneRule {
@@ -176877,7 +176877,7 @@ export const CreateAiToneRuleDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<CreateAiToneRuleMutation, CreateAiToneRuleMutationVariables>;
-export const UpdateAiToneRulesDocument = new TypedDocumentString(`
+export const UpdateAiToneRulesDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateAiToneRules($input: UpdateAiToneRulesInput!) {
   updateAiToneRules(input: $input) {
     aiToneRules {
@@ -176955,7 +176955,7 @@ export const UpdateAiToneRulesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateAiToneRulesMutation, UpdateAiToneRulesMutationVariables>;
-export const DeleteAiToneRulesDocument = new TypedDocumentString(`
+export const DeleteAiToneRulesDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation DeleteAiToneRules($input: DeleteAiToneRulesInput!) {
   deleteAiToneRules(input: $input) {
     error {
@@ -176971,7 +176971,7 @@ export const DeleteAiToneRulesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteAiToneRulesMutation, DeleteAiToneRulesMutationVariables>;
-export const UpdateInternalNotificationsDocument = new TypedDocumentString(`
+export const UpdateInternalNotificationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateInternalNotifications($input: UpdateInternalNotificationsInput!) {
   updateInternalNotifications(input: $input) {
     internalNotifications {
@@ -177151,7 +177151,7 @@ export const UpdateInternalNotificationsDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<UpdateInternalNotificationsMutation, UpdateInternalNotificationsMutationVariables>;
-export const UpdateAllMyInternalNotificationsDocument = new TypedDocumentString(`
+export const UpdateAllMyInternalNotificationsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation UpdateAllMyInternalNotifications($input: UpdateAllMyInternalNotificationsInput!) {
   updateAllMyInternalNotifications(input: $input) {
     updatedCount
@@ -177168,7 +177168,7 @@ export const UpdateAllMyInternalNotificationsDocument = new TypedDocumentString(
   }
 }
     `) as unknown as TypedDocumentString<UpdateAllMyInternalNotificationsMutation, UpdateAllMyInternalNotificationsMutationVariables>;
-export const ImportTenantFieldSchemasDocument = new TypedDocumentString(`
+export const ImportTenantFieldSchemasDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ImportTenantFieldSchemas($input: ImportTenantFieldSchemasInput!) {
   importTenantFieldSchemas(input: $input) {
     result {
@@ -177189,7 +177189,7 @@ export const ImportTenantFieldSchemasDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ImportTenantFieldSchemasMutation, ImportTenantFieldSchemasMutationVariables>;
-export const ImportTenantsDocument = new TypedDocumentString(`
+export const ImportTenantsDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ImportTenants($input: ImportTenantsInput!) {
   importTenants(input: $input) {
     result {
@@ -177210,7 +177210,7 @@ export const ImportTenantsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ImportTenantsMutation, ImportTenantsMutationVariables>;
-export const ImportCustomersDocument = new TypedDocumentString(`
+export const ImportCustomersDocument = /*#__PURE__*/ new TypedDocumentString(`
     mutation ImportCustomers($input: ImportCustomersInput!) {
   importCustomers(input: $input) {
     result {
@@ -177231,7 +177231,7 @@ export const ImportCustomersDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ImportCustomersMutation, ImportCustomersMutationVariables>;
-export const MachineUserApiKeysDocument = new TypedDocumentString(`
+export const MachineUserApiKeysDocument = /*#__PURE__*/ new TypedDocumentString(`
     query MachineUserApiKeys($machineUserId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   machineUser(machineUserId: $machineUserId) {
     apiKeys(first: $first, after: $after, last: $last, before: $before) {
@@ -177351,7 +177351,7 @@ export const MachineUserApiKeysDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<MachineUserApiKeysQuery, MachineUserApiKeysQueryVariables>;
-export const CustomerCustomerGroupMembershipsDocument = new TypedDocumentString(`
+export const CustomerCustomerGroupMembershipsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query CustomerCustomerGroupMemberships($customerId: ID!, $filters: CustomerGroupMembershipsFilter, $first: Int, $after: String, $last: Int, $before: String) {
   customer(customerId: $customerId) {
     customerGroupMemberships(
@@ -177436,7 +177436,7 @@ export const CustomerCustomerGroupMembershipsDocument = new TypedDocumentString(
     }
   }
 }`) as unknown as TypedDocumentString<CustomerCustomerGroupMembershipsQuery, CustomerCustomerGroupMembershipsQueryVariables>;
-export const BroadcastThreadsDocument = new TypedDocumentString(`
+export const BroadcastThreadsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query BroadcastThreads($broadcastId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   broadcast(broadcastId: $broadcastId) {
     threads(first: $first, after: $after, last: $last, before: $before) {
@@ -178495,7 +178495,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<BroadcastThreadsQuery, BroadcastThreadsQueryVariables>;
-export const ThreadLinksDocument = new TypedDocumentString(`
+export const ThreadLinksDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadLinks($threadId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   thread(threadId: $threadId) {
     links(first: $first, after: $after, last: $last, before: $before) {
@@ -178885,7 +178885,7 @@ fragment PlainThreadThreadLinkFields on PlainThreadThreadLink {
   plainThreadId
   plainThreadStatusDetailType
 }`) as unknown as TypedDocumentString<ThreadLinksQuery, ThreadLinksQueryVariables>;
-export const ThreadTimelineEntriesDocument = new TypedDocumentString(`
+export const ThreadTimelineEntriesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadTimelineEntries($threadId: ID!, $filters: ThreadTimelineEntriesFilter, $first: Int, $after: String, $last: Int, $before: String) {
   thread(threadId: $threadId) {
     timelineEntries(
@@ -184155,7 +184155,7 @@ fragment UserWorkingHoursFields on UserWorkingHours {
     }
   }
 }`) as unknown as TypedDocumentString<ThreadTimelineEntriesQuery, ThreadTimelineEntriesQueryVariables>;
-export const ThreadParticipantsDocument = new TypedDocumentString(`
+export const ThreadParticipantsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadParticipants($threadId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   thread(threadId: $threadId) {
     participants(first: $first, after: $after, last: $last, before: $before) {
@@ -184218,7 +184218,7 @@ fragment UserActorFields on UserActor {
     id
   }
 }`) as unknown as TypedDocumentString<ThreadParticipantsQuery, ThreadParticipantsQueryVariables>;
-export const TaskThreadLinksDocument = new TypedDocumentString(`
+export const TaskThreadLinksDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TaskThreadLinks($taskId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   task(taskId: $taskId) {
     threadLinks(first: $first, after: $after, last: $last, before: $before) {
@@ -184608,7 +184608,7 @@ fragment PlainThreadThreadLinkFields on PlainThreadThreadLink {
   plainThreadId
   plainThreadStatusDetailType
 }`) as unknown as TypedDocumentString<TaskThreadLinksQuery, TaskThreadLinksQueryVariables>;
-export const TaskSourceLinksDocument = new TypedDocumentString(`
+export const TaskSourceLinksDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TaskSourceLinks($taskId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   task(taskId: $taskId) {
     sourceLinks(first: $first, after: $after, last: $last, before: $before) {
@@ -184643,7 +184643,7 @@ export const TaskSourceLinksDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<TaskSourceLinksQuery, TaskSourceLinksQueryVariables>;
-export const ThreadDiscussionMessagesDocument = new TypedDocumentString(`
+export const ThreadDiscussionMessagesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query ThreadDiscussionMessages($threadDiscussionId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   threadDiscussion(threadDiscussionId: $threadDiscussionId) {
     messages(first: $first, after: $after, last: $last, before: $before) {
@@ -184887,7 +184887,7 @@ export const ThreadDiscussionMessagesDocument = new TypedDocumentString(`
     }
   }
 }`) as unknown as TypedDocumentString<ThreadDiscussionMessagesQuery, ThreadDiscussionMessagesQueryVariables>;
-export const TierMembershipsDocument = new TypedDocumentString(`
+export const TierMembershipsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query TierMemberships($tierId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   tier(tierId: $tierId) {
     memberships(first: $first, after: $after, last: $last, before: $before) {
@@ -185031,7 +185031,7 @@ fragment TenantTierMembershipFields on TenantTierMembership {
     }
   }
 }`) as unknown as TypedDocumentString<TierMembershipsQuery, TierMembershipsQueryVariables>;
-export const HelpCenterArticleGroupsDocument = new TypedDocumentString(`
+export const HelpCenterArticleGroupsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterArticleGroups($id: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   helpCenter(id: $id) {
     articleGroups(first: $first, after: $after, last: $last, before: $before) {
@@ -185115,7 +185115,7 @@ export const HelpCenterArticleGroupsDocument = new TypedDocumentString(`
   }
   slug
 }`) as unknown as TypedDocumentString<HelpCenterArticleGroupsQuery, HelpCenterArticleGroupsQueryVariables>;
-export const HelpCenterArticlesDocument = new TypedDocumentString(`
+export const HelpCenterArticlesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterArticles($id: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   helpCenter(id: $id) {
     articles(first: $first, after: $after, last: $last, before: $before) {
@@ -185230,7 +185230,7 @@ export const HelpCenterArticlesDocument = new TypedDocumentString(`
     id
   }
 }`) as unknown as TypedDocumentString<HelpCenterArticlesQuery, HelpCenterArticlesQueryVariables>;
-export const HelpCenterArticleGroupChildArticleGroupsDocument = new TypedDocumentString(`
+export const HelpCenterArticleGroupChildArticleGroupsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterArticleGroupChildArticleGroups($id: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   helpCenterArticleGroup(id: $id) {
     childArticleGroups(first: $first, after: $after, last: $last, before: $before) {
@@ -185314,7 +185314,7 @@ export const HelpCenterArticleGroupChildArticleGroupsDocument = new TypedDocumen
   }
   slug
 }`) as unknown as TypedDocumentString<HelpCenterArticleGroupChildArticleGroupsQuery, HelpCenterArticleGroupChildArticleGroupsQueryVariables>;
-export const HelpCenterArticleGroupArticlesDocument = new TypedDocumentString(`
+export const HelpCenterArticleGroupArticlesDocument = /*#__PURE__*/ new TypedDocumentString(`
     query HelpCenterArticleGroupArticles($id: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   helpCenterArticleGroup(id: $id) {
     articles(first: $first, after: $after, last: $last, before: $before) {
@@ -185429,7 +185429,7 @@ export const HelpCenterArticleGroupArticlesDocument = new TypedDocumentString(`
     id
   }
 }`) as unknown as TypedDocumentString<HelpCenterArticleGroupArticlesQuery, HelpCenterArticleGroupArticlesQueryVariables>;
-export const KnowledgeGapSignalsDocument = new TypedDocumentString(`
+export const KnowledgeGapSignalsDocument = /*#__PURE__*/ new TypedDocumentString(`
     query KnowledgeGapSignals($knowledgeGapId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   knowledgeGap(knowledgeGapId: $knowledgeGapId) {
     signals(first: $first, after: $after, last: $last, before: $before) {

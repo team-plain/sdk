@@ -32,6 +32,9 @@ generates:
       # Ships each document as its query text rather than an AST, about a quarter of the size, and
       # saves printing it back to text on every request.
       documentMode: string
+      # Marks each new TypedDocumentString(...) side-effect free, so bundlers can drop documents an app
+      # never uses, starting with the fragment documents the SDK itself never imports.
+      pureMagicComment: true
   ./src/_generated_sdk.ts:
     plugins:
       - "@team-plain/graphql-codegen-plugin"
