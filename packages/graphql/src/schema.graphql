@@ -995,6 +995,11 @@ input DiscussionsFilter {
   createdBySystem: Boolean
 
   """
+  When true, only return the bounded Sidekick tasks started by an `ask_sidekick` workflow step. When false, exclude them. These report an outcome to their workflow step rather than being a conversation anyone joins, so human-facing session lists should pass false.
+  """
+  isWorkflowTask: Boolean
+
+  """
   Only return discussions run by one of the provided kinds of agent. Discussions with no agent at
   all, such as a Slack channel or email discussion, match none of them; use
   not: { agentTypes: [...] } for those.
@@ -3988,6 +3993,11 @@ type MachineUser {
   True when this machine user is an agent the workspace built itself, rather than an ordinary API integration.
   """
   isCustomAgent: Boolean!
+
+  """
+  False when custom-agent pricing is on for the workspace and this machine user is neither a custom agent nor Ari. Such a machine user cannot be assigned to a thread. True means the agent rule does not refuse this machine user; other gates, such as credits, can still refuse an assignment.
+  """
+  isAssignableToThreads: Boolean!
   avatar: WorkspaceFile
 
   """Fetches a single API key belonging to this machine user by its ID."""
@@ -6329,6 +6339,11 @@ type SidekickToolConfigurableArg {
   Initial picker selection. Save it in the tool permission to enforce it.
   """
   defaultValue: String
+
+  """
+  When true the builder may pin several values for this arg; the agent must then pass one of them. When false the pin is a single value.
+  """
+  isMultiValued: Boolean!
 }
 
 type SidekickToolArgOptionsPage {
@@ -9289,9 +9304,9 @@ input UpdateBroadcastInput {
   senderEmailAddress: OptionalStringInput
 
   """
-  Pass a target to replace the current one, or an empty `channels` list to clear it. Omit to leave
-  it unchanged. Clearing the target — or the sender — of a broadcast that is already scheduled is
-  rejected, because a scheduled broadcast has to stay sendable.
+  Pass a target to replace the current one, or null — equivalently a target with no `scope` and no
+  `recipients` — to clear it. Omit to leave it unchanged. Clearing the target — or the sender — of a
+  broadcast that is already scheduled is rejected, because a scheduled broadcast has to stay sendable.
   """
   sendTarget: BroadcastSendTargetInput
 }
@@ -11357,6 +11372,19 @@ type Mutation {
   Instructs the Plain Slack bot to join all Slack channels it has access to for the given workspace Slack channel integration. Use this after first installing the integration to connect existing channels.
   """
   bulkJoinSlackChannels(input: BulkJoinSlackChannelsInput!): BulkJoinSlackChannelsOutput!
+
+  """
+  Creates a thread from a top-level message in a connected customer Slack channel, along with the
+  replies Plain has already received for it. This is the trigger for the `API_ONLY` ingestion
+  mode, and works in every other mode too. Ingestion runs asynchronously, so `thread` is
+  returned only when the message had already been ingested. Requires the `thread:create`
+  permission.
+  
+  This is not a way to import historic conversations: only replies Plain saw over the Slack
+  events API are included, so a message from before the Plain bot joined the channel becomes a
+  thread missing everything that was said before then.
+  """
+  createThreadFromSlackMessage(input: CreateThreadFromSlackMessageInput!): CreateThreadFromSlackMessageOutput!
 
   """
   Replaces all auto-join rules for a workspace slack channel integration.
@@ -16280,6 +16308,28 @@ type BulkJoinSlackChannelsOutput {
   error: MutationError
 }
 
+input CreateThreadFromSlackMessageInput {
+  """
+  The Slack channel the message is in, as provided by Slack (e.g. C0123ABCD).
+  """
+  slackChannelId: String!
+
+  """
+  The Slack `ts` of the top-level message to ingest. Replies are rejected.
+  """
+  slackMessageTimestamp: String!
+}
+
+type CreateThreadFromSlackMessageOutput {
+  """
+  The thread, when this Slack message had already been ingested. Null when the request was
+  accepted and the thread is still being created — use `threadBySlackPermalink` or the
+  `thread.thread_created` webhook to pick it up.
+  """
+  thread: Thread
+  error: MutationError
+}
+
 enum DemoChannelType {
   SLACK
 }
@@ -16441,6 +16491,11 @@ enum SlackIngestionMode {
 
   """A thread is created only when a user reacts with a specific emoji."""
   MANUAL
+
+  """
+  A thread is created only when the `createThreadFromSlackMessage` mutation is called for a message.
+  """
+  API_ONLY
 }
 
 """

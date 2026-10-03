@@ -6452,6 +6452,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               description
               type
               isCustomAgent
+              isAssignableToThreads
               avatar {
                 id
                 fileName
@@ -6714,6 +6715,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               description
               type
               isCustomAgent
+              isAssignableToThreads
               avatar {
                 id
                 fileName
@@ -6978,6 +6980,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               description
               type
               isCustomAgent
+              isAssignableToThreads
               avatar {
                 id
                 fileName
@@ -7240,6 +7243,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               description
               type
               isCustomAgent
+              isAssignableToThreads
               avatar {
                 id
                 fileName
@@ -12106,6 +12110,7 @@ fragment MachineUserFields on MachineUser {
   description
   type
   isCustomAgent
+  isAssignableToThreads
   avatar {
     id
     fileName
@@ -13498,6 +13503,7 @@ fragment SidekickAvailableToolFields on SidekickAvailableTool {
     dependsOn
     exclusiveWith
     defaultValue
+    isMultiValued
   }
 }
 
@@ -14094,6 +14100,7 @@ fragment TaskFields on Task {
       description
       type
       isCustomAgent
+      isAssignableToThreads
       avatar {
         id
         fileName
@@ -15054,6 +15061,7 @@ fragment ThreadFields on Thread {
       description
       type
       isCustomAgent
+      isAssignableToThreads
       avatar {
         id
         fileName
@@ -15320,6 +15328,7 @@ fragment ThreadFields on Thread {
       description
       type
       isCustomAgent
+      isAssignableToThreads
       avatar {
         id
         fileName
@@ -19151,6 +19160,7 @@ fragment TimelineEntryFields on TimelineEntry {
           description
           type
           isCustomAgent
+          isAssignableToThreads
           avatar {
             id
             fileName
@@ -19413,6 +19423,7 @@ fragment TimelineEntryFields on TimelineEntry {
           description
           type
           isCustomAgent
+          isAssignableToThreads
           avatar {
             id
             fileName
@@ -19677,6 +19688,7 @@ fragment TimelineEntryFields on TimelineEntry {
           description
           type
           isCustomAgent
+          isAssignableToThreads
           avatar {
             id
             fileName
@@ -19939,6 +19951,7 @@ fragment TimelineEntryFields on TimelineEntry {
           description
           type
           isCustomAgent
+          isAssignableToThreads
           avatar {
             id
             fileName
@@ -29322,6 +29335,24 @@ mutation BulkUpdateConnectedSlackChannels($input: BulkUpdateConnectedSlackChanne
 
 mutation BulkJoinSlackChannels($input: BulkJoinSlackChannelsInput!) {
   bulkJoinSlackChannels(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateThreadFromSlackMessage($input: CreateThreadFromSlackMessageInput!) {
+  createThreadFromSlackMessage(input: $input) {
+    thread {
+      ...ThreadFields
+    }
     error {
       message
       type
