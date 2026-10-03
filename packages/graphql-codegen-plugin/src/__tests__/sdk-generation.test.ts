@@ -270,6 +270,61 @@ describe("SDK generation", () => {
     expect(code).not.toContain("new CreateUserOutputModel");
   });
 
+  it("makes variables optional when every argument has a default", () => {
+    const schema = buildSchema(`
+      type Query {
+        dummy: String
+      }
+      type Mutation {
+        createTestThread(input: TestThreadInput! = {channel: CHAT}): CreateTestThreadOutput!
+        createUser(name: String!, input: TestThreadInput! = {channel: CHAT}): CreateTestThreadOutput!
+      }
+      enum Channel {
+        CHAT
+        EMAIL
+      }
+      input TestThreadInput {
+        channel: Channel!
+      }
+      type CreateTestThreadOutput {
+        error: String
+      }
+    `);
+    const docs = createDocuments(`
+      mutation CreateTestThread($input: TestThreadInput) {
+        createTestThread(input: $input) {
+          error
+        }
+      }
+      mutation CreateUser($name: String!, $input: TestThreadInput) {
+        createUser(name: $name, input: $input) {
+          error
+        }
+      }
+    `);
+
+    const output = plugin(schema, docs, {});
+    const code = typeof output === "string" ? output : output.content;
+
+    const stubs = `
+      declare const CreateTestThreadDocument: any;
+      declare const CreateUserDocument: any;
+      type CreateTestThreadMutation = { createTestThread: { error: string | null } };
+      type CreateTestThreadMutationVariables = { input?: { channel: "CHAT" | "EMAIL" } | null };
+      type CreateUserMutation = { createUser: { error: string | null } };
+      type CreateUserMutationVariables = { name: string; input?: { channel: "CHAT" | "EMAIL" } | null };
+    `;
+
+    const diagnostics = compileTypeScript(code, stubs);
+    expect(diagnostics, formatDiagnostics(diagnostics)).toHaveLength(0);
+
+    expect(code).toContain("createTestThread(variables?: CreateTestThreadMutationVariables)");
+    expect(code).toContain(
+      "async createTestThread(variables: CreateTestThreadMutationVariables = {})",
+    );
+    expect(code).toContain("createUser(variables: CreateUserMutationVariables)");
+  });
+
   it("carries a schema deprecation onto the generated signature and method", () => {
     const schema = buildSchema(`
       type Query {

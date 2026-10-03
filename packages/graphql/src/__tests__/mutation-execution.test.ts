@@ -127,4 +127,48 @@ describe("mutation execution", () => {
     expect(query).toContain("type");
     expect(query).toContain("code");
   });
+
+  it("exposes createAccount and sends the account mutation", async () => {
+    fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(
+      graphqlResponse({
+        createAccount: { account: null, error: null },
+      }),
+    );
+    const client = new PlainClient({ apiKey: "test-key" });
+
+    expect(client.mutation.createAccount).toEqual(expect.any(Function));
+
+    const result = await client.mutation.createAccount({
+      input: { name: "Acme", externalId: "acme_1" },
+    });
+
+    expect(result.account).toBeNull();
+    expect(result.error).toBeNull();
+
+    const body = getRequestBody(fetchMock);
+    expect(body.variables).toEqual({ input: { name: "Acme", externalId: "acme_1" } });
+    const query = body.query as string;
+    expect(query).toMatch(/mutation CreateAccount\(\$input: CreateAccountInput!\)/);
+    expect(query).toContain("createAccount(input: $input)");
+    expect(query).toContain("...AccountFields");
+  });
+
+  it("calls createTestThread with no arguments and lets the API default the input", async () => {
+    fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(
+      graphqlResponse({
+        createTestThread: { thread: null, error: null },
+      }),
+    );
+    const client = new PlainClient({ apiKey: "test-key" });
+
+    const result = await client.mutation.createTestThread();
+
+    expect(result.error).toBeNull();
+    const body = getRequestBody(fetchMock);
+    expect(body.variables).toEqual({});
+    const query = body.query as string;
+    expect(query).toMatch(/mutation CreateTestThread\(\$input: CreateTestThreadInput\)/);
+  });
 });
