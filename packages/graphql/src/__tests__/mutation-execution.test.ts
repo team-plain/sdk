@@ -171,4 +171,34 @@ describe("mutation execution", () => {
     const query = body.query as string;
     expect(query).toMatch(/mutation CreateTestThread\(\$input: CreateTestThreadInput\)/);
   });
+
+  it("exposes createThreadFromSlackMessage and sends the Slack ingestion mutation", async () => {
+    fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(
+      graphqlResponse({
+        createThreadFromSlackMessage: { thread: null, error: null },
+      }),
+    );
+    const client = new PlainClient({ apiKey: "test-key" });
+
+    expect(client.mutation.createThreadFromSlackMessage).toEqual(expect.any(Function));
+
+    const result = await client.mutation.createThreadFromSlackMessage({
+      input: { slackChannelId: "C0123ABCD", slackMessageTimestamp: "1234567890.123456" },
+    });
+
+    expect(result.thread).toBeNull();
+    expect(result.error).toBeNull();
+
+    const body = getRequestBody(fetchMock);
+    expect(body.variables).toEqual({
+      input: { slackChannelId: "C0123ABCD", slackMessageTimestamp: "1234567890.123456" },
+    });
+    const query = body.query as string;
+    expect(query).toMatch(
+      /mutation CreateThreadFromSlackMessage\(\$input: CreateThreadFromSlackMessageInput!\)/,
+    );
+    expect(query).toContain("createThreadFromSlackMessage(input: $input)");
+    expect(query).toContain("...ThreadFields");
+  });
 });
