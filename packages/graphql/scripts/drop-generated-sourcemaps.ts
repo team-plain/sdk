@@ -1,5 +1,3 @@
-// Runs after the build. Sourcemaps for the generated files are 12 MB of the package and map onto code
-// nobody steps through, so drop them; the hand-written files keep theirs.
 import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
