@@ -450,7 +450,6 @@ function generateFragment(type: GraphQLObjectType): string {
 
 function formatArgType(arg: GraphQLArgument): string {
   // A nullable variable may feed a non-null arg that has a default, so callers can omit it.
-  // graphql 17 puts SDL defaults in `default`; `defaultValue` is only set from config that uses it.
   if (isNonNullType(arg.type) && (arg.default !== undefined || arg.defaultValue !== undefined)) {
     return arg.type.ofType.toString();
   }
