@@ -59,7 +59,7 @@
   "devDependencies": {
     "@graphql-codegen/cli": "^5.0.7",
     "@graphql-codegen/typed-document-node": "^5.1.2",
-    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript": "^6.1.0",
     "@graphql-codegen/typescript-operations": "^4.6.1",
     "@team-plain/graphql-codegen-plugin": "workspace:*",
     "tsdown": "^0.23.0",
