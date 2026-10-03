@@ -20,7 +20,6 @@ generates:
       nonOptionalTypename: false
       importSchemaTypesFrom: ./src/_generated_documents.ts
       namespacedImportName: ""
-      # v6 widens ID inputs to string | number. Keep them string, as the SDK has always typed them.
       scalars:
         ID: string
       enumType: string-literal
