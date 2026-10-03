@@ -48,7 +48,7 @@
     "generate-documents": "node src/generate-documents.ts",
     "download-schema": "node scripts/download-schema.ts",
     "codegen": "pnpm download-schema && node src/generate-documents.ts && graphql-codegen --config codegen.yml",
-    "build": "tsc && tsdown",
+    "build": "tsc && tsdown && node scripts/drop-generated-sourcemaps.ts",
     "prepublishOnly": "npm run build",
     "test": "vitest run"
   },
@@ -64,5 +64,6 @@
     "@team-plain/graphql-codegen-plugin": "workspace:*",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2"
-  }
+  },
+  "sideEffects": false
 }
