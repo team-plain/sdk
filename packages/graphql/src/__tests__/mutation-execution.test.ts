@@ -153,4 +153,22 @@ describe("mutation execution", () => {
     expect(query).toContain("createAccount(input: $input)");
     expect(query).toContain("...AccountFields");
   });
+
+  it("calls createTestThread with no arguments and lets the API default the input", async () => {
+    fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(
+      graphqlResponse({
+        createTestThread: { thread: null, error: null },
+      }),
+    );
+    const client = new PlainClient({ apiKey: "test-key" });
+
+    const result = await client.mutation.createTestThread();
+
+    expect(result.error).toBeNull();
+    const body = getRequestBody(fetchMock);
+    expect(body.variables).toEqual({});
+    const query = body.query as string;
+    expect(query).toMatch(/mutation CreateTestThread\(\$input: CreateTestThreadInput\)/);
+  });
 });

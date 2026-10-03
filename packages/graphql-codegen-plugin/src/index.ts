@@ -152,6 +152,23 @@ function applyDeprecation(
 
 const SKIP_MODEL_TYPES = new Set(["MutationError", "MutationFieldError"]);
 
+function variablesParams(
+  field: GraphQLField<unknown, unknown>,
+  varsTsName: string,
+): { signature: string; implementation: string } {
+  if (field.args.length === 0) return { signature: "", implementation: "" };
+  const hasDefaultedArg = field.args.some((a) => a.defaultValue !== undefined);
+  const hasRequiredArg = field.args.some(
+    (a) => isNonNullType(a.type) && a.defaultValue === undefined,
+  );
+  return hasDefaultedArg && !hasRequiredArg
+    ? {
+        signature: `variables?: ${varsTsName}`,
+        implementation: `variables: ${varsTsName} = {}`,
+      }
+    : { signature: `variables: ${varsTsName}`, implementation: `variables: ${varsTsName}` };
+}
+
 // ─── Plugin ───────────────────────────────────────────────────────────────────
 //
 // The plugin runs as part of @graphql-codegen and produces a single TypeScript
@@ -642,7 +659,10 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     const isConnection = isConnectionType(namedType.name);
     const hasModel = modelTypes.has(namedType.name);
 
-    const varsParam = hasArgs ? `variables: ${varsTsName}` : "";
+    const { signature: varsSignature, implementation: varsParam } = variablesParams(
+      field,
+      varsTsName,
+    );
     const varsArg = hasArgs ? `, variables` : "";
     const typeArgs = hasArgs
       ? `<${queryTsName}, ${varsTsName}>`
@@ -673,7 +693,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       if (nodeHasModel && nodeTypeName) {
         const nodeModelClass = modelClassName(nodeTypeName);
         const returnType = `Promise<PlainConnection<${nodeModelClass}>>`;
-        querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+        querySignatures.push(`${fieldName}(${varsSignature}): ${returnType};`);
         queryMethodBodies.push(
           `    async ${fieldName}(${varsParam}): ${returnType} {
       const response = await _client.request${typeArgs}(
@@ -690,7 +710,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       } else {
         // Connection without model — return raw type
         const returnType = `Promise<${queryTsName}["${fieldName}"]>`;
-        querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+        querySignatures.push(`${fieldName}(${varsSignature}): ${returnType};`);
         queryMethodBodies.push(
           `    async ${fieldName}(${varsParam}): ${returnType} {
       const response = await _client.request${typeArgs}(
@@ -704,7 +724,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       // List of model type
       const nodeModelClass = modelClassName(namedType.name);
       const returnType = `Promise<${nodeModelClass}[]>`;
-      querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+      querySignatures.push(`${fieldName}(${varsSignature}): ${returnType};`);
       queryMethodBodies.push(
         `    async ${fieldName}(${varsParam}): ${returnType} {
       const response = await _client.request${typeArgs}(
@@ -717,7 +737,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       // Single model type
       const mClass = modelClassName(namedType.name);
       const returnType = `Promise<${mClass}>`;
-      querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+      querySignatures.push(`${fieldName}(${varsSignature}): ${returnType};`);
       if (isNonNull) {
         queryMethodBodies.push(
           `    async ${fieldName}(${varsParam}): ${returnType} {
@@ -744,7 +764,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       // Raw return (scalars, enums, types without models, lists of non-models)
       if (!isNonNull && !isList && !isConnection) {
         const returnType = `Promise<NonNullable<${queryTsName}["${fieldName}"]>>`;
-        querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+        querySignatures.push(`${fieldName}(${varsSignature}): ${returnType};`);
         queryMethodBodies.push(
           `    async ${fieldName}(${varsParam}): ${returnType} {
       const response = await _client.request${typeArgs}(
@@ -758,7 +778,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
         );
       } else {
         const returnType = `Promise<${queryTsName}["${fieldName}"]>`;
-        querySignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+        querySignatures.push(`${fieldName}(${varsSignature}): ${returnType};`);
         queryMethodBodies.push(
           `    async ${fieldName}(${varsParam}): ${returnType} {
       const response = await _client.request${typeArgs}(
@@ -791,14 +811,17 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     const hasArgs = Object.keys(field.args).length > 0;
     if (hasArgs) allImportedTypes.add(varsTsName);
 
-    const varsParam = hasArgs ? `variables: ${varsTsName}` : "";
+    const { signature: varsSignature, implementation: varsParam } = variablesParams(
+      field,
+      varsTsName,
+    );
     const varsArg = hasArgs ? `, variables` : "";
     const typeArgs = hasArgs
       ? `<${mutTsName}, ${varsTsName}>`
       : `<${mutTsName}, Record<string, never>>`;
 
     const returnType = `Promise<${mutTsName}["${fieldName}"]>`;
-    mutationSignatures.push(`${fieldName}(${varsParam}): ${returnType};`);
+    mutationSignatures.push(`${fieldName}(${varsSignature}): ${returnType};`);
     mutationMethodBodies.push(
       `    async ${fieldName}(${varsParam}): ${returnType} {
       const response = await _client.request${typeArgs}(
