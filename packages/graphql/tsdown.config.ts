@@ -1,13 +1,13 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: ["src/**/*.ts", "!src/__tests__/**", "!src/generate-documents.ts"],
   format: ["cjs"],
   outDir: "dist/cjs",
-  outExtension: () => ({ js: ".js" }),
-  bundle: false,
+  outExtensions: () => ({ js: ".js" }),
+  unbundle: true,
   sourcemap: true,
-  clean: false,
+  dts: false,
   target: "esnext",
   onSuccess: 'echo \'{"type":"commonjs"}\' > dist/cjs/package.json',
 });

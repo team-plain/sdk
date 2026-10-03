@@ -42,7 +42,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && tsup",
+    "build": "tsc && tsdown",
     "test": "vitest run"
   },
   "peerDependencies": {
@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@team-plain/graphql": "workspace:*",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.23.0",
     "typescript": "^7.0.2"
   }
 }
