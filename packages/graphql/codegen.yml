@@ -26,6 +26,9 @@ generates:
         ID: string
       enumType: string-literal
       skipTypename: true
+      # Ships each document as its query text rather than an AST, about a quarter of the size, and
+      # saves printing it back to text on every request.
+      documentMode: string
   ./src/_generated_sdk.ts:
     plugins:
       - "@team-plain/graphql-codegen-plugin"

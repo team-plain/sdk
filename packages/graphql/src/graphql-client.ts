@@ -1,6 +1,6 @@
-import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type { DocumentTypeDecoration, TypedDocumentNode } from "@graphql-typed-document-node/core";
 import packageJson from "@team-plain/graphql/package.json" with { type: "json" };
-import { print } from "graphql";
+import { type DocumentNode, print } from "graphql";
 
 import {
   AuthenticationError,
@@ -24,6 +24,15 @@ export interface GraphQLResponse<TData> {
   }>;
 }
 
+/**
+ * A GraphQL operation to send: one of the SDK's generated documents, a document from `parse()`,
+ * or the query text itself.
+ */
+export type GraphQLDocument<TData, TVariables> =
+  | TypedDocumentNode<TData, TVariables>
+  | DocumentTypeDecoration<TData, TVariables>
+  | string;
+
 export interface PlainGraphQLClientOptions {
   apiKey: string;
   apiUrl?: string;
@@ -42,7 +51,7 @@ export class PlainGraphQLClient {
   }
 
   async request<TData, TVariables extends Record<string, unknown>>(
-    document: TypedDocumentNode<TData, TVariables>,
+    document: GraphQLDocument<TData, TVariables>,
     variables?: TVariables,
   ): Promise<TData> {
     for (let attempt = 0; ; attempt++) {
@@ -58,11 +67,11 @@ export class PlainGraphQLClient {
   }
 
   private async requestOnce<TData, TVariables extends Record<string, unknown>>(
-    document: TypedDocumentNode<TData, TVariables>,
+    document: GraphQLDocument<TData, TVariables>,
     variables?: TVariables,
   ): Promise<TData> {
     const body = JSON.stringify({
-      query: print(document),
+      query: queryText(document),
       variables: variables ?? undefined,
     });
 
@@ -127,4 +136,12 @@ export class PlainGraphQLClient {
     }
     return undefined;
   }
+}
+
+// Generated documents are String objects carrying their query text; only a parsed AST needs printing.
+function queryText(document: GraphQLDocument<unknown, never>): string {
+  if (typeof document === "object" && document !== null && "kind" in document) {
+    return print(document as DocumentNode);
+  }
+  return String(document);
 }
