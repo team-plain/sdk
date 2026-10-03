@@ -1,0 +1,5 @@
+# Collapsed in GitHub diffs and left out of line counts. Their inputs, schema.graphql and
+# webhook-schema.json, stay visible so API changes can still be reviewed.
+packages/*/src/_generated_* linguist-generated=true
+packages/webhooks/src/webhook-schema.ts linguist-generated=true
+pnpm-lock.yaml linguist-generated=true
