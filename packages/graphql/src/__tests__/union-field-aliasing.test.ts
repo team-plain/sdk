@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NoteEntryModel, TimelineEntryModel } from "../_generated_sdk.js";
 import { PlainClient } from "../client.js";
-import { getRequestBody, graphqlResponse, mockFetch } from "./helpers.js";
+import { getRequestBody, graphqlResponse, mockFetch, sentQuery } from "./helpers.js";
 
 /**
  * The Entry union has members (NoteEntry, ChatEntry, CustomEntry, etc.) that share
@@ -72,7 +72,7 @@ describe("union field aliasing", () => {
     await client.query.timelineEntry({ timelineEntryId: "te_123" });
 
     const body = getRequestBody(fetchMock);
-    const query = body.query as string;
+    const query = sentQuery(body);
 
     // The generated query should use aliases for the conflicting "text" field
     // across different Entry union members

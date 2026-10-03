@@ -35,6 +35,9 @@ generates:
       # Marks each new TypedDocumentString(...) side-effect free, so bundlers can drop documents an app
       # never uses, starting with the fragment documents the SDK itself never imports.
       pureMagicComment: true
+    hooks:
+      afterOneFileWrite:
+        - node scripts/strip-document-whitespace.ts
   ./src/_generated_sdk.ts:
     plugins:
       - "@team-plain/graphql-codegen-plugin"
