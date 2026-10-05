@@ -2,7 +2,7 @@
 type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-import { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
+import { TypedDocumentString } from './typed-document-string.js';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 /** All built-in and custom scalars, mapped to their actual values */
@@ -42681,24 +42681,7 @@ export type KnowledgeGapSignalsQueryVariables = Exact<{
 
 export type KnowledgeGapSignalsQuery = { knowledgeGap?: { signals: { totalCount: number, edges: Array<{ cursor: string, node: { __typename: 'AriKnowledgeGapSignal', id: string, type: KnowledgeGapSignalType, threadId: string, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } } | null };
 
-export class TypedDocumentString<TResult, TVariables>
-  extends String
-  implements DocumentTypeDecoration<TResult, TVariables>
-{
-  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
-  private value: string;
-  public __meta__?: Record<string, any> | undefined;
-
-  constructor(value: string, __meta__?: Record<string, any> | undefined) {
-    super(value);
-    this.value = value;
-    this.__meta__ = __meta__;
-  }
-
-  override toString(): string & DocumentTypeDecoration<TResult, TVariables> {
-    return this.value;
-  }
-}
+export { TypedDocumentString };
 export const AccountFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`fragment AccountFields on Account{id name externalId url@include(if:true)source tier@include(if:true){id}threadChannelAssociations{__typename ...on SlackThreadChannelAssociation{id companyId@include(if:true)tenantId@include(if:true)tenantMembershipPolicy accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}}primaryDomain@include(if:true)alternateDomains logoUrl@include(if:true)isDomainAutoJoinEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}`, {"fragmentName":"AccountFields"}) as unknown as TypedDocumentString<AccountFieldsFragment, unknown>;
 export const AccountFieldFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`fragment AccountFieldFields on AccountField{id source@include(if:true)externalFieldId value{__typename ...on AccountFieldStringValue{stringValue}...on AccountFieldNumberValue{numberValue}...on AccountFieldBooleanValue{booleanValue}...on AccountFieldStringArrayValue{arrayValue}...on AccountFieldDateTimeValue{dateValue{unixTimestamp iso8601}}...on AccountFieldUserReferenceValue{userReferenceValues}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}`, {"fragmentName":"AccountFieldFields"}) as unknown as TypedDocumentString<AccountFieldFieldsFragment, unknown>;
 export const AccountFieldBooleanValueFieldsFragmentDoc = /*#__PURE__*/ new TypedDocumentString(`fragment AccountFieldBooleanValueFields on AccountFieldBooleanValue{booleanValue}`, {"fragmentName":"AccountFieldBooleanValueFields"}) as unknown as TypedDocumentString<AccountFieldBooleanValueFieldsFragment, unknown>;
