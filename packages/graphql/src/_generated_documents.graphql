@@ -5639,7 +5639,6 @@ fragment FirstResolutionTimeServiceLevelAgreementFields on FirstResolutionTimeSe
 fragment FirstResponseTimeServiceLevelAgreementFields on FirstResponseTimeServiceLevelAgreement {
   id
   firstResponseTimeMinutes
-  useBusinessHoursOnly
   threadPriorityFilter
   threadLabelTypeIdFilter {
     labelTypeIds
@@ -8908,7 +8907,6 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             ... on FirstResponseTimeServiceLevelAgreement {
               id
               firstResponseTimeMinutes
-              useBusinessHoursOnly
               threadPriorityFilter
               threadLabelTypeIdFilter {
                 labelTypeIds
@@ -9032,7 +9030,6 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             ... on NextResponseTimeServiceLevelAgreement {
               id
               nextResponseTimeMinutes
-              useBusinessHoursOnly
               threadPriorityFilter
               threadLabelTypeIdFilter {
                 labelTypeIds
@@ -13274,7 +13271,6 @@ fragment MSTeamsThreadChannelDetailsFields on MSTeamsThreadChannelDetails {
 fragment NextResponseTimeServiceLevelAgreementFields on NextResponseTimeServiceLevelAgreement {
   id
   nextResponseTimeMinutes
-  useBusinessHoursOnly
   threadPriorityFilter
   threadLabelTypeIdFilter {
     labelTypeIds
@@ -14135,7 +14131,6 @@ fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgree
     ... on FirstResponseTimeServiceLevelAgreement {
       id
       firstResponseTimeMinutes
-      useBusinessHoursOnly
       threadPriorityFilter
       threadLabelTypeIdFilter {
         labelTypeIds
@@ -14259,7 +14254,6 @@ fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgree
     ... on NextResponseTimeServiceLevelAgreement {
       id
       nextResponseTimeMinutes
-      useBusinessHoursOnly
       threadPriorityFilter
       threadLabelTypeIdFilter {
         labelTypeIds
@@ -19459,7 +19453,6 @@ fragment TierFields on Tier {
     ... on FirstResponseTimeServiceLevelAgreement {
       id
       firstResponseTimeMinutes
-      useBusinessHoursOnly
       threadPriorityFilter
       threadLabelTypeIdFilter {
         labelTypeIds
@@ -19583,7 +19576,6 @@ fragment TierFields on Tier {
     ... on NextResponseTimeServiceLevelAgreement {
       id
       nextResponseTimeMinutes
-      useBusinessHoursOnly
       threadPriorityFilter
       threadLabelTypeIdFilter {
         labelTypeIds
@@ -22397,7 +22389,6 @@ fragment TimelineEntryFields on TimelineEntry {
         ... on FirstResponseTimeServiceLevelAgreement {
           id
           firstResponseTimeMinutes
-          useBusinessHoursOnly
           threadPriorityFilter
           threadLabelTypeIdFilter {
             labelTypeIds
@@ -22521,7 +22512,6 @@ fragment TimelineEntryFields on TimelineEntry {
         ... on NextResponseTimeServiceLevelAgreement {
           id
           nextResponseTimeMinutes
-          useBusinessHoursOnly
           threadPriorityFilter
           threadLabelTypeIdFilter {
             labelTypeIds

@@ -29,22 +29,6 @@ const schema = buildSchema(schemaSource);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// Deprecated fields that a published release selected. Dropping one removes it from the generated
-// result types, a breaking change, so they stay selected until the next major.
-const KEPT_DEPRECATED_FIELDS = new Set([
-  "FirstResponseTimeServiceLevelAgreement.useBusinessHoursOnly",
-  "NextResponseTimeServiceLevelAgreement.useBusinessHoursOnly",
-]);
-
-function isSkippedDeprecated(
-  type: GraphQLNamedType,
-  field: { name: string; deprecationReason?: string | null },
-): boolean {
-  return (
-    field.deprecationReason != null && !KEPT_DEPRECATED_FIELDS.has(`${type.name}.${field.name}`)
-  );
-}
-
 function toPascalCase(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -167,7 +151,7 @@ function registerFragmentType(type: GraphQLNamedType): void {
   // Only register types that have at least one selectable scalar/enum/DateTime field
   const fields = type.getFields();
   const hasSelectableField = Object.values(fields).some((f) => {
-    if (isSkippedDeprecated(type, f)) return false;
+    if (f.deprecationReason != null) return false;
     const named = unwrapType(f.type);
     return isSimpleType(named);
   });
@@ -191,7 +175,7 @@ function registerUnionMemberType(type: GraphQLNamedType): void {
 
   const fields = type.getFields();
   const hasSelectableField = Object.values(fields).some((f) => {
-    if (isSkippedDeprecated(type, f)) return false;
+    if (f.deprecationReason != null) return false;
     const named = unwrapType(f.type);
     return isSimpleType(named);
   });
@@ -284,7 +268,7 @@ while (fragmentTypes.size !== previousSize) {
 function expandValueObject(type: GraphQLObjectType, indent: string): string {
   const fields = type.getFields();
   return Object.values(fields)
-    .filter((f) => !isSkippedDeprecated(type, f))
+    .filter((f) => f.deprecationReason == null)
     .map((f) => `${indent}${f.name}`)
     .join("\n");
 }
@@ -299,7 +283,7 @@ function findConflictingUnionFields(members: readonly GraphQLObjectType[]): Set<
   const conflicting = new Set<string>();
   for (const member of members) {
     for (const [fieldName, field] of Object.entries(member.getFields())) {
-      if (isSkippedDeprecated(member, field)) continue;
+      if (field.deprecationReason != null) continue;
       const sig = field.type.toString();
       const existing = fieldTypeSigs.get(fieldName);
       if (existing === undefined) {
@@ -330,7 +314,7 @@ function generateMemberInlineSelection(
   const lines: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
-    if (isSkippedDeprecated(type, field)) continue;
+    if (field.deprecationReason != null) continue;
     const namedType = unwrapType(field.type);
     const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
     if (hasRequiredArgs) continue;
@@ -393,7 +377,7 @@ function generateUnionSelectionInner(
   lines.push(`${indent}  __typename`);
   for (const member of members) {
     // Skip members where all fields are deprecated
-    if (!Object.values(member.getFields()).some((f) => !isSkippedDeprecated(member, f))) continue;
+    if (!Object.values(member.getFields()).some((f) => f.deprecationReason == null)) continue;
     const memberFields = generateMemberInlineSelection(member, `${indent}    `, conflictingFields);
     if (memberFields) {
       lines.push(`${indent}  ... on ${member.name} {\n${memberFields}\n${indent}  }`);
@@ -424,7 +408,7 @@ function generateFragment(type: GraphQLObjectType): string {
   const selections: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
-    if (isSkippedDeprecated(type, field)) continue;
+    if (field.deprecationReason != null) continue;
     const namedType = unwrapType(field.type);
     const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
     if (hasRequiredArgs) continue;
@@ -498,7 +482,7 @@ function generateInlineScalarSelection(
   const lines: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
-    if (isSkippedDeprecated(type, field)) continue;
+    if (field.deprecationReason != null) continue;
     const namedType = unwrapType(field.type);
     if (isScalarType(namedType) || isEnumType(namedType)) {
       lines.push(`${indent}${fieldName}`);
@@ -558,7 +542,7 @@ function generateSelectionForType(
     lines.push(` {`);
     lines.push(`${indent}  __typename`);
     for (const member of members) {
-      if (!Object.values(member.getFields()).some((f) => !isSkippedDeprecated(member, f))) continue;
+      if (!Object.values(member.getFields()).some((f) => f.deprecationReason == null)) continue;
       if (conflicting.size > 0) {
         // Use inline fields with aliases to avoid SameResponseShape validation errors
         const memberFields = generateMemberInlineSelection(member, `${indent}    `, conflicting);
@@ -589,7 +573,7 @@ function generateSelectionForType(
     lines.push(` {`);
     lines.push(`${indent}  __typename`);
     for (const impl of implementations) {
-      if (!Object.values(impl.getFields()).some((f) => !isSkippedDeprecated(impl, f))) continue;
+      if (!Object.values(impl.getFields()).some((f) => f.deprecationReason == null)) continue;
       if (conflicting.size > 0) {
         const memberFields = generateMemberInlineSelection(impl, `${indent}    `, conflicting);
         if (memberFields) {
@@ -748,7 +732,7 @@ function generateMutationOutputSelection(outputType: GraphQLObjectType): string 
   const lines: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
-    if (isSkippedDeprecated(outputType, field)) continue;
+    if (field.deprecationReason != null) continue;
     if (fieldName === "error") {
       lines.push(`    ${MUTATION_ERROR_SELECTION}`);
       continue;

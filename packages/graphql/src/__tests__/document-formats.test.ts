@@ -2,8 +2,6 @@ import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { type DefinitionNode, type DocumentNode, Kind, parse, print } from "graphql";
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
-  type FirstResponseTimeServiceLevelAgreementFieldsFragment,
-  FirstResponseTimeServiceLevelAgreementFieldsFragmentDoc,
   MyWorkspaceDocument,
   type MyWorkspaceQuery,
   type MyWorkspaceQueryVariables,
@@ -157,17 +155,6 @@ describe("sending generated documents", () => {
     await client.request(document);
 
     expect(getRequestBody(fetchMock).query).toBe("query Other {\n  myUser {\n    id\n  }\n}");
-  });
-});
-
-describe("deprecated fields a release selected", () => {
-  it("are still selected, so their result types keep them", () => {
-    expect(print(FirstResponseTimeServiceLevelAgreementFieldsFragmentDoc)).toContain(
-      "useBusinessHoursOnly",
-    );
-    expectTypeOf<FirstResponseTimeServiceLevelAgreementFieldsFragment>().toHaveProperty(
-      "useBusinessHoursOnly",
-    );
   });
 });
 
