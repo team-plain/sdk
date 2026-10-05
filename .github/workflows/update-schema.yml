@@ -40,27 +40,18 @@ jobs:
         if: steps.update.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          BUMP: ${{ steps.update.outputs.bump }}
-          CHANGESET: ${{ steps.update.outputs.changeset }}
-          BRANCH: schema/update
+          TITLE: Regenerate against the current API schema (${{ steps.update.outputs.bump }})
+          BODY: The scheduled schema update found changes. Review the generated changeset before merging.
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -C "$BRANCH"
+          git switch -C schema/update
           git add -A
-          git commit -m "Regenerate against the current API schema"
-          git push --force origin "$BRANCH"
-
-          title="Regenerate against the current API schema ($BUMP)"
-          {
-            echo "The scheduled schema update found changes. The changeset below was generated from the schema diff; edit it before merging if a change needs a migration note."
-            echo
-            # Everything after the frontmatter's closing ---.
-            awk 'seen >= 2; /^---$/ { seen++ }' "$CHANGESET"
-          } > "$RUNNER_TEMP/body.md"
-
-          if gh pr view "$BRANCH" --json state --jq .state 2>/dev/null | grep -q OPEN; then
-            gh pr edit "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"
+          git commit -m "$TITLE"
+          git push --force origin schema/update
+          open=$(gh pr list --head schema/update --state open --json number --jq '.[0].number')
+          if [ -n "$open" ]; then
+            gh pr edit "$open" --title "$TITLE" --body "$BODY"
           else
-            gh pr create --base main --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"
+            gh pr create --head schema/update --title "$TITLE" --body "$BODY"
           fi
