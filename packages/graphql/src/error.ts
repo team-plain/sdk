@@ -30,7 +30,11 @@ export class RateLimitError extends PlainError {
   public readonly retryAfterSeconds: number | undefined;
   public readonly limit: number | undefined;
   public readonly remaining: number | undefined;
-  /** When the current rate limit window ends. */
+  /**
+   * When the current one-minute counting window ends. The limit is a sliding window, so capacity
+   * comes back gradually rather than all at this moment; use `retryAfterSeconds` to decide when to
+   * retry.
+   */
   public readonly resetAt: Date | undefined;
 
   constructor(

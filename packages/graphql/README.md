@@ -114,7 +114,7 @@ for (const identity of customer.identities) {
 
 ### Rate limits and retries
 
-Plain enforces a per-workspace request rate limit and responds with HTTP 429 above it. The SDK throws a `RateLimitError` carrying, when the API sent them, its `Retry-After` hint as `retryAfterSeconds`, your workspace's per-minute request limit as `limit`, the requests left in the current window as `remaining`, and when that window ends as `resetAt`. A rate limited request was never processed, so it is always safe to retry — you can have the client do that for you:
+Plain enforces a per-workspace request rate limit and responds with HTTP 429 above it. The SDK throws a `RateLimitError` carrying, when the API sent them, its `Retry-After` hint as `retryAfterSeconds`, your workspace's per-minute request limit as `limit`, the requests left as `remaining`, and when the current one-minute counting window ends as `resetAt`. The limit is a sliding window, so capacity comes back gradually rather than all at `resetAt`: wait `retryAfterSeconds` before retrying. A rate limited request was never processed, so it is always safe to retry — you can have the client do that for you:
 
 ```ts
 const client = new PlainClient({
