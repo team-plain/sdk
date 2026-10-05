@@ -10,5 +10,6 @@ export default defineConfig({
   dts: false,
   minify: { compress: false, mangle: false, codegen: { removeWhitespace: true } },
   target: "esnext",
-  onSuccess: 'echo \'{"type":"commonjs"}\' > dist/cjs/package.json',
+  // The ESM declarations, copied into the CommonJS scope so require() users get CommonJS types.
+  onSuccess: 'echo \'{"type":"commonjs"}\' > dist/cjs/package.json && cp dist/*.d.ts dist/cjs/',
 });
