@@ -19,18 +19,19 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - name: Set up pnpm and Node.js, install dependencies
+        uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          runtime: node@24
+          cache: true
+          require-lockfile: true
 
-      - name: Set up Node.js
+      # changesets/action does not configure npm auth, so publishing relies on the .npmrc this writes
+      # for NODE_AUTH_TOKEN. Without node-version it keeps the Node.js installed above.
+      - name: Configure npm registry auth
         uses: actions/setup-node@v7
         with:
-          node-version: "24"
-          cache: "pnpm"
           registry-url: "https://registry.npmjs.org"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Generate a GitHub App token
         uses: actions/create-github-app-token@v3
