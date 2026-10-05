@@ -1,6 +1,7 @@
+import { print } from "@0no-co/graphql.web";
 import type { DocumentTypeDecoration, TypedDocumentNode } from "@graphql-typed-document-node/core";
 import packageJson from "@team-plain/graphql/package.json" with { type: "json" };
-import { type DocumentNode, print } from "graphql";
+import type { DocumentNode } from "graphql";
 
 import {
   AuthenticationError,

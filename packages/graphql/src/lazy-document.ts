@@ -1,12 +1,7 @@
-import {
-  type DefinitionNode,
-  type DocumentNode,
-  Kind,
-  type Location,
-  parse,
-  print,
-  Source,
-} from "graphql";
+// graphql.web parses and prints like graphql-js at under half the bundle size; its AST omits empty
+// arrays, as the SDK's earlier inlined ASTs did.
+import { Kind, parse, print } from "@0no-co/graphql.web";
+import type { DefinitionNode, DocumentNode, Location } from "graphql";
 
 // Symbol.for so the ESM and CommonJS builds, which each load their own copy of this module, still
 // recognise each other's documents.
@@ -24,8 +19,8 @@ export function gql(definition: string, ...fragments: DocumentNode[]): DocumentN
     if (texts === undefined) {
       texts = new Set([definition]);
       for (const fragment of fragments) {
-        for (const definition of definitionTexts.get(fragment)?.() ?? [print(fragment)]) {
-          texts.add(definition);
+        for (const text of definitionTexts.get(fragment)?.() ?? [print(fragment)]) {
+          texts.add(text);
         }
       }
     }
@@ -43,56 +38,26 @@ export function gql(definition: string, ...fragments: DocumentNode[]): DocumentN
  */
 function lazyDocument(source: () => string): DocumentNode {
   let text: string | undefined;
-  const queryText = () => {
-    text ??= source();
-    return text;
-  };
   let definitions: ReadonlyArray<DefinitionNode> | undefined;
   let loc: Location | undefined;
-  const document = { kind: Kind.DOCUMENT } as {
-    kind: DocumentNode["kind"];
-    definitions: ReadonlyArray<DefinitionNode>;
-  };
-
-  const settle = (value: ReadonlyArray<DefinitionNode>) => {
-    definitions = value;
-    // Becomes a plain data property once known, so the document reads like any other AST from here
-    // on. A frozen document keeps the accessor and the cached value instead.
-    if (Object.isExtensible(document)) {
-      Object.defineProperty(document, "definitions", {
-        value,
-        writable: true,
-        enumerable: true,
-        configurable: true,
-      });
-    }
-  };
-
-  Object.defineProperty(document, "definitions", {
-    enumerable: true,
-    configurable: true,
-    get() {
-      if (definitions === undefined) {
-        // No per-node locations: they would show up when the document is serialised or cloned,
-        // which the earlier inlined ASTs never had.
-        settle(parse(queryText(), { noLocation: true }).definitions);
-      }
-      return definitions;
-    },
-    set(value: ReadonlyArray<DefinitionNode>) {
-      settle(value);
-    },
-  });
+  const queryText = () => (text ??= source());
+  const document = { kind: Kind.DOCUMENT } as unknown as DocumentNode;
 
   Object.defineProperties(document, {
+    definitions: {
+      enumerable: true,
+      configurable: true,
+      get: () => (definitions ??= parse(queryText(), { noLocation: true }).definitions),
+      set: (value: ReadonlyArray<DefinitionNode>) => {
+        definitions = value;
+      },
+    },
     // graphql-tag reads loc.source.body when a document is interpolated into a gql template, and
     // urql reads it instead of printing the document.
     loc: {
       configurable: true,
-      get() {
-        loc ??= { start: 0, end: queryText().length, source: new Source(queryText()) } as Location;
-        return loc;
-      },
+      get: () =>
+        (loc ??= { start: 0, end: queryText().length, source: { body: queryText() } } as Location),
     },
     toString: {
       configurable: true,
