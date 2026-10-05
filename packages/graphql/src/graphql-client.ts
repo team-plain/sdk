@@ -10,6 +10,7 @@ import {
   PlainGraphQLError,
   RateLimitError,
 } from "./error.js";
+import { unchangedQueryTextOf } from "./lazy-document.js";
 import { numericHeader, type RetryOptions, retryDelayMs } from "./retry.js";
 
 export interface GraphQLResponse<TData> {
@@ -138,11 +139,9 @@ export class PlainGraphQLClient {
   }
 }
 
-// Generated documents also read as a DocumentNode, so check for text first, or every request would
-// parse and print them.
 function queryText(document: GraphQLDocument<unknown, never>): string {
   if (typeof document === "string" || document instanceof String) {
     return document.toString();
   }
-  return print(document as DocumentNode);
+  return unchangedQueryTextOf(document) ?? print(document as DocumentNode);
 }

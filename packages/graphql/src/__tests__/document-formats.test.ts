@@ -1,5 +1,5 @@
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
-import { Kind, parse, print } from "graphql";
+import { type DefinitionNode, type DocumentNode, Kind, parse, print } from "graphql";
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
   MyWorkspaceDocument,
@@ -8,6 +8,7 @@ import {
   PlainGraphQLClient,
   UpsertCustomerDocument,
 } from "../index.js";
+import { lazyDocument } from "../lazy-document.js";
 import { getRequestBody, graphqlResponse, mockFetch } from "./helpers.js";
 
 describe("document formats", () => {
@@ -62,7 +63,7 @@ describe("generated documents read as an AST", () => {
   });
 
   it("is typed as a TypedDocumentNode", () => {
-    expectTypeOf(MyWorkspaceDocument).toExtend<
+    expectTypeOf(MyWorkspaceDocument).toEqualTypeOf<
       TypedDocumentNode<MyWorkspaceQuery, MyWorkspaceQueryVariables>
     >();
   });
@@ -72,6 +73,74 @@ describe("generated documents read as an AST", () => {
   });
 
   it("exposes the query text through loc, as graphql-tag interpolation expects", () => {
-    expect(MyWorkspaceDocument.loc?.source.body).toBe(MyWorkspaceDocument.toString());
+    const document = lazyDocument("query Mine{myWorkspace{id}}");
+
+    expect(document.loc?.source.body).toBe("query Mine{myWorkspace{id}}");
+    expect(document.toString()).toBe("query Mine{myWorkspace{id}}");
+  });
+
+  it("is a plain object with an AST's keys", () => {
+    const document = lazyDocument("query Mine { myWorkspace { id } }");
+
+    expect(Object.getPrototypeOf(document)).toBe(Object.prototype);
+    expect(Object.keys(document)).toEqual(["kind", "definitions"]);
+  });
+
+  it.each([
+    ["spread", (document: DocumentNode) => ({ ...document })],
+    ["JSON", (document: DocumentNode) => JSON.parse(JSON.stringify(document))],
+    ["structuredClone", (document: DocumentNode) => structuredClone(document)],
+  ])("copies through %s into a document that prints the same", (_name, copy) => {
+    const document = lazyDocument("query Mine { myWorkspace { id } }");
+
+    expect(print(copy(document))).toBe(print(parse("query Mine { myWorkspace { id } }")));
+  });
+
+  it("takes assigned definitions", () => {
+    const document = lazyDocument("query Mine { myWorkspace { id } }");
+    const replaced = parse("query Other { myUser { id } }").definitions;
+
+    (document as { definitions: DocumentNode["definitions"] }).definitions = replaced;
+
+    expect(document.definitions).toBe(replaced);
+  });
+
+  it("parses once when frozen", () => {
+    const document = Object.freeze(lazyDocument("query Mine { myWorkspace { id } }"));
+
+    expect(document.definitions).toBe(document.definitions);
+    expect(print(document)).toBe(print(parse("query Mine { myWorkspace { id } }")));
+  });
+});
+
+describe("sending generated documents", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("prints a copy instead of sending the original's text", async () => {
+    const fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(graphqlResponse({ myWorkspace: null }));
+    const client = new PlainGraphQLClient({ apiKey: "test-key" });
+
+    await client.request({ ...MyWorkspaceDocument });
+
+    expect(getRequestBody(fetchMock).query).toBe(print(MyWorkspaceDocument));
+  });
+
+  it("prints a document whose definitions were edited", async () => {
+    const fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(graphqlResponse({ myUser: null }));
+    const client = new PlainGraphQLClient({ apiKey: "test-key" });
+    const document = lazyDocument("query Mine { myWorkspace { id } }");
+    (document.definitions as DefinitionNode[]).splice(
+      0,
+      1,
+      ...parse("query Other { myUser { id } }").definitions,
+    );
+
+    await client.request(document);
+
+    expect(getRequestBody(fetchMock).query).toBe("query Other {\n  myUser {\n    id\n  }\n}");
   });
 });
