@@ -1,6 +1,13 @@
-import { parse } from "graphql";
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import { Kind, parse, print } from "graphql";
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { MyWorkspaceDocument, type MyWorkspaceQuery, PlainGraphQLClient } from "../index.js";
+import {
+  MyWorkspaceDocument,
+  type MyWorkspaceQuery,
+  type MyWorkspaceQueryVariables,
+  PlainGraphQLClient,
+  UpsertCustomerDocument,
+} from "../index.js";
 import { getRequestBody, graphqlResponse, mockFetch } from "./helpers.js";
 
 describe("document formats", () => {
@@ -42,5 +49,29 @@ describe("document formats", () => {
 
     expect(data.myWorkspace.id).toBe("w_1");
     expect(getRequestBody(fetchMock).query).toBe("query Mine { myWorkspace { id } }");
+  });
+});
+
+describe("generated documents read as an AST", () => {
+  it("prints like the parsed query text, fragments included", () => {
+    expect(UpsertCustomerDocument.kind).toBe(Kind.DOCUMENT);
+    expect(print(UpsertCustomerDocument)).toBe(print(parse(UpsertCustomerDocument.toString())));
+    expect(UpsertCustomerDocument.definitions.map((definition) => definition.kind)).toContain(
+      Kind.FRAGMENT_DEFINITION,
+    );
+  });
+
+  it("is typed as a TypedDocumentNode", () => {
+    expectTypeOf(MyWorkspaceDocument).toExtend<
+      TypedDocumentNode<MyWorkspaceQuery, MyWorkspaceQueryVariables>
+    >();
+  });
+
+  it("parses its query text once", () => {
+    expect(MyWorkspaceDocument.definitions).toBe(MyWorkspaceDocument.definitions);
+  });
+
+  it("exposes the query text through loc, as graphql-tag interpolation expects", () => {
+    expect(MyWorkspaceDocument.loc?.source.body).toBe(MyWorkspaceDocument.toString());
   });
 });

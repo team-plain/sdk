@@ -138,10 +138,11 @@ export class PlainGraphQLClient {
   }
 }
 
-// Generated documents are String objects carrying their query text; only a parsed AST needs printing.
+// Generated documents also read as a DocumentNode, so check for text first, or every request would
+// parse and print them.
 function queryText(document: GraphQLDocument<unknown, never>): string {
-  if (typeof document === "object" && document !== null && "kind" in document) {
-    return print(document as DocumentNode);
+  if (typeof document === "string" || document instanceof String) {
+    return document.toString();
   }
-  return String(document);
+  return print(document as DocumentNode);
 }

@@ -35,6 +35,7 @@ generates:
     hooks:
       afterOneFileWrite:
         - node scripts/strip-document-whitespace.ts
+        - node scripts/import-typed-document-string.ts
   ./src/_generated_sdk.ts:
     plugins:
       - "@team-plain/graphql-codegen-plugin"
