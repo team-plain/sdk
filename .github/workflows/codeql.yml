@@ -29,10 +29,12 @@ jobs:
         language: [actions, javascript-typescript]
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Check out the repository
+        uses: actions/checkout@v7
 
       # build-mode none reads the sources directly, so there is no pnpm install in this job.
-      - uses: github/codeql-action/init@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: none
@@ -44,6 +46,7 @@ jobs:
               # Generated from webhook-schema.json: types only.
               - packages/webhooks/src/webhook-schema.ts
 
-      - uses: github/codeql-action/analyze@v4
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
         with:
           category: /language:${{ matrix.language }}

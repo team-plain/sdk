@@ -1,4 +1,5 @@
 name: CI
+
 on:
   pull_request:
     branches: [main]
@@ -12,16 +13,30 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-      - uses: actions/setup-node@v7
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm format:check
-      - run: pnpm build
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Build
+        run: pnpm build
+
       # The build regenerates the SDK from the committed schema, so any diff means a generated file
       # was edited by hand or not regenerated after a schema or generator change.
       - name: Check generated files are up to date
@@ -31,29 +46,45 @@ jobs:
             echo "::error::Generated files are out of date. Run pnpm build and commit the result."
             exit 1
           fi
-      - run: pnpm typecheck
-      - run: pnpm test
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
 
   package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-      - uses: actions/setup-node@v7
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
       # Raw size, not compressed: an unminified build can be twice the size and gzip the same.
       - name: Check the built JS stays within its size limits
         run: pnpm exec size-limit
+
       - name: Check exports and types resolve in every module mode
         run: |
           for pkg in graphql ui-components webhooks; do
             pnpm exec attw --pack "packages/$pkg"
             pnpm exec publint "packages/$pkg"
           done
+
       - name: Install the packed packages and load them
         run: |
           mkdir -p "$RUNNER_TEMP/packs"

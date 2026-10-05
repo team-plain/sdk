@@ -19,23 +19,37 @@ jobs:
     timeout-minutes: 15
     steps:
       # Pull requests opened with the default token don't trigger CI, so push and open them as the app.
-      - uses: actions/create-github-app-token@v3
+      - name: Generate a GitHub App token
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ secrets.GH_WORKFLOW_APP_ID }}
           private-key: ${{ secrets.GH_WORKFLOW_APP_PRIVATE_KEY }}
-      - uses: actions/checkout@v7
+
+      - name: Check out the repository
+        uses: actions/checkout@v7
         with:
           token: ${{ steps.app-token.outputs.token }}
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-      - uses: actions/setup-node@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @team-plain/graphql-codegen-plugin build
-      - id: update
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the codegen plugin
+        run: pnpm --filter @team-plain/graphql-codegen-plugin build
+
+      - name: Download the schema and regenerate
+        id: update
         run: pnpm --filter @team-plain/graphql update-schema
+
       - name: Open or update the pull request
         if: steps.update.outputs.changed == 'true'
         env:
