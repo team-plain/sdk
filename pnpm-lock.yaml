@@ -197,15 +197,18 @@ importers:
       '@graphql-codegen/cli':
         specifier: ^7.4.3
         version: 7.4.3(@types/node@24.19.0)(graphql@17.0.2)(supports-color@7.2.0)(typescript@7.0.2)
-      '@graphql-codegen/typed-document-node':
-        specifier: ^7.1.0
-        version: 7.1.0(graphql@17.0.2)
+      '@graphql-codegen/plugin-helpers':
+        specifier: ^7.3.0
+        version: 7.3.0(graphql@17.0.2)
       '@graphql-codegen/typescript':
         specifier: ^6.1.0
         version: 6.1.0(graphql@17.0.2)
       '@graphql-codegen/typescript-operations':
         specifier: ^6.1.7
         version: 6.1.7(graphql@17.0.2)
+      '@graphql-codegen/visitor-plugin-common':
+        specifier: ^7.2.5
+        version: 7.2.5(graphql@17.0.2)
       '@team-plain/graphql-codegen-plugin':
         specifier: workspace:*
         version: link:../graphql-codegen-plugin
