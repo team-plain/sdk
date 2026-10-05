@@ -103,7 +103,7 @@ The pipeline has two stages:
 
 1. **Document generation** (`generate-documents.ts`): reads `schema.graphql` and produces `_generated_documents.graphql` with fragments for every object type (scalars + 1 level of relations via `{ id }`) and query/mutation operations.
 
-2. **Code generation** (`graphql-codegen` with `codegen.yml`): runs standard plugins (`typescript`, `typescript-operations`, `typed-document-node`) to produce typed document nodes, then runs our custom `@team-plain/graphql-codegen-plugin` to produce model classes and the `PlainSdk` class.
+2. **Code generation** (`graphql-codegen` with `codegen.yml`): runs `typescript` and `typescript-operations` for the result and variables types, and `scripts/documents-plugin.ts` for the documents, each built from its query text by `src/lazy-document.ts`. Then our custom `@team-plain/graphql-codegen-plugin` produces model classes and the `PlainSdk` class.
 
 ## Common Tasks
 
