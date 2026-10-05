@@ -51,6 +51,19 @@ describe("document formats", () => {
     expect(data.myWorkspace.id).toBe("w_1");
     expect(getRequestBody(fetchMock).query).toBe("query Mine { myWorkspace { id } }");
   });
+
+  it("types query text by its result alone", async () => {
+    fetchMock = mockFetch();
+    fetchMock.mockResolvedValueOnce(graphqlResponse({ myWorkspace: { id: "w_1" } }));
+    const client = new PlainGraphQLClient({ apiKey: "test-key" });
+
+    const data = await client.request<{ myWorkspace: { id: string } }>(
+      "query Mine($id: ID) { myWorkspace { id } }",
+      { id: "w_1" },
+    );
+
+    expectTypeOf(data).toEqualTypeOf<{ myWorkspace: { id: string } }>();
+  });
 });
 
 describe("generated documents read as an AST", () => {

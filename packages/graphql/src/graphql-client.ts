@@ -29,7 +29,7 @@ export interface GraphQLResponse<TData> {
  * A GraphQL operation to send: one of the SDK's generated documents, a document from `parse()`,
  * or the query text itself.
  */
-export type GraphQLDocument<TData, TVariables> =
+export type GraphQLDocument<TData = unknown, TVariables = Record<string, unknown>> =
   | TypedDocumentNode<TData, TVariables>
   | DocumentTypeDecoration<TData, TVariables>
   | string;
@@ -51,10 +51,11 @@ export class PlainGraphQLClient {
     this.maxRetries = options.retry?.maxRetries ?? 0;
   }
 
-  async request<TData, TVariables extends Record<string, unknown>>(
-    document: GraphQLDocument<TData, TVariables>,
-    variables?: TVariables,
-  ): Promise<TData> {
+  // Defaults so a query string can be typed by its result alone: request<Result>(query, variables).
+  async request<
+    TData = unknown,
+    TVariables extends Record<string, unknown> = Record<string, unknown>,
+  >(document: GraphQLDocument<TData, TVariables>, variables?: TVariables): Promise<TData> {
     for (let attempt = 0; ; attempt++) {
       try {
         return await this.requestOnce(document, variables);
