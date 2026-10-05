@@ -30,7 +30,7 @@
         "default": "./dist/index.js"
       },
       "require": {
-        "types": "./dist/index.d.ts",
+        "types": "./dist/cjs/index.d.ts",
         "default": "./dist/cjs/index.js"
       }
     }
@@ -52,5 +52,6 @@
     "@team-plain/graphql": "workspace:*",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2"
-  }
+  },
+  "sideEffects": false
 }
