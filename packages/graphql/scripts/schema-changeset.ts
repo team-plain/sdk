@@ -25,8 +25,12 @@ export async function schemaChangeset(
   const dropped = of(ChangeType.FieldDeprecationAdded, false).filter(
     (c) => !added.has(c.path?.replace(/\.@deprecated$/, "")),
   );
+  const restored = of(ChangeType.FieldDeprecationRemoved, false);
   const docsOnly = changes.every(
-    (c) => /DESCRIPTION|DEPRECATION|DIRECTIVE_USAGE/.test(c.type) && !dropped.includes(c),
+    (c) =>
+      /DESCRIPTION|DEPRECATION|DIRECTIVE_USAGE/.test(c.type) &&
+      !dropped.includes(c) &&
+      !restored.includes(c),
   );
   const bump: Bump =
     breaking.length > 0 || dropped.length > 0 ? "major" : docsOnly ? "patch" : "minor";
@@ -34,6 +38,7 @@ export async function schemaChangeset(
   const sections = [
     ["Breaking", breaking],
     ["No longer in the generated result types, because deprecated", dropped],
+    ["Back in the generated result types, because no longer deprecated", restored],
     ["New methods", of(ChangeType.FieldAdded, true)],
     ["Deprecated methods, still available", of(ChangeType.FieldDeprecationAdded, true)],
   ] as const;

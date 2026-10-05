@@ -50,6 +50,12 @@ describe("schemaChangeset", () => {
     expect(result?.summary).toContain("'Thread.title' is deprecated");
   });
 
+  it("is a minor when an object field is undeprecated, since it rejoins the result types", async () => {
+    const result = await schemaChangeset(deprecate(base, "title: String"), base);
+    expect(result?.releases[0].type).toBe("minor");
+    expect(result?.summary).toContain("**Back in the generated result types");
+  });
+
   it("is a minor when a new field arrives already deprecated", async () => {
     const next = base.replace("status: Status", 'status: Status old: ID @deprecated(reason: "x")');
     expect((await schemaChangeset(base, next))?.releases[0].type).toBe("minor");
