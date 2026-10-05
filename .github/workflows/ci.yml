@@ -30,3 +30,35 @@ jobs:
           fi
       - run: pnpm typecheck
       - run: pnpm test
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # Raw size, not compressed: an unminified build can be twice the size and gzip the same.
+      - name: Check the built JS stays within its size limits
+        run: pnpm exec size-limit
+      - name: Check exports and types resolve in every module mode
+        run: |
+          for pkg in graphql ui-components webhooks; do
+            pnpm exec attw --pack "packages/$pkg"
+            pnpm exec publint "packages/$pkg"
+          done
+      - name: Install the packed packages and load them
+        run: |
+          mkdir -p "$RUNNER_TEMP/packs"
+          pnpm -r --filter "./packages/*" --filter "!@team-plain/graphql-codegen-plugin" \
+            exec pnpm pack --pack-destination "$RUNNER_TEMP/packs"
+          mkdir "$RUNNER_TEMP/consumer" && cd "$RUNNER_TEMP/consumer"
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund "$RUNNER_TEMP"/packs/*.tgz
+          export PACKAGES='["@team-plain/graphql","@team-plain/ui-components","@team-plain/webhooks"]'
+          node -e 'for (const p of JSON.parse(process.env.PACKAGES)) if (!Object.keys(require(p)).length) throw new Error(p)'
+          node --input-type=module -e 'for (const p of JSON.parse(process.env.PACKAGES)) if (!Object.keys(await import(p)).length) throw new Error(p)'

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "@team-plain/graphql (ESM)",
+    "path": "packages/graphql/dist/*.js",
+    "limit": "1.5 MB",
+    "brotli": false
+  },
+  {
+    "name": "@team-plain/graphql (CJS)",
+    "path": "packages/graphql/dist/cjs/*.js",
+    "limit": "1.5 MB",
+    "brotli": false
+  },
+  {
+    "name": "@team-plain/ui-components",
+    "path": "packages/ui-components/dist/**/*.js",
+    "limit": "15 kB",
+    "brotli": false
+  },
+  {
+    "name": "@team-plain/webhooks",
+    "path": "packages/webhooks/dist/**/*.js",
+    "limit": "100 kB",
+    "brotli": false
+  }
+]
