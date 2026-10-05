@@ -53,6 +53,7 @@ jobs:
           done
       - name: Install the packed packages and load them
         run: |
+          mkdir -p "$RUNNER_TEMP/packs"
           pnpm -r --filter "./packages/*" --filter "!@team-plain/graphql-codegen-plugin" \
             exec pnpm pack --pack-destination "$RUNNER_TEMP/packs"
           mkdir "$RUNNER_TEMP/consumer" && cd "$RUNNER_TEMP/consumer"
