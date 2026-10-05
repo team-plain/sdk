@@ -16,8 +16,9 @@ export class TypedDocumentString<TResult, TVariables>
   private value: string;
   public __meta__?: Record<string, unknown> | undefined;
   // An own field rather than a getter: graphql's visit() clones a node from its own properties, so
-  // print() would lose a kind defined on the prototype.
-  readonly kind: DocumentNode["kind"] = Kind.DOCUMENT;
+  // print() would lose a kind defined on the prototype. Typed through Kind because the declaration
+  // emit otherwise inlines graphql 17's "Document" literal, which graphql 16's Kind enum rejects.
+  readonly kind: typeof Kind.DOCUMENT = Kind.DOCUMENT;
   #ast: DocumentNode | undefined;
 
   constructor(value: string, __meta__?: Record<string, unknown> | undefined) {
