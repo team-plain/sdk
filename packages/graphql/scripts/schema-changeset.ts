@@ -1,9 +1,16 @@
-// The bump follows what SDK users see. The document generator skips deprecated fields, so
-// deprecating an object field removes it from the generated result types, which the schema diff
-// alone calls non-breaking.
+// The bump follows what SDK users see. The document generator skips deprecated fields and fields
+// with a non-null argument, even a defaulted one, so deprecating an object field or giving it such
+// an argument removes it from the generated result types, which the schema diff alone calls
+// non-breaking.
 import type { NewChangeset } from "@changesets/types";
 import { type Change, ChangeType, CriticalityLevel, diff } from "@graphql-inspector/core";
-import { buildSchema } from "graphql";
+import {
+  buildSchema,
+  type GraphQLSchema,
+  isInterfaceType,
+  isNonNullType,
+  isObjectType,
+} from "graphql";
 
 type Bump = "major" | "minor" | "patch";
 
@@ -11,21 +18,32 @@ export async function schemaChangeset(
   oldSdl: string,
   newSdl: string,
 ): Promise<Omit<NewChangeset, "id"> | null> {
-  const changes = await diff(buildSchema(oldSdl), buildSchema(newSdl));
+  const oldSchema = buildSchema(oldSdl);
+  const newSchema = buildSchema(newSdl);
+  const changes = await diff(oldSchema, newSchema);
   if (changes.length === 0) return null;
 
-  const isMethod = (c: Change) =>
-    /^(Query|Mutation)\.\w+$/.test(c.path?.replace(/\.@deprecated$/, "") ?? "");
+  const isMethod = (c: Change) => /^(Query|Mutation)\./.test(c.path ?? "");
   const of = (type: ChangeType, method: boolean) =>
     changes.filter((c) => c.type === type && isMethod(c) === method);
+  // Comparing both schemas, rather than trusting the change type, keeps a field that was already
+  // skipped, or arrives skipped, out of the lists.
+  const moves = (types: ChangeType[], from: GraphQLSchema, to: GraphQLSchema) =>
+    changes.filter(
+      (c) =>
+        types.includes(c.type as ChangeType) &&
+        !isMethod(c) &&
+        isSelected(from, c) &&
+        !isSelected(to, c),
+    );
 
   const breaking = changes.filter((c) => c.criticality.level === CriticalityLevel.Breaking);
-  // A field that arrives already deprecated was never in the result types.
-  const added = new Set(changes.filter((c) => c.type === ChangeType.FieldAdded).map((c) => c.path));
-  const dropped = of(ChangeType.FieldDeprecationAdded, false).filter(
-    (c) => !added.has(c.path?.replace(/\.@deprecated$/, "")),
+  const dropped = moves(
+    [ChangeType.FieldDeprecationAdded, ChangeType.FieldArgumentAdded],
+    oldSchema,
+    newSchema,
   );
-  const restored = of(ChangeType.FieldDeprecationRemoved, false);
+  const restored = moves([ChangeType.FieldDeprecationRemoved], newSchema, oldSchema);
   const docsOnly = changes.every(
     (c) =>
       /DESCRIPTION|DEPRECATION|DIRECTIVE_USAGE/.test(c.type) &&
@@ -37,8 +55,8 @@ export async function schemaChangeset(
 
   const sections = [
     ["Breaking", breaking],
-    ["No longer in the generated result types, because deprecated", dropped],
-    ["Back in the generated result types, because no longer deprecated", restored],
+    ["No longer in the generated result types", dropped],
+    ["Back in the generated result types", restored],
     ["New methods", of(ChangeType.FieldAdded, true)],
     ["Deprecated methods, still available", of(ChangeType.FieldDeprecationAdded, true)],
   ] as const;
@@ -55,4 +73,16 @@ export async function schemaChangeset(
   if (bump !== "patch") releases.push({ name: "@team-plain/ui-components", type: "major" });
 
   return { summary, releases };
+}
+
+function isSelected(schema: GraphQLSchema, change: Change): boolean {
+  const [typeName, fieldName] = change.path?.split(".") ?? [];
+  const type = schema.getType(typeName ?? "");
+  if (!isObjectType(type) && !isInterfaceType(type)) return false;
+  const field = type.getFields()[fieldName ?? ""];
+  return (
+    field !== undefined &&
+    field.deprecationReason == null &&
+    !field.args.some((a) => isNonNullType(a.type))
+  );
 }
