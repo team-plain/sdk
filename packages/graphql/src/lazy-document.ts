@@ -12,15 +12,41 @@ import {
 // recognise each other's documents.
 const unchangedQueryText = Symbol.for("@team-plain/graphql/unchangedQueryText");
 
+const definitionTexts = new WeakMap<DocumentNode, () => ReadonlySet<string>>();
+
 /**
- * Builds a generated document from its query text.
- *
- * The result is a plain `DocumentNode` object, like the SDK's earlier inlined ASTs: its own
- * enumerable keys are `kind` and `definitions`, so spreading, cloning or serialising it still gives a
- * document. `definitions` is parsed on first access, so documents only ever sent as text never pay
- * for it.
+ * Builds a generated document from its own definition and the fragment documents it uses. A
+ * fragment used along several paths is sent once.
  */
-export function lazyDocument(text: string): DocumentNode {
+export function gql(definition: string, ...fragments: DocumentNode[]): DocumentNode {
+  let texts: Set<string> | undefined;
+  const collect = () => {
+    if (texts === undefined) {
+      texts = new Set([definition]);
+      for (const fragment of fragments) {
+        for (const definition of definitionTexts.get(fragment)?.() ?? [print(fragment)]) {
+          texts.add(definition);
+        }
+      }
+    }
+    return texts;
+  };
+  const document = lazyDocument(() => [...collect()].join(""));
+  definitionTexts.set(document, collect);
+  return document;
+}
+
+/**
+ * A plain `DocumentNode` object, like the SDK's earlier inlined ASTs: its own enumerable keys are
+ * `kind` and `definitions`, so spreading, cloning or serialising it still gives a document.
+ * `definitions` is parsed on first access, so documents only ever sent as text never pay for it.
+ */
+function lazyDocument(source: () => string): DocumentNode {
+  let text: string | undefined;
+  const queryText = () => {
+    text ??= source();
+    return text;
+  };
   let definitions: ReadonlyArray<DefinitionNode> | undefined;
   let loc: Location | undefined;
   const document = { kind: Kind.DOCUMENT } as {
@@ -49,7 +75,7 @@ export function lazyDocument(text: string): DocumentNode {
       if (definitions === undefined) {
         // No per-node locations: they would show up when the document is serialised or cloned,
         // which the earlier inlined ASTs never had.
-        settle(parse(text, { noLocation: true }).definitions);
+        settle(parse(queryText(), { noLocation: true }).definitions);
       }
       return definitions;
     },
@@ -64,19 +90,19 @@ export function lazyDocument(text: string): DocumentNode {
     loc: {
       configurable: true,
       get() {
-        loc ??= { start: 0, end: text.length, source: new Source(text) } as Location;
+        loc ??= { start: 0, end: queryText().length, source: new Source(queryText()) } as Location;
         return loc;
       },
     },
     toString: {
       configurable: true,
       writable: true,
-      value: () => (definitions === undefined ? text : print(document)),
+      value: () => (definitions === undefined ? queryText() : print(document)),
     },
     // Once definitions has been read, it may have been edited in place, so only the untouched text
     // is safe to send without printing.
     [unchangedQueryText]: {
-      value: () => (definitions === undefined ? text : undefined),
+      value: () => (definitions === undefined ? queryText() : undefined),
     },
   });
 

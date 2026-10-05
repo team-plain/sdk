@@ -10,7 +10,7 @@ import {
   PlainGraphQLClient,
   UpsertCustomerDocument,
 } from "../index.js";
-import { lazyDocument } from "../lazy-document.js";
+import { gql } from "../lazy-document.js";
 import { getRequestBody, graphqlResponse, mockFetch } from "./helpers.js";
 
 describe("document formats", () => {
@@ -88,14 +88,14 @@ describe("generated documents read as an AST", () => {
   });
 
   it("exposes the query text through loc, as graphql-tag interpolation expects", () => {
-    const document = lazyDocument("query Mine{myWorkspace{id}}");
+    const document = gql("query Mine{myWorkspace{id}}");
 
     expect(document.loc?.source.body).toBe("query Mine{myWorkspace{id}}");
     expect(document.toString()).toBe("query Mine{myWorkspace{id}}");
   });
 
   it("is a plain object with an AST's keys", () => {
-    const document = lazyDocument("query Mine { myWorkspace { id } }");
+    const document = gql("query Mine { myWorkspace { id } }");
 
     expect(Object.getPrototypeOf(document)).toBe(Object.prototype);
     expect(Object.keys(document)).toEqual(["kind", "definitions"]);
@@ -106,13 +106,13 @@ describe("generated documents read as an AST", () => {
     ["JSON", (document: DocumentNode) => JSON.parse(JSON.stringify(document))],
     ["structuredClone", (document: DocumentNode) => structuredClone(document)],
   ])("copies through %s into a document that prints the same", (_name, copy) => {
-    const document = lazyDocument("query Mine { myWorkspace { id } }");
+    const document = gql("query Mine { myWorkspace { id } }");
 
     expect(print(copy(document))).toBe(print(parse("query Mine { myWorkspace { id } }")));
   });
 
   it("takes assigned definitions", () => {
-    const document = lazyDocument("query Mine { myWorkspace { id } }");
+    const document = gql("query Mine { myWorkspace { id } }");
     const replaced = parse("query Other { myUser { id } }").definitions;
 
     (document as { definitions: DocumentNode["definitions"] }).definitions = replaced;
@@ -121,7 +121,7 @@ describe("generated documents read as an AST", () => {
   });
 
   it("parses once when frozen", () => {
-    const document = Object.freeze(lazyDocument("query Mine { myWorkspace { id } }"));
+    const document = Object.freeze(gql("query Mine { myWorkspace { id } }"));
 
     expect(document.definitions).toBe(document.definitions);
     expect(print(document)).toBe(print(parse("query Mine { myWorkspace { id } }")));
@@ -147,7 +147,7 @@ describe("sending generated documents", () => {
     const fetchMock = mockFetch();
     fetchMock.mockResolvedValueOnce(graphqlResponse({ myUser: null }));
     const client = new PlainGraphQLClient({ apiKey: "test-key" });
-    const document = lazyDocument("query Mine { myWorkspace { id } }");
+    const document = gql("query Mine { myWorkspace { id } }");
     (document.definitions as DefinitionNode[]).splice(
       0,
       1,
@@ -168,5 +168,25 @@ describe("deprecated fields a release selected", () => {
     expectTypeOf<FirstResponseTimeServiceLevelAgreementFieldsFragment>().toHaveProperty(
       "useBusinessHoursOnly",
     );
+  });
+});
+
+describe("documents with fragments", () => {
+  it("sends each fragment once, however many paths use it", () => {
+    const leaf = gql("fragment Leaf on User{id}");
+    const left = gql("fragment Left on User{...Leaf}", leaf);
+    const right = gql("fragment Right on User{...Leaf}", leaf);
+    const query = gql("query Q{myUser{...Left ...Right}}", left, right, leaf);
+
+    expect(query.toString()).toBe(
+      "query Q{myUser{...Left ...Right}}fragment Left on User{...Leaf}fragment Leaf on User{id}fragment Right on User{...Leaf}",
+    );
+  });
+
+  it("sends a generated operation with every fragment it spreads, and valid", () => {
+    const text = UpsertCustomerDocument.toString();
+
+    expect(() => parse(text)).not.toThrow();
+    expect(print(parse(text))).toBe(print(UpsertCustomerDocument));
   });
 });

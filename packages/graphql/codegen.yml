@@ -26,16 +26,19 @@ generates:
         ID: string
       enumType: string-literal
       skipTypename: true
-      # Ships each document as its query text rather than an AST, about a quarter of the size, and
-      # saves printing it back to text on every request.
-      documentMode: string
+      # Each document is built by the SDK's own tag from its query text rather than inlined as an AST,
+      # about a quarter of the size, and fragments are shared between documents rather than copied
+      # into each one.
+      documentMode: graphQLTag
+      gqlImport: ./lazy-document.js#gql
+      useTypeImports: true
       # Marks each document's construction side-effect free, so bundlers can drop documents an app
-      # never uses, starting with the fragment documents the SDK itself never imports.
+      # never uses, starting with the fragment documents the SDK itself never imports. Takes effect
+      # once compact-documents.ts turns each template into a call.
       pureMagicComment: true
     hooks:
       afterOneFileWrite:
-        - node scripts/strip-document-whitespace.ts
-        - node scripts/use-lazy-documents.ts
+        - node scripts/compact-documents.ts
   ./src/_generated_sdk.ts:
     plugins:
       - "@team-plain/graphql-codegen-plugin"
