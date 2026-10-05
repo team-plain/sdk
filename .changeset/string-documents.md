@@ -1,5 +1,5 @@
 ---
-"@team-plain/graphql": major
+"@team-plain/graphql": minor
 ---
 
 Generated documents now hold compact query text instead of an inlined AST, and the package is marked side-effect free. It bundles to 124 kB gzipped, down from 223 kB, and bundlers drop documents an app never uses (`sideEffects: false`).
