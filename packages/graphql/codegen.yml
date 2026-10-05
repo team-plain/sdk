@@ -24,6 +24,9 @@ generates:
         ID: string
       enumType: string-literal
       skipTypename: true
+    hooks:
+      afterOneFileWrite:
+        - node scripts/restore-codegen-5-types.ts
   ./src/_generated_sdk.ts:
     plugins:
       - "@team-plain/graphql-codegen-plugin"
