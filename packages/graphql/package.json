@@ -47,7 +47,8 @@
   "scripts": {
     "generate-documents": "node src/generate-documents.ts",
     "download-schema": "node scripts/download-schema.ts",
-    "codegen": "pnpm download-schema && node src/generate-documents.ts && graphql-codegen --config codegen.yml",
+    "update-schema": "node scripts/update-schema.ts",
+    "codegen": "node src/generate-documents.ts && graphql-codegen --config codegen.yml",
     "build": "tsc && tsdown && node scripts/drop-generated-sourcemaps.ts",
     "prepublishOnly": "npm run build",
     "test": "vitest run"

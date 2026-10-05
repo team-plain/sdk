@@ -19,5 +19,14 @@ jobs:
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm build
+      # The build regenerates the SDK from the committed schema, so any diff means a generated file
+      # was edited by hand or not regenerated after a schema or generator change.
+      - name: Check generated files are up to date
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --short
+            echo "::error::Generated files are out of date. Run pnpm build and commit the result."
+            exit 1
+          fi
       - run: pnpm typecheck
       - run: pnpm test
