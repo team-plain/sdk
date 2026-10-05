@@ -47,7 +47,8 @@
   "scripts": {
     "generate-documents": "node src/generate-documents.ts",
     "download-schema": "node scripts/download-schema.ts",
-    "codegen": "pnpm download-schema && node src/generate-documents.ts && graphql-codegen --config codegen.yml",
+    "update-schema": "node scripts/update-schema.ts",
+    "codegen": "node src/generate-documents.ts && graphql-codegen --config codegen.yml",
     "build": "tsc && tsdown && node scripts/drop-generated-sourcemaps.ts",
     "prepublishOnly": "npm run build",
     "test": "vitest run"
@@ -58,11 +59,14 @@
     "graphql": "^16.14.2 || ^17.0.2"
   },
   "devDependencies": {
+    "@changesets/types": "^7.0.0",
+    "@changesets/write": "^1.0.1",
     "@graphql-codegen/cli": "^7.4.3",
     "@graphql-codegen/plugin-helpers": "^7.3.0",
     "@graphql-codegen/typescript": "^6.1.0",
     "@graphql-codegen/typescript-operations": "^6.1.7",
     "@graphql-codegen/visitor-plugin-common": "^7.2.5",
+    "@graphql-inspector/core": "^8.0.0",
     "@team-plain/graphql-codegen-plugin": "workspace:*",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2"

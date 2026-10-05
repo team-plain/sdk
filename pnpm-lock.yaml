@@ -194,6 +194,12 @@ importers:
         specifier: ^16.14.2 || ^17.0.2
         version: 17.0.2
     devDependencies:
+      '@changesets/types':
+        specifier: ^7.0.0
+        version: 7.0.0
+      '@changesets/write':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@graphql-codegen/cli':
         specifier: ^7.4.3
         version: 7.4.3(@types/node@24.19.0)(graphql@17.0.2)(supports-color@7.2.0)(typescript@7.0.2)
@@ -209,6 +215,9 @@ importers:
       '@graphql-codegen/visitor-plugin-common':
         specifier: ^7.2.5
         version: 7.2.5(graphql@17.0.2)
+      '@graphql-inspector/core':
+        specifier: ^8.0.0
+        version: 8.0.0(graphql@17.0.2)
       '@team-plain/graphql-codegen-plugin':
         specifier: workspace:*
         version: link:../graphql-codegen-plugin
@@ -741,6 +750,12 @@ packages:
   '@graphql-hive/signal@2.0.0':
     resolution: {integrity: sha512-Pz8wB3K0iU6ae9S1fWfsmJX24CcGeTo6hE7T44ucmV/ALKRj+bxClmqrYcDT7v3f0d12Rh4FAXBb6gon+WkDpQ==}
     engines: {node: '>=20.0.0'}
+
+  '@graphql-inspector/core@8.0.0':
+    resolution: {integrity: sha512-2nzh/ez5BGi0yuKJnLv6STp2HKHZJ/PtFd5mHlrZTR2SxkvauPLwrvyekVethZRp+fVJHgb+3IcYh7osIAqsng==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      graphql: ^16.0.0 || ^17.0.0
 
   '@graphql-tools/apollo-engine-loader@8.0.36':
     resolution: {integrity: sha512-wpchMvOZEHax7JOwuvJHAMX+ln1TrGqhyj8ULBV8Au1N6DSAejq7PyRTZ3MKZPqqxdz8vC+c0GlYzuXvVTN7mQ==}
@@ -2153,6 +2168,10 @@ packages:
     resolution: {integrity: sha512-3pKJwH184Xo/lnH6oyP1q2pMd7HcypqqmRs91/6/i2CGtWwIKGCkOOMTm/zXbgTEWHw1uNpNi/igc3ePOYHb6w==}
     engines: {node: '>=0.10.0'}
 
+  object-inspect@1.13.4:
+    resolution: {integrity: sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==}
+    engines: {node: '>= 0.4'}
+
   obug@2.2.1:
     resolution: {integrity: sha512-XrsrhT5sybtKI6wakr2SPOlGZWWYbUXZ7a0jT8/QOeAPau+1X/bSegNe5YR75oJmEZQbKningirmGOEJCIk61Q==}
     engines: {node: '>=12.20.0'}
@@ -2422,6 +2441,9 @@ packages:
         optional: true
       unrun:
         optional: true
+
+  tslib@2.6.3:
+    resolution: {integrity: sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==}
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
@@ -3140,6 +3162,13 @@ snapshots:
       tslib: 2.8.1
 
   '@graphql-hive/signal@2.0.0': {}
+
+  '@graphql-inspector/core@8.0.0(graphql@17.0.2)':
+    dependencies:
+      dependency-graph: 1.0.0
+      graphql: 17.0.2
+      object-inspect: 1.13.4
+      tslib: 2.6.3
 
   '@graphql-tools/apollo-engine-loader@8.0.36(graphql@17.0.2)':
     dependencies:
@@ -4343,6 +4372,8 @@ snapshots:
     dependencies:
       remove-trailing-separator: 1.1.0
 
+  object-inspect@1.13.4: {}
+
   obug@2.2.1: {}
 
   obug@3.0.0: {}
@@ -4570,6 +4601,8 @@ snapshots:
       - '@vue/language-core'
       - oxc-resolver
       - vue-tsc
+
+  tslib@2.6.3: {}
 
   tslib@2.8.1: {}
 

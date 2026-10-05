@@ -1,0 +1,57 @@
+name: Update schema
+
+on:
+  schedule:
+    # Mondays, so a week of API changes lands as one reviewable pull request.
+    - cron: "17 7 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Pull requests opened with the default token don't trigger CI, so push and open them as the app.
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ secrets.GH_WORKFLOW_APP_ID }}
+          private-key: ${{ secrets.GH_WORKFLOW_APP_PRIVATE_KEY }}
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @team-plain/graphql-codegen-plugin build
+      - id: update
+        run: pnpm --filter @team-plain/graphql update-schema
+      - name: Open or update the pull request
+        if: steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TITLE: Regenerate against the current API schema (${{ steps.update.outputs.bump }})
+          BODY: The scheduled schema update found changes. Review the generated changeset before merging.
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C schema/update
+          git add -A
+          git commit -m "$TITLE"
+          git push --force origin schema/update
+          open=$(gh pr list --head schema/update --state open --json number --jq '.[0].number')
+          if [ -n "$open" ]; then
+            gh pr edit "$open" --title "$TITLE" --body "$BODY"
+          else
+            gh pr create --head schema/update --title "$TITLE" --body "$BODY"
+          fi

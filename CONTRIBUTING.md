@@ -26,7 +26,7 @@ pnpm build
 These are important to understand before contributing:
 
 - **Node 24+. ESM and CJS.** Publishable packages ship both ESM and CJS builds: `tsc` emits ESM and types, tsdown emits CJS.
-- **Generated files are committed.** The `_generated_*` files are checked in so consumers don't need to run codegen. Re-run `pnpm codegen` after schema changes.
+- **Generated files are committed.** The `_generated_*` files are checked in so consumers don't need to run codegen. CI checks they match the committed schema.
 
 ### SDK-specific
 
@@ -50,7 +50,7 @@ packages/
     src/index.ts        # Single-file plugin: schema analysis → model classes → SDK class
   graphql/                  # The publishable SDK package (@team-plain/graphql)
     src/
-      schema.graphql              # Plain's GraphQL schema (fetched from API)
+      schema.graphql              # Plain's GraphQL schema (fetched by update-schema)
       generate-documents.ts       # Script: schema → fragments + query/mutation operations
       _generated_documents.graphql  # Auto-generated GraphQL operations
       _generated_documents.ts       # Auto-generated typed document nodes
@@ -83,7 +83,8 @@ Files prefixed with `_generated_` are auto-generated — don't edit them manuall
 | Command | Description |
 |---------|-------------|
 | `pnpm build` | Build everything (codegen plugin → SDK → ui-components → webhooks) |
-| `pnpm codegen` | Regenerate documents + SDK from schema |
+| `pnpm --filter @team-plain/graphql codegen` | Regenerate documents + SDK from the committed schema |
+| `pnpm --filter @team-plain/graphql update-schema` | Download the production schema, regenerate, and write a changeset |
 | `pnpm typecheck` | Type-check all packages |
 | `pnpm test` | Run tests across all packages |
 | `pnpm --filter @team-plain/graphql-codegen-plugin build` | Build just the codegen plugin |
@@ -109,11 +110,17 @@ The pipeline has two stages:
 
 ### Update the GraphQL schema
 
+A scheduled workflow (`update-schema.yml`) does this every Monday and opens a pull request when the schema changed. To do it by hand:
+
 ```bash
-curl -o packages/graphql/src/schema.graphql https://core-api.uk.plain.com/graphql/v1/schema.graphql
-pnpm codegen
+pnpm --filter @team-plain/graphql-codegen-plugin build
+pnpm --filter @team-plain/graphql update-schema
 pnpm typecheck
 ```
+
+`update-schema` downloads the production schema, regenerates the SDK, and writes a changeset with the bump the change needs: major when a field disappears from the generated result types, minor for additions, patch for description-only changes. Review the changeset and add migration notes where a change needs them.
+
+Builds, including releases, only ever use the committed `schema.graphql`, and CI fails if the committed generated files don't match it.
 
 ### Modify how SDK classes are generated
 
@@ -121,7 +128,7 @@ Edit `packages/graphql-codegen-plugin/src/index.ts`, then:
 
 ```bash
 pnpm --filter @team-plain/graphql-codegen-plugin build
-pnpm codegen
+pnpm --filter @team-plain/graphql codegen
 pnpm typecheck
 ```
 
