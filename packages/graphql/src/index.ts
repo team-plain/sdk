@@ -7,6 +7,7 @@ export { PlainClient } from "./client.js";
 export type { PageInfoData, PlainConnectionConfig } from "./connection.js";
 export { PlainConnection } from "./connection.js";
 export type { GraphQLErrorEntry } from "./error.js";
+export type { Exact, MakeEmpty, MakeMaybe, MakeOptional } from "./helper-types.js";
 export {
   AuthenticationError,
   ForbiddenError,

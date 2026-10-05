@@ -53,6 +53,7 @@ packages/
       schema.graphql              # Plain's GraphQL schema (fetched from API)
       generate-documents.ts       # Script: schema → fragments + query/mutation operations
       _generated_documents.graphql  # Auto-generated GraphQL operations
+      _generated_types.ts           # Auto-generated schema and operation types
       _generated_documents.ts       # Auto-generated typed document nodes
       _generated_sdk.ts             # Auto-generated model classes + PlainSdk class
       client.ts                   # PlainClient — the main entry point
@@ -103,7 +104,7 @@ The pipeline has two stages:
 
 1. **Document generation** (`generate-documents.ts`): reads `schema.graphql` and produces `_generated_documents.graphql` with fragments for every object type (scalars + 1 level of relations via `{ id }`) and query/mutation operations.
 
-2. **Code generation** (`graphql-codegen` with `codegen.yml`): runs standard plugins (`typescript`, `typescript-operations`, `typed-document-node`) to produce typed document nodes, then runs our custom `@team-plain/graphql-codegen-plugin` to produce model classes and the `PlainSdk` class.
+2. **Code generation** (`graphql-codegen` with `codegen.yml`): runs standard plugins (`typescript` and `typescript-operations` into `_generated_types.ts`, `typed-document-node` into `_generated_documents.ts`) to produce types and typed document nodes, then runs our custom `@team-plain/graphql-codegen-plugin` to produce model classes and the `PlainSdk` class.
 
 ## Common Tasks
 
