@@ -184,6 +184,9 @@ importers:
 
   packages/graphql:
     dependencies:
+      '@0no-co/graphql.web':
+        specifier: ^1.3.4
+        version: 1.3.4(graphql@17.0.2)
       '@graphql-typed-document-node/core':
         specifier: ^3.2.0
         version: 3.2.0(graphql@17.0.2)
@@ -194,15 +197,18 @@ importers:
       '@graphql-codegen/cli':
         specifier: ^7.4.3
         version: 7.4.3(@types/node@24.19.0)(graphql@17.0.2)(supports-color@7.2.0)(typescript@7.0.2)
-      '@graphql-codegen/typed-document-node':
-        specifier: ^7.1.0
-        version: 7.1.0(graphql@17.0.2)
+      '@graphql-codegen/plugin-helpers':
+        specifier: ^7.3.0
+        version: 7.3.0(graphql@17.0.2)
       '@graphql-codegen/typescript':
         specifier: ^6.1.0
         version: 6.1.0(graphql@17.0.2)
       '@graphql-codegen/typescript-operations':
         specifier: ^6.1.7
         version: 6.1.7(graphql@17.0.2)
+      '@graphql-codegen/visitor-plugin-common':
+        specifier: ^7.2.5
+        version: 7.2.5(graphql@17.0.2)
       '@team-plain/graphql-codegen-plugin':
         specifier: workspace:*
         version: link:../graphql-codegen-plugin
@@ -264,6 +270,14 @@ importers:
         version: 7.0.2
 
 packages:
+
+  '@0no-co/graphql.web@1.3.4':
+    resolution: {integrity: sha512-imSwulOeDQodRy/olQmVEo2PiY6ntjkZ9eiGdw6lMYylh/tay9b7MusyJBmEnkL8GiKRKr6ltr+D42mY5bd8Bg==}
+    peerDependencies:
+      graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+    peerDependenciesMeta:
+      graphql:
+        optional: true
 
   '@apidevtools/json-schema-ref-parser@11.9.3':
     resolution: {integrity: sha512-60vepv88RwcJtSHrD6MjIL6Ta3SOYbgfnkHb+ppAVK+o9mXprRtulx7VlRl3lN3bbvysAfCS7WMVfhUYemB0IQ==}
@@ -2609,6 +2623,10 @@ packages:
     resolution: {integrity: sha512-CgaU0/PPjCAIEZ3WQroosOxTY3eeKldAN3h+vk8pMNz4+jl1CZzBR4pW+K/rRPF112VooCL5FdjJoiMNjDrL2A==}
 
 snapshots:
+
+  '@0no-co/graphql.web@1.3.4(graphql@17.0.2)':
+    optionalDependencies:
+      graphql: 17.0.2
 
   '@apidevtools/json-schema-ref-parser@11.9.3':
     dependencies:

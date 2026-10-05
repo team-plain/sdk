@@ -48,21 +48,24 @@
     "generate-documents": "node src/generate-documents.ts",
     "download-schema": "node scripts/download-schema.ts",
     "codegen": "pnpm download-schema && node src/generate-documents.ts && graphql-codegen --config codegen.yml",
-    "build": "tsc && tsdown",
+    "build": "tsc && tsdown && node scripts/drop-generated-sourcemaps.ts",
     "prepublishOnly": "npm run build",
     "test": "vitest run"
   },
   "dependencies": {
+    "@0no-co/graphql.web": "^1.3.4",
     "@graphql-typed-document-node/core": "^3.2.0",
     "graphql": "^16.14.2 || ^17.0.2"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^7.4.3",
-    "@graphql-codegen/typed-document-node": "^7.1.0",
+    "@graphql-codegen/plugin-helpers": "^7.3.0",
     "@graphql-codegen/typescript": "^6.1.0",
     "@graphql-codegen/typescript-operations": "^6.1.7",
+    "@graphql-codegen/visitor-plugin-common": "^7.2.5",
     "@team-plain/graphql-codegen-plugin": "workspace:*",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2"
-  }
+  },
+  "sideEffects": false
 }

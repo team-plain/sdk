@@ -1,6 +1,7 @@
-import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import { print } from "@0no-co/graphql.web";
+import type { DocumentTypeDecoration, TypedDocumentNode } from "@graphql-typed-document-node/core";
 import packageJson from "@team-plain/graphql/package.json" with { type: "json" };
-import { print } from "graphql";
+import type { DocumentNode } from "graphql";
 
 import {
   AuthenticationError,
@@ -10,6 +11,7 @@ import {
   PlainGraphQLError,
   RateLimitError,
 } from "./error.js";
+import { unchangedQueryTextOf } from "./lazy-document.js";
 import { numericHeader, type RetryOptions, retryDelayMs } from "./retry.js";
 
 export interface GraphQLResponse<TData> {
@@ -23,6 +25,15 @@ export interface GraphQLResponse<TData> {
     [key: string]: unknown;
   }>;
 }
+
+/**
+ * A GraphQL operation to send: one of the SDK's generated documents, a document from `parse()`,
+ * or the query text itself.
+ */
+export type GraphQLDocument<TData = unknown, TVariables = Record<string, unknown>> =
+  | TypedDocumentNode<TData, TVariables>
+  | DocumentTypeDecoration<TData, TVariables>
+  | string;
 
 export interface PlainGraphQLClientOptions {
   apiKey: string;
@@ -41,10 +52,11 @@ export class PlainGraphQLClient {
     this.maxRetries = options.retry?.maxRetries ?? 0;
   }
 
-  async request<TData, TVariables extends Record<string, unknown>>(
-    document: TypedDocumentNode<TData, TVariables>,
-    variables?: TVariables,
-  ): Promise<TData> {
+  // Defaults so a query string can be typed by its result alone: request<Result>(query, variables).
+  async request<
+    TData = unknown,
+    TVariables extends Record<string, unknown> = Record<string, unknown>,
+  >(document: GraphQLDocument<TData, TVariables>, variables?: TVariables): Promise<TData> {
     for (let attempt = 0; ; attempt++) {
       try {
         return await this.requestOnce(document, variables);
@@ -58,11 +70,11 @@ export class PlainGraphQLClient {
   }
 
   private async requestOnce<TData, TVariables extends Record<string, unknown>>(
-    document: TypedDocumentNode<TData, TVariables>,
+    document: GraphQLDocument<TData, TVariables>,
     variables?: TVariables,
   ): Promise<TData> {
     const body = JSON.stringify({
-      query: print(document),
+      query: queryText(document),
       variables: variables ?? undefined,
     });
 
@@ -127,4 +139,11 @@ export class PlainGraphQLClient {
     }
     return undefined;
   }
+}
+
+function queryText(document: GraphQLDocument<unknown, never>): string {
+  if (typeof document === "string" || document instanceof String) {
+    return document.toString();
+  }
+  return unchangedQueryTextOf(document) ?? print(document as DocumentNode);
 }
