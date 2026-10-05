@@ -9,6 +9,8 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
+  # npm trusted publishing: pnpm exchanges the GitHub OIDC token for a short-lived publish token.
+  id-token: write
 
 jobs:
   release:
@@ -26,13 +28,6 @@ jobs:
           cache: true
           require-lockfile: true
 
-      # changesets/action does not configure npm auth, so publishing relies on the .npmrc this writes
-      # for NODE_AUTH_TOKEN. Without node-version it keeps the Node.js installed above.
-      - name: Configure npm registry auth
-        uses: actions/setup-node@v7
-        with:
-          registry-url: "https://registry.npmjs.org"
-
       - name: Generate a GitHub App token
         uses: actions/create-github-app-token@v3
         id: generate-token
@@ -48,6 +43,3 @@ jobs:
           publish-script: pnpm release
           pr-title: "chore: version packages"
           commit-message: "chore: version packages"
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
