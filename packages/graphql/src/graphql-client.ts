@@ -11,7 +11,7 @@ import {
   RateLimitError,
 } from "./error.js";
 import { unchangedQueryTextOf } from "./lazy-document.js";
-import { numericHeader, type RetryOptions, retryDelayMs } from "./retry.js";
+import { dateHeader, numericHeader, type RetryOptions, retryDelayMs } from "./retry.js";
 
 export interface GraphQLResponse<TData> {
   data?: TData;
@@ -104,6 +104,8 @@ export class PlainGraphQLClient {
           errorDetail ? `Rate limit exceeded: ${errorDetail}` : "Rate limit exceeded",
           numericHeader(response, "retry-after"),
           numericHeader(response, "x-ratelimit-limit"),
+          numericHeader(response, "x-ratelimit-remaining"),
+          dateHeader(response, "x-ratelimit-reset"),
         );
       }
       throw new NetworkError(

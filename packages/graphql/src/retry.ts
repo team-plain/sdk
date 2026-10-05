@@ -20,3 +20,9 @@ export function numericHeader(response: Response, name: string): number | undefi
   const value = Number(response.headers.get(name) ?? Number.NaN);
   return value >= 0 ? value : undefined;
 }
+
+export function dateHeader(response: Response, name: string): Date | undefined {
+  const value = response.headers.get(name);
+  const date = value === null ? undefined : new Date(value);
+  return date && !Number.isNaN(date.getTime()) ? date : undefined;
+}

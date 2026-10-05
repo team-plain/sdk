@@ -29,12 +29,23 @@ export class NetworkError extends PlainError {
 export class RateLimitError extends PlainError {
   public readonly retryAfterSeconds: number | undefined;
   public readonly limit: number | undefined;
+  public readonly remaining: number | undefined;
+  /** When the current rate limit window ends. */
+  public readonly resetAt: Date | undefined;
 
-  constructor(message: string, retryAfterSeconds?: number, limit?: number) {
+  constructor(
+    message: string,
+    retryAfterSeconds?: number,
+    limit?: number,
+    remaining?: number,
+    resetAt?: Date,
+  ) {
     super(message);
     this.name = "RateLimitError";
     this.retryAfterSeconds = retryAfterSeconds;
     this.limit = limit;
+    this.remaining = remaining;
+    this.resetAt = resetAt;
   }
 }
 

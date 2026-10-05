@@ -30,12 +30,34 @@ describe("rate limit retries", () => {
   });
 
   it.each([
-    [{ "retry-after": "7", "x-ratelimit-limit": "450" }, 7, 450],
-    [{}, undefined, undefined],
-    [{ "retry-after": "soon", "x-ratelimit-limit": "lots" }, undefined, undefined],
+    [
+      {
+        "retry-after": "7",
+        "x-ratelimit-limit": "450",
+        "x-ratelimit-remaining": "0",
+        "x-ratelimit-reset": "2026-10-05T12:01:00.000Z",
+      },
+      7,
+      450,
+      0,
+      new Date("2026-10-05T12:01:00.000Z"),
+    ],
+    [{}, undefined, undefined, undefined, undefined],
+    [
+      {
+        "retry-after": "soon",
+        "x-ratelimit-limit": "lots",
+        "x-ratelimit-remaining": "few",
+        "x-ratelimit-reset": "later",
+      },
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ],
   ])(
     "reads rate limit headers %o and does not retry by default",
-    async (headers, retryAfterSeconds, limit) => {
+    async (headers, retryAfterSeconds, limit, remaining, resetAt) => {
       const fetchMock = mockFetch();
       fetchMock.mockResolvedValueOnce(rateLimited(headers));
       const client = new PlainClient({ apiKey: "k" });
@@ -44,6 +66,8 @@ describe("rate limit retries", () => {
       expect(error).toBeInstanceOf(RateLimitError);
       expect((error as RateLimitError).retryAfterSeconds).toBe(retryAfterSeconds);
       expect((error as RateLimitError).limit).toBe(limit);
+      expect((error as RateLimitError).remaining).toBe(remaining);
+      expect((error as RateLimitError).resetAt).toEqual(resetAt);
       expect(fetchMock).toHaveBeenCalledTimes(1);
     },
   );
