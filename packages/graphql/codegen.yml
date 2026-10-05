@@ -9,33 +9,23 @@ config:
     ignoreRules:
       - OverlappingFieldsCanBeMergedRule
 generates:
-  ./src/_generated_types.ts:
+  ./src/_generated_documents.ts:
     documentTransforms:
       - ./scripts/make-nullable-fields-optional.ts
     plugins:
       - typescript
       - typescript-operations
+      - typed-document-node
     config:
       avoidOptionals: false
       enumsAsTypes: true
       nonOptionalTypename: false
-      importSchemaTypesFrom: ./src/_generated_types.ts
+      importSchemaTypesFrom: ./src/_generated_documents.ts
       namespacedImportName: ""
       scalars:
         ID: string
       enumType: string-literal
       skipTypename: true
-  ./src/_generated_documents.ts:
-    plugins:
-      - add:
-          content:
-            - "import type * as Types from './_generated_types.js';"
-            - "export type * from './_generated_types.js';"
-            # A local document const hides the same-named schema type from `export type *`.
-            - "export type HelpCenterArticleDocument = Types.HelpCenterArticleDocument;"
-      - typed-document-node
-    config:
-      importOperationTypesFrom: ./_generated_types.js
   ./src/_generated_sdk.ts:
     plugins:
       - "@team-plain/graphql-codegen-plugin"

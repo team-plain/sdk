@@ -191,9 +191,6 @@ importers:
         specifier: ^16.14.2 || ^17.0.2
         version: 17.0.2
     devDependencies:
-      '@graphql-codegen/add':
-        specifier: ^7.1.0
-        version: 7.1.0(graphql@17.0.2)
       '@graphql-codegen/cli':
         specifier: ^7.4.3
         version: 7.4.3(@types/node@24.19.0)(graphql@17.0.2)(supports-color@7.2.0)(typescript@7.0.2)

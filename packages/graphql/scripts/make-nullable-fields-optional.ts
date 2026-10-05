@@ -1,6 +1,6 @@
 // GraphQL Codegen 6 only marks a result field optional when it carries @include or @skip, while
 // @team-plain/graphql 3.x shipped every nullable field as optional (`reason?: string | null`).
-// Applied to the types output only, so the documents sent to the API stay free of the directive.
+// `@include(if: true)` is a no-op for the API, so the directive costs only query size.
 import type { Types } from "@graphql-codegen/plugin-helpers";
 import {
   buildASTSchema,

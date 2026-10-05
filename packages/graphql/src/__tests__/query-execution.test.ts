@@ -138,7 +138,7 @@ describe("query execution", () => {
     expect(query).toContain("iso8601");
 
     // Relations only select { id } (lazy-loading pattern)
-    expect(query).toMatch(/company\s*\{\s*id\s*\}/);
+    expect(query).toMatch(/company(?: @include\(if: true\))?\s*\{\s*id\s*\}/);
   });
 
   it("throws when nullable query returns null", async () => {
