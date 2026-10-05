@@ -10,6 +10,8 @@ config:
       - OverlappingFieldsCanBeMergedRule
 generates:
   ./src/_generated_documents.ts:
+    documentTransforms:
+      - ./scripts/make-nullable-fields-optional.ts
     plugins:
       - typescript
       - typescript-operations
@@ -18,6 +20,11 @@ generates:
       avoidOptionals: false
       enumsAsTypes: true
       nonOptionalTypename: false
+      importSchemaTypesFrom: ./src/_generated_documents.ts
+      namespacedImportName: ""
+      scalars:
+        ID: string
+      enumType: string-literal
       skipTypename: true
   ./src/_generated_sdk.ts:
     plugins:

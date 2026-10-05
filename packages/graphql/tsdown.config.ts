@@ -8,6 +8,7 @@ export default defineConfig({
   unbundle: true,
   sourcemap: true,
   dts: false,
+  minify: { compress: false, mangle: false, codegen: { removeWhitespace: true } },
   target: "esnext",
   onSuccess: 'echo \'{"type":"commonjs"}\' > dist/cjs/package.json',
 });
