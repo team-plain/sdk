@@ -1,5 +1,14 @@
 # @team-plain/webhooks
 
+## 1.10.1
+
+### Patch Changes
+
+- b9757b8: Update dependencies: `graphql` to ^16.14.2, `ajv` to ^8.20.0 and `ajv-formats` to ^3.0.1.
+- 818d901: Build the CommonJS output with tsdown instead of tsup. Exports are unchanged.
+- 73bfc55: `require()` users now get CommonJS type declarations. With `moduleResolution: node16` or `nodenext`, TypeScript used to resolve ESM declarations for the CommonJS build. `@team-plain/ui-components` and `@team-plain/webhooks` are now marked side-effect free, so bundlers can drop what you don't use.
+- 1e0fcfc: Sourcemaps now embed their sources, so stack traces and debuggers resolve to the original TypeScript without it being published. Sourcemaps for the generated GraphQL code are not published.
+
 ## 1.10.0
 
 ### Minor Changes

@@ -1,5 +1,63 @@
 # @team-plain/graphql
 
+## 4.0.0
+
+### Major Changes
+
+- 3abc931: Regenerate against the current API schema. Adds the Account queries and mutations plus every other operation shipped since the last codegen. No method is removed, but **one field is gone from the generated result types, which is why this is a major.**
+  
+  | field                                                        | TypeScript      | JavaScript  | replacement              |
+  | ------------------------------------------------------------ | --------------- | ----------- | ------------------------ |
+  | `FirstResponseTimeServiceLevelAgreement.useBusinessHoursOnly` | TS2339 at build | `undefined` | `businessHoursSchedules` |
+  | `NextResponseTimeServiceLevelAgreement.useBusinessHoursOnly`  | TS2339 at build | `undefined` | `businessHoursSchedules` |
+  
+  The API deprecated `useBusinessHoursOnly` because an SLA can now be tracked against several named business hours schedules rather than a single on/off flag. The bundled documents skip deprecated fields, so it drops out wherever an SLA is returned: `query.tier` and `query.tiers`, the tier and SLA create, update and delete mutations, and SLA status transitions in timeline entries and `importThreadMessages`.
+  
+  `businessHoursSchedules` is not selected by the bundled documents yet. Until it is, read it with your own query through `PlainGraphQLClient`. An empty list means the SLA is tracked 24/7, the old `useBusinessHoursOnly: false`:
+  
+  ```ts
+  import { PlainGraphQLClient } from "@team-plain/graphql";
+  import { parse } from "graphql";
+  
+  const client = new PlainGraphQLClient({ apiKey });
+  const data = await client.request(
+    parse(`
+      query TierSlaSchedules($tierId: ID!) {
+        tier(tierId: $tierId) {
+          serviceLevelAgreements {
+            ... on FirstResponseTimeServiceLevelAgreement { id businessHoursSchedules { id name } }
+            ... on NextResponseTimeServiceLevelAgreement { id businessHoursSchedules { id name } }
+          }
+        }
+      }
+    `),
+    { tierId },
+  );
+  ```
+  
+  `mutation.createTestThread` gains an optional `input` (`{ channel }`, defaulting to `CHAT` on the API). Calling it with no arguments still works: the generator now treats an argument with a schema default as optional instead of required.
+
+### Minor Changes
+
+- 700285e: New method `mutation.createThreadFromSlackMessage({ input: { slackChannelId, slackMessageTimestamp } })` creates a thread from a top-level message in a connected customer Slack channel. It triggers the new `API_ONLY` ingestion mode (`SlackIngestionMode`) and works in the other modes too. Ingestion is asynchronous: `thread` is returned only when the message was already ingested; otherwise it is null and the thread arrives later through `query.threadBySlackPermalink` or the `thread.thread_created` webhook. Requires `thread:create`. Replies are rejected.
+  
+  Also new in this schema:
+  
+  - `MachineUser.isAssignableToThreads`: false when custom-agent pricing is on and the machine user is neither a custom agent nor Ari
+  - `SidekickAvailableTool.configurableArgs[].isMultiValued`: when true, the builder may pin several values for that arg
+  - `isWorkflowTask` on the discussions filter: when true, only the Sidekick tasks started by an `ask_sidekick` workflow step
+- 4eae2d5: Support graphql 17. `graphql` is now `^16.14.2 || ^17.0.2`, so projects on either major share their own copy.
+- 1e0fcfc: Generated documents now hold compact query text instead of an inlined AST, and the package is marked side-effect free.
+  
+  `request()` now takes any `GraphQLDocument`: a generated document, a document from `parse()`, or query text as a plain string.
+
+### Patch Changes
+
+- b9757b8: Update dependencies: `graphql` to ^16.14.2, `ajv` to ^8.20.0 and `ajv-formats` to ^3.0.1.
+- 818d901: Build the CommonJS output with tsdown instead of tsup. Exports are unchanged.
+- 73bfc55: `require()` users now get CommonJS type declarations. With `moduleResolution: node16` or `nodenext`, TypeScript used to resolve ESM declarations for the CommonJS build. `@team-plain/ui-components` and `@team-plain/webhooks` are now marked side-effect free, so bundlers can drop what you don't use.
+- 1e0fcfc: Sourcemaps now embed their sources, so stack traces and debuggers resolve to the original TypeScript without it being published. Sourcemaps for the generated GraphQL code are not published.
+
 ## 3.2.0
 
 ### Minor Changes
