@@ -62,7 +62,7 @@
     "@changesets/types": "^7.0.0",
     "@changesets/write": "^1.0.1",
     "@graphql-codegen/cli": "^7.4.3",
-    "@graphql-codegen/plugin-helpers": "^7.3.0",
+    "@graphql-codegen/plugin-helpers": "^7.4.0",
     "@graphql-codegen/typescript": "^6.1.0",
     "@graphql-codegen/typescript-operations": "^6.1.7",
     "@graphql-codegen/visitor-plugin-common": "^7.2.5",
