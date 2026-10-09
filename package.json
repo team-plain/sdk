@@ -19,13 +19,13 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
-    "@biomejs/biome": "^2.5.14",
+    "@biomejs/biome": "^2.5.15",
     "@changesets/cli": "^3.0.3",
     "@size-limit/file": "^14.1.0",
     "graphql": "^17.0.2",
-    "publint": "^0.3.24",
+    "publint": "^0.3.25",
     "size-limit": "^14.1.0",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.3"
   },
   "packageManager": "pnpm@12.8.2+sha512.a5941679663d952c5f0ecc38ba98af98b4dc01b95780354f6894f2f873973cef2f7e2989d7db3ee5393938ae21f62fe06bcdf685d475ddad829a62095d2b8b11"
 }
