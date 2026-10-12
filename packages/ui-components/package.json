@@ -46,7 +46,7 @@
     "test": "vitest run"
   },
   "peerDependencies": {
-    "@team-plain/graphql": "workspace:*"
+    "@team-plain/graphql": "workspace:^"
   },
   "devDependencies": {
     "@team-plain/graphql": "workspace:*",

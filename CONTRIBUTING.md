@@ -118,7 +118,7 @@ pnpm --filter @team-plain/graphql update-schema
 pnpm typecheck
 ```
 
-`update-schema` downloads the production schema, regenerates the SDK, and writes a changeset with the bump the change needs: major when a field disappears from the generated result types, minor for additions, patch for description-only changes. Review the changeset and add migration notes where a change needs them.
+`update-schema` downloads the production schema, regenerates the SDK, and writes a changeset with the bump the change needs: major when a field disappears from the generated result types, minor for additions and for values removed from an enum the API only returns, patch for description-only changes. Only a major also bumps `@team-plain/ui-components`, whose peer range on `@team-plain/graphql` it leaves. Review the changeset and add migration notes where a change needs them.
 
 Builds, including releases, only ever use the committed `schema.graphql`, and CI fails if the committed generated files don't match it.
 
