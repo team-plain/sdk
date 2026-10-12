@@ -1133,7 +1133,7 @@ type ThreadDiscussionMessage {
   updatedBy: Actor!
 }
 
-union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionApprovalRequestEntryPayload | ThreadDiscussionToolCallApprovalEntryPayload | ThreadDiscussionConnectRequestEntryPayload | ThreadDiscussionTurnStoppedEntryPayload
+union ThreadDiscussionEntryPayload = ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionApprovalRequestEntryPayload | ThreadDiscussionToolCallApprovalEntryPayload | ThreadDiscussionConnectRequestEntryPayload | ThreadDiscussionQuestionEntryPayload | ThreadDiscussionTurnStoppedEntryPayload
 
 type ThreadDiscussionMessageEntryPayload {
   text: String!
@@ -1255,6 +1255,54 @@ type ThreadDiscussionConnectRequestEntryPayload {
   """
   When every requested tool became connected. Null while the request is pending.
   """
+  resolvedAt: DateTime
+}
+
+enum SidekickQuestionStatus {
+  PENDING
+  ANSWERED
+  DISMISSED
+}
+
+type SidekickQuestionOption {
+  id: ID!
+  label: String!
+  description: String!
+}
+
+type SidekickQuestion {
+  id: ID!
+  question: String!
+
+  """
+  True when several options can be picked; false when the user picks one option or types an answer.
+  """
+  isMultiSelect: Boolean!
+  options: [SidekickQuestionOption!]!
+}
+
+type SidekickQuestionSelection {
+  questionId: ID!
+  optionIds: [ID!]!
+
+  """
+  The answer the user typed in the card's text box. Null when they only picked listed options.
+  """
+  otherText: String
+}
+
+"""
+Sidekick asked the person to choose among a few options. Rendered as a card in the
+Sidekick transcript. Only produced for in-app sessions. The card always offers an
+Other free-text choice that is not one of `options`.
+"""
+type ThreadDiscussionQuestionEntryPayload {
+  questionRequestId: ID!
+  questions: [SidekickQuestion!]!
+  status: SidekickQuestionStatus!
+  selections: [SidekickQuestionSelection!]!
+
+  """When the person answered. Null while the question is pending."""
   resolvedAt: DateTime
 }
 
@@ -1414,6 +1462,11 @@ type WorkflowCapabilities {
 
   """Whether the `ask_sidekick` (Sidekick action) block is available."""
   hasSidekickActionSupport: Boolean!
+
+  """
+  Whether the AI-triage mode on `apply_labels` and `set_priority` actions is available.
+  """
+  hasAiTriageActionSupport: Boolean!
 }
 
 input WorkflowsFilter {
@@ -1519,6 +1572,7 @@ type WorkflowStep {
   - ACTION: an action, e.g. `apply_labels`, `remove_labels`, `set_priority`, `set_status`, `set_tier`, `set_service_level_agreement_policy`, `assign_to_user`, `assign_to_team`, `add_note`, `send_message`, `send_slack_notification`, `send_http_request`, `set_thread_field`, `snooze_thread`, `escalate_thread`.
   - WAIT: `{ "duration": <seconds>, "businessHoursScheduleIds"?: [<ID>, ...], "cancelCondition"?: <condition> }`. When `businessHoursScheduleIds` is set, `duration` counts open time while any selected schedule is open.
   Examples: `{"version":1,"type":"apply_labels","labelTypeIds":["lt_..."]}`, `{"version":1,"type":"else_if","conditions":[...]}`.
+  `apply_labels` and `set_priority` also accept an AI-triage mode (`{"version":1,"type":"apply_labels","aiTriage":true}` / `{"version":1,"type":"set_priority","aiTriage":true}`) where the AI picks the labels (from label types not excluded from AI) or the priority instead of a fixed value.
   Payloads embed workspace-specific IDs (label type IDs, user IDs, tier IDs, etc.), which are not portable: copying a payload into another workspace references IDs that do not exist there and the step silently applies nothing.
   """
   payload: String!
@@ -1806,6 +1860,11 @@ type SavedThreadsViewFilterTenantField {
   """The external ID of the tenant field schema being filtered on."""
   externalFieldId: ID!
   stringValue: String
+
+  """
+  Matches when the field's value equals any of these (OR). For STRING/ENUM fields.
+  """
+  stringValues: [String!]
   booleanValue: Boolean
   numberValue: Float
   stringArrayValue: [String!]!
@@ -1813,12 +1872,22 @@ type SavedThreadsViewFilterTenantField {
 
   """IDs of users matched when filtering on a user-reference tenant field."""
   userReferenceValues: [ID!]!
+
+  """
+  IDs of tenants matched when filtering on a tenant-reference tenant field.
+  """
+  tenantReferenceValues: [ID!]!
 }
 
 type SavedThreadsViewFilterAccountField {
   """The external ID of the account field schema being filtered on."""
   externalFieldId: ID!
   stringValue: String
+
+  """
+  Matches when the field's value equals any of these (OR). For STRING/ENUM fields.
+  """
+  stringValues: [String!]
   booleanValue: Boolean
   numberValue: Float
   stringArrayValue: [String!]!
@@ -1826,6 +1895,11 @@ type SavedThreadsViewFilterAccountField {
 
   """IDs of users matched when filtering on a user-reference account field."""
   userReferenceValues: [ID!]!
+
+  """
+  IDs of accounts matched when filtering on an account-reference account field.
+  """
+  accountReferenceValues: [ID!]!
 }
 
 """
@@ -2434,6 +2508,13 @@ type BroadcastSendDelivery {
 
   """When the last attempt started, or null if there has not been one."""
   lastAttemptedAt: DateTime
+
+  """
+  Reactions on this delivery's message, one entry per emoji. Empty when that channel has not reacted,
+  including when the message was never posted. `Broadcast.reactions` is these counts summed across
+  every channel the broadcast reached.
+  """
+  reactions: [BroadcastReactionCount!]!
 }
 
 type BroadcastSendDeliveryEdge {
@@ -2656,7 +2737,7 @@ type Broadcast {
 
   """
   Reactions on the messages this broadcast posted, one entry per emoji, totalled across every channel
-  it reached.
+  it reached. The same counts split by channel are `reactions` on each `BroadcastSendDelivery`.
   """
   reactions: [BroadcastReactionCount!]!
 }
@@ -3226,6 +3307,11 @@ type BroadcastAudienceTenantFieldFilter {
 
   """IDs of users matched when filtering on a user-reference tenant field."""
   userReferenceValues: [ID!]!
+
+  """
+  IDs of tenants matched when filtering on a tenant-reference tenant field.
+  """
+  tenantReferenceValues: [ID!]!
 }
 
 """
@@ -3241,6 +3327,11 @@ type BroadcastAudienceAccountFieldFilter {
 
   """IDs of users matched when filtering on a user-reference account field."""
   userReferenceValues: [ID!]!
+
+  """
+  IDs of accounts matched when filtering on an account-reference account field.
+  """
+  accountReferenceValues: [ID!]!
 }
 
 """
@@ -3333,6 +3424,72 @@ input ResubscribeBroadcastRecipientInput {
 
 type ResubscribeBroadcastRecipientOutput {
   unsubscribe: BroadcastRecipientUnsubscribe
+  error: MutationError
+}
+
+input ImportBroadcastRecipientUnsubscribeRowInput {
+  """1-based spreadsheet row number (header is 1)."""
+  rowNumber: Int!
+
+  """
+  Recipient identifier to unsubscribe. Today this is a Slack channel id (`C…` / `G…` / `D…`)
+  or exact Slack channel name (optional leading `#`); email addresses will reuse this field later.
+  """
+  recipient: String!
+
+  """
+  Optional Slack team id when the same Slack channel name exists on more than one connected team. Unused for non-Slack recipients.
+  """
+  slackTeamId: ID
+}
+
+input ImportBroadcastRecipientUnsubscribesInput {
+  """Structured rows to unsubscribe (max 500). CSV parsing is client-side."""
+  rows: [ImportBroadcastRecipientUnsubscribeRowInput!]!
+
+  """When true, resolve and report without writing."""
+  isDryRun: Boolean!
+}
+
+enum ImportBroadcastRecipientUnsubscribeRowStatus {
+  CREATED
+  ALREADY_UNSUBSCRIBED
+  NOT_FOUND
+  AMBIGUOUS
+  INVALID
+}
+
+type ImportBroadcastRecipientUnsubscribeMatch {
+  slackTeamId: ID!
+  slackChannelId: ID!
+  name: String!
+}
+
+type ImportBroadcastRecipientUnsubscribeRowResult {
+  rowNumber: Int!
+  status: ImportBroadcastRecipientUnsubscribeRowStatus!
+
+  """The recipient identifier from the import row (after normalization)."""
+  recipient: String
+  slackTeamId: ID
+  slackChannelId: ID
+  message: String
+  unsubscribe: BroadcastRecipientUnsubscribe
+  matches: [ImportBroadcastRecipientUnsubscribeMatch!]!
+}
+
+type ImportBroadcastRecipientUnsubscribesResult {
+  isDryRun: Boolean!
+  rows: [ImportBroadcastRecipientUnsubscribeRowResult!]!
+  createdCount: Int!
+  alreadyUnsubscribedCount: Int!
+  notFoundCount: Int!
+  ambiguousCount: Int!
+  invalidCount: Int!
+}
+
+type ImportBroadcastRecipientUnsubscribesOutput {
+  result: ImportBroadcastRecipientUnsubscribesResult
   error: MutationError
 }
 
@@ -5268,7 +5425,7 @@ type Query {
   sidekickCreditBalance: SidekickCreditBalance!
 
   """
-  Every billable item the workspace has been charged credits for, newest first: Sidekick sessions, Sidekick actions a workflow ran, and work done by the workspace's own agents. Use it to show the line-by-line breakdown behind a credit total. Supports standard forward and backward pagination. Requires the `billing:read` permission.
+  Every billable item the workspace has used credits on, newest first: Sidekick sessions, Sidekick actions a workflow ran, and work done by the workspace's own agents. Items with status FREE_BETA were not charged; their credits show what they would have cost. Use it to show the line-by-line breakdown behind a credit total. Supports standard forward and backward pagination. Requires the `billing:read` permission.
   """
   creditSpend(first: Int, after: String, last: Int, before: String): CreditSpendConnection!
 
@@ -5454,7 +5611,7 @@ type Query {
   """
   broadcastRecipientUnsubscribes(
     """
-    Narrows to unsubscribes whose connected channel name contains this, matched case-insensitively and unanchored. Channels that are no longer connected are excluded from name search.
+    Narrows to unsubscribes whose connected channel name contains this, or whose Slack workspace name contains this, matched case-insensitively and unanchored. Channel-name matches exclude disconnected channels; a workspace-name match returns every opted-out channel in that Slack workspace, including disconnected ones.
     """
     searchQuery: String
     first: Int
@@ -5797,6 +5954,11 @@ type Query {
   subscriptionEventTypes: [SubscriptionEventType!]!
 
   """
+  List the static variables that can be interpolated with `{{ key }}` in snippets, auto-responses, bulk replies and workflow actions, with a label and group for building a picker. Thread field variables are not included; derive them from `threadFieldSchemas` as `threadField.<key>`. Requires the `workspace:read` permission.
+  """
+  interpolationVariables: [InterpolationVariable!]!
+
+  """
   Get a workflow rule by id. Returns null if no rule with the given ID exists.
   Workflow rules are the older, condition-plus-action configuration model; see `workflow` for the newer step-based model.
   """
@@ -6021,9 +6183,9 @@ type Query {
   teamSettings(labelTypeId: ID!): TeamSettings
 
   """
-  Returns a paginated list of tenants in the workspace. Use the `filters` argument to narrow by ID, deleted status, or last-updated time. Requires the `tenant:read` permission.
+  Returns a paginated list of tenants in the workspace. Use the `filters` argument to narrow the results and `sortBy` to order them (by name ascending when omitted). Requires the `tenant:read` permission.
   """
-  tenants(first: Int, after: String, last: Int, before: String, filters: TenantsFilter): TenantConnection!
+  tenants(first: Int, after: String, last: Int, before: String, filters: TenantsFilter, sortBy: TenantsSort): TenantConnection!
 
   """
   Fetches a single tenant by its Plain-assigned ID. Returns null if no matching tenant is found. Requires the `tenant:read` permission.
@@ -6031,9 +6193,9 @@ type Query {
   tenant(tenantId: ID!): Tenant
 
   """
-  Returns a paginated list of accounts in the workspace. Use the `filters` argument to narrow by ID, deleted status, or last-updated time. Requires the `tenant:read` permission.
+  Returns a paginated list of accounts in the workspace. Use the `filters` argument to narrow the results and `sortBy` to order them (by name ascending when omitted). Requires the `tenant:read` permission.
   """
-  accounts(first: Int, after: String, last: Int, before: String, filters: AccountsFilter): AccountConnection!
+  accounts(first: Int, after: String, last: Int, before: String, filters: AccountsFilter, sortBy: AccountsSort): AccountConnection!
 
   """
   Fetches a single account by its Plain-assigned ID. Returns null if no matching account is found. Requires the `tenant:read` permission.
@@ -6117,7 +6279,7 @@ type Query {
   sidekickGithubServiceConfig(serviceAuthorizationId: ID!): SidekickGithubServiceConfig
 
   """
-  Returns the Sidekick configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly or Grain), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog have their own configuration shapes — use sidekickGithubServiceConfig / sidekickPosthogServiceConfig instead.
+  Returns the Sidekick configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog have their own configuration shapes — use sidekickGithubServiceConfig / sidekickPosthogServiceConfig instead.
   """
   sidekickServiceConfig(serviceAuthorizationId: ID!): SidekickServiceConfig
 
@@ -6127,7 +6289,7 @@ type Query {
   sidekickPosthogServiceConfig(serviceAuthorizationId: ID!): SidekickPosthogServiceConfig
 
   """
-  Returns workspace-level Sidekick settings, including the custom prompt that is appended to every Sidekick session's system prompt. Always returns an object; fields inside are null when not configured.
+  Returns workspace-level Sidekick settings, including the custom prompt that is appended to every Sidekick session's system prompt and the tools selected during onboarding. Always returns an object. customPrompt is null when not configured. preferredIntegrations is empty when none are selected.
   """
   sidekickSettings: SidekickSettings!
 
@@ -7858,6 +8020,7 @@ input TenantFieldFilter {
   numberValue: Float
   stringArrayValue: [String!]
   userReferenceValues: [ID!]
+  tenantReferenceValues: [ID!]
 }
 
 input AccountFieldFilter {
@@ -7873,6 +8036,7 @@ input AccountFieldFilter {
   numberValue: Float
   stringArrayValue: [String!]
   userReferenceValues: [ID!]
+  accountReferenceValues: [ID!]
 }
 
 enum ServiceLevelAgreementType {
@@ -9661,6 +9825,13 @@ type BroadcastSendTarget {
   Recipients the author unchecked from what the target resolved to. Subtracted last, so a broadcast can drop one without editing the audience that pulled it in.
   """
   excludeRecipients: [BroadcastSendTargetRecipient!]!
+
+  """
+  When true, channels that have unsubscribed still resolve as recipients and are delivered.
+  Off by default — the deliberate escape hatch when a broadcast must reach everyone regardless of
+  opt-outs. Distinct from `appendUnsubscribeLink`, which only controls the footer on the message.
+  """
+  includeUnsubscribed: Boolean!
 }
 
 """
@@ -9698,6 +9869,13 @@ input BroadcastSendTargetInput {
   """
   recipients: [BroadcastSendTargetRecipientInput!]
   excludeRecipients: [BroadcastSendTargetRecipientInput!]
+
+  """
+  When true, channels that have unsubscribed still resolve as recipients and are delivered.
+  Omit or pass false to keep the default: opted-out channels are excluded from the preview and
+  recorded as skipped on send. Distinct from `appendUnsubscribeLink` on the broadcast.
+  """
+  includeUnsubscribed: Boolean
 }
 
 input CreateBroadcastInput {
@@ -9740,6 +9918,15 @@ input CreateBroadcastInput {
 }
 
 type CreateBroadcastOutput {
+  broadcast: Broadcast
+  error: MutationError
+}
+
+input DuplicateBroadcastInput {
+  broadcastId: ID!
+}
+
+type DuplicateBroadcastOutput {
   broadcast: Broadcast
   error: MutationError
 }
@@ -9815,6 +10002,7 @@ input BroadcastAudienceTenantFieldFilterInput {
   numberValue: Float
   stringArrayValue: [String!]
   userReferenceValues: [String!]
+  tenantReferenceValues: [String!]
 }
 
 input BroadcastAudienceAccountFieldFilterInput {
@@ -9824,6 +10012,7 @@ input BroadcastAudienceAccountFieldFilterInput {
   numberValue: Float
   stringArrayValue: [String!]
   userReferenceValues: [String!]
+  accountReferenceValues: [String!]
 }
 
 input BroadcastAudienceFilterInput {
@@ -11542,6 +11731,14 @@ type Mutation {
   createBroadcast(input: CreateBroadcastInput!): CreateBroadcastOutput!
 
   """
+  Copies an existing broadcast into a new draft. Authoring fields (content, audience, sender,
+  notification title, and related settings) are copied. Send history, schedule, recipients, and
+  delivery stats are not. The copy is named `Copy of <original name>`. Requires the
+  `broadcast:create` and `broadcast:read` permissions.
+  """
+  duplicateBroadcast(input: DuplicateBroadcastInput!): DuplicateBroadcastOutput!
+
+  """
   Updates one or more fields of an existing broadcast. Each field uses a wrapper input —
   pass `{ value: ... }` to set it or omit it entirely to leave it unchanged. `type` is
   not updatable. Requires the `broadcast:edit` permission.
@@ -11566,6 +11763,11 @@ type Mutation {
   `broadcast:edit` permission and the broadcasts feature flag.
   """
   resubscribeBroadcastRecipient(input: ResubscribeBroadcastRecipientInput!): ResubscribeBroadcastRecipientOutput!
+
+  """
+  Bulk-imports broadcast recipient unsubscribes by recipient identifier (Slack channel id/name today; email later). Idempotent. Requires `broadcast:edit` and the broadcasts feature flag.
+  """
+  importBroadcastRecipientUnsubscribes(input: ImportBroadcastRecipientUnsubscribesInput!): ImportBroadcastRecipientUnsubscribesOutput!
 
   """
   Creates a reusable broadcast audience. `filters` is validated against `type`, so a filter naming a
@@ -11955,11 +12157,6 @@ type Mutation {
   The provided rules become the complete set of rules for the integration.
   """
   setSlackAutoJoinRules(input: SetSlackAutoJoinRulesInput!): SetSlackAutoJoinRulesOutput!
-
-  """
-  Creates (or reuses) a demo channel on the given integration's support channel (e.g. a demo Slack channel), invites the installing user, and seeds a demo customer thread so the integration can be tried out before going live.
-  """
-  createDemoChannel(input: CreateDemoChannelInput!): CreateDemoChannelOutput!
 
   """
   Creates a customer event that appears in the timeline of every thread belonging to the customer.
@@ -12565,6 +12762,18 @@ type Mutation {
   resolveAgentApproval(input: ResolveAgentApprovalInput!): ResolveAgentApprovalOutput!
 
   """
+  Records the person's answer to a Sidekick question card and resumes the agent with those
+  selections. Only a human may answer. Answering the same card again with the same selections
+  is a no-op; a different answer is rejected.
+  """
+  answerSidekickQuestion(input: AnswerSidekickQuestionInput!): AnswerSidekickQuestionOutput!
+
+  """
+  Dismisses a Sidekick question card so the person can reply in the chat instead.
+  """
+  dismissSidekickQuestion(input: DismissSidekickQuestionInput!): DismissSidekickQuestionOutput!
+
+  """
   Removes a user message that is waiting in a Sidekick AGENT_SESSION queue. Rejects with
   `queued_agent_session_message_already_dispatched` if the agent has already picked the
   message up — the frontend should reload to reflect the new state.
@@ -12735,12 +12944,12 @@ type Mutation {
   deleteAccountFieldSchema(input: DeleteAccountFieldSchemaInput!): DeleteAccountFieldSchemaOutput!
 
   """
-  Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, or `userReferenceValues`). Requires `tenant:edit` permission.
+  Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `tenantReferenceValues`). Requires `tenant:edit` permission.
   """
   upsertTenantField(input: UpsertTenantFieldInput!): UpsertTenantFieldOutput!
 
   """
-  Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, or `userReferenceValues`). Requires `tenant:edit` permission.
+  Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `accountReferenceValues`). Requires `tenant:edit` permission.
   """
   upsertAccountField(input: UpsertAccountFieldInput!): UpsertAccountFieldOutput!
 
@@ -12810,7 +13019,7 @@ type Mutation {
   updateSidekickGithubConfig(input: UpdateSidekickGithubConfigInput!): UpdateSidekickGithubConfigOutput!
 
   """
-  Updates the operating instructions that guide how Sidekick uses a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly or Grain), identified by its serviceAuthorizationId. Pass null or an empty string to clear the instructions. GitHub and PostHog have their own configuration shapes — use updateSidekickGithubConfig / updateSidekickPosthogConfig instead.
+  Updates the operating instructions that guide how Sidekick uses a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Pass null or an empty string to clear the instructions. GitHub and PostHog have their own configuration shapes — use updateSidekickGithubConfig / updateSidekickPosthogConfig instead.
   """
   updateSidekickServiceConfig(input: UpdateSidekickServiceConfigInput!): UpdateSidekickServiceConfigOutput!
 
@@ -12820,7 +13029,7 @@ type Mutation {
   updateSidekickPosthogConfig(input: UpdateSidekickPosthogConfigInput!): UpdateSidekickPosthogConfigOutput!
 
   """
-  Updates workspace-level Sidekick settings, such as the custom prompt appended to every session's system prompt. Pass null or an empty string for customPrompt to clear any existing value.
+  Updates workspace-level Sidekick settings, such as the custom prompt appended to every session's system prompt and the tools selected during onboarding. Pass null or an empty string for customPrompt to clear any existing value. Omit a field to leave it unchanged.
   """
   updateSidekickSettings(input: UpdateSidekickSettingsInput!): UpdateSidekickSettingsOutput!
 
@@ -14383,6 +14592,29 @@ type ResolveAgentApprovalOutput {
   error: MutationError
 }
 
+input AnswerSidekickQuestionSelectionInput {
+  questionId: ID!
+  optionIds: [ID!]!
+  otherText: String
+}
+
+input AnswerSidekickQuestionInput {
+  threadDiscussionMessageId: ID!
+  selections: [AnswerSidekickQuestionSelectionInput!]!
+}
+
+type AnswerSidekickQuestionOutput {
+  error: MutationError
+}
+
+input DismissSidekickQuestionInput {
+  threadDiscussionMessageId: ID!
+}
+
+type DismissSidekickQuestionOutput {
+  error: MutationError
+}
+
 input UpdateCompanyTierInput {
   tierIdentifier: TierIdentifierInput
   companyIdentifier: CompanyIdentifierInput!
@@ -14911,6 +15143,9 @@ enum TenantFieldType {
 
   """One or more references to Plain users by ID."""
   USER_REFERENCE_TYPE
+
+  """One or more references to Plain tenants by ID."""
+  TENANT_REFERENCE_TYPE
 }
 
 enum TenantFieldMappingConcept {
@@ -15022,6 +15257,7 @@ input UpsertTenantFieldInput {
   arrayValue: [String!]
   dateValue: String
   userReferenceValues: [ID!]
+  tenantReferenceValues: [ID!]
 }
 
 type UpsertTenantFieldOutput {
@@ -15067,7 +15303,7 @@ type RemoveTenantFieldSchemaMappingOutput {
   error: MutationError
 }
 
-union TenantFieldValue = TenantFieldStringValue | TenantFieldNumberValue | TenantFieldBooleanValue | TenantFieldStringArrayValue | TenantFieldDateTimeValue | TenantFieldUserReferenceValue
+union TenantFieldValue = TenantFieldStringValue | TenantFieldNumberValue | TenantFieldBooleanValue | TenantFieldStringArrayValue | TenantFieldDateTimeValue | TenantFieldUserReferenceValue | TenantFieldTenantReferenceValue
 
 type TenantFieldStringValue {
   stringValue: String!
@@ -15092,6 +15328,11 @@ type TenantFieldDateTimeValue {
 type TenantFieldUserReferenceValue {
   userReferenceValues: [ID!]!
   users: [User!]!
+}
+
+type TenantFieldTenantReferenceValue {
+  tenantReferenceValues: [ID!]!
+  tenants: [Tenant!]!
 }
 
 type TenantField {
@@ -15138,6 +15379,9 @@ enum AccountFieldType {
 
   """One or more references to Plain users by ID."""
   USER_REFERENCE_TYPE
+
+  """One or more references to Plain accounts by ID."""
+  ACCOUNT_REFERENCE_TYPE
 }
 
 enum AccountFieldMappingConcept {
@@ -15248,6 +15492,7 @@ input UpsertAccountFieldInput {
   arrayValue: [String!]
   dateValue: String
   userReferenceValues: [ID!]
+  accountReferenceValues: [ID!]
 }
 
 type UpsertAccountFieldOutput {
@@ -15293,7 +15538,7 @@ type RemoveAccountFieldSchemaMappingOutput {
   error: MutationError
 }
 
-union AccountFieldValue = AccountFieldStringValue | AccountFieldNumberValue | AccountFieldBooleanValue | AccountFieldStringArrayValue | AccountFieldDateTimeValue | AccountFieldUserReferenceValue
+union AccountFieldValue = AccountFieldStringValue | AccountFieldNumberValue | AccountFieldBooleanValue | AccountFieldStringArrayValue | AccountFieldDateTimeValue | AccountFieldUserReferenceValue | AccountFieldAccountReferenceValue
 
 type AccountFieldStringValue {
   stringValue: String!
@@ -15318,6 +15563,11 @@ type AccountFieldDateTimeValue {
 type AccountFieldUserReferenceValue {
   userReferenceValues: [ID!]!
   users: [User!]!
+}
+
+type AccountFieldAccountReferenceValue {
+  accountReferenceValues: [ID!]!
+  accounts: [Account!]!
 }
 
 type AccountField {
@@ -16870,6 +17120,43 @@ type SubscriptionEventType {
   description: String!
 }
 
+"""The entity a static interpolation variable reads from."""
+enum InterpolationVariableGroup {
+  """The thread the message, note or request is about."""
+  THREAD
+
+  """The customer on the thread."""
+  CUSTOMER
+
+  """The tenant on the thread."""
+  TENANT
+
+  """The current workspace."""
+  WORKSPACE
+
+  """The user performing the action, when there is one."""
+  USER
+}
+
+"""
+A static variable that Plain fills in when interpolating `{{ key }}` tokens in snippets, auto-responses, bulk replies and workflow actions. Thread field variables (`threadField.<key>`) are not listed here; they are derived from the workspace's thread field schemas.
+"""
+type InterpolationVariable {
+  """The key used inside the braces, e.g. `customer.fullName`."""
+  key: String!
+
+  """A short human-readable label for the variable, suitable for a picker."""
+  label: String!
+
+  """The entity the variable reads from."""
+  group: InterpolationVariableGroup!
+
+  """
+  Whether the variable is suitable for text a customer will read. Internal identifiers and the AI thread summary are not.
+  """
+  isCustomerFacing: Boolean!
+}
+
 type WebhookVersionEdge {
   cursor: String!
   node: WebhookVersion!
@@ -17628,19 +17915,6 @@ type CreateThreadFromSlackMessageOutput {
   `threadBySlackPermalink`, or the `thread.thread_created` webhook to pick it up.
   """
   thread: Thread
-  error: MutationError
-}
-
-enum DemoChannelType {
-  SLACK
-}
-
-input CreateDemoChannelInput {
-  channelType: DemoChannelType!
-  integrationId: ID!
-}
-
-type CreateDemoChannelOutput {
   error: MutationError
 }
 
@@ -18843,14 +19117,23 @@ type SidekickSettings {
   Free-text instructions appended to Sidekick's system prompt for every session in this workspace, allowing teams to tailor its behavior (tone, escalation rules, domain knowledge, etc.). Null when no custom prompt has been configured.
   """
   customPrompt: String
+
+  """
+  Catalog slugs for the tools this workspace said they use during onboarding. Empty when none are selected.
+  """
+  preferredIntegrations: [String!]!
 }
 
 input UpdateSidekickSettingsInput {
   """
-  Custom prompt to append to the Sidekick system prompt. Pass null
-  or an empty string to clear.
+  Custom prompt to append to the Sidekick system prompt. Pass null or an empty string to clear. Omit to leave the current value unchanged.
   """
   customPrompt: String
+
+  """
+  Tools selected during onboarding, as Sidekick integration catalog slugs. Pass an empty list to record that nothing was selected. Omit or pass null to leave the current value unchanged. Unknown slugs are rejected.
+  """
+  preferredIntegrations: [String!]
 }
 
 type UpdateSidekickSettingsOutput {
@@ -19684,6 +19967,49 @@ input TenantsFilter {
   Filter to tenants whose tenant field values match all of the given field filters.
   """
   tenantFields: [TenantFieldFilter!]
+
+  """Filter to tenants from any of the given sources."""
+  sources: [TenantSource!]
+
+  """Matches tenants that match every one of these filters."""
+  and: [TenantsFilter!]
+
+  """Matches tenants that match at least one of these filters."""
+  or: [TenantsFilter!]
+
+  """Matches tenants that do not match this filter."""
+  not: TenantsFilter
+}
+
+enum TenantsSortField {
+  NAME
+  SOURCE
+
+  """
+  Sorts by the name of the tenant's tier. A tenant in several tiers sorts by the first name alphabetically.
+  """
+  TIER
+
+  """
+  Sorts by the value of the tenant field whose schema is given in `tenantFieldSchemaId`.
+  """
+  TENANT_FIELD
+
+  """Sorts by the number of the tenant's threads in the TODO status."""
+  OPEN_THREAD_COUNT
+}
+
+"""
+Tenants without a value for the sort field come last in either direction. Ties are ordered by name.
+"""
+input TenantsSort {
+  field: TenantsSortField!
+  direction: SortDirection!
+
+  """
+  Required when `field` is `TENANT_FIELD`. The schema must be for a string, number, boolean or datetime field.
+  """
+  tenantFieldSchemaId: ID
 }
 
 input AccountsFilter {
@@ -19705,6 +20031,49 @@ input AccountsFilter {
   Filter to accounts whose account field values match all of the given field filters.
   """
   accountFields: [AccountFieldFilter!]
+
+  """Filter to accounts from any of the given sources."""
+  sources: [AccountSource!]
+
+  """Matches accounts that match every one of these filters."""
+  and: [AccountsFilter!]
+
+  """Matches accounts that match at least one of these filters."""
+  or: [AccountsFilter!]
+
+  """Matches accounts that do not match this filter."""
+  not: AccountsFilter
+}
+
+enum AccountsSortField {
+  NAME
+  SOURCE
+
+  """
+  Sorts by the name of the account's tier. An account in several tiers sorts by the first name alphabetically.
+  """
+  TIER
+
+  """
+  Sorts by the value of the account field whose schema is given in `accountFieldSchemaId`.
+  """
+  ACCOUNT_FIELD
+
+  """Sorts by the number of the account's threads in the TODO status."""
+  OPEN_THREAD_COUNT
+}
+
+"""
+Accounts without a value for the sort field come last in either direction. Ties are ordered by name.
+"""
+input AccountsSort {
+  field: AccountsSortField!
+  direction: SortDirection!
+
+  """
+  Required when `field` is `ACCOUNT_FIELD`. The schema must be for a string, number, boolean or datetime field.
+  """
+  accountFieldSchemaId: ID
 }
 
 enum BillingSubscriptionStatus {
@@ -19861,7 +20230,6 @@ enum FeatureKey {
   MULTIPLE_BUSINESS_HOURS
   SLACK_DISCUSSIONS
   SERVICE_LEVEL_AGREEMENTS
-  DATA_IMPORTERS
   ZENDESK_IMPORTER
   INTERCOM_IMPORTER
   SALESFORCE_IMPORTER
@@ -19885,6 +20253,7 @@ enum FeatureKey {
   TEAM_REPORTING
   CUSTOMER_SURVEYS
   HELP_CENTER
+  HELP_CENTERS
   AI_AGENT
   AI_ASSISTANT
   CUSTOM_ROLES
@@ -20025,6 +20394,11 @@ type SidekickCreditUsageDay {
   credits: Int!
 
   """
+  Credits the day's free-beta items would have cost. Nothing was charged for them.
+  """
+  freeCredits: Int!
+
+  """
   Number of billable items that resolved on this day, not only Sidekick sessions.
   """
   sessionCount: Int!
@@ -20039,6 +20413,9 @@ enum CreditSpendKind {
 
   """A Sidekick session that a workflow started as one of its actions."""
   SIDEKICK_WORKFLOW_ACTION
+
+  """An AI-triage labels or priority pick made by a workflow step."""
+  AI_TRIAGE
 
   """A discussion handled by one of the workspace's own agents."""
   CUSTOM_AGENT_DISCUSSION
@@ -20061,6 +20438,11 @@ enum CreditSpendStatus {
 
   """Sent to the billing provider."""
   BILLED
+
+  """
+  Free during a beta. `credits` is what the item would have cost; nothing was charged.
+  """
+  FREE_BETA
 }
 
 """One billable item and the credits it cost."""
@@ -20084,7 +20466,9 @@ type CreditSpendItem {
   """Name of the workflow that caused the spend, when one did."""
   workflowName: String
 
-  """Credits charged for this item."""
+  """
+  Credits charged for this item. For a FREE_BETA item, what it would have cost.
+  """
   credits: Int!
 
   """When the underlying work resolved and the charge was computed."""
@@ -20210,8 +20594,9 @@ type RoleChangeCost {
   adjustedPrice: Price!
 
   """
-  Total amount that will be invoiced immediately for the role change.
-  If this is negative, we would credit the amount to your account.
+  Prorated amount billed for this role change. Monthly contracts put this on the next invoice.
+  Annual contracts charge it at the end of the month. 0 when nothing is billed.
+  If this is negative, the amount is credited rather than charged.
   """
   dueNowPrice: Price!
 
@@ -21132,6 +21517,8 @@ type HelpCenterPortalSettingsThreadVisibility {
   overrideCustomerTenants: HelpCenterPortalSettingsOverrideCustomerTenants
   customerAccounts: Boolean!
   overrideCustomerAccounts: HelpCenterPortalSettingsOverrideCustomerAccounts
+  customerEmailDomain: Boolean!
+  overrideCustomerEmailDomain: HelpCenterPortalSettingsOverrideCustomerTenants
 }
 
 input HelpCenterPortalSettingsThreadVisibilityInput {
@@ -21141,6 +21528,8 @@ input HelpCenterPortalSettingsThreadVisibilityInput {
   overrideCustomerTenants: HelpCenterPortalSettingsOverrideCustomerTenantsInput
   customerAccounts: Boolean
   overrideCustomerAccounts: HelpCenterPortalSettingsOverrideCustomerAccountsInput
+  customerEmailDomain: Boolean
+  overrideCustomerEmailDomain: HelpCenterPortalSettingsOverrideCustomerTenantsInput
 }
 
 enum HelpCenterPortalSettingsFormFieldType {

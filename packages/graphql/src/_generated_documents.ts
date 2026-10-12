@@ -93,6 +93,11 @@ export type AccountField = {
   value: AccountFieldValue;
 };
 
+export type AccountFieldAccountReferenceValue = {
+  accountReferenceValues: Array<Scalars['ID']['output']>;
+  accounts: Array<Account>;
+};
+
 export type AccountFieldBooleanValue = {
   booleanValue: Scalars['Boolean']['output'];
 };
@@ -102,6 +107,7 @@ export type AccountFieldDateTimeValue = {
 };
 
 export type AccountFieldFilter = {
+  accountReferenceValues?: InputMaybe<Array<Scalars['ID']['input']>>;
   booleanValue?: InputMaybe<Scalars['Boolean']['input']>;
   dateValue?: InputMaybe<Scalars['String']['input']>;
   externalFieldId: Scalars['String']['input'];
@@ -187,6 +193,8 @@ export type AccountFieldStringValue = {
 
 /** The data type of an account field schema, determining which value field to use when upserting an account field. */
 export type AccountFieldType =
+  /** One or more references to Plain accounts by ID. */
+  | 'ACCOUNT_REFERENCE_TYPE'
   /** A true/false boolean value. */
   | 'BOOLEAN_TYPE'
   /** An ISO 8601 date-time value. */
@@ -205,7 +213,7 @@ export type AccountFieldUserReferenceValue = {
   users: Array<User>;
 };
 
-export type AccountFieldValue = AccountFieldBooleanValue | AccountFieldDateTimeValue | AccountFieldNumberValue | AccountFieldStringArrayValue | AccountFieldStringValue | AccountFieldUserReferenceValue;
+export type AccountFieldValue = AccountFieldAccountReferenceValue | AccountFieldBooleanValue | AccountFieldDateTimeValue | AccountFieldNumberValue | AccountFieldStringArrayValue | AccountFieldStringValue | AccountFieldUserReferenceValue;
 
 export type AccountIdentifierInput = {
   accountId?: InputMaybe<Scalars['ID']['input']>;
@@ -261,11 +269,19 @@ export type AccountsFilter = {
   /** Filter to accounts whose account field values match all of the given field filters. */
   accountFields?: InputMaybe<Array<AccountFieldFilter>>;
   accountIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Matches accounts that match every one of these filters. */
+  and?: InputMaybe<Array<AccountsFilter>>;
   /**
    * True to only return accounts that have been deleted. False to only return accounts that have not been deleted.
    * Omit to return all accounts.
    */
   isDeleted?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Matches accounts that do not match this filter. */
+  not?: InputMaybe<AccountsFilter>;
+  /** Matches accounts that match at least one of these filters. */
+  or?: InputMaybe<Array<AccountsFilter>>;
+  /** Filter to accounts from any of the given sources. */
+  sources?: InputMaybe<Array<AccountSource>>;
   /** Filter to accounts that belong to any of the given tiers, identified by their Plain ID or external ID. */
   tierIdentifiers?: InputMaybe<Array<TierIdentifierInput>>;
   updatedAt?: InputMaybe<DatetimeFilter>;
@@ -281,6 +297,24 @@ export type AccountsSearchQuery = {
    */
   term: Scalars['String']['input'];
 };
+
+/** Accounts without a value for the sort field come last in either direction. Ties are ordered by name. */
+export type AccountsSort = {
+  /** Required when `field` is `ACCOUNT_FIELD`. The schema must be for a string, number, boolean or datetime field. */
+  accountFieldSchemaId?: InputMaybe<Scalars['ID']['input']>;
+  direction: SortDirection;
+  field: AccountsSortField;
+};
+
+export type AccountsSortField =
+  /** Sorts by the value of the account field whose schema is given in `accountFieldSchemaId`. */
+  | 'ACCOUNT_FIELD'
+  | 'NAME'
+  /** Sorts by the number of the account's threads in the TODO status. */
+  | 'OPEN_THREAD_COUNT'
+  | 'SOURCE'
+  /** Sorts by the name of the account's tier. An account in several tiers sorts by the first name alphabetically. */
+  | 'TIER';
 
 export type Actor = CustomerActor | DeletedCustomerActor | MachineUserActor | SystemActor | UserActor;
 
@@ -584,6 +618,21 @@ export type AiToneRuleUpdate = {
 
 export type AiToneRulesFilter = {
   isEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type AnswerSidekickQuestionInput = {
+  selections: Array<AnswerSidekickQuestionSelectionInput>;
+  threadDiscussionMessageId: Scalars['ID']['input'];
+};
+
+export type AnswerSidekickQuestionOutput = {
+  error?: Maybe<MutationError>;
+};
+
+export type AnswerSidekickQuestionSelectionInput = {
+  optionIds: Array<Scalars['ID']['input']>;
+  otherText?: InputMaybe<Scalars['String']['input']>;
+  questionId: Scalars['ID']['input'];
 };
 
 export type ApiKey = {
@@ -1023,7 +1072,7 @@ export type Broadcast = {
   notificationTitle?: Maybe<Scalars['String']['output']>;
   /**
    * Reactions on the messages this broadcast posted, one entry per emoji, totalled across every channel
-   * it reached.
+   * it reached. The same counts split by channel are `reactions` on each `BroadcastSendDelivery`.
    */
   reactions: Array<BroadcastReactionCount>;
   /** When the broadcast's send is due, or when it started if it is already underway. Null while the broadcast is a draft. */
@@ -1101,6 +1150,8 @@ export type BroadcastAudience = {
 
 /** Matches an account field against one value. Exactly one value field must be set. */
 export type BroadcastAudienceAccountFieldFilter = {
+  /** IDs of accounts matched when filtering on an account-reference account field. */
+  accountReferenceValues: Array<Scalars['ID']['output']>;
   booleanValue?: Maybe<Scalars['Boolean']['output']>;
   /** The external ID of the account field schema being filtered on. */
   externalFieldId: Scalars['ID']['output'];
@@ -1112,6 +1163,7 @@ export type BroadcastAudienceAccountFieldFilter = {
 };
 
 export type BroadcastAudienceAccountFieldFilterInput = {
+  accountReferenceValues?: InputMaybe<Array<Scalars['String']['input']>>;
   booleanValue?: InputMaybe<Scalars['Boolean']['input']>;
   externalFieldId: Scalars['ID']['input'];
   numberValue?: InputMaybe<Scalars['Float']['input']>;
@@ -1191,6 +1243,8 @@ export type BroadcastAudienceTenantFieldFilter = {
   numberValue?: Maybe<Scalars['Float']['output']>;
   stringArrayValue: Array<Scalars['String']['output']>;
   stringValue?: Maybe<Scalars['String']['output']>;
+  /** IDs of tenants matched when filtering on a tenant-reference tenant field. */
+  tenantReferenceValues: Array<Scalars['ID']['output']>;
   /** IDs of users matched when filtering on a user-reference tenant field. */
   userReferenceValues: Array<Scalars['ID']['output']>;
 };
@@ -1201,6 +1255,7 @@ export type BroadcastAudienceTenantFieldFilterInput = {
   numberValue?: InputMaybe<Scalars['Float']['input']>;
   stringArrayValue?: InputMaybe<Array<Scalars['String']['input']>>;
   stringValue?: InputMaybe<Scalars['String']['input']>;
+  tenantReferenceValues?: InputMaybe<Array<Scalars['String']['input']>>;
   userReferenceValues?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
@@ -1369,6 +1424,12 @@ export type BroadcastSendDelivery = {
   id: Scalars['ID']['output'];
   /** When the last attempt started, or null if there has not been one. */
   lastAttemptedAt?: Maybe<DateTime>;
+  /**
+   * Reactions on this delivery's message, one entry per emoji. Empty when that channel has not reacted,
+   * including when the message was never posted. `Broadcast.reactions` is these counts summed across
+   * every channel the broadcast reached.
+   */
+  reactions: Array<BroadcastReactionCount>;
   recipient: BroadcastSendDeliveryRecipient;
   status: BroadcastSendDeliveryStatus;
 };
@@ -1520,6 +1581,12 @@ export type BroadcastSendTarget = {
   excludeRecipients: Array<BroadcastSendTargetRecipient>;
   /** Who the broadcast reaches. Audiences, tiers, tenants and channel-name matches are all dimensions of this one filter. Set when `scope` is `MATCHING`, and null otherwise. */
   filters?: Maybe<BroadcastAudienceFilter>;
+  /**
+   * When true, channels that have unsubscribed still resolve as recipients and are delivered.
+   * Off by default — the deliberate escape hatch when a broadcast must reach everyone regardless of
+   * opt-outs. Distinct from `appendUnsubscribeLink`, which only controls the footer on the message.
+   */
+  includeUnsubscribed: Scalars['Boolean']['output'];
   /** Recipients named outright, added to whatever `filters` resolved to. One the workspace cannot reach — on Slack, a channel it cannot post to — is dropped, the same as one named inside an audience. */
   recipients: Array<BroadcastSendTargetRecipient>;
   /** Whether the broadcast reaches everyone or only what `filters` matches. Everyone means every connected channel the broadcast may reach, whether or not a tenant is associated with it. Null until the author has chosen. */
@@ -1530,6 +1597,12 @@ export type BroadcastSendTargetInput = {
   excludeRecipients?: InputMaybe<Array<BroadcastSendTargetRecipientInput>>;
   /** Who the broadcast reaches. Every audience it names must be of the same type as the broadcast. Must constrain something: reaching everyone is the `ALL_RECIPIENTS` scope, not an empty filter. A node nested below the first must constrain something too. */
   filters?: InputMaybe<BroadcastAudienceFilterInput>;
+  /**
+   * When true, channels that have unsubscribed still resolve as recipients and are delivered.
+   * Omit or pass false to keep the default: opted-out channels are excluded from the preview and
+   * recorded as skipped on send. Distinct from `appendUnsubscribeLink` on the broadcast.
+   */
+  includeUnsubscribed?: InputMaybe<Scalars['Boolean']['input']>;
   /**
    * Recipients to send to by id, added to whatever `filters` resolves to. For a caller that has ids rather
    * than a predicate; one the workspace cannot reach is dropped rather than failed. Either side of the
@@ -2938,15 +3011,6 @@ export type CreateCustomerSurveyOutput = {
   error?: Maybe<MutationError>;
 };
 
-export type CreateDemoChannelInput = {
-  channelType: DemoChannelType;
-  integrationId: Scalars['ID']['input'];
-};
-
-export type CreateDemoChannelOutput = {
-  error?: Maybe<MutationError>;
-};
-
 export type CreateDiscussionInput = {
   /**
    * Free-form context from the UI (e.g. active filters on the current page) injected
@@ -3828,7 +3892,7 @@ export type CreditSpendEdge = {
 export type CreditSpendItem = {
   /** Who caused the spend. Null when nobody triggered it directly, for example a workflow that ran on an event rather than by hand. */
   actor?: Maybe<Actor>;
-  /** Credits charged for this item. */
+  /** Credits charged for this item. For a FREE_BETA item, what it would have cost. */
   credits: Scalars['Int']['output'];
   /** The discussion this spend belongs to, when there is one. A thread assignment charge has none. */
   discussionId?: Maybe<Scalars['ID']['output']>;
@@ -3849,6 +3913,8 @@ export type CreditSpendItem = {
 
 /** What kind of work a credit charge paid for. */
 export type CreditSpendKind =
+  /** An AI-triage labels or priority pick made by a workflow step. */
+  | 'AI_TRIAGE'
   /** An Ari outcome: a thread Ari handled that stayed closed for 7 days without a teammate taking over. */
   | 'ARI_OUTCOME_RESOLUTION'
   /** A discussion handled by one of the workspace's own agents. */
@@ -3864,6 +3930,8 @@ export type CreditSpendKind =
 export type CreditSpendStatus =
   /** Sent to the billing provider. */
   | 'BILLED'
+  /** Free during a beta. `credits` is what the item would have cost; nothing was charged. */
+  | 'FREE_BETA'
   /** Computed and counted against the workspace, not yet sent to the billing provider. */
   | 'RECORDED';
 
@@ -5228,9 +5296,6 @@ export type DeletedThreadsFilter = {
   deletedAt?: InputMaybe<DatetimeFilter>;
 };
 
-export type DemoChannelType =
-  | 'SLACK';
-
 export type DependsOnLabelType = {
   labelTypeId: Scalars['ID']['output'];
 };
@@ -5401,6 +5466,14 @@ export type DiscussionsSortField =
   | 'LAST_ACTIVITY_AT'
   | 'UPDATED_AT';
 
+export type DismissSidekickQuestionInput = {
+  threadDiscussionMessageId: Scalars['ID']['input'];
+};
+
+export type DismissSidekickQuestionOutput = {
+  error?: Maybe<MutationError>;
+};
+
 export type DismissSuggestedLabelTypesInput = {
   suggestedLabelTypeIds: Array<Scalars['ID']['input']>;
 };
@@ -5424,6 +5497,15 @@ export type DoneStatusDetail =
   | 'DONE_MANUALLY_SET'
   | 'IGNORED'
   | 'TIMER_EXPIRED';
+
+export type DuplicateBroadcastInput = {
+  broadcastId: Scalars['ID']['input'];
+};
+
+export type DuplicateBroadcastOutput = {
+  broadcast?: Maybe<Broadcast>;
+  error?: Maybe<MutationError>;
+};
 
 export type EditQueuedAgentSessionMessageInput = {
   /** New markdown body for the queued message. Attachments are preserved as-is. */
@@ -5761,12 +5843,12 @@ export type FeatureKey =
   | 'CURSOR_AGENTS'
   | 'CUSTOMER_SURVEYS'
   | 'CUSTOM_ROLES'
-  | 'DATA_IMPORTERS'
   | 'DISCORD_INTEGRATION'
   | 'ESCALATION_PATHS'
   | 'FRESHDESK_IMPORTER'
   | 'HELPSCOUT_SYNC'
   | 'HELP_CENTER'
+  | 'HELP_CENTERS'
   | 'HUBSPOT_SYNC'
   | 'INCIDENTIO_INTEGRATION'
   | 'INSIGHTS_LOOKBACK_DAYS'
@@ -6531,18 +6613,22 @@ export type HelpCenterPortalSettingsThreadFieldsInput = {
 export type HelpCenterPortalSettingsThreadVisibility = {
   customerAccounts: Scalars['Boolean']['output'];
   customerCompany: Scalars['Boolean']['output'];
+  customerEmailDomain: Scalars['Boolean']['output'];
   customerTenants: Scalars['Boolean']['output'];
   overrideCustomerAccounts?: Maybe<HelpCenterPortalSettingsOverrideCustomerAccounts>;
   overrideCustomerCompany?: Maybe<HelpCenterPortalSettingsOverrideCustomerCompany>;
+  overrideCustomerEmailDomain?: Maybe<HelpCenterPortalSettingsOverrideCustomerTenants>;
   overrideCustomerTenants?: Maybe<HelpCenterPortalSettingsOverrideCustomerTenants>;
 };
 
 export type HelpCenterPortalSettingsThreadVisibilityInput = {
   customerAccounts?: InputMaybe<Scalars['Boolean']['input']>;
   customerCompany?: InputMaybe<Scalars['Boolean']['input']>;
+  customerEmailDomain?: InputMaybe<Scalars['Boolean']['input']>;
   customerTenants?: InputMaybe<Scalars['Boolean']['input']>;
   overrideCustomerAccounts?: InputMaybe<HelpCenterPortalSettingsOverrideCustomerAccountsInput>;
   overrideCustomerCompany?: InputMaybe<HelpCenterPortalSettingsOverrideCustomerCompanyInput>;
+  overrideCustomerEmailDomain?: InputMaybe<HelpCenterPortalSettingsOverrideCustomerTenantsInput>;
   overrideCustomerTenants?: InputMaybe<HelpCenterPortalSettingsOverrideCustomerTenantsInput>;
 };
 
@@ -6593,6 +6679,65 @@ export type HyperlineCheckoutSessionStatus =
 export type ImpersonationInput = {
   asCustomer?: InputMaybe<CustomerImpersonationInput>;
   asUser?: InputMaybe<UserImpersonationInput>;
+};
+
+export type ImportBroadcastRecipientUnsubscribeMatch = {
+  name: Scalars['String']['output'];
+  slackChannelId: Scalars['ID']['output'];
+  slackTeamId: Scalars['ID']['output'];
+};
+
+export type ImportBroadcastRecipientUnsubscribeRowInput = {
+  /**
+   * Recipient identifier to unsubscribe. Today this is a Slack channel id (`C…` / `G…` / `D…`)
+   * or exact Slack channel name (optional leading `#`); email addresses will reuse this field later.
+   */
+  recipient: Scalars['String']['input'];
+  /** 1-based spreadsheet row number (header is 1). */
+  rowNumber: Scalars['Int']['input'];
+  /** Optional Slack team id when the same Slack channel name exists on more than one connected team. Unused for non-Slack recipients. */
+  slackTeamId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type ImportBroadcastRecipientUnsubscribeRowResult = {
+  matches: Array<ImportBroadcastRecipientUnsubscribeMatch>;
+  message?: Maybe<Scalars['String']['output']>;
+  /** The recipient identifier from the import row (after normalization). */
+  recipient?: Maybe<Scalars['String']['output']>;
+  rowNumber: Scalars['Int']['output'];
+  slackChannelId?: Maybe<Scalars['ID']['output']>;
+  slackTeamId?: Maybe<Scalars['ID']['output']>;
+  status: ImportBroadcastRecipientUnsubscribeRowStatus;
+  unsubscribe?: Maybe<BroadcastRecipientUnsubscribe>;
+};
+
+export type ImportBroadcastRecipientUnsubscribeRowStatus =
+  | 'ALREADY_UNSUBSCRIBED'
+  | 'AMBIGUOUS'
+  | 'CREATED'
+  | 'INVALID'
+  | 'NOT_FOUND';
+
+export type ImportBroadcastRecipientUnsubscribesInput = {
+  /** When true, resolve and report without writing. */
+  isDryRun: Scalars['Boolean']['input'];
+  /** Structured rows to unsubscribe (max 500). CSV parsing is client-side. */
+  rows: Array<ImportBroadcastRecipientUnsubscribeRowInput>;
+};
+
+export type ImportBroadcastRecipientUnsubscribesOutput = {
+  error?: Maybe<MutationError>;
+  result?: Maybe<ImportBroadcastRecipientUnsubscribesResult>;
+};
+
+export type ImportBroadcastRecipientUnsubscribesResult = {
+  alreadyUnsubscribedCount: Scalars['Int']['output'];
+  ambiguousCount: Scalars['Int']['output'];
+  createdCount: Scalars['Int']['output'];
+  invalidCount: Scalars['Int']['output'];
+  isDryRun: Scalars['Boolean']['output'];
+  notFoundCount: Scalars['Int']['output'];
+  rows: Array<ImportBroadcastRecipientUnsubscribeRowResult>;
 };
 
 export type ImportCustomerInput = {
@@ -7058,6 +7203,31 @@ export type InternalNotificationsFilter = {
   createdAt?: InputMaybe<DatetimeFilter>;
   isRead?: InputMaybe<Scalars['Boolean']['input']>;
 };
+
+/** A static variable that Plain fills in when interpolating `{{ key }}` tokens in snippets, auto-responses, bulk replies and workflow actions. Thread field variables (`threadField.<key>`) are not listed here; they are derived from the workspace's thread field schemas. */
+export type InterpolationVariable = {
+  /** The entity the variable reads from. */
+  group: InterpolationVariableGroup;
+  /** Whether the variable is suitable for text a customer will read. Internal identifiers and the AI thread summary are not. */
+  isCustomerFacing: Scalars['Boolean']['output'];
+  /** The key used inside the braces, e.g. `customer.fullName`. */
+  key: Scalars['String']['output'];
+  /** A short human-readable label for the variable, suitable for a picker. */
+  label: Scalars['String']['output'];
+};
+
+/** The entity a static interpolation variable reads from. */
+export type InterpolationVariableGroup =
+  /** The customer on the thread. */
+  | 'CUSTOMER'
+  /** The tenant on the thread. */
+  | 'TENANT'
+  /** The thread the message, note or request is about. */
+  | 'THREAD'
+  /** The user performing the action, when there is one. */
+  | 'USER'
+  /** The current workspace. */
+  | 'WORKSPACE';
 
 export type InviteUserToWorkspaceInput = {
   customRoleId?: InputMaybe<Scalars['ID']['input']>;
@@ -7785,6 +7955,12 @@ export type Mutation = {
   addUserToActiveBillingRota: AddUserToActiveBillingRotaOutput;
   /** Adds an alternate support email address to the workspace's custom domain configuration, allowing emails to be sent from and received at that address. A workspace can have up to 5 alternate addresses. */
   addWorkspaceAlternateSupportEmailAddress: AddWorkspaceAlternateSupportEmailAddressOutput;
+  /**
+   * Records the person's answer to a Sidekick question card and resumes the agent with those
+   * selections. Only a human may answer. Answering the same card again with the same selections
+   * is a no-op; a different answer is rejected.
+   */
+  answerSidekickQuestion: AnswerSidekickQuestionOutput;
   /** Archives a label type so it can no longer be applied to threads, while preserving it on threads that already have it. To apply an archived label type again, unarchive it first. Requires the `labelType:edit` permission. */
   archiveLabelType: ArchiveLabelTypeOutput;
   /** Assigns a role to a user in the workspace. Supply exactly one of `roleKey` (for built-in roles) or `customRoleId` (for custom roles) — not both. You can also set `usingBillingRotaSeat` to control whether the user occupies a billable seat on the billing rota. Requires the `roles:assign` permission. */
@@ -7931,8 +8107,6 @@ export type Mutation = {
   createCustomerGroup: CreateCustomerGroupOutput;
   /** Creates a new customer survey (e.g. a CSAT survey) in the workspace. Requires the `customerSurvey:create` permission and a billing entitlement for customer surveys. You must supply a template (currently only `csatTemplate` is supported) and can optionally specify targeting conditions, an enabled state, a send delay, and a per-customer cooldown interval. */
   createCustomerSurvey: CreateCustomerSurveyOutput;
-  /** Creates (or reuses) a demo channel on the given integration's support channel (e.g. a demo Slack channel), invites the installing user, and seeds a demo customer thread so the integration can be tried out before going live. */
-  createDemoChannel: CreateDemoChannelOutput;
   /**
    * Create a new discussion. Supersedes createThreadDiscussion and additionally supports Sidekick
    * AGENT_SESSION discussions (which can be started without a thread). For Slack, Email, and Cursor
@@ -8313,8 +8487,17 @@ export type Mutation = {
   deleteWorkspaceSlackIntegration: DeleteWorkspaceSlackIntegrationOutput;
   /** Removes Plain's Sidekick AI agent from the workspace's Slack. Returns the integration that was deleted. Returns an error if no Sidekick integration exists. Requires the workspaceSlackSidekickIntegration:delete permission. */
   deleteWorkspaceSlackSidekickIntegration: DeleteWorkspaceSlackSidekickIntegrationOutput;
+  /** Dismisses a Sidekick question card so the person can reply in the chat instead. */
+  dismissSidekickQuestion: DismissSidekickQuestionOutput;
   /** Dismisses one or more pending suggested label types without creating label types. All ids must currently be PENDING. Requires the `labelType:create` permission. */
   dismissSuggestedLabelTypes: DismissSuggestedLabelTypesOutput;
+  /**
+   * Copies an existing broadcast into a new draft. Authoring fields (content, audience, sender,
+   * notification title, and related settings) are copied. Send history, schedule, recipients, and
+   * delivery stats are not. The copy is named `Copy of <original name>`. Requires the
+   * `broadcast:create` and `broadcast:read` permissions.
+   */
+  duplicateBroadcast: DuplicateBroadcastOutput;
   /**
    * Edits the text of a user message that is waiting in a Sidekick AGENT_SESSION queue.
    * Attachments are not editable in this flow — delete and re-send to change them. Rejects
@@ -8335,6 +8518,8 @@ export type Mutation = {
   generateAiToneRulesFromDescription: GenerateAiToneRulesFromDescriptionOutput;
   /** Use AI to generate one or more draft help center articles from the content of a support thread. Returns the generated articles in DRAFT status for review before publishing. Requires the helpCenter:edit permission. */
   generateHelpCenterArticle: GenerateHelpCenterArticleOutput;
+  /** Bulk-imports broadcast recipient unsubscribes by recipient identifier (Slack channel id/name today; email later). Idempotent. Requires `broadcast:edit` and the broadcasts feature flag. */
+  importBroadcastRecipientUnsubscribes: ImportBroadcastRecipientUnsubscribesOutput;
   /** Upsert up to 25 customers from an external system using their externalId for idempotency. Each customer can include an optional list of tenants to associate with. Returns an ImportResult with added, updated, and skipped counts. */
   importCustomers: ImportCustomersOutput;
   /** Upsert up to 50 tenant field schemas from an external system using their externalFieldId for idempotency. Set isDeleted: true on a schema to mark it as deleted in Plain. Returns an ImportResult with added, updated, and skipped counts. */
@@ -8741,9 +8926,9 @@ export type Mutation = {
   updateSidekickMcpServer: UpdateSidekickMcpServerOutput;
   /** Updates the operating instructions and default project that guide how Sidekick uses the PostHog integration. Pass null or an empty string to clear either field. */
   updateSidekickPosthogConfig: UpdateSidekickPosthogConfigOutput;
-  /** Updates the operating instructions that guide how Sidekick uses a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly or Grain), identified by its serviceAuthorizationId. Pass null or an empty string to clear the instructions. GitHub and PostHog have their own configuration shapes — use updateSidekickGithubConfig / updateSidekickPosthogConfig instead. */
+  /** Updates the operating instructions that guide how Sidekick uses a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Pass null or an empty string to clear the instructions. GitHub and PostHog have their own configuration shapes — use updateSidekickGithubConfig / updateSidekickPosthogConfig instead. */
   updateSidekickServiceConfig: UpdateSidekickServiceConfigOutput;
-  /** Updates workspace-level Sidekick settings, such as the custom prompt appended to every session's system prompt. Pass null or an empty string for customPrompt to clear any existing value. */
+  /** Updates workspace-level Sidekick settings, such as the custom prompt appended to every session's system prompt and the tools selected during onboarding. Pass null or an empty string for customPrompt to clear any existing value. Omit a field to leave it unchanged. */
   updateSidekickSettings: UpdateSidekickSettingsOutput;
   /** Updates configuration for the workspace's Slack Sidekick integration. Currently supports setting custom operating instructions that guide Sidekick's behavior. Omitting operatingInstructions is a no-op; passing null or an empty string clears any existing instructions. Requires the workspaceSlackSidekickIntegration:update permission. */
   updateSidekickSlackConfig: UpdateSidekickSlackConfigOutput;
@@ -8800,7 +8985,7 @@ export type Mutation = {
    * Requires the `tenant:read` and `tenant:create` permissions.
    */
   upsertAccount: UpsertAccountOutput;
-  /** Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, or `userReferenceValues`). Requires `tenant:edit` permission. */
+  /** Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `accountReferenceValues`). Requires `tenant:edit` permission. */
   upsertAccountField: UpsertAccountFieldOutput;
   /** Creates or updates one or more account field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission. */
   upsertAccountFieldSchema: UpsertAccountFieldSchemaOutput;
@@ -8847,7 +9032,7 @@ export type Mutation = {
    * Requires the `tenant:read` and `tenant:create` permissions.
    */
   upsertTenant: UpsertTenantOutput;
-  /** Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, or `userReferenceValues`). Requires `tenant:edit` permission. */
+  /** Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `tenantReferenceValues`). Requires `tenant:edit` permission. */
   upsertTenantField: UpsertTenantFieldOutput;
   /** Creates or updates one or more tenant field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission. */
   upsertTenantFieldSchema: UpsertTenantFieldSchemaOutput;
@@ -8919,6 +9104,11 @@ export type MutationAddUserToActiveBillingRotaArgs = {
 
 export type MutationAddWorkspaceAlternateSupportEmailAddressArgs = {
   input: AddWorkspaceAlternateSupportEmailAddressInput;
+};
+
+
+export type MutationAnswerSidekickQuestionArgs = {
+  input: AnswerSidekickQuestionInput;
 };
 
 
@@ -9099,11 +9289,6 @@ export type MutationCreateCustomerGroupArgs = {
 
 export type MutationCreateCustomerSurveyArgs = {
   input: CreateCustomerSurveyInput;
-};
-
-
-export type MutationCreateDemoChannelArgs = {
-  input: CreateDemoChannelInput;
 };
 
 
@@ -9702,8 +9887,18 @@ export type MutationDeleteWorkspaceSlackIntegrationArgs = {
 };
 
 
+export type MutationDismissSidekickQuestionArgs = {
+  input: DismissSidekickQuestionInput;
+};
+
+
 export type MutationDismissSuggestedLabelTypesArgs = {
   input: DismissSuggestedLabelTypesInput;
+};
+
+
+export type MutationDuplicateBroadcastArgs = {
+  input: DuplicateBroadcastInput;
 };
 
 
@@ -9734,6 +9929,11 @@ export type MutationGenerateAiToneRulesFromDescriptionArgs = {
 
 export type MutationGenerateHelpCenterArticleArgs = {
   input: GenerateHelpCenterArticleInput;
+};
+
+
+export type MutationImportBroadcastRecipientUnsubscribesArgs = {
+  input: ImportBroadcastRecipientUnsubscribesInput;
 };
 
 
@@ -10800,7 +11000,7 @@ export type Query = {
   account?: Maybe<Account>;
   /** Returns the list of account field schemas defined in the workspace. Use the `source` and `isVisible` filters to narrow results. Supports cursor-based pagination. */
   accountFieldSchemas: AccountFieldSchemaConnection;
-  /** Returns a paginated list of accounts in the workspace. Use the `filters` argument to narrow by ID, deleted status, or last-updated time. Requires the `tenant:read` permission. */
+  /** Returns a paginated list of accounts in the workspace. Use the `filters` argument to narrow the results and `sortBy` to order them (by name ascending when omitted). Requires the `tenant:read` permission. */
   accounts: AccountConnection;
   /**
    * Returns the cluster that the given thread currently belongs to, or null if the thread has not been assigned to any cluster.
@@ -10906,7 +11106,7 @@ export type Query = {
   connectedSlackChannel?: Maybe<ConnectedSlackChannel>;
   /** Gets all slack channels for this workspace, which match the specified filters. */
   connectedSlackChannels: ConnectedSlackChannelConnection;
-  /** Every billable item the workspace has been charged credits for, newest first: Sidekick sessions, Sidekick actions a workflow ran, and work done by the workspace's own agents. Use it to show the line-by-line breakdown behind a credit total. Supports standard forward and backward pagination. Requires the `billing:read` permission. */
+  /** Every billable item the workspace has used credits on, newest first: Sidekick sessions, Sidekick actions a workflow ran, and work done by the workspace's own agents. Items with status FREE_BETA were not charged; their credits show what they would have cost. Use it to show the line-by-line breakdown behind a credit total. Supports standard forward and backward pagination. Requires the `billing:read` permission. */
   creditSpend: CreditSpendConnection;
   /** Returns the list of GitHub repositories accessible via the given Cursor integration. Results are fetched live from the Cursor API and cached for up to 5 minutes. Requires the `workspaceCursorIntegration:read` permission. */
   cursorRepositories: Array<CursorRepository>;
@@ -11016,6 +11216,8 @@ export type Query = {
   importerTenantLists: ImporterTenantListConnection;
   /** List indexed documents across your workspace, newest first. Use the `knowledgeSourceId` filter to retrieve only the documents belonging to a specific knowledge source, and the `statuses` filter to retrieve only documents with a given ingestion status. */
   indexedDocuments: IndexedDocumentConnection;
+  /** List the static variables that can be interpolated with `{{ key }}` in snippets, auto-responses, bulk replies and workflow actions, with a label and group for building a picker. Thread field variables are not included; derive them from `threadFieldSchemas` as `threadField.<key>`. Requires the `workspace:read` permission. */
+  interpolationVariables: Array<InterpolationVariable>;
   /**
    * Fetch the configurable fields for a connected issue tracker (e.g. Shortcut, Rootly, incident.io, GitHub).
    * Pass previously selected field values in `selectedFields` so that dependent fields (such as labels that depend on a chosen repository) are populated correctly.
@@ -11198,9 +11400,9 @@ export type Query = {
   sidekickMcpServers: Array<SidekickMcpServer>;
   /** Returns the Sidekick PostHog configuration for a workspace, including any operating instructions and the default project the agent queries. Returns null when no configuration has been saved yet. */
   sidekickPosthogServiceConfig?: Maybe<SidekickPosthogServiceConfig>;
-  /** Returns the Sidekick configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly or Grain), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog have their own configuration shapes — use sidekickGithubServiceConfig / sidekickPosthogServiceConfig instead. */
+  /** Returns the Sidekick configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog have their own configuration shapes — use sidekickGithubServiceConfig / sidekickPosthogServiceConfig instead. */
   sidekickServiceConfig?: Maybe<SidekickServiceConfig>;
-  /** Returns workspace-level Sidekick settings, including the custom prompt that is appended to every Sidekick session's system prompt. Always returns an object; fields inside are null when not configured. */
+  /** Returns workspace-level Sidekick settings, including the custom prompt that is appended to every Sidekick session's system prompt and the tools selected during onboarding. Always returns an object. customPrompt is null when not configured. preferredIntegrations is empty when none are selected. */
   sidekickSettings: SidekickSettings;
   /**
    * Every skill available to Sidekick in this workspace: Plain's system skills
@@ -11256,7 +11458,7 @@ export type Query = {
   tenant?: Maybe<Tenant>;
   /** Returns the list of tenant field schemas defined in the workspace. Use the `source` and `isVisible` filters to narrow results. Supports cursor-based pagination. */
   tenantFieldSchemas: TenantFieldSchemaConnection;
-  /** Returns a paginated list of tenants in the workspace. Use the `filters` argument to narrow by ID, deleted status, or last-updated time. Requires the `tenant:read` permission. */
+  /** Returns a paginated list of tenants in the workspace. Use the `filters` argument to narrow the results and `sortBy` to order them (by name ascending when omitted). Requires the `tenant:read` permission. */
   tenants: TenantConnection;
   /**
    * The Slack test channel for one workspace Slack integration, or null until the first Slack test thread creates it.
@@ -11545,6 +11747,7 @@ export type QueryAccountsArgs = {
   filters?: InputMaybe<AccountsFilter>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  sortBy?: InputMaybe<AccountsSort>;
 };
 
 
@@ -12369,6 +12572,7 @@ export type QueryTenantsArgs = {
   filters?: InputMaybe<TenantsFilter>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  sortBy?: InputMaybe<TenantsSort>;
 };
 
 
@@ -13153,8 +13357,9 @@ export type RoleChangeCost = {
    */
   adjustedPrice: Price;
   /**
-   * Total amount that will be invoiced immediately for the role change.
-   * If this is negative, we would credit the amount to your account.
+   * Prorated amount billed for this role change. Monthly contracts put this on the next invoice.
+   * Annual contracts charge it at the end of the month. 0 when nothing is billed.
+   * If this is negative, the amount is credited rather than charged.
    */
   dueNowPrice: Price;
   /**
@@ -13284,6 +13489,8 @@ export type SavedThreadsViewFilter = {
 };
 
 export type SavedThreadsViewFilterAccountField = {
+  /** IDs of accounts matched when filtering on an account-reference account field. */
+  accountReferenceValues: Array<Scalars['ID']['output']>;
   booleanValue?: Maybe<Scalars['Boolean']['output']>;
   dateValue?: Maybe<DateTime>;
   /** The external ID of the account field schema being filtered on. */
@@ -13291,6 +13498,8 @@ export type SavedThreadsViewFilterAccountField = {
   numberValue?: Maybe<Scalars['Float']['output']>;
   stringArrayValue: Array<Scalars['String']['output']>;
   stringValue?: Maybe<Scalars['String']['output']>;
+  /** Matches when the field's value equals any of these (OR). For STRING/ENUM fields. */
+  stringValues?: Maybe<Array<Scalars['String']['output']>>;
   /** IDs of users matched when filtering on a user-reference account field. */
   userReferenceValues: Array<Scalars['ID']['output']>;
 };
@@ -13337,6 +13546,10 @@ export type SavedThreadsViewFilterTenantField = {
   numberValue?: Maybe<Scalars['Float']['output']>;
   stringArrayValue: Array<Scalars['String']['output']>;
   stringValue?: Maybe<Scalars['String']['output']>;
+  /** Matches when the field's value equals any of these (OR). For STRING/ENUM fields. */
+  stringValues?: Maybe<Array<Scalars['String']['output']>>;
+  /** IDs of tenants matched when filtering on a tenant-reference tenant field. */
+  tenantReferenceValues: Array<Scalars['ID']['output']>;
   /** IDs of users matched when filtering on a user-reference tenant field. */
   userReferenceValues: Array<Scalars['ID']['output']>;
 };
@@ -14174,6 +14387,8 @@ export type SidekickCreditUsageDay = {
   credits: Scalars['Int']['output'];
   /** Start of the UTC day this usage falls in. */
   day: DateTime;
+  /** Credits the day's free-beta items would have cost. Nothing was charged for them. */
+  freeCredits: Scalars['Int']['output'];
   /** Number of billable items that resolved on this day, not only Sidekick sessions. */
   sessionCount: Scalars['Int']['output'];
 };
@@ -14313,6 +14528,32 @@ export type SidekickPosthogServiceConfig = {
   projectId?: Maybe<Scalars['ID']['output']>;
 };
 
+export type SidekickQuestion = {
+  id: Scalars['ID']['output'];
+  /** True when several options can be picked; false when the user picks one option or types an answer. */
+  isMultiSelect: Scalars['Boolean']['output'];
+  options: Array<SidekickQuestionOption>;
+  question: Scalars['String']['output'];
+};
+
+export type SidekickQuestionOption = {
+  description: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  label: Scalars['String']['output'];
+};
+
+export type SidekickQuestionSelection = {
+  optionIds: Array<Scalars['ID']['output']>;
+  /** The answer the user typed in the card's text box. Null when they only picked listed options. */
+  otherText?: Maybe<Scalars['String']['output']>;
+  questionId: Scalars['ID']['output'];
+};
+
+export type SidekickQuestionStatus =
+  | 'ANSWERED'
+  | 'DISMISSED'
+  | 'PENDING';
+
 /**
  * The Sidekick configuration for a connected service whose only
  * user-editable setting is its operating instructions. Covers Datadog,
@@ -14343,6 +14584,8 @@ export type SidekickSessionsChange = {
 export type SidekickSettings = {
   /** Free-text instructions appended to Sidekick's system prompt for every session in this workspace, allowing teams to tailor its behavior (tone, escalation rules, domain knowledge, etc.). Null when no custom prompt has been configured. */
   customPrompt?: Maybe<Scalars['String']['output']>;
+  /** Catalog slugs for the tools this workspace said they use during onboarding. Empty when none are selected. */
+  preferredIntegrations: Array<Scalars['String']['output']>;
 };
 
 /**
@@ -15227,6 +15470,7 @@ export type TenantFieldFilter = {
   stringValue?: InputMaybe<Scalars['String']['input']>;
   /** Matches when the field's value equals any of these (OR). For STRING/ENUM fields. */
   stringValues?: InputMaybe<Array<Scalars['String']['input']>>;
+  tenantReferenceValues?: InputMaybe<Array<Scalars['ID']['input']>>;
   userReferenceValues?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -15302,6 +15546,11 @@ export type TenantFieldStringValue = {
   stringValue: Scalars['String']['output'];
 };
 
+export type TenantFieldTenantReferenceValue = {
+  tenantReferenceValues: Array<Scalars['ID']['output']>;
+  tenants: Array<Tenant>;
+};
+
 /** The data type of a tenant field schema, determining which value field to use when upserting a tenant field. */
 export type TenantFieldType =
   /** A true/false boolean value. */
@@ -15314,6 +15563,8 @@ export type TenantFieldType =
   | 'STRING_ARRAY'
   /** A plain text string value. */
   | 'STRING_TYPE'
+  /** One or more references to Plain tenants by ID. */
+  | 'TENANT_REFERENCE_TYPE'
   /** One or more references to Plain users by ID. */
   | 'USER_REFERENCE_TYPE';
 
@@ -15322,7 +15573,7 @@ export type TenantFieldUserReferenceValue = {
   users: Array<User>;
 };
 
-export type TenantFieldValue = TenantFieldBooleanValue | TenantFieldDateTimeValue | TenantFieldNumberValue | TenantFieldStringArrayValue | TenantFieldStringValue | TenantFieldUserReferenceValue;
+export type TenantFieldValue = TenantFieldBooleanValue | TenantFieldDateTimeValue | TenantFieldNumberValue | TenantFieldStringArrayValue | TenantFieldStringValue | TenantFieldTenantReferenceValue | TenantFieldUserReferenceValue;
 
 export type TenantIdentifierInput = {
   externalId?: InputMaybe<Scalars['String']['input']>;
@@ -15375,11 +15626,19 @@ export type TenantTierMembership = {
 };
 
 export type TenantsFilter = {
+  /** Matches tenants that match every one of these filters. */
+  and?: InputMaybe<Array<TenantsFilter>>;
   /**
    * True to only return tenants that have been deleted. False to only return tenants that have not been deleted.
    * Omit to return all tenants.
    */
   isDeleted?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Matches tenants that do not match this filter. */
+  not?: InputMaybe<TenantsFilter>;
+  /** Matches tenants that match at least one of these filters. */
+  or?: InputMaybe<Array<TenantsFilter>>;
+  /** Filter to tenants from any of the given sources. */
+  sources?: InputMaybe<Array<TenantSource>>;
   /** Filter to tenants whose tenant field values match all of the given field filters. */
   tenantFields?: InputMaybe<Array<TenantFieldFilter>>;
   tenantIds?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -15398,6 +15657,24 @@ export type TenantsSearchQuery = {
    */
   term: Scalars['String']['input'];
 };
+
+/** Tenants without a value for the sort field come last in either direction. Ties are ordered by name. */
+export type TenantsSort = {
+  direction: SortDirection;
+  field: TenantsSortField;
+  /** Required when `field` is `TENANT_FIELD`. The schema must be for a string, number, boolean or datetime field. */
+  tenantFieldSchemaId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type TenantsSortField =
+  | 'NAME'
+  /** Sorts by the number of the tenant's threads in the TODO status. */
+  | 'OPEN_THREAD_COUNT'
+  | 'SOURCE'
+  /** Sorts by the value of the tenant field whose schema is given in `tenantFieldSchemaId`. */
+  | 'TENANT_FIELD'
+  /** Sorts by the name of the tenant's tier. A tenant in several tiers sorts by the first name alphabetically. */
+  | 'TIER';
 
 /** The channels a test thread's conversation can happen on. */
 export type TestThreadChannel =
@@ -15912,7 +16189,7 @@ export type ThreadDiscussionEntry = {
   threadDiscussionId: Scalars['ID']['output'];
 };
 
-export type ThreadDiscussionEntryPayload = ThreadDiscussionApprovalRequestEntryPayload | ThreadDiscussionConnectRequestEntryPayload | ThreadDiscussionMessageEntryPayload | ThreadDiscussionToolCallApprovalEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionTurnStoppedEntryPayload;
+export type ThreadDiscussionEntryPayload = ThreadDiscussionApprovalRequestEntryPayload | ThreadDiscussionConnectRequestEntryPayload | ThreadDiscussionMessageEntryPayload | ThreadDiscussionQuestionEntryPayload | ThreadDiscussionToolCallApprovalEntryPayload | ThreadDiscussionToolCallEntryPayload | ThreadDiscussionTurnStoppedEntryPayload;
 
 export type ThreadDiscussionMessage = {
   /** Customer-scoped attachments. Populated for EMAIL / SLACK / CURSOR messages. */
@@ -15994,6 +16271,20 @@ export type ThreadDiscussionMessageType =
   | 'INBOUND'
   /** A message sent by a Plain workspace member. */
   | 'OUTBOUND';
+
+/**
+ * Sidekick asked the person to choose among a few options. Rendered as a card in the
+ * Sidekick transcript. Only produced for in-app sessions. The card always offers an
+ * Other free-text choice that is not one of `options`.
+ */
+export type ThreadDiscussionQuestionEntryPayload = {
+  questionRequestId: Scalars['ID']['output'];
+  questions: Array<SidekickQuestion>;
+  /** When the person answered. Null while the question is pending. */
+  resolvedAt?: Maybe<DateTime>;
+  selections: Array<SidekickQuestionSelection>;
+  status: SidekickQuestionStatus;
+};
 
 export type ThreadDiscussionResolvedEntry = {
   customerId: Scalars['ID']['output'];
@@ -17958,11 +18249,10 @@ export type UpdateSidekickServiceConfigOutput = {
 };
 
 export type UpdateSidekickSettingsInput = {
-  /**
-   * Custom prompt to append to the Sidekick system prompt. Pass null
-   * or an empty string to clear.
-   */
+  /** Custom prompt to append to the Sidekick system prompt. Pass null or an empty string to clear. Omit to leave the current value unchanged. */
   customPrompt?: InputMaybe<Scalars['String']['input']>;
+  /** Tools selected during onboarding, as Sidekick integration catalog slugs. Pass an empty list to record that nothing was selected. Omit or pass null to leave the current value unchanged. Unknown slugs are rejected. */
+  preferredIntegrations?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type UpdateSidekickSettingsOutput = {
@@ -18286,6 +18576,7 @@ export type UploadFormData = {
 
 export type UpsertAccountFieldInput = {
   accountFieldIdentifier: AccountFieldIdentifier;
+  accountReferenceValues?: InputMaybe<Array<Scalars['ID']['input']>>;
   arrayValue?: InputMaybe<Array<Scalars['String']['input']>>;
   booleanValue?: InputMaybe<Scalars['Boolean']['input']>;
   dateValue?: InputMaybe<Scalars['String']['input']>;
@@ -18485,6 +18776,7 @@ export type UpsertTenantFieldInput = {
   numberValue?: InputMaybe<Scalars['Float']['input']>;
   stringValue?: InputMaybe<Scalars['String']['input']>;
   tenantFieldIdentifier: TenantFieldIdentifier;
+  tenantReferenceValues?: InputMaybe<Array<Scalars['ID']['input']>>;
   type: TenantFieldType;
   userReferenceValues?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -19041,6 +19333,8 @@ export type Workflow = {
 export type WorkflowCapabilities = {
   /** Action step types this workflow is restricted to (e.g. `send_slack_notification`). An empty list means no restriction (all action types are allowed). */
   allowedActionTypes: Array<Scalars['String']['output']>;
+  /** Whether the AI-triage mode on `apply_labels` and `set_priority` actions is available. */
+  hasAiTriageActionSupport: Scalars['Boolean']['output'];
   /** Whether condition steps are allowed. */
   hasConditionSupport: Scalars['Boolean']['output'];
   /** Whether the `ask_sidekick` (Sidekick action) block is available. */
@@ -19214,6 +19508,7 @@ export type WorkflowStep = {
    * - ACTION: an action, e.g. `apply_labels`, `remove_labels`, `set_priority`, `set_status`, `set_tier`, `set_service_level_agreement_policy`, `assign_to_user`, `assign_to_team`, `add_note`, `send_message`, `send_slack_notification`, `send_http_request`, `set_thread_field`, `snooze_thread`, `escalate_thread`.
    * - WAIT: `{ "duration": <seconds>, "businessHoursScheduleIds"?: [<ID>, ...], "cancelCondition"?: <condition> }`. When `businessHoursScheduleIds` is set, `duration` counts open time while any selected schedule is open.
    * Examples: `{"version":1,"type":"apply_labels","labelTypeIds":["lt_..."]}`, `{"version":1,"type":"else_if","conditions":[...]}`.
+   * `apply_labels` and `set_priority` also accept an AI-triage mode (`{"version":1,"type":"apply_labels","aiTriage":true}` / `{"version":1,"type":"set_priority","aiTriage":true}`) where the AI picks the labels (from label types not excluded from AI) or the priority instead of a fixed value.
    * Payloads embed workspace-specific IDs (label type IDs, user IDs, tier IDs, etc.), which are not portable: copying a payload into another workspace references IDs that do not exist there and the step silently applies nothing.
    */
   payload: Scalars['String']['output'];
@@ -19801,6 +20096,7 @@ export type AccountFieldsFragment = { id: string, name: string, externalId: stri
    };
 
 export type AccountFieldFieldsFragment = { id: string, source?: string | null, externalFieldId: string, value:
+    | { __typename: 'AccountFieldAccountReferenceValue', accountReferenceValues: Array<string> }
     | { __typename: 'AccountFieldBooleanValue', booleanValue: boolean }
     | { __typename: 'AccountFieldDateTimeValue', dateValue: { unixTimestamp: string, iso8601: string } }
     | { __typename: 'AccountFieldNumberValue', numberValue: number }
@@ -19816,6 +20112,8 @@ export type AccountFieldFieldsFragment = { id: string, source?: string | null, e
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
+
+export type AccountFieldAccountReferenceValueFieldsFragment = { accountReferenceValues: Array<string> };
 
 export type AccountFieldBooleanValueFieldsFragment = { booleanValue: boolean };
 
@@ -19971,7 +20269,7 @@ export type BooleanSettingFieldsFragment = { code: string, booleanValue: boolean
 export type BroadcastFieldsFragment = { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
     | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
     | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
-   | null, sendTarget: { scope?: BroadcastSendTargetScope | null, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+   | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -19985,7 +20283,7 @@ export type BroadcastFieldsFragment = { id: string, name: string, notificationTi
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    | null, reactions: Array<{ emojiName: string, count: number, imageUrl?: string | null }> };
 
-export type BroadcastAudienceFieldsFragment = { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type BroadcastAudienceFieldsFragment = { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -20931,6 +21229,8 @@ export type HelpCenterIndexFieldsFragment = { helpCenterId: string, hash: string
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
+
+export type ImportBroadcastRecipientUnsubscribesResultFieldsFragment = { isDryRun: boolean, createdCount: number, alreadyUnsubscribedCount: number, notFoundCount: number, ambiguousCount: number, invalidCount: number };
 
 export type ImportJobFieldsFragment = { id: string, status: ImporterStatus, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null };
 
@@ -22377,6 +22677,7 @@ export type TenantFieldFieldsFragment = { id: string, source?: string | null, ex
     | { __typename: 'TenantFieldNumberValue', numberValue: number }
     | { __typename: 'TenantFieldStringArrayValue', arrayValue: Array<string> }
     | { __typename: 'TenantFieldStringValue', stringValue: string }
+    | { __typename: 'TenantFieldTenantReferenceValue', tenantReferenceValues: Array<string> }
     | { __typename: 'TenantFieldUserReferenceValue', userReferenceValues: Array<string> }
   , createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -22407,6 +22708,8 @@ export type TenantFieldSchemaFieldsFragment = { id: string, source: string, exte
 export type TenantFieldStringArrayValueFieldsFragment = { arrayValue: Array<string> };
 
 export type TenantFieldStringValueFieldsFragment = { stringValue: string };
+
+export type TenantFieldTenantReferenceValueFieldsFragment = { tenantReferenceValues: Array<string> };
 
 export type TenantFieldUserReferenceValueFieldsFragment = { userReferenceValues: Array<string> };
 
@@ -22625,6 +22928,7 @@ export type ThreadDiscussionMessageFieldsFragment = { id: string, threadDiscussi
        | null }
     | { __typename: 'ThreadDiscussionConnectRequestEntryPayload', connectRequestId: string, justification: string, threadDiscussionConnectRequestEntryPayloadStatus: SidekickConnectRequestStatus, tools: Array<{ slug: string, name: string, isConnected: boolean }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null }
     | { __typename: 'ThreadDiscussionMessageEntryPayload', text: string, type: ThreadDiscussionMessageType, isFinal: boolean, slackBlocks?: string | null }
+    | { __typename: 'ThreadDiscussionQuestionEntryPayload', questionRequestId: string, threadDiscussionQuestionEntryPayloadStatus: SidekickQuestionStatus, selections: Array<{ questionId: string, optionIds: Array<string>, otherText?: string | null }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null }
     | { __typename: 'ThreadDiscussionToolCallApprovalEntryPayload', approvalId: string, justification: string, reviewerNote?: string | null, threadDiscussionToolCallApprovalEntryPayloadToolCallId: string, threadDiscussionToolCallApprovalEntryPayloadStatus: AgentApprovalStatus, resolvedAt?: { unixTimestamp: string, iso8601: string } | null, resolvedBy?:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -22655,6 +22959,8 @@ export type ThreadDiscussionMessageFieldsFragment = { id: string, threadDiscussi
 export type ThreadDiscussionMessageEntryFieldsFragment = { customerId: string, threadDiscussionId: string, threadDiscussionMessageId: string, discussionType: ThreadDiscussionType, text: string, resolvedText: string, type: ThreadDiscussionMessageType, slackMessageLink?: string | null, slackMessageTimestamp?: string | null, hasUnprocessedAttachments: boolean, lastEditedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null, deletedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null };
 
 export type ThreadDiscussionMessageEntryPayloadFieldsFragment = { text: string, type: ThreadDiscussionMessageType, isFinal: boolean, slackBlocks?: string | null };
+
+export type ThreadDiscussionQuestionEntryPayloadFieldsFragment = { questionRequestId: string, status: SidekickQuestionStatus, selections: Array<{ questionId: string, optionIds: Array<string>, otherText?: string | null }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null };
 
 export type ThreadDiscussionResolvedEntryFieldsFragment = { customerId: string, threadDiscussionId: string, discussionType: ThreadDiscussionType, emailRecipients: Array<string>, slackChannelName?: string | null, slackMessageLink?: string | null, resolvedAt: { unixTimestamp: string, iso8601: string } };
 
@@ -24462,7 +24768,7 @@ export type SidekickCreditUsageByDayQueryVariables = Exact<{
 }>;
 
 
-export type SidekickCreditUsageByDayQuery = { sidekickCreditUsageByDay: { days: Array<{ credits: number, sessionCount: number, day: { unixTimestamp: string, iso8601: string } }> } };
+export type SidekickCreditUsageByDayQuery = { sidekickCreditUsageByDay: { days: Array<{ credits: number, freeCredits: number, sessionCount: number, day: { unixTimestamp: string, iso8601: string } }> } };
 
 export type SidekickCreditBalanceQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -26721,7 +27027,7 @@ export type BroadcastsQueryVariables = Exact<{
 export type BroadcastsQuery = { broadcasts: { totalCount: number, edges: Array<{ cursor: string, node: { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
           | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
           | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
-         | null, sendTarget: { scope?: BroadcastSendTargetScope | null, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+         | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26748,7 +27054,7 @@ export type SearchBroadcastsQueryVariables = Exact<{
 export type SearchBroadcastsQuery = { searchBroadcasts: { totalCount: number, edges: Array<{ cursor: string, node: { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
           | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
           | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
-         | null, sendTarget: { scope?: BroadcastSendTargetScope | null, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+         | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26770,7 +27076,7 @@ export type BroadcastQueryVariables = Exact<{
 export type BroadcastQuery = { broadcast?: { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
       | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
       | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
-     | null, sendTarget: { scope?: BroadcastSendTargetScope | null, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+     | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26812,7 +27118,7 @@ export type BroadcastAudiencesQueryVariables = Exact<{
 }>;
 
 
-export type BroadcastAudiencesQuery = { broadcastAudiences: { edges: Array<{ cursor: string, node: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type BroadcastAudiencesQuery = { broadcastAudiences: { edges: Array<{ cursor: string, node: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26831,7 +27137,7 @@ export type BroadcastAudienceQueryVariables = Exact<{
 }>;
 
 
-export type BroadcastAudienceQuery = { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type BroadcastAudienceQuery = { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -27810,6 +28116,11 @@ export type SubscriptionEventTypesQueryVariables = Exact<{ [key: string]: never;
 
 export type SubscriptionEventTypesQuery = { subscriptionEventTypes: Array<{ eventType: string, description: string }> };
 
+export type InterpolationVariablesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InterpolationVariablesQuery = { interpolationVariables: Array<{ key: string, label: string, group: InterpolationVariableGroup, isCustomerFacing: boolean }> };
+
 export type WorkflowRuleQueryVariables = Exact<{
   workflowRuleId: string;
 }>;
@@ -27883,7 +28194,7 @@ export type WorkflowCapabilitiesQueryVariables = Exact<{
 }>;
 
 
-export type WorkflowCapabilitiesQuery = { workflowCapabilities: { hasConditionSupport: boolean, hasWaitSupport: boolean, allowedActionTypes: Array<string>, hasSidekickActionSupport: boolean } };
+export type WorkflowCapabilitiesQuery = { workflowCapabilities: { hasConditionSupport: boolean, hasWaitSupport: boolean, allowedActionTypes: Array<string>, hasSidekickActionSupport: boolean, hasAiTriageActionSupport: boolean } };
 
 export type WorkflowExecutionQueryVariables = Exact<{
   workflowExecutionId: string;
@@ -29248,6 +29559,7 @@ export type TenantsQueryVariables = Exact<{
   last?: number | null | undefined;
   before?: string | null | undefined;
   filters?: TenantsFilter | null | undefined;
+  sortBy?: TenantsSort | null | undefined;
 }>;
 
 
@@ -29298,6 +29610,7 @@ export type AccountsQueryVariables = Exact<{
   last?: number | null | undefined;
   before?: string | null | undefined;
   filters?: AccountsFilter | null | undefined;
+  sortBy?: AccountsSort | null | undefined;
 }>;
 
 
@@ -29774,7 +30087,7 @@ export type SidekickPosthogServiceConfigQuery = { sidekickPosthogServiceConfig?:
 export type SidekickSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SidekickSettingsQuery = { sidekickSettings: { customPrompt?: string | null } };
+export type SidekickSettingsQuery = { sidekickSettings: { customPrompt?: string | null, preferredIntegrations: Array<string> } };
 
 export type AgentSandboxToolPoliciesQueryVariables = Exact<{
   service?: string | null | undefined;
@@ -31912,7 +32225,29 @@ export type CreateBroadcastMutationVariables = Exact<{
 export type CreateBroadcastMutation = { createBroadcast: { broadcast?: { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
         | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
         | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
-       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, reactions: Array<{ emojiName: string, count: number, imageUrl?: string | null }> } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type DuplicateBroadcastMutationVariables = Exact<{
+  input: DuplicateBroadcastInput;
+}>;
+
+
+export type DuplicateBroadcastMutation = { duplicateBroadcast: { broadcast?: { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
+        | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
+        | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
+       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -31934,7 +32269,7 @@ export type UpdateBroadcastMutationVariables = Exact<{
 export type UpdateBroadcastMutation = { updateBroadcast: { broadcast?: { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
         | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
         | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
-       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -31956,7 +32291,7 @@ export type DeleteBroadcastMutationVariables = Exact<{
 export type DeleteBroadcastMutation = { deleteBroadcast: { broadcast?: { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
         | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
         | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
-       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32000,12 +32335,19 @@ export type ResubscribeBroadcastRecipientMutation = { resubscribeBroadcastRecipi
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
+export type ImportBroadcastRecipientUnsubscribesMutationVariables = Exact<{
+  input: ImportBroadcastRecipientUnsubscribesInput;
+}>;
+
+
+export type ImportBroadcastRecipientUnsubscribesMutation = { importBroadcastRecipientUnsubscribes: { result?: { isDryRun: boolean, createdCount: number, alreadyUnsubscribedCount: number, notFoundCount: number, ambiguousCount: number, invalidCount: number } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
 export type CreateBroadcastAudienceMutationVariables = Exact<{
   input: CreateBroadcastAudienceInput;
 }>;
 
 
-export type CreateBroadcastAudienceMutation = { createBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateBroadcastAudienceMutation = { createBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32024,7 +32366,7 @@ export type UpdateBroadcastAudienceMutationVariables = Exact<{
 }>;
 
 
-export type UpdateBroadcastAudienceMutation = { updateBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateBroadcastAudienceMutation = { updateBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32043,7 +32385,7 @@ export type DeleteBroadcastAudienceMutationVariables = Exact<{
 }>;
 
 
-export type DeleteBroadcastAudienceMutation = { deleteBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type DeleteBroadcastAudienceMutation = { deleteBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32065,7 +32407,7 @@ export type ScheduleBroadcastMutationVariables = Exact<{
 export type ScheduleBroadcastMutation = { scheduleBroadcast: { broadcast?: { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
         | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
         | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
-       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32087,7 +32429,7 @@ export type SendTestBroadcastMutationVariables = Exact<{
 export type SendTestBroadcastMutation = { sendTestBroadcast: { broadcast?: { id: string, name: string, notificationTitle?: string | null, content: string, contentFormat: BroadcastContentFormat, type: BroadcastType, isLinkUnfurlingEnabled: boolean, appendUnsubscribeLink?: boolean | null, status: BroadcastStatus, isDeleted: boolean, sender?:
         | { __typename: 'PlainWorkspaceBroadcastSender', workspace: { id: string } }
         | { __typename: 'SlackBroadcastSender', user: { userId: string, user: { id: string } } }
-       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+       | null, sendTarget: { scope?: BroadcastSendTargetScope | null, includeUnsubscribed: boolean, recipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }>, excludeRecipients: Array<{ type: BroadcastRecipientType, slackTeamId?: string | null, slackChannelId?: string | null }> }, latestSend?: { id: string, status: BroadcastSendStatus, isTest: boolean, scheduledAt: { unixTimestamp: string, iso8601: string }, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, deliveryCounts: { pending: number, sending: number, sent: number, failed: number, skippedUnsubscribed: number, total: number } } | null, scheduledAt?: { unixTimestamp: string, iso8601: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33299,13 +33641,6 @@ export type SetSlackAutoJoinRulesMutationVariables = Exact<{
 
 
 export type SetSlackAutoJoinRulesMutation = { setSlackAutoJoinRules: { rules: Array<{ id?: string | null, integrationId: string, channelNamePrefix: string, channelNameSuffix: string, defaultChannelMode?: SlackAutoJoinRuleChannelMode | null, defaultIngestionMode?: { type: SlackIngestionMode, manual?: { emoji?: string | null, isCustomerEnabled: boolean } | null } | null }>, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
-
-export type CreateDemoChannelMutationVariables = Exact<{
-  input: CreateDemoChannelInput;
-}>;
-
-
-export type CreateDemoChannelMutation = { createDemoChannel: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type CreateCustomerEventMutationVariables = Exact<{
   input: CreateCustomerEventInput;
@@ -38655,6 +38990,7 @@ export type SendThreadDiscussionMessageMutation = { sendThreadDiscussionMessage:
            | null }
         | { __typename: 'ThreadDiscussionConnectRequestEntryPayload', connectRequestId: string, justification: string, threadDiscussionConnectRequestEntryPayloadStatus: SidekickConnectRequestStatus, tools: Array<{ slug: string, name: string, isConnected: boolean }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null }
         | { __typename: 'ThreadDiscussionMessageEntryPayload', text: string, type: ThreadDiscussionMessageType, isFinal: boolean, slackBlocks?: string | null }
+        | { __typename: 'ThreadDiscussionQuestionEntryPayload', questionRequestId: string, threadDiscussionQuestionEntryPayloadStatus: SidekickQuestionStatus, selections: Array<{ questionId: string, optionIds: Array<string>, otherText?: string | null }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null }
         | { __typename: 'ThreadDiscussionToolCallApprovalEntryPayload', approvalId: string, justification: string, reviewerNote?: string | null, threadDiscussionToolCallApprovalEntryPayloadToolCallId: string, threadDiscussionToolCallApprovalEntryPayloadStatus: AgentApprovalStatus, resolvedAt?: { unixTimestamp: string, iso8601: string } | null, resolvedBy?:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -38695,6 +39031,7 @@ export type SendDiscussionMessageMutation = { sendDiscussionMessage: { discussio
            | null }
         | { __typename: 'ThreadDiscussionConnectRequestEntryPayload', connectRequestId: string, justification: string, threadDiscussionConnectRequestEntryPayloadStatus: SidekickConnectRequestStatus, tools: Array<{ slug: string, name: string, isConnected: boolean }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null }
         | { __typename: 'ThreadDiscussionMessageEntryPayload', text: string, type: ThreadDiscussionMessageType, isFinal: boolean, slackBlocks?: string | null }
+        | { __typename: 'ThreadDiscussionQuestionEntryPayload', questionRequestId: string, threadDiscussionQuestionEntryPayloadStatus: SidekickQuestionStatus, selections: Array<{ questionId: string, optionIds: Array<string>, otherText?: string | null }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null }
         | { __typename: 'ThreadDiscussionToolCallApprovalEntryPayload', approvalId: string, justification: string, reviewerNote?: string | null, threadDiscussionToolCallApprovalEntryPayloadToolCallId: string, threadDiscussionToolCallApprovalEntryPayloadStatus: AgentApprovalStatus, resolvedAt?: { unixTimestamp: string, iso8601: string } | null, resolvedBy?:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -38822,6 +39159,20 @@ export type ResolveAgentApprovalMutationVariables = Exact<{
 
 
 export type ResolveAgentApprovalMutation = { resolveAgentApproval: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type AnswerSidekickQuestionMutationVariables = Exact<{
+  input: AnswerSidekickQuestionInput;
+}>;
+
+
+export type AnswerSidekickQuestionMutation = { answerSidekickQuestion: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type DismissSidekickQuestionMutationVariables = Exact<{
+  input: DismissSidekickQuestionInput;
+}>;
+
+
+export type DismissSidekickQuestionMutation = { dismissSidekickQuestion: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type DeleteQueuedAgentSessionMessageMutationVariables = Exact<{
   input: DeleteQueuedAgentSessionMessageInput;
@@ -39340,6 +39691,7 @@ export type UpsertTenantFieldMutation = { upsertTenantField: { result?: UpsertRe
         | { __typename: 'TenantFieldNumberValue', numberValue: number }
         | { __typename: 'TenantFieldStringArrayValue', arrayValue: Array<string> }
         | { __typename: 'TenantFieldStringValue', stringValue: string }
+        | { __typename: 'TenantFieldTenantReferenceValue', tenantReferenceValues: Array<string> }
         | { __typename: 'TenantFieldUserReferenceValue', userReferenceValues: Array<string> }
       , createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -39357,6 +39709,7 @@ export type UpsertAccountFieldMutationVariables = Exact<{
 
 
 export type UpsertAccountFieldMutation = { upsertAccountField: { result?: UpsertResult | null, accountField?: { id: string, source?: string | null, externalFieldId: string, value:
+        | { __typename: 'AccountFieldAccountReferenceValue', accountReferenceValues: Array<string> }
         | { __typename: 'AccountFieldBooleanValue', booleanValue: boolean }
         | { __typename: 'AccountFieldDateTimeValue', dateValue: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'AccountFieldNumberValue', numberValue: number }
@@ -39384,6 +39737,7 @@ export type DeleteTenantFieldMutation = { deleteTenantField: { tenantField?: { i
         | { __typename: 'TenantFieldNumberValue', numberValue: number }
         | { __typename: 'TenantFieldStringArrayValue', arrayValue: Array<string> }
         | { __typename: 'TenantFieldStringValue', stringValue: string }
+        | { __typename: 'TenantFieldTenantReferenceValue', tenantReferenceValues: Array<string> }
         | { __typename: 'TenantFieldUserReferenceValue', userReferenceValues: Array<string> }
       , createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -39401,6 +39755,7 @@ export type DeleteAccountFieldMutationVariables = Exact<{
 
 
 export type DeleteAccountFieldMutation = { deleteAccountField: { accountField?: { id: string, source?: string | null, externalFieldId: string, value:
+        | { __typename: 'AccountFieldAccountReferenceValue', accountReferenceValues: Array<string> }
         | { __typename: 'AccountFieldBooleanValue', booleanValue: boolean }
         | { __typename: 'AccountFieldDateTimeValue', dateValue: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'AccountFieldNumberValue', numberValue: number }
@@ -39645,7 +40000,7 @@ export type UpdateSidekickSettingsMutationVariables = Exact<{
 }>;
 
 
-export type UpdateSidekickSettingsMutation = { updateSidekickSettings: { sidekickSettings?: { customPrompt?: string | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+export type UpdateSidekickSettingsMutation = { updateSidekickSettings: { sidekickSettings?: { customPrompt?: string | null, preferredIntegrations: Array<string> } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type UpdateAgentSandboxToolPolicyMutationVariables = Exact<{
   input: UpdateAgentSandboxToolPolicyInput;
@@ -42530,6 +42885,7 @@ export type ThreadDiscussionMessagesQuery = { threadDiscussion?: { messages: { e
                | null }
             | { __typename: 'ThreadDiscussionConnectRequestEntryPayload', connectRequestId: string, justification: string, threadDiscussionConnectRequestEntryPayloadStatus: SidekickConnectRequestStatus, tools: Array<{ slug: string, name: string, isConnected: boolean }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null }
             | { __typename: 'ThreadDiscussionMessageEntryPayload', text: string, type: ThreadDiscussionMessageType, isFinal: boolean, slackBlocks?: string | null }
+            | { __typename: 'ThreadDiscussionQuestionEntryPayload', questionRequestId: string, threadDiscussionQuestionEntryPayloadStatus: SidekickQuestionStatus, selections: Array<{ questionId: string, optionIds: Array<string>, otherText?: string | null }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null }
             | { __typename: 'ThreadDiscussionToolCallApprovalEntryPayload', approvalId: string, justification: string, reviewerNote?: string | null, threadDiscussionToolCallApprovalEntryPayloadToolCallId: string, threadDiscussionToolCallApprovalEntryPayloadStatus: AgentApprovalStatus, resolvedAt?: { unixTimestamp: string, iso8601: string } | null, resolvedBy?:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -42683,7 +43039,8 @@ export type KnowledgeGapSignalsQueryVariables = Exact<{
 export type KnowledgeGapSignalsQuery = { knowledgeGap?: { signals: { totalCount: number, edges: Array<{ cursor: string, node: { __typename: 'AriKnowledgeGapSignal', id: string, type: KnowledgeGapSignalType, threadId: string, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } } | null };
 
 export const AccountFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFields on Account{id name externalId url@include(if:true)source tier@include(if:true){id}threadChannelAssociations{__typename ...on SlackThreadChannelAssociation{id companyId@include(if:true)tenantId@include(if:true)tenantMembershipPolicy accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}}primaryDomain@include(if:true)alternateDomains logoUrl@include(if:true)isDomainAutoJoinEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AccountFieldsFragment, unknown>;
-export const AccountFieldFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFieldFields on AccountField{id source@include(if:true)externalFieldId value{__typename ...on AccountFieldStringValue{stringValue}...on AccountFieldNumberValue{numberValue}...on AccountFieldBooleanValue{booleanValue}...on AccountFieldStringArrayValue{arrayValue}...on AccountFieldDateTimeValue{dateValue{unixTimestamp iso8601}}...on AccountFieldUserReferenceValue{userReferenceValues}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AccountFieldFieldsFragment, unknown>;
+export const AccountFieldFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFieldFields on AccountField{id source@include(if:true)externalFieldId value{__typename ...on AccountFieldStringValue{stringValue}...on AccountFieldNumberValue{numberValue}...on AccountFieldBooleanValue{booleanValue}...on AccountFieldStringArrayValue{arrayValue}...on AccountFieldDateTimeValue{dateValue{unixTimestamp iso8601}}...on AccountFieldUserReferenceValue{userReferenceValues}...on AccountFieldAccountReferenceValue{accountReferenceValues}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AccountFieldFieldsFragment, unknown>;
+export const AccountFieldAccountReferenceValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFieldAccountReferenceValueFields on AccountFieldAccountReferenceValue{accountReferenceValues}") as unknown as DocumentNode<AccountFieldAccountReferenceValueFieldsFragment, unknown>;
 export const AccountFieldBooleanValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFieldBooleanValueFields on AccountFieldBooleanValue{booleanValue}") as unknown as DocumentNode<AccountFieldBooleanValueFieldsFragment, unknown>;
 export const AccountFieldDateTimeValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFieldDateTimeValueFields on AccountFieldDateTimeValue{dateValue{unixTimestamp iso8601}}") as unknown as DocumentNode<AccountFieldDateTimeValueFieldsFragment, unknown>;
 export const AccountFieldNumberValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFieldNumberValueFields on AccountFieldNumberValue{numberValue}") as unknown as DocumentNode<AccountFieldNumberValueFieldsFragment, unknown>;
@@ -42716,8 +43073,8 @@ export const BillingSubscriptionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment 
 export const BillingTopupCreditBalanceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BillingTopupCreditBalanceFields on BillingTopupCreditBalance{type lifetimeGranted@include(if:true)lifetimeUsed@include(if:true)remaining}") as unknown as DocumentNode<BillingTopupCreditBalanceFieldsFragment, unknown>;
 export const BooleanSettingFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BooleanSettingFields on BooleanSetting{code booleanValue scope{id@include(if:true)scopeType}}") as unknown as DocumentNode<BooleanSettingFieldsFragment, unknown>;
 export const UserActorFieldsFragmentDoc = /*#__PURE__*/ gql("fragment UserActorFields on UserActor{userId user{id}}") as unknown as DocumentNode<UserActorFieldsFragment, unknown>;
-export const BroadcastFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastFields on Broadcast{id name notificationTitle@include(if:true)content contentFormat type isLinkUnfurlingEnabled appendUnsubscribeLink@include(if:true)sender@include(if:true){__typename ...on SlackBroadcastSender{user{...UserActorFields}}...on PlainWorkspaceBroadcastSender{workspace{id}}}sendTarget{scope@include(if:true)recipients{type slackTeamId@include(if:true)slackChannelId@include(if:true)}excludeRecipients{type slackTeamId@include(if:true)slackChannelId@include(if:true)}}status latestSend@include(if:true){id status isTest scheduledAt{unixTimestamp iso8601}startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}deliveryCounts{pending sending sent failed skippedUnsubscribed total}}scheduledAt@include(if:true){unixTimestamp iso8601}startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}isDeleted createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}reactions{emojiName count imageUrl@include(if:true)}}", UserActorFieldsFragmentDoc) as unknown as DocumentNode<BroadcastFieldsFragment, unknown>;
-export const BroadcastAudienceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastAudienceFields on BroadcastAudience{id name type filters{tenantIds accountIds tierIds tenantFields{externalFieldId stringValue@include(if:true)booleanValue@include(if:true)numberValue@include(if:true)stringArrayValue userReferenceValues}accountFields{externalFieldId stringValue@include(if:true)booleanValue@include(if:true)numberValue@include(if:true)stringArrayValue userReferenceValues}slackChannels{slackTeamId slackChannelId}slackChannelNameContains audienceIds}isDeleted createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BroadcastAudienceFieldsFragment, unknown>;
+export const BroadcastFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastFields on Broadcast{id name notificationTitle@include(if:true)content contentFormat type isLinkUnfurlingEnabled appendUnsubscribeLink@include(if:true)sender@include(if:true){__typename ...on SlackBroadcastSender{user{...UserActorFields}}...on PlainWorkspaceBroadcastSender{workspace{id}}}sendTarget{scope@include(if:true)recipients{type slackTeamId@include(if:true)slackChannelId@include(if:true)}excludeRecipients{type slackTeamId@include(if:true)slackChannelId@include(if:true)}includeUnsubscribed}status latestSend@include(if:true){id status isTest scheduledAt{unixTimestamp iso8601}startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}deliveryCounts{pending sending sent failed skippedUnsubscribed total}}scheduledAt@include(if:true){unixTimestamp iso8601}startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}isDeleted createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}reactions{emojiName count imageUrl@include(if:true)}}", UserActorFieldsFragmentDoc) as unknown as DocumentNode<BroadcastFieldsFragment, unknown>;
+export const BroadcastAudienceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastAudienceFields on BroadcastAudience{id name type filters{tenantIds accountIds tierIds tenantFields{externalFieldId stringValue@include(if:true)booleanValue@include(if:true)numberValue@include(if:true)stringArrayValue userReferenceValues tenantReferenceValues}accountFields{externalFieldId stringValue@include(if:true)booleanValue@include(if:true)numberValue@include(if:true)stringArrayValue userReferenceValues accountReferenceValues}slackChannels{slackTeamId slackChannelId}slackChannelNameContains audienceIds}isDeleted createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BroadcastAudienceFieldsFragment, unknown>;
 export const BroadcastRecipientUnsubscribeFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastRecipientUnsubscribeFields on BroadcastRecipientUnsubscribe{id workspaceId recipient{__typename ...on SlackBroadcastRecipientUnsubscribeRecipient{slackTeamId slackChannelId connectedSlackChannel@include(if:true){id}}}source broadcastSendDeliveryId@include(if:true)createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BroadcastRecipientUnsubscribeFieldsFragment, unknown>;
 export const BroadcastSendTargetRecipientsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastSendTargetRecipientsFields on BroadcastSendTargetRecipients{count emptyReason@include(if:true)unsubscribedExcludedCount}") as unknown as DocumentNode<BroadcastSendTargetRecipientsFieldsFragment, unknown>;
 export const BulkCreateThreadLinkResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BulkCreateThreadLinkResultFields on BulkCreateThreadLinkResult{threadId threadLink@include(if:true){__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}error@include(if:true){message type code fields{field message type}}}") as unknown as DocumentNode<BulkCreateThreadLinkResultFieldsFragment, unknown>;
@@ -42816,6 +43173,7 @@ export const HelpCenterArticleSearchResultFieldsFragmentDoc = /*#__PURE__*/ gql(
 export const HelpCenterAuthMechanismWorkosAuthkitFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAuthMechanismWorkosAuthkitFields on HelpCenterAuthMechanismWorkosAuthkit{type}") as unknown as DocumentNode<HelpCenterAuthMechanismWorkosAuthkitFieldsFragment, unknown>;
 export const HelpCenterAuthMechanismWorkosConnectFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAuthMechanismWorkosConnectFields on HelpCenterAuthMechanismWorkosConnect{type appClientId appSecretMasked apiHost}") as unknown as DocumentNode<HelpCenterAuthMechanismWorkosConnectFieldsFragment, unknown>;
 export const HelpCenterIndexFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterIndexFields on HelpCenterIndex{helpCenterId hash navIndex{type id title slug parentId@include(if:true)status@include(if:true)description@include(if:true)icon@include(if:true)}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<HelpCenterIndexFieldsFragment, unknown>;
+export const ImportBroadcastRecipientUnsubscribesResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportBroadcastRecipientUnsubscribesResultFields on ImportBroadcastRecipientUnsubscribesResult{isDryRun createdCount alreadyUnsubscribedCount notFoundCount ambiguousCount invalidCount}") as unknown as DocumentNode<ImportBroadcastRecipientUnsubscribesResultFieldsFragment, unknown>;
 export const ImportJobFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportJobFields on ImportJob{id status startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<ImportJobFieldsFragment, unknown>;
 export const ImportJobDefinitionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportJobDefinitionFields on ImportJobDefinition{id mode entityTypes metadata@include(if:true){lists{id name@include(if:true)}}enabledAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ImportJobDefinitionFieldsFragment, unknown>;
 export const ImportThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportThreadChannelDetailsFields on ImportThreadChannelDetails{importSourceUrl@include(if:true)importIntegrationKey}") as unknown as DocumentNode<ImportThreadChannelDetailsFieldsFragment, unknown>;
@@ -42890,13 +43248,14 @@ export const SystemSidekickSkillFieldsFragmentDoc = /*#__PURE__*/ gql("fragment 
 export const TaskFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TaskFields on Task{id ref title description@include(if:true)status priority company@include(if:true){id}tenant@include(if:true){id}account@include(if:true){id}assignedTo@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}assignedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}", RoleFieldsFragmentDoc, UserWorkingHoursFieldsFragmentDoc) as unknown as DocumentNode<TaskFieldsFragment, unknown>;
 export const TeamSettingsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TeamSettingsFields on TeamSettings{id labelTypeId isRoundRobinEnabled roundRobinMaxCapacity createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TeamSettingsFieldsFragment, unknown>;
 export const TenantFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFields on Tenant{id name externalId url@include(if:true)source tier@include(if:true){id}threadChannelAssociations{__typename ...on SlackThreadChannelAssociation{id companyId@include(if:true)tenantId@include(if:true)tenantMembershipPolicy accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}}primaryDomain@include(if:true)alternateDomains logoUrl@include(if:true)isDomainAutoJoinEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TenantFieldsFragment, unknown>;
-export const TenantFieldFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldFields on TenantField{id source@include(if:true)externalFieldId value{__typename ...on TenantFieldStringValue{stringValue}...on TenantFieldNumberValue{numberValue}...on TenantFieldBooleanValue{booleanValue}...on TenantFieldStringArrayValue{arrayValue}...on TenantFieldDateTimeValue{dateValue{unixTimestamp iso8601}}...on TenantFieldUserReferenceValue{userReferenceValues}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TenantFieldFieldsFragment, unknown>;
+export const TenantFieldFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldFields on TenantField{id source@include(if:true)externalFieldId value{__typename ...on TenantFieldStringValue{stringValue}...on TenantFieldNumberValue{numberValue}...on TenantFieldBooleanValue{booleanValue}...on TenantFieldStringArrayValue{arrayValue}...on TenantFieldDateTimeValue{dateValue{unixTimestamp iso8601}}...on TenantFieldUserReferenceValue{userReferenceValues}...on TenantFieldTenantReferenceValue{tenantReferenceValues}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TenantFieldFieldsFragment, unknown>;
 export const TenantFieldBooleanValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldBooleanValueFields on TenantFieldBooleanValue{booleanValue}") as unknown as DocumentNode<TenantFieldBooleanValueFieldsFragment, unknown>;
 export const TenantFieldDateTimeValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldDateTimeValueFields on TenantFieldDateTimeValue{dateValue{unixTimestamp iso8601}}") as unknown as DocumentNode<TenantFieldDateTimeValueFieldsFragment, unknown>;
 export const TenantFieldNumberValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldNumberValueFields on TenantFieldNumberValue{numberValue}") as unknown as DocumentNode<TenantFieldNumberValueFieldsFragment, unknown>;
 export const TenantFieldSchemaFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldSchemaFields on TenantFieldSchema{id source externalFieldId label type options@include(if:true)isVisible order mapsTo@include(if:true)createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TenantFieldSchemaFieldsFragment, unknown>;
 export const TenantFieldStringArrayValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldStringArrayValueFields on TenantFieldStringArrayValue{arrayValue}") as unknown as DocumentNode<TenantFieldStringArrayValueFieldsFragment, unknown>;
 export const TenantFieldStringValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldStringValueFields on TenantFieldStringValue{stringValue}") as unknown as DocumentNode<TenantFieldStringValueFieldsFragment, unknown>;
+export const TenantFieldTenantReferenceValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldTenantReferenceValueFields on TenantFieldTenantReferenceValue{tenantReferenceValues}") as unknown as DocumentNode<TenantFieldTenantReferenceValueFieldsFragment, unknown>;
 export const TenantFieldUserReferenceValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldUserReferenceValueFields on TenantFieldUserReferenceValue{userReferenceValues}") as unknown as DocumentNode<TenantFieldUserReferenceValueFieldsFragment, unknown>;
 export const TenantTierMembershipFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantTierMembershipFields on TenantTierMembership{id tierId tenantId createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TenantTierMembershipFieldsFragment, unknown>;
 export const ThreadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadFields on Thread{id ref customer{id}title description@include(if:true)previewText@include(if:true)priority externalId@include(if:true)isTestThread status statusChangedAt{unixTimestamp iso8601}statusChangedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}statusDetail@include(if:true){__typename ...on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}...on ThreadStatusDetailNewReply{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailInProgress{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForCustomer{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailThreadLinkUpdated{statusChangedAt{unixTimestamp iso8601}linearIssueId@include(if:true)}...on ThreadStatusDetailIgnored{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}...on ThreadStatusDetailThreadDiscussionResolved{statusChangedAt{unixTimestamp iso8601}threadDiscussionId@include(if:true)}}agentStatus@include(if:true)agentStatusDetail@include(if:true){__typename ...on AgentStatusDetailInProgress{type}...on AgentStatusDetailHandedOff{type reason@include(if:true)}...on AgentStatusDetailHandled{type}}agentStatusUpdatedAt@include(if:true){unixTimestamp iso8601}agentStatusUpdatedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}assignedTo@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}assignedAt@include(if:true){unixTimestamp iso8601}additionalAssignees{__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}aiAgentMode@include(if:true)firstInboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}firstOutboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}lastInboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}lastOutboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}supportEmailAddresses isFromPlainManagedDomain tenant@include(if:true){id}account@include(if:true){id}tier@include(if:true){id}serviceLevelAgreementPolicy@include(if:true){id}channel channelDetails@include(if:true){__typename ...on SlackThreadChannelDetails{slackChannelId slackChannelName slackTeamId slackTeamName}...on MSTeamsThreadChannelDetails{msTeamsTeamId msTeamsTeamName msTeamsChannelId msTeamsChannelName msTeamsMessageType}...on ChatThreadChannelDetails{customerReadAt{unixTimestamp iso8601}}...on DiscordThreadChannelDetails{discordGuildId discordChannelId discordChannelName@include(if:true)}...on ImportThreadChannelDetails{importSourceUrl@include(if:true)importIntegrationKey}}surveyResponse@include(if:true){id sentiment@include(if:true)rating@include(if:true)surveyId@include(if:true)comment@include(if:true)respondedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}catchupDetail@include(if:true){summary@include(if:true)completedActions{userId content}customerEvents{customerId content}suggestedSidekickPrompts{label prompt category}generatedAt@include(if:true){unixTimestamp iso8601}}lockedAt@include(if:true){unixTimestamp iso8601}lockedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}importedAt@include(if:true){unixTimestamp iso8601}importedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}broadcast@include(if:true){id}}", RoleFieldsFragmentDoc, UserWorkingHoursFieldsFragmentDoc) as unknown as DocumentNode<ThreadFieldsFragment, unknown>;
@@ -42910,9 +43269,10 @@ export const ThreadDiscussionConnectRequestEntryPayloadFieldsFragmentDoc = /*#__
 export const ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFields on ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails{cursorWorkspaceIntegrationId repositoryUrl@include(if:true)}") as unknown as DocumentNode<ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment, unknown>;
 export const ThreadDiscussionEmailChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionEmailChannelDetailsFields on ThreadDiscussionEmailChannelDetails{emailRecipients}") as unknown as DocumentNode<ThreadDiscussionEmailChannelDetailsFieldsFragment, unknown>;
 export const ThreadDiscussionEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionEntryFields on ThreadDiscussionEntry{customerId threadDiscussionId discussionType emailRecipients slackChannelName@include(if:true)slackMessageLink@include(if:true)}") as unknown as DocumentNode<ThreadDiscussionEntryFieldsFragment, unknown>;
-export const ThreadDiscussionMessageFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage{id threadDiscussionId type text slackMessageLink@include(if:true)hasUnprocessedAttachments lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}entryType entry@include(if:true){__typename ...on ThreadDiscussionMessageEntryPayload{text type isFinal slackBlocks@include(if:true)}...on ThreadDiscussionToolCallEntryPayload{threadDiscussionToolCallEntryPayloadToolCallId:toolCallId@include(if:true)service@include(if:true)op@include(if:true)description args@include(if:true)threadDiscussionToolCallEntryPayloadStatus:status error@include(if:true)durationMs}...on ThreadDiscussionApprovalRequestEntryPayload{approvalId leaseId justification threadDiscussionApprovalRequestEntryPayloadStatus:status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}calls}...on ThreadDiscussionToolCallApprovalEntryPayload{approvalId threadDiscussionToolCallApprovalEntryPayloadToolCallId:toolCallId justification threadDiscussionToolCallApprovalEntryPayloadStatus:status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ThreadDiscussionConnectRequestEntryPayload{connectRequestId justification tools{slug name isConnected}threadDiscussionConnectRequestEntryPayloadStatus:status resolvedAt@include(if:true){unixTimestamp iso8601}}...on ThreadDiscussionTurnStoppedEntryPayload{stoppedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadDiscussionMessageFieldsFragment, unknown>;
+export const ThreadDiscussionMessageFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage{id threadDiscussionId type text slackMessageLink@include(if:true)hasUnprocessedAttachments lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}entryType entry@include(if:true){__typename ...on ThreadDiscussionMessageEntryPayload{text type isFinal slackBlocks@include(if:true)}...on ThreadDiscussionToolCallEntryPayload{threadDiscussionToolCallEntryPayloadToolCallId:toolCallId@include(if:true)service@include(if:true)op@include(if:true)description args@include(if:true)threadDiscussionToolCallEntryPayloadStatus:status error@include(if:true)durationMs}...on ThreadDiscussionApprovalRequestEntryPayload{approvalId leaseId justification threadDiscussionApprovalRequestEntryPayloadStatus:status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}calls}...on ThreadDiscussionToolCallApprovalEntryPayload{approvalId threadDiscussionToolCallApprovalEntryPayloadToolCallId:toolCallId justification threadDiscussionToolCallApprovalEntryPayloadStatus:status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ThreadDiscussionConnectRequestEntryPayload{connectRequestId justification tools{slug name isConnected}threadDiscussionConnectRequestEntryPayloadStatus:status resolvedAt@include(if:true){unixTimestamp iso8601}}...on ThreadDiscussionQuestionEntryPayload{questionRequestId threadDiscussionQuestionEntryPayloadStatus:status selections{questionId optionIds otherText@include(if:true)}resolvedAt@include(if:true){unixTimestamp iso8601}}...on ThreadDiscussionTurnStoppedEntryPayload{stoppedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadDiscussionMessageFieldsFragment, unknown>;
 export const ThreadDiscussionMessageEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionMessageEntryFields on ThreadDiscussionMessageEntry{customerId threadDiscussionId threadDiscussionMessageId discussionType text resolvedText type slackMessageLink@include(if:true)slackMessageTimestamp@include(if:true)hasUnprocessedAttachments lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadDiscussionMessageEntryFieldsFragment, unknown>;
 export const ThreadDiscussionMessageEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionMessageEntryPayloadFields on ThreadDiscussionMessageEntryPayload{text type isFinal slackBlocks@include(if:true)}") as unknown as DocumentNode<ThreadDiscussionMessageEntryPayloadFieldsFragment, unknown>;
+export const ThreadDiscussionQuestionEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionQuestionEntryPayloadFields on ThreadDiscussionQuestionEntryPayload{questionRequestId status selections{questionId optionIds otherText@include(if:true)}resolvedAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadDiscussionQuestionEntryPayloadFieldsFragment, unknown>;
 export const ThreadDiscussionResolvedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionResolvedEntryFields on ThreadDiscussionResolvedEntry{customerId threadDiscussionId discussionType emailRecipients slackChannelName@include(if:true)slackMessageLink@include(if:true)resolvedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadDiscussionResolvedEntryFieldsFragment, unknown>;
 export const ThreadDiscussionSlackChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionSlackChannelDetailsFields on ThreadDiscussionSlackChannelDetails{slackTeamId slackChannelId slackChannelName slackMessageLink@include(if:true)}") as unknown as DocumentNode<ThreadDiscussionSlackChannelDetailsFieldsFragment, unknown>;
 export const ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionToolCallApprovalEntryPayloadFields on ThreadDiscussionToolCallApprovalEntryPayload{approvalId toolCallId justification status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment, unknown>;
@@ -43008,7 +43368,7 @@ export const MyFavoritePagesDocument = /*#__PURE__*/ gql("query MyFavoritePages(
 export const BillingPlansDocument = /*#__PURE__*/ gql("query BillingPlans($first:Int$after:String$last:Int$before:String){billingPlans(first:$first after:$after last:$last before:$before){edges{node{...BillingPlanFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", BillingPlanFieldsFragmentDoc) as unknown as DocumentNode<BillingPlansQuery, BillingPlansQueryVariables>;
 export const MyBillingSubscriptionDocument = /*#__PURE__*/ gql("query MyBillingSubscription{myBillingSubscription@include(if:true){...BillingSubscriptionFields}}", BillingSubscriptionFieldsFragmentDoc) as unknown as DocumentNode<MyBillingSubscriptionQuery, MyBillingSubscriptionQueryVariables>;
 export const MyBillingRotaDocument = /*#__PURE__*/ gql("query MyBillingRota{myBillingRota@include(if:true){onRotaUserIds offRotaUserIds}}") as unknown as DocumentNode<MyBillingRotaQuery, MyBillingRotaQueryVariables>;
-export const SidekickCreditUsageByDayDocument = /*#__PURE__*/ gql("query SidekickCreditUsageByDay($input:SidekickCreditUsageByDayInput!){sidekickCreditUsageByDay(input:$input){days{day{unixTimestamp iso8601}credits sessionCount}}}") as unknown as DocumentNode<SidekickCreditUsageByDayQuery, SidekickCreditUsageByDayQueryVariables>;
+export const SidekickCreditUsageByDayDocument = /*#__PURE__*/ gql("query SidekickCreditUsageByDay($input:SidekickCreditUsageByDayInput!){sidekickCreditUsageByDay(input:$input){days{day{unixTimestamp iso8601}credits freeCredits sessionCount}}}") as unknown as DocumentNode<SidekickCreditUsageByDayQuery, SidekickCreditUsageByDayQueryVariables>;
 export const SidekickCreditBalanceDocument = /*#__PURE__*/ gql("query SidekickCreditBalance{sidekickCreditBalance{...SidekickCreditBalanceFields}}", SidekickCreditBalanceFieldsFragmentDoc) as unknown as DocumentNode<SidekickCreditBalanceQuery, SidekickCreditBalanceQueryVariables>;
 export const CreditSpendDocument = /*#__PURE__*/ gql("query CreditSpend($first:Int$after:String$last:Int$before:String){creditSpend(first:$first after:$after last:$last before:$before){edges{node{...CreditSpendItemFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", CreditSpendItemFieldsFragmentDoc) as unknown as DocumentNode<CreditSpendQuery, CreditSpendQueryVariables>;
 export const WorkOsConfigurationDocument = /*#__PURE__*/ gql("query WorkOSConfiguration{workOSConfiguration@include(if:true){ssoUrl directorySyncUrl domainVerificationUrl widgetToken}}") as unknown as DocumentNode<WorkOsConfigurationQuery, WorkOsConfigurationQueryVariables>;
@@ -43099,11 +43459,12 @@ export const WebhookTargetsDocument = /*#__PURE__*/ gql("query WebhookTargets($f
 export const WebhookDeliveryAttemptsDocument = /*#__PURE__*/ gql("query WebhookDeliveryAttempts($webhookTargetId:ID!$filters:WebhookDeliveryAttemptFilter$first:Int$after:String$last:Int$before:String){webhookDeliveryAttempts(webhookTargetId:$webhookTargetId filters:$filters first:$first after:$after last:$last before:$before){edges{node{...WebhookDeliveryAttemptFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WebhookDeliveryAttemptFieldsFragmentDoc) as unknown as DocumentNode<WebhookDeliveryAttemptsQuery, WebhookDeliveryAttemptsQueryVariables>;
 export const PublicEventRequestBodyDocument = /*#__PURE__*/ gql("query PublicEventRequestBody($publicEventId:ID!){publicEventRequestBody(publicEventId:$publicEventId)@include(if:true)}") as unknown as DocumentNode<PublicEventRequestBodyQuery, PublicEventRequestBodyQueryVariables>;
 export const SubscriptionEventTypesDocument = /*#__PURE__*/ gql("query SubscriptionEventTypes{subscriptionEventTypes{eventType description}}") as unknown as DocumentNode<SubscriptionEventTypesQuery, SubscriptionEventTypesQueryVariables>;
+export const InterpolationVariablesDocument = /*#__PURE__*/ gql("query InterpolationVariables{interpolationVariables{key label group isCustomerFacing}}") as unknown as DocumentNode<InterpolationVariablesQuery, InterpolationVariablesQueryVariables>;
 export const WorkflowRuleDocument = /*#__PURE__*/ gql("query WorkflowRule($workflowRuleId:ID!){workflowRule(workflowRuleId:$workflowRuleId)@include(if:true){...WorkflowRuleFields}}", WorkflowRuleFieldsFragmentDoc) as unknown as DocumentNode<WorkflowRuleQuery, WorkflowRuleQueryVariables>;
 export const WorkflowRulesDocument = /*#__PURE__*/ gql("query WorkflowRules($first:Int$after:String$last:Int$before:String){workflowRules(first:$first after:$after last:$last before:$before){edges{node{...WorkflowRuleFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkflowRuleFieldsFragmentDoc) as unknown as DocumentNode<WorkflowRulesQuery, WorkflowRulesQueryVariables>;
 export const WorkflowDocument = /*#__PURE__*/ gql("query Workflow($workflowId:ID!){workflow(workflowId:$workflowId)@include(if:true){...WorkflowFields}}", WorkflowFieldsFragmentDoc) as unknown as DocumentNode<WorkflowQuery, WorkflowQueryVariables>;
 export const WorkflowsDocument = /*#__PURE__*/ gql("query Workflows($first:Int$after:String$last:Int$before:String$filters:WorkflowsFilter$sortBy:WorkflowsSort){workflows(first:$first after:$after last:$last before:$before filters:$filters sortBy:$sortBy){edges{node{...WorkflowFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkflowFieldsFragmentDoc) as unknown as DocumentNode<WorkflowsQuery, WorkflowsQueryVariables>;
-export const WorkflowCapabilitiesDocument = /*#__PURE__*/ gql("query WorkflowCapabilities($triggerType:WorkflowTriggerType!){workflowCapabilities(triggerType:$triggerType){hasConditionSupport hasWaitSupport allowedActionTypes hasSidekickActionSupport}}") as unknown as DocumentNode<WorkflowCapabilitiesQuery, WorkflowCapabilitiesQueryVariables>;
+export const WorkflowCapabilitiesDocument = /*#__PURE__*/ gql("query WorkflowCapabilities($triggerType:WorkflowTriggerType!){workflowCapabilities(triggerType:$triggerType){hasConditionSupport hasWaitSupport allowedActionTypes hasSidekickActionSupport hasAiTriageActionSupport}}") as unknown as DocumentNode<WorkflowCapabilitiesQuery, WorkflowCapabilitiesQueryVariables>;
 export const WorkflowExecutionDocument = /*#__PURE__*/ gql("query WorkflowExecution($workflowExecutionId:ID!){workflowExecution(workflowExecutionId:$workflowExecutionId)@include(if:true){...WorkflowExecutionFields}}", WorkflowExecutionFieldsFragmentDoc) as unknown as DocumentNode<WorkflowExecutionQuery, WorkflowExecutionQueryVariables>;
 export const WorkflowExecutionsDocument = /*#__PURE__*/ gql("query WorkflowExecutions($workflowId:ID!$first:Int$after:String$last:Int$before:String){workflowExecutions(workflowId:$workflowId first:$first after:$after last:$last before:$before){edges{node{...WorkflowExecutionFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkflowExecutionFieldsFragmentDoc) as unknown as DocumentNode<WorkflowExecutionsQuery, WorkflowExecutionsQueryVariables>;
 export const WorkflowExecutionsForWorkspaceDocument = /*#__PURE__*/ gql("query WorkflowExecutionsForWorkspace($filters:WorkflowExecutionsFilter$first:Int$after:String$last:Int$before:String){workflowExecutionsForWorkspace(filters:$filters first:$first after:$after last:$last before:$before){edges{node{...WorkflowExecutionFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkflowExecutionFieldsFragmentDoc) as unknown as DocumentNode<WorkflowExecutionsForWorkspaceQuery, WorkflowExecutionsForWorkspaceQueryVariables>;
@@ -43134,9 +43495,9 @@ export const CompaniesDocument = /*#__PURE__*/ gql("query Companies($first:Int$a
 export const CompanyDocument = /*#__PURE__*/ gql("query Company($companyId:ID!){company(companyId:$companyId)@include(if:true){...CompanyFields}}", CompanyFieldsFragmentDoc) as unknown as DocumentNode<CompanyQuery, CompanyQueryVariables>;
 export const SearchCompaniesDocument = /*#__PURE__*/ gql("query SearchCompanies($searchQuery:CompaniesSearchQuery!$filters:CompaniesFilter$first:Int$after:String$last:Int$before:String){searchCompanies(searchQuery:$searchQuery filters:$filters first:$first after:$after last:$last before:$before){edges{node{company{...CompanyFields}}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", CompanyFieldsFragmentDoc) as unknown as DocumentNode<SearchCompaniesQuery, SearchCompaniesQueryVariables>;
 export const TeamSettingsDocument = /*#__PURE__*/ gql("query TeamSettings($labelTypeId:ID!){teamSettings(labelTypeId:$labelTypeId)@include(if:true){...TeamSettingsFields}}", TeamSettingsFieldsFragmentDoc) as unknown as DocumentNode<TeamSettingsQuery, TeamSettingsQueryVariables>;
-export const TenantsDocument = /*#__PURE__*/ gql("query Tenants($first:Int$after:String$last:Int$before:String$filters:TenantsFilter){tenants(first:$first after:$after last:$last before:$before filters:$filters){edges{node{...TenantFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", TenantFieldsFragmentDoc) as unknown as DocumentNode<TenantsQuery, TenantsQueryVariables>;
+export const TenantsDocument = /*#__PURE__*/ gql("query Tenants($first:Int$after:String$last:Int$before:String$filters:TenantsFilter$sortBy:TenantsSort){tenants(first:$first after:$after last:$last before:$before filters:$filters sortBy:$sortBy){edges{node{...TenantFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", TenantFieldsFragmentDoc) as unknown as DocumentNode<TenantsQuery, TenantsQueryVariables>;
 export const TenantDocument = /*#__PURE__*/ gql("query Tenant($tenantId:ID!){tenant(tenantId:$tenantId)@include(if:true){...TenantFields}}", TenantFieldsFragmentDoc) as unknown as DocumentNode<TenantQuery, TenantQueryVariables>;
-export const AccountsDocument = /*#__PURE__*/ gql("query Accounts($first:Int$after:String$last:Int$before:String$filters:AccountsFilter){accounts(first:$first after:$after last:$last before:$before filters:$filters){edges{node{...AccountFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", AccountFieldsFragmentDoc) as unknown as DocumentNode<AccountsQuery, AccountsQueryVariables>;
+export const AccountsDocument = /*#__PURE__*/ gql("query Accounts($first:Int$after:String$last:Int$before:String$filters:AccountsFilter$sortBy:AccountsSort){accounts(first:$first after:$after last:$last before:$before filters:$filters sortBy:$sortBy){edges{node{...AccountFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", AccountFieldsFragmentDoc) as unknown as DocumentNode<AccountsQuery, AccountsQueryVariables>;
 export const AccountDocument = /*#__PURE__*/ gql("query Account($accountId:ID!){account(accountId:$accountId)@include(if:true){...AccountFields}}", AccountFieldsFragmentDoc) as unknown as DocumentNode<AccountQuery, AccountQueryVariables>;
 export const TaskDocument = /*#__PURE__*/ gql("query Task($taskId:ID!){task(taskId:$taskId)@include(if:true){...TaskFields}}", TaskFieldsFragmentDoc) as unknown as DocumentNode<TaskQuery, TaskQueryVariables>;
 export const TaskByRefDocument = /*#__PURE__*/ gql("query TaskByRef($ref:String!){taskByRef(ref:$ref)@include(if:true){...TaskFields}}", TaskFieldsFragmentDoc) as unknown as DocumentNode<TaskByRefQuery, TaskByRefQueryVariables>;
@@ -43154,7 +43515,7 @@ export const SidekickGithubAccessibleReposDocument = /*#__PURE__*/ gql("query Si
 export const SidekickGithubServiceConfigDocument = /*#__PURE__*/ gql("query SidekickGithubServiceConfig($serviceAuthorizationId:ID!){sidekickGithubServiceConfig(serviceAuthorizationId:$serviceAuthorizationId)@include(if:true){...SidekickGithubServiceConfigFields}}", SidekickGithubServiceConfigFieldsFragmentDoc) as unknown as DocumentNode<SidekickGithubServiceConfigQuery, SidekickGithubServiceConfigQueryVariables>;
 export const SidekickServiceConfigDocument = /*#__PURE__*/ gql("query SidekickServiceConfig($serviceAuthorizationId:ID!){sidekickServiceConfig(serviceAuthorizationId:$serviceAuthorizationId)@include(if:true){serviceAuthorizationId operatingInstructions@include(if:true)}}") as unknown as DocumentNode<SidekickServiceConfigQuery, SidekickServiceConfigQueryVariables>;
 export const SidekickPosthogServiceConfigDocument = /*#__PURE__*/ gql("query SidekickPosthogServiceConfig($serviceAuthorizationId:ID!){sidekickPosthogServiceConfig(serviceAuthorizationId:$serviceAuthorizationId)@include(if:true){operatingInstructions@include(if:true)projectId@include(if:true)}}") as unknown as DocumentNode<SidekickPosthogServiceConfigQuery, SidekickPosthogServiceConfigQueryVariables>;
-export const SidekickSettingsDocument = /*#__PURE__*/ gql("query SidekickSettings{sidekickSettings{customPrompt@include(if:true)}}") as unknown as DocumentNode<SidekickSettingsQuery, SidekickSettingsQueryVariables>;
+export const SidekickSettingsDocument = /*#__PURE__*/ gql("query SidekickSettings{sidekickSettings{customPrompt@include(if:true)preferredIntegrations}}") as unknown as DocumentNode<SidekickSettingsQuery, SidekickSettingsQueryVariables>;
 export const AgentSandboxToolPoliciesDocument = /*#__PURE__*/ gql("query AgentSandboxToolPolicies($service:String){agentSandboxToolPolicies(service:$service){service op displayName description mode factoryDefault isOverride}}") as unknown as DocumentNode<AgentSandboxToolPoliciesQuery, AgentSandboxToolPoliciesQueryVariables>;
 export const SidekickSkillsDocument = /*#__PURE__*/ gql("query SidekickSkills{sidekickSkills{__typename ...on SystemSidekickSkill{...SystemSidekickSkillFields}...on CustomSidekickSkill{...CustomSidekickSkillFields}}}", SystemSidekickSkillFieldsFragmentDoc, CustomSidekickSkillFieldsFragmentDoc) as unknown as DocumentNode<SidekickSkillsQuery, SidekickSkillsQueryVariables>;
 export const SidekickCustomSkillDocument = /*#__PURE__*/ gql("query SidekickCustomSkill($id:ID!){sidekickCustomSkill(id:$id)@include(if:true){id name displayName description instructions isEnabled}}") as unknown as DocumentNode<SidekickCustomSkillQuery, SidekickCustomSkillQueryVariables>;
@@ -43252,10 +43613,12 @@ export const CreateSnippetDocument = /*#__PURE__*/ gql("mutation CreateSnippet($
 export const DeleteSnippetDocument = /*#__PURE__*/ gql("mutation DeleteSnippet($input:DeleteSnippetInput!){deleteSnippet(input:$input){snippet@include(if:true){...SnippetFields}error@include(if:true){message type code fields{field message type}}}}", SnippetFieldsFragmentDoc) as unknown as DocumentNode<DeleteSnippetMutation, DeleteSnippetMutationVariables>;
 export const UpdateSnippetDocument = /*#__PURE__*/ gql("mutation UpdateSnippet($input:UpdateSnippetInput!){updateSnippet(input:$input){snippet@include(if:true){...SnippetFields}error@include(if:true){message type code fields{field message type}}}}", SnippetFieldsFragmentDoc) as unknown as DocumentNode<UpdateSnippetMutation, UpdateSnippetMutationVariables>;
 export const CreateBroadcastDocument = /*#__PURE__*/ gql("mutation CreateBroadcast($input:CreateBroadcastInput!){createBroadcast(input:$input){broadcast@include(if:true){...BroadcastFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastFieldsFragmentDoc) as unknown as DocumentNode<CreateBroadcastMutation, CreateBroadcastMutationVariables>;
+export const DuplicateBroadcastDocument = /*#__PURE__*/ gql("mutation DuplicateBroadcast($input:DuplicateBroadcastInput!){duplicateBroadcast(input:$input){broadcast@include(if:true){...BroadcastFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastFieldsFragmentDoc) as unknown as DocumentNode<DuplicateBroadcastMutation, DuplicateBroadcastMutationVariables>;
 export const UpdateBroadcastDocument = /*#__PURE__*/ gql("mutation UpdateBroadcast($input:UpdateBroadcastInput!){updateBroadcast(input:$input){broadcast@include(if:true){...BroadcastFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastFieldsFragmentDoc) as unknown as DocumentNode<UpdateBroadcastMutation, UpdateBroadcastMutationVariables>;
 export const DeleteBroadcastDocument = /*#__PURE__*/ gql("mutation DeleteBroadcast($input:DeleteBroadcastInput!){deleteBroadcast(input:$input){broadcast@include(if:true){...BroadcastFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastFieldsFragmentDoc) as unknown as DocumentNode<DeleteBroadcastMutation, DeleteBroadcastMutationVariables>;
 export const UnsubscribeBroadcastRecipientDocument = /*#__PURE__*/ gql("mutation UnsubscribeBroadcastRecipient($input:UnsubscribeBroadcastRecipientInput!){unsubscribeBroadcastRecipient(input:$input){unsubscribe@include(if:true){...BroadcastRecipientUnsubscribeFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastRecipientUnsubscribeFieldsFragmentDoc) as unknown as DocumentNode<UnsubscribeBroadcastRecipientMutation, UnsubscribeBroadcastRecipientMutationVariables>;
 export const ResubscribeBroadcastRecipientDocument = /*#__PURE__*/ gql("mutation ResubscribeBroadcastRecipient($input:ResubscribeBroadcastRecipientInput!){resubscribeBroadcastRecipient(input:$input){unsubscribe@include(if:true){...BroadcastRecipientUnsubscribeFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastRecipientUnsubscribeFieldsFragmentDoc) as unknown as DocumentNode<ResubscribeBroadcastRecipientMutation, ResubscribeBroadcastRecipientMutationVariables>;
+export const ImportBroadcastRecipientUnsubscribesDocument = /*#__PURE__*/ gql("mutation ImportBroadcastRecipientUnsubscribes($input:ImportBroadcastRecipientUnsubscribesInput!){importBroadcastRecipientUnsubscribes(input:$input){result@include(if:true){...ImportBroadcastRecipientUnsubscribesResultFields}error@include(if:true){message type code fields{field message type}}}}", ImportBroadcastRecipientUnsubscribesResultFieldsFragmentDoc) as unknown as DocumentNode<ImportBroadcastRecipientUnsubscribesMutation, ImportBroadcastRecipientUnsubscribesMutationVariables>;
 export const CreateBroadcastAudienceDocument = /*#__PURE__*/ gql("mutation CreateBroadcastAudience($input:CreateBroadcastAudienceInput!){createBroadcastAudience(input:$input){broadcastAudience@include(if:true){...BroadcastAudienceFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastAudienceFieldsFragmentDoc) as unknown as DocumentNode<CreateBroadcastAudienceMutation, CreateBroadcastAudienceMutationVariables>;
 export const UpdateBroadcastAudienceDocument = /*#__PURE__*/ gql("mutation UpdateBroadcastAudience($input:UpdateBroadcastAudienceInput!){updateBroadcastAudience(input:$input){broadcastAudience@include(if:true){...BroadcastAudienceFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastAudienceFieldsFragmentDoc) as unknown as DocumentNode<UpdateBroadcastAudienceMutation, UpdateBroadcastAudienceMutationVariables>;
 export const DeleteBroadcastAudienceDocument = /*#__PURE__*/ gql("mutation DeleteBroadcastAudience($input:DeleteBroadcastAudienceInput!){deleteBroadcastAudience(input:$input){broadcastAudience@include(if:true){...BroadcastAudienceFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastAudienceFieldsFragmentDoc) as unknown as DocumentNode<DeleteBroadcastAudienceMutation, DeleteBroadcastAudienceMutationVariables>;
@@ -43320,7 +43683,6 @@ export const BulkUpdateConnectedSlackChannelsDocument = /*#__PURE__*/ gql("mutat
 export const BulkJoinSlackChannelsDocument = /*#__PURE__*/ gql("mutation BulkJoinSlackChannels($input:BulkJoinSlackChannelsInput!){bulkJoinSlackChannels(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<BulkJoinSlackChannelsMutation, BulkJoinSlackChannelsMutationVariables>;
 export const CreateThreadFromSlackMessageDocument = /*#__PURE__*/ gql("mutation CreateThreadFromSlackMessage($input:CreateThreadFromSlackMessageInput!){createThreadFromSlackMessage(input:$input){thread@include(if:true){...ThreadFields}error@include(if:true){message type code fields{field message type}}}}", ThreadFieldsFragmentDoc) as unknown as DocumentNode<CreateThreadFromSlackMessageMutation, CreateThreadFromSlackMessageMutationVariables>;
 export const SetSlackAutoJoinRulesDocument = /*#__PURE__*/ gql("mutation SetSlackAutoJoinRules($input:SetSlackAutoJoinRulesInput!){setSlackAutoJoinRules(input:$input){rules{...SlackAutoJoinRuleFields}error@include(if:true){message type code fields{field message type}}}}", SlackAutoJoinRuleFieldsFragmentDoc) as unknown as DocumentNode<SetSlackAutoJoinRulesMutation, SetSlackAutoJoinRulesMutationVariables>;
-export const CreateDemoChannelDocument = /*#__PURE__*/ gql("mutation CreateDemoChannel($input:CreateDemoChannelInput!){createDemoChannel(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<CreateDemoChannelMutation, CreateDemoChannelMutationVariables>;
 export const CreateCustomerEventDocument = /*#__PURE__*/ gql("mutation CreateCustomerEvent($input:CreateCustomerEventInput!){createCustomerEvent(input:$input){customerEvent@include(if:true){...CustomerEventFields}error@include(if:true){message type code fields{field message type}}}}", CustomerEventFieldsFragmentDoc) as unknown as DocumentNode<CreateCustomerEventMutation, CreateCustomerEventMutationVariables>;
 export const CreateThreadEventDocument = /*#__PURE__*/ gql("mutation CreateThreadEvent($input:CreateThreadEventInput!){createThreadEvent(input:$input){threadEvent@include(if:true){...ThreadEventFields}error@include(if:true){message type code fields{field message type}}}}", ThreadEventFieldsFragmentDoc) as unknown as DocumentNode<CreateThreadEventMutation, CreateThreadEventMutationVariables>;
 export const CreateWorkspaceEmailDomainSettingsDocument = /*#__PURE__*/ gql("mutation CreateWorkspaceEmailDomainSettings($input:CreateWorkspaceEmailDomainSettingsInput!){createWorkspaceEmailDomainSettings(input:$input){workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc) as unknown as DocumentNode<CreateWorkspaceEmailDomainSettingsMutation, CreateWorkspaceEmailDomainSettingsMutationVariables>;
@@ -43429,6 +43791,8 @@ export const ChangeThreadDiscussionStatusDocument = /*#__PURE__*/ gql("mutation 
 export const MarkThreadDiscussionReadDocument = /*#__PURE__*/ gql("mutation MarkThreadDiscussionRead($input:MarkThreadDiscussionReadInput!){markThreadDiscussionRead(input:$input){threadDiscussion@include(if:true){...ThreadDiscussionFields}error@include(if:true){message type code fields{field message type}}}}", ThreadDiscussionFieldsFragmentDoc) as unknown as DocumentNode<MarkThreadDiscussionReadMutation, MarkThreadDiscussionReadMutationVariables>;
 export const DeleteThreadDiscussionDocument = /*#__PURE__*/ gql("mutation DeleteThreadDiscussion($input:DeleteThreadDiscussionInput!){deleteThreadDiscussion(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteThreadDiscussionMutation, DeleteThreadDiscussionMutationVariables>;
 export const ResolveAgentApprovalDocument = /*#__PURE__*/ gql("mutation ResolveAgentApproval($input:ResolveAgentApprovalInput!){resolveAgentApproval(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ResolveAgentApprovalMutation, ResolveAgentApprovalMutationVariables>;
+export const AnswerSidekickQuestionDocument = /*#__PURE__*/ gql("mutation AnswerSidekickQuestion($input:AnswerSidekickQuestionInput!){answerSidekickQuestion(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<AnswerSidekickQuestionMutation, AnswerSidekickQuestionMutationVariables>;
+export const DismissSidekickQuestionDocument = /*#__PURE__*/ gql("mutation DismissSidekickQuestion($input:DismissSidekickQuestionInput!){dismissSidekickQuestion(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DismissSidekickQuestionMutation, DismissSidekickQuestionMutationVariables>;
 export const DeleteQueuedAgentSessionMessageDocument = /*#__PURE__*/ gql("mutation DeleteQueuedAgentSessionMessage($input:DeleteQueuedAgentSessionMessageInput!){deleteQueuedAgentSessionMessage(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteQueuedAgentSessionMessageMutation, DeleteQueuedAgentSessionMessageMutationVariables>;
 export const EditQueuedAgentSessionMessageDocument = /*#__PURE__*/ gql("mutation EditQueuedAgentSessionMessage($input:EditQueuedAgentSessionMessageInput!){editQueuedAgentSessionMessage(input:$input){queuedAgentSessionMessage@include(if:true){...QueuedAgentSessionMessageFields}error@include(if:true){message type code fields{field message type}}}}", QueuedAgentSessionMessageFieldsFragmentDoc) as unknown as DocumentNode<EditQueuedAgentSessionMessageMutation, EditQueuedAgentSessionMessageMutationVariables>;
 export const StopAgentSessionTurnDocument = /*#__PURE__*/ gql("mutation StopAgentSessionTurn($input:StopAgentSessionTurnInput!){stopAgentSessionTurn(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<StopAgentSessionTurnMutation, StopAgentSessionTurnMutationVariables>;
@@ -43472,7 +43836,7 @@ export const DeleteMyServiceAuthorizationDocument = /*#__PURE__*/ gql("mutation 
 export const UpdateSidekickGithubConfigDocument = /*#__PURE__*/ gql("mutation UpdateSidekickGithubConfig($input:UpdateSidekickGithubConfigInput!){updateSidekickGithubConfig(input:$input){serviceAuthorization@include(if:true){...ServiceAuthorizationFields}error@include(if:true){message type code fields{field message type}}}}", ServiceAuthorizationFieldsFragmentDoc) as unknown as DocumentNode<UpdateSidekickGithubConfigMutation, UpdateSidekickGithubConfigMutationVariables>;
 export const UpdateSidekickServiceConfigDocument = /*#__PURE__*/ gql("mutation UpdateSidekickServiceConfig($input:UpdateSidekickServiceConfigInput!){updateSidekickServiceConfig(input:$input){serviceAuthorization@include(if:true){...ServiceAuthorizationFields}error@include(if:true){message type code fields{field message type}}}}", ServiceAuthorizationFieldsFragmentDoc) as unknown as DocumentNode<UpdateSidekickServiceConfigMutation, UpdateSidekickServiceConfigMutationVariables>;
 export const UpdateSidekickPosthogConfigDocument = /*#__PURE__*/ gql("mutation UpdateSidekickPosthogConfig($input:UpdateSidekickPosthogConfigInput!){updateSidekickPosthogConfig(input:$input){serviceAuthorization@include(if:true){...ServiceAuthorizationFields}error@include(if:true){message type code fields{field message type}}}}", ServiceAuthorizationFieldsFragmentDoc) as unknown as DocumentNode<UpdateSidekickPosthogConfigMutation, UpdateSidekickPosthogConfigMutationVariables>;
-export const UpdateSidekickSettingsDocument = /*#__PURE__*/ gql("mutation UpdateSidekickSettings($input:UpdateSidekickSettingsInput!){updateSidekickSettings(input:$input){sidekickSettings@include(if:true){customPrompt@include(if:true)}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<UpdateSidekickSettingsMutation, UpdateSidekickSettingsMutationVariables>;
+export const UpdateSidekickSettingsDocument = /*#__PURE__*/ gql("mutation UpdateSidekickSettings($input:UpdateSidekickSettingsInput!){updateSidekickSettings(input:$input){sidekickSettings@include(if:true){customPrompt@include(if:true)preferredIntegrations}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<UpdateSidekickSettingsMutation, UpdateSidekickSettingsMutationVariables>;
 export const UpdateAgentSandboxToolPolicyDocument = /*#__PURE__*/ gql("mutation UpdateAgentSandboxToolPolicy($input:UpdateAgentSandboxToolPolicyInput!){updateAgentSandboxToolPolicy(input:$input){policy@include(if:true){service op displayName description mode factoryDefault isOverride}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<UpdateAgentSandboxToolPolicyMutation, UpdateAgentSandboxToolPolicyMutationVariables>;
 export const CreateSidekickCustomSkillDocument = /*#__PURE__*/ gql("mutation CreateSidekickCustomSkill($input:CreateSidekickCustomSkillInput!){createSidekickCustomSkill(input:$input){customSkill@include(if:true){id name displayName description instructions isEnabled}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<CreateSidekickCustomSkillMutation, CreateSidekickCustomSkillMutationVariables>;
 export const UpdateSidekickCustomSkillDocument = /*#__PURE__*/ gql("mutation UpdateSidekickCustomSkill($input:UpdateSidekickCustomSkillInput!){updateSidekickCustomSkill(input:$input){customSkill@include(if:true){id name displayName description instructions isEnabled}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<UpdateSidekickCustomSkillMutation, UpdateSidekickCustomSkillMutationVariables>;
