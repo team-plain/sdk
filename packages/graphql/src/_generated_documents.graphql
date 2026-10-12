@@ -163,6 +163,9 @@ fragment AccountFieldFields on AccountField {
     ... on AccountFieldUserReferenceValue {
       userReferenceValues
     }
+    ... on AccountFieldAccountReferenceValue {
+      accountReferenceValues
+    }
   }
   createdAt {
     unixTimestamp
@@ -218,6 +221,10 @@ fragment AccountFieldFields on AccountField {
       }
     }
   }
+}
+
+fragment AccountFieldAccountReferenceValueFields on AccountFieldAccountReferenceValue {
+  accountReferenceValues
 }
 
 fragment AccountFieldBooleanValueFields on AccountFieldBooleanValue {
@@ -1073,6 +1080,7 @@ fragment BroadcastFields on Broadcast {
       slackTeamId
       slackChannelId
     }
+    includeUnsubscribed
   }
   status
   latestSend {
@@ -1216,6 +1224,7 @@ fragment BroadcastAudienceFields on BroadcastAudience {
       numberValue
       stringArrayValue
       userReferenceValues
+      tenantReferenceValues
     }
     accountFields {
       externalFieldId
@@ -1224,6 +1233,7 @@ fragment BroadcastAudienceFields on BroadcastAudience {
       numberValue
       stringArrayValue
       userReferenceValues
+      accountReferenceValues
     }
     slackChannels {
       slackTeamId
@@ -6439,6 +6449,15 @@ fragment HelpCenterIndexFields on HelpCenterIndex {
       }
     }
   }
+}
+
+fragment ImportBroadcastRecipientUnsubscribesResultFields on ImportBroadcastRecipientUnsubscribesResult {
+  isDryRun
+  createdCount
+  alreadyUnsubscribedCount
+  notFoundCount
+  ambiguousCount
+  invalidCount
 }
 
 fragment ImportJobFields on ImportJob {
@@ -15678,6 +15697,9 @@ fragment TenantFieldFields on TenantField {
     ... on TenantFieldUserReferenceValue {
       userReferenceValues
     }
+    ... on TenantFieldTenantReferenceValue {
+      tenantReferenceValues
+    }
   }
   createdAt {
     unixTimestamp
@@ -15822,6 +15844,10 @@ fragment TenantFieldStringArrayValueFields on TenantFieldStringArrayValue {
 
 fragment TenantFieldStringValueFields on TenantFieldStringValue {
   stringValue
+}
+
+fragment TenantFieldTenantReferenceValueFields on TenantFieldTenantReferenceValue {
+  tenantReferenceValues
 }
 
 fragment TenantFieldUserReferenceValueFields on TenantFieldUserReferenceValue {
@@ -17275,6 +17301,19 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
         iso8601
       }
     }
+    ... on ThreadDiscussionQuestionEntryPayload {
+      questionRequestId
+      threadDiscussionQuestionEntryPayloadStatus: status
+      selections {
+        questionId
+        optionIds
+        otherText
+      }
+      resolvedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
     ... on ThreadDiscussionTurnStoppedEntryPayload {
       stoppedBy {
         __typename
@@ -17410,6 +17449,20 @@ fragment ThreadDiscussionMessageEntryPayloadFields on ThreadDiscussionMessageEnt
   type
   isFinal
   slackBlocks
+}
+
+fragment ThreadDiscussionQuestionEntryPayloadFields on ThreadDiscussionQuestionEntryPayload {
+  questionRequestId
+  status
+  selections {
+    questionId
+    optionIds
+    otherText
+  }
+  resolvedAt {
+    unixTimestamp
+    iso8601
+  }
 }
 
 fragment ThreadDiscussionResolvedEntryFields on ThreadDiscussionResolvedEntry {
@@ -27288,6 +27341,7 @@ query SidekickCreditUsageByDay($input: SidekickCreditUsageByDayInput!) {
         iso8601
       }
       credits
+      freeCredits
       sessionCount
     }
   }
@@ -28197,6 +28251,15 @@ query SubscriptionEventTypes {
   }
 }
 
+query InterpolationVariables {
+  interpolationVariables {
+    key
+    label
+    group
+    isCustomerFacing
+  }
+}
+
 query WorkflowRule($workflowRuleId: ID!) {
   workflowRule(workflowRuleId: $workflowRuleId) {
     ...WorkflowRuleFields
@@ -28249,6 +28312,7 @@ query WorkflowCapabilities($triggerType: WorkflowTriggerType!) {
     hasWaitSupport
     allowedActionTypes
     hasSidekickActionSupport
+    hasAiTriageActionSupport
   }
 }
 
@@ -28565,8 +28629,8 @@ query TeamSettings($labelTypeId: ID!) {
   }
 }
 
-query Tenants($first: Int, $after: String, $last: Int, $before: String, $filters: TenantsFilter) {
-  tenants(first: $first, after: $after, last: $last, before: $before, filters: $filters) {
+query Tenants($first: Int, $after: String, $last: Int, $before: String, $filters: TenantsFilter, $sortBy: TenantsSort) {
+  tenants(first: $first, after: $after, last: $last, before: $before, filters: $filters, sortBy: $sortBy) {
     edges {
       node {
         ...TenantFields
@@ -28588,8 +28652,8 @@ query Tenant($tenantId: ID!) {
   }
 }
 
-query Accounts($first: Int, $after: String, $last: Int, $before: String, $filters: AccountsFilter) {
-  accounts(first: $first, after: $after, last: $last, before: $before, filters: $filters) {
+query Accounts($first: Int, $after: String, $last: Int, $before: String, $filters: AccountsFilter, $sortBy: AccountsSort) {
+  accounts(first: $first, after: $after, last: $last, before: $before, filters: $filters, sortBy: $sortBy) {
     edges {
       node {
         ...AccountFields
@@ -28796,6 +28860,7 @@ query SidekickPosthogServiceConfig($serviceAuthorizationId: ID!) {
 query SidekickSettings {
   sidekickSettings {
     customPrompt
+    preferredIntegrations
   }
 }
 
@@ -30145,6 +30210,24 @@ mutation CreateBroadcast($input: CreateBroadcastInput!) {
   }
 }
 
+mutation DuplicateBroadcast($input: DuplicateBroadcastInput!) {
+  duplicateBroadcast(input: $input) {
+    broadcast {
+      ...BroadcastFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation UpdateBroadcast($input: UpdateBroadcastInput!) {
   updateBroadcast(input: $input) {
     broadcast {
@@ -30203,6 +30286,24 @@ mutation ResubscribeBroadcastRecipient($input: ResubscribeBroadcastRecipientInpu
   resubscribeBroadcastRecipient(input: $input) {
     unsubscribe {
       ...BroadcastRecipientUnsubscribeFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ImportBroadcastRecipientUnsubscribes($input: ImportBroadcastRecipientUnsubscribesInput!) {
+  importBroadcastRecipientUnsubscribes(input: $input) {
+    result {
+      ...ImportBroadcastRecipientUnsubscribesResultFields
     }
     error {
       message
@@ -31314,21 +31415,6 @@ mutation SetSlackAutoJoinRules($input: SetSlackAutoJoinRulesInput!) {
     rules {
       ...SlackAutoJoinRuleFields
     }
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation CreateDemoChannel($input: CreateDemoChannelInput!) {
-  createDemoChannel(input: $input) {
     error {
       message
       type
@@ -33270,6 +33356,36 @@ mutation ResolveAgentApproval($input: ResolveAgentApprovalInput!) {
   }
 }
 
+mutation AnswerSidekickQuestion($input: AnswerSidekickQuestionInput!) {
+  answerSidekickQuestion(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DismissSidekickQuestion($input: DismissSidekickQuestionInput!) {
+  dismissSidekickQuestion(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation DeleteQueuedAgentSessionMessage($input: DeleteQueuedAgentSessionMessageInput!) {
   deleteQueuedAgentSessionMessage(input: $input) {
     error {
@@ -34043,6 +34159,7 @@ mutation UpdateSidekickSettings($input: UpdateSidekickSettingsInput!) {
   updateSidekickSettings(input: $input) {
     sidekickSettings {
       customPrompt
+      preferredIntegrations
     }
     error {
       message

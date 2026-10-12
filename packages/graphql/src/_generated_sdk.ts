@@ -20,6 +20,7 @@ import {
   AgentSandboxToolPoliciesDocument,
   AiFeedbackDocument,
   AiToneRulesDocument,
+  AnswerSidekickQuestionDocument,
   ArchiveLabelTypeDocument,
   AssignRolesToUserDocument,
   AssignThreadDocument,
@@ -81,7 +82,6 @@ import {
   CreateCustomerEventDocument,
   CreateCustomerGroupDocument,
   CreateCustomerSurveyDocument,
-  CreateDemoChannelDocument,
   CreateDiscussionDocument,
   CreateEmailPreviewUrlDocument,
   CreateEscalationPathDocument,
@@ -231,7 +231,9 @@ import {
   DeletedThreadsDocument,
   DiscussionDocument,
   DiscussionsDocument,
+  DismissSidekickQuestionDocument,
   DismissSuggestedLabelTypesDocument,
+  DuplicateBroadcastDocument,
   EditQueuedAgentSessionMessageDocument,
   EmailSuppressionDocument,
   EnabledAiToneRulesTextDocument,
@@ -259,6 +261,7 @@ import {
   HelpCenterDocument,
   HelpCenterIndexDocument,
   HelpCentersDocument,
+  ImportBroadcastRecipientUnsubscribesDocument,
   ImportCustomersDocument,
   ImportJobDefinitionDocument,
   ImportJobsDocument,
@@ -270,6 +273,7 @@ import {
   ImportThreadMessagesDocument,
   ImporterTenantListsDocument,
   IndexedDocumentsDocument,
+  InterpolationVariablesDocument,
   InviteUserToWorkspaceDocument,
   IssueTrackerFieldsDocument,
   KnowledgeGapDocument,
@@ -593,6 +597,7 @@ import type {
   AcceptSuggestedLabelTypesMutationVariables,
   AcceptWorkspaceInviteMutation,
   AcceptWorkspaceInviteMutationVariables,
+  AccountFieldAccountReferenceValueFieldsFragment,
   AccountFieldBooleanValueFieldsFragment,
   AccountFieldDateTimeValueFieldsFragment,
   AccountFieldFieldsFragment,
@@ -643,6 +648,8 @@ import type {
   AiToneRuleFieldsFragment,
   AiToneRulesQuery,
   AiToneRulesQueryVariables,
+  AnswerSidekickQuestionMutation,
+  AnswerSidekickQuestionMutationVariables,
   ApiKeyFieldsFragment,
   ArchiveLabelTypeMutation,
   ArchiveLabelTypeMutationVariables,
@@ -810,8 +817,6 @@ import type {
   CreateCustomerGroupMutationVariables,
   CreateCustomerSurveyMutation,
   CreateCustomerSurveyMutationVariables,
-  CreateDemoChannelMutation,
-  CreateDemoChannelMutationVariables,
   CreateDiscussionMutation,
   CreateDiscussionMutationVariables,
   CreateEmailPreviewUrlMutation,
@@ -1135,8 +1140,12 @@ import type {
   DiscussionResolvedNotificationDetailFieldsFragment,
   DiscussionsQuery,
   DiscussionsQueryVariables,
+  DismissSidekickQuestionMutation,
+  DismissSidekickQuestionMutationVariables,
   DismissSuggestedLabelTypesMutation,
   DismissSuggestedLabelTypesMutationVariables,
+  DuplicateBroadcastMutation,
+  DuplicateBroadcastMutationVariables,
   EditQueuedAgentSessionMessageMutation,
   EditQueuedAgentSessionMessageMutationVariables,
   EmailBounceNotificationDetailFieldsFragment,
@@ -1217,6 +1226,9 @@ import type {
   HelpCenterQueryVariables,
   HelpCentersQuery,
   HelpCentersQueryVariables,
+  ImportBroadcastRecipientUnsubscribesMutation,
+  ImportBroadcastRecipientUnsubscribesMutationVariables,
+  ImportBroadcastRecipientUnsubscribesResultFieldsFragment,
   ImportCustomersMutation,
   ImportCustomersMutationVariables,
   ImportJobDefinitionFieldsFragment,
@@ -1253,6 +1265,7 @@ import type {
   IndexingStatusPendingFieldsFragment,
   IntegrationReauthRequiredNotificationDetailFieldsFragment,
   InternalNotificationFieldsFragment,
+  InterpolationVariablesQuery,
   InviteUserToWorkspaceMutation,
   InviteUserToWorkspaceMutationVariables,
   IssueTrackerFieldFieldsFragment,
@@ -1585,6 +1598,7 @@ import type {
   TenantFieldSchemasQueryVariables,
   TenantFieldStringArrayValueFieldsFragment,
   TenantFieldStringValueFieldsFragment,
+  TenantFieldTenantReferenceValueFieldsFragment,
   TenantFieldUserReferenceValueFieldsFragment,
   TenantFieldsFragment,
   TenantQuery,
@@ -1626,6 +1640,7 @@ import type {
   ThreadDiscussionMessagesQueryVariables,
   ThreadDiscussionQuery,
   ThreadDiscussionQueryVariables,
+  ThreadDiscussionQuestionEntryPayloadFieldsFragment,
   ThreadDiscussionResolvedEntryFieldsFragment,
   ThreadDiscussionSlackChannelDetailsFieldsFragment,
   ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment,
@@ -2093,7 +2108,7 @@ export class AccountFieldModel {
   public readonly updatedAt: AccountFieldFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly value: AccountFieldBooleanValueModel | AccountFieldDateTimeValueModel | AccountFieldNumberValueModel | AccountFieldStringArrayValueModel | AccountFieldStringValueModel | AccountFieldUserReferenceValueModel;
+  public readonly value: AccountFieldAccountReferenceValueModel | AccountFieldBooleanValueModel | AccountFieldDateTimeValueModel | AccountFieldNumberValueModel | AccountFieldStringArrayValueModel | AccountFieldStringValueModel | AccountFieldUserReferenceValueModel;
 
   constructor(client: PlainGraphQLClient, data: AccountFieldFieldsFragment) {
     this._client = client;
@@ -2121,6 +2136,7 @@ export class AccountFieldModel {
   })();
     this.value = (() => {
     switch ((data.value as any).__typename) {
+      case "AccountFieldAccountReferenceValue": return new AccountFieldAccountReferenceValueModel(client, data.value as any);
       case "AccountFieldBooleanValue": return new AccountFieldBooleanValueModel(client, data.value as any);
       case "AccountFieldDateTimeValue": return new AccountFieldDateTimeValueModel(client, data.value as any);
       case "AccountFieldNumberValue": return new AccountFieldNumberValueModel(client, data.value as any);
@@ -2130,6 +2146,20 @@ export class AccountFieldModel {
       default: return data.value as any;
     }
   })();
+  }
+}
+
+export class AccountFieldAccountReferenceValueModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: AccountFieldAccountReferenceValueFieldsFragment;
+  public readonly __typename = "AccountFieldAccountReferenceValue" as const;
+
+  public readonly accountReferenceValues: AccountFieldAccountReferenceValueFieldsFragment["accountReferenceValues"];
+
+  constructor(client: PlainGraphQLClient, data: AccountFieldAccountReferenceValueFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.accountReferenceValues = data.accountReferenceValues;
   }
 }
 
@@ -6159,6 +6189,30 @@ export class HelpCenterIndexModel {
   }
 }
 
+export class ImportBroadcastRecipientUnsubscribesResultModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ImportBroadcastRecipientUnsubscribesResultFieldsFragment;
+  public readonly __typename = "ImportBroadcastRecipientUnsubscribesResult" as const;
+
+  public readonly alreadyUnsubscribedCount: ImportBroadcastRecipientUnsubscribesResultFieldsFragment["alreadyUnsubscribedCount"];
+  public readonly ambiguousCount: ImportBroadcastRecipientUnsubscribesResultFieldsFragment["ambiguousCount"];
+  public readonly createdCount: ImportBroadcastRecipientUnsubscribesResultFieldsFragment["createdCount"];
+  public readonly invalidCount: ImportBroadcastRecipientUnsubscribesResultFieldsFragment["invalidCount"];
+  public readonly isDryRun: ImportBroadcastRecipientUnsubscribesResultFieldsFragment["isDryRun"];
+  public readonly notFoundCount: ImportBroadcastRecipientUnsubscribesResultFieldsFragment["notFoundCount"];
+
+  constructor(client: PlainGraphQLClient, data: ImportBroadcastRecipientUnsubscribesResultFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.alreadyUnsubscribedCount = data.alreadyUnsubscribedCount;
+    this.ambiguousCount = data.ambiguousCount;
+    this.createdCount = data.createdCount;
+    this.invalidCount = data.invalidCount;
+    this.isDryRun = data.isDryRun;
+    this.notFoundCount = data.notFoundCount;
+  }
+}
+
 export class ImportJobModel {
   protected _client: PlainGraphQLClient;
   protected _data: ImportJobFieldsFragment;
@@ -8670,7 +8724,7 @@ export class TenantFieldModel {
   public readonly updatedAt: TenantFieldFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly value: TenantFieldBooleanValueModel | TenantFieldDateTimeValueModel | TenantFieldNumberValueModel | TenantFieldStringArrayValueModel | TenantFieldStringValueModel | TenantFieldUserReferenceValueModel;
+  public readonly value: TenantFieldBooleanValueModel | TenantFieldDateTimeValueModel | TenantFieldNumberValueModel | TenantFieldStringArrayValueModel | TenantFieldStringValueModel | TenantFieldTenantReferenceValueModel | TenantFieldUserReferenceValueModel;
 
   constructor(client: PlainGraphQLClient, data: TenantFieldFieldsFragment) {
     this._client = client;
@@ -8703,6 +8757,7 @@ export class TenantFieldModel {
       case "TenantFieldNumberValue": return new TenantFieldNumberValueModel(client, data.value as any);
       case "TenantFieldStringArrayValue": return new TenantFieldStringArrayValueModel(client, data.value as any);
       case "TenantFieldStringValue": return new TenantFieldStringValueModel(client, data.value as any);
+      case "TenantFieldTenantReferenceValue": return new TenantFieldTenantReferenceValueModel(client, data.value as any);
       case "TenantFieldUserReferenceValue": return new TenantFieldUserReferenceValueModel(client, data.value as any);
       default: return data.value as any;
     }
@@ -8829,6 +8884,20 @@ export class TenantFieldStringValueModel {
     this._client = client;
     this._data = data;
     this.stringValue = data.stringValue;
+  }
+}
+
+export class TenantFieldTenantReferenceValueModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: TenantFieldTenantReferenceValueFieldsFragment;
+  public readonly __typename = "TenantFieldTenantReferenceValue" as const;
+
+  public readonly tenantReferenceValues: TenantFieldTenantReferenceValueFieldsFragment["tenantReferenceValues"];
+
+  constructor(client: PlainGraphQLClient, data: TenantFieldTenantReferenceValueFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.tenantReferenceValues = data.tenantReferenceValues;
   }
 }
 
@@ -9481,7 +9550,7 @@ export class ThreadDiscussionMessageModel {
   public readonly type: ThreadDiscussionMessageFieldsFragment["type"];
   public readonly updatedAt: ThreadDiscussionMessageFieldsFragment["updatedAt"];
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly entry: (ThreadDiscussionApprovalRequestEntryPayloadModel | ThreadDiscussionConnectRequestEntryPayloadModel | ThreadDiscussionMessageEntryPayloadModel | ThreadDiscussionToolCallApprovalEntryPayloadModel | ThreadDiscussionToolCallEntryPayloadModel | { __typename: "ThreadDiscussionTurnStoppedEntryPayload" }) | null;
+  public readonly entry: (ThreadDiscussionApprovalRequestEntryPayloadModel | ThreadDiscussionConnectRequestEntryPayloadModel | ThreadDiscussionMessageEntryPayloadModel | ThreadDiscussionQuestionEntryPayloadModel | ThreadDiscussionToolCallApprovalEntryPayloadModel | ThreadDiscussionToolCallEntryPayloadModel | { __typename: "ThreadDiscussionTurnStoppedEntryPayload" }) | null;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: ThreadDiscussionMessageFieldsFragment) {
@@ -9513,6 +9582,7 @@ export class ThreadDiscussionMessageModel {
       case "ThreadDiscussionApprovalRequestEntryPayload": return new ThreadDiscussionApprovalRequestEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionApprovalRequestEntryPayloadStatus } as any);
       case "ThreadDiscussionConnectRequestEntryPayload": return new ThreadDiscussionConnectRequestEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionConnectRequestEntryPayloadStatus } as any);
       case "ThreadDiscussionMessageEntryPayload": return new ThreadDiscussionMessageEntryPayloadModel(client, data.entry as any);
+      case "ThreadDiscussionQuestionEntryPayload": return new ThreadDiscussionQuestionEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionQuestionEntryPayloadStatus } as any);
       case "ThreadDiscussionToolCallApprovalEntryPayload": return new ThreadDiscussionToolCallApprovalEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionToolCallApprovalEntryPayloadStatus, toolCallId: (data.entry as any).threadDiscussionToolCallApprovalEntryPayloadToolCallId } as any);
       case "ThreadDiscussionToolCallEntryPayload": return new ThreadDiscussionToolCallEntryPayloadModel(client, { ...data.entry as any, status: (data.entry as any).threadDiscussionToolCallEntryPayloadStatus, toolCallId: (data.entry as any).threadDiscussionToolCallEntryPayloadToolCallId } as any);
       case "ThreadDiscussionTurnStoppedEntryPayload": return data.entry as any;
@@ -9585,6 +9655,26 @@ export class ThreadDiscussionMessageEntryPayloadModel {
     this.slackBlocks = data.slackBlocks;
     this.text = data.text;
     this.type = data.type;
+  }
+}
+
+export class ThreadDiscussionQuestionEntryPayloadModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionQuestionEntryPayloadFieldsFragment;
+  public readonly __typename = "ThreadDiscussionQuestionEntryPayload" as const;
+
+  public readonly questionRequestId: ThreadDiscussionQuestionEntryPayloadFieldsFragment["questionRequestId"];
+  public readonly resolvedAt: ThreadDiscussionQuestionEntryPayloadFieldsFragment["resolvedAt"];
+  public readonly selections: ThreadDiscussionQuestionEntryPayloadFieldsFragment["selections"];
+  public readonly status: ThreadDiscussionQuestionEntryPayloadFieldsFragment["status"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionQuestionEntryPayloadFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.questionRequestId = data.questionRequestId;
+    this.resolvedAt = data.resolvedAt;
+    this.selections = data.selections;
+    this.status = data.status;
   }
 }
 
@@ -12088,6 +12178,7 @@ export interface PlainSdkQueries {
   importJobs(variables: ImportJobsQueryVariables): Promise<PlainConnection<ImportJobModel>>;
   importerTenantLists(variables: ImporterTenantListsQueryVariables): Promise<ImporterTenantListsQuery["importerTenantLists"]>;
   indexedDocuments(variables: IndexedDocumentsQueryVariables): Promise<PlainConnection<IndexedDocumentModel>>;
+  interpolationVariables(): Promise<InterpolationVariablesQuery["interpolationVariables"]>;
   issueTrackerFields(variables: IssueTrackerFieldsQueryVariables): Promise<IssueTrackerFieldModel[]>;
   knowledgeGap(variables: KnowledgeGapQueryVariables): Promise<KnowledgeGapModel>;
   knowledgeGaps(variables: KnowledgeGapsQueryVariables): Promise<PlainConnection<KnowledgeGapModel>>;
@@ -12262,6 +12353,7 @@ export interface PlainSdkMutations {
   addMembersToTier(variables: AddMembersToTierMutationVariables): Promise<AddMembersToTierMutation["addMembersToTier"]>;
   addUserToActiveBillingRota(variables: AddUserToActiveBillingRotaMutationVariables): Promise<AddUserToActiveBillingRotaMutation["addUserToActiveBillingRota"]>;
   addWorkspaceAlternateSupportEmailAddress(variables: AddWorkspaceAlternateSupportEmailAddressMutationVariables): Promise<AddWorkspaceAlternateSupportEmailAddressMutation["addWorkspaceAlternateSupportEmailAddress"]>;
+  answerSidekickQuestion(variables: AnswerSidekickQuestionMutationVariables): Promise<AnswerSidekickQuestionMutation["answerSidekickQuestion"]>;
   archiveLabelType(variables: ArchiveLabelTypeMutationVariables): Promise<ArchiveLabelTypeMutation["archiveLabelType"]>;
   assignRolesToUser(variables: AssignRolesToUserMutationVariables): Promise<AssignRolesToUserMutation["assignRolesToUser"]>;
   assignThread(variables: AssignThreadMutationVariables): Promise<AssignThreadMutation["assignThread"]>;
@@ -12301,7 +12393,6 @@ export interface PlainSdkMutations {
   createCustomerEvent(variables: CreateCustomerEventMutationVariables): Promise<CreateCustomerEventMutation["createCustomerEvent"]>;
   createCustomerGroup(variables: CreateCustomerGroupMutationVariables): Promise<CreateCustomerGroupMutation["createCustomerGroup"]>;
   createCustomerSurvey(variables: CreateCustomerSurveyMutationVariables): Promise<CreateCustomerSurveyMutation["createCustomerSurvey"]>;
-  createDemoChannel(variables: CreateDemoChannelMutationVariables): Promise<CreateDemoChannelMutation["createDemoChannel"]>;
   createDiscussion(variables: CreateDiscussionMutationVariables): Promise<CreateDiscussionMutation["createDiscussion"]>;
   createEmailPreviewUrl(variables: CreateEmailPreviewUrlMutationVariables): Promise<CreateEmailPreviewUrlMutation["createEmailPreviewUrl"]>;
   createEscalationPath(variables: CreateEscalationPathMutationVariables): Promise<CreateEscalationPathMutation["createEscalationPath"]>;
@@ -12433,13 +12524,16 @@ export interface PlainSdkMutations {
   deleteWorkspaceSlackChannelIntegration(variables: DeleteWorkspaceSlackChannelIntegrationMutationVariables): Promise<DeleteWorkspaceSlackChannelIntegrationMutation["deleteWorkspaceSlackChannelIntegration"]>;
   deleteWorkspaceSlackIntegration(variables: DeleteWorkspaceSlackIntegrationMutationVariables): Promise<DeleteWorkspaceSlackIntegrationMutation["deleteWorkspaceSlackIntegration"]>;
   deleteWorkspaceSlackSidekickIntegration(): Promise<DeleteWorkspaceSlackSidekickIntegrationMutation["deleteWorkspaceSlackSidekickIntegration"]>;
+  dismissSidekickQuestion(variables: DismissSidekickQuestionMutationVariables): Promise<DismissSidekickQuestionMutation["dismissSidekickQuestion"]>;
   dismissSuggestedLabelTypes(variables: DismissSuggestedLabelTypesMutationVariables): Promise<DismissSuggestedLabelTypesMutation["dismissSuggestedLabelTypes"]>;
+  duplicateBroadcast(variables: DuplicateBroadcastMutationVariables): Promise<DuplicateBroadcastMutation["duplicateBroadcast"]>;
   editQueuedAgentSessionMessage(variables: EditQueuedAgentSessionMessageMutationVariables): Promise<EditQueuedAgentSessionMessageMutation["editQueuedAgentSessionMessage"]>;
   escalateThread(variables: EscalateThreadMutationVariables): Promise<EscalateThreadMutation["escalateThread"]>;
   exportWorkflowTemplate(variables: ExportWorkflowTemplateMutationVariables): Promise<ExportWorkflowTemplateMutation["exportWorkflowTemplate"]>;
   forkThread(variables: ForkThreadMutationVariables): Promise<ForkThreadMutation["forkThread"]>;
   generateAiToneRulesFromDescription(variables: GenerateAiToneRulesFromDescriptionMutationVariables): Promise<GenerateAiToneRulesFromDescriptionMutation["generateAiToneRulesFromDescription"]>;
   generateHelpCenterArticle(variables: GenerateHelpCenterArticleMutationVariables): Promise<GenerateHelpCenterArticleMutation["generateHelpCenterArticle"]>;
+  importBroadcastRecipientUnsubscribes(variables: ImportBroadcastRecipientUnsubscribesMutationVariables): Promise<ImportBroadcastRecipientUnsubscribesMutation["importBroadcastRecipientUnsubscribes"]>;
   importCustomers(variables: ImportCustomersMutationVariables): Promise<ImportCustomersMutation["importCustomers"]>;
   importTenantFieldSchemas(variables: ImportTenantFieldSchemasMutationVariables): Promise<ImportTenantFieldSchemasMutation["importTenantFieldSchemas"]>;
   importTenantFieldSchemasFromService(variables: ImportTenantFieldSchemasFromServiceMutationVariables): Promise<ImportTenantFieldSchemasFromServiceMutation["importTenantFieldSchemasFromService"]>;
@@ -13329,6 +13423,13 @@ export class PlainSdk {
         pageInfo: conn.pageInfo,
         fetch: (cursor) => query.indexedDocuments({ ...variables, ...cursor } as IndexedDocumentsQueryVariables),
       });
+    },
+
+    async interpolationVariables(): Promise<InterpolationVariablesQuery["interpolationVariables"]> {
+      const response = await _client.request<InterpolationVariablesQuery, Record<string, never>>(
+        InterpolationVariablesDocument
+      );
+      return response.interpolationVariables;
     },
 
     async issueTrackerFields(variables: IssueTrackerFieldsQueryVariables): Promise<IssueTrackerFieldModel[]> {
@@ -14936,6 +15037,13 @@ export class PlainSdk {
       return response.addWorkspaceAlternateSupportEmailAddress;
     },
 
+    async answerSidekickQuestion(variables: AnswerSidekickQuestionMutationVariables): Promise<AnswerSidekickQuestionMutation["answerSidekickQuestion"]> {
+      const response = await _client.request<AnswerSidekickQuestionMutation, AnswerSidekickQuestionMutationVariables>(
+        AnswerSidekickQuestionDocument, variables
+      );
+      return response.answerSidekickQuestion;
+    },
+
     async archiveLabelType(variables: ArchiveLabelTypeMutationVariables): Promise<ArchiveLabelTypeMutation["archiveLabelType"]> {
       const response = await _client.request<ArchiveLabelTypeMutation, ArchiveLabelTypeMutationVariables>(
         ArchiveLabelTypeDocument, variables
@@ -15201,13 +15309,6 @@ export class PlainSdk {
         CreateCustomerSurveyDocument, variables
       );
       return response.createCustomerSurvey;
-    },
-
-    async createDemoChannel(variables: CreateDemoChannelMutationVariables): Promise<CreateDemoChannelMutation["createDemoChannel"]> {
-      const response = await _client.request<CreateDemoChannelMutation, CreateDemoChannelMutationVariables>(
-        CreateDemoChannelDocument, variables
-      );
-      return response.createDemoChannel;
     },
 
     async createDiscussion(variables: CreateDiscussionMutationVariables): Promise<CreateDiscussionMutation["createDiscussion"]> {
@@ -16121,11 +16222,25 @@ export class PlainSdk {
       return response.deleteWorkspaceSlackSidekickIntegration;
     },
 
+    async dismissSidekickQuestion(variables: DismissSidekickQuestionMutationVariables): Promise<DismissSidekickQuestionMutation["dismissSidekickQuestion"]> {
+      const response = await _client.request<DismissSidekickQuestionMutation, DismissSidekickQuestionMutationVariables>(
+        DismissSidekickQuestionDocument, variables
+      );
+      return response.dismissSidekickQuestion;
+    },
+
     async dismissSuggestedLabelTypes(variables: DismissSuggestedLabelTypesMutationVariables): Promise<DismissSuggestedLabelTypesMutation["dismissSuggestedLabelTypes"]> {
       const response = await _client.request<DismissSuggestedLabelTypesMutation, DismissSuggestedLabelTypesMutationVariables>(
         DismissSuggestedLabelTypesDocument, variables
       );
       return response.dismissSuggestedLabelTypes;
+    },
+
+    async duplicateBroadcast(variables: DuplicateBroadcastMutationVariables): Promise<DuplicateBroadcastMutation["duplicateBroadcast"]> {
+      const response = await _client.request<DuplicateBroadcastMutation, DuplicateBroadcastMutationVariables>(
+        DuplicateBroadcastDocument, variables
+      );
+      return response.duplicateBroadcast;
     },
 
     async editQueuedAgentSessionMessage(variables: EditQueuedAgentSessionMessageMutationVariables): Promise<EditQueuedAgentSessionMessageMutation["editQueuedAgentSessionMessage"]> {
@@ -16168,6 +16283,13 @@ export class PlainSdk {
         GenerateHelpCenterArticleDocument, variables
       );
       return response.generateHelpCenterArticle;
+    },
+
+    async importBroadcastRecipientUnsubscribes(variables: ImportBroadcastRecipientUnsubscribesMutationVariables): Promise<ImportBroadcastRecipientUnsubscribesMutation["importBroadcastRecipientUnsubscribes"]> {
+      const response = await _client.request<ImportBroadcastRecipientUnsubscribesMutation, ImportBroadcastRecipientUnsubscribesMutationVariables>(
+        ImportBroadcastRecipientUnsubscribesDocument, variables
+      );
+      return response.importBroadcastRecipientUnsubscribes;
     },
 
     async importCustomers(variables: ImportCustomersMutationVariables): Promise<ImportCustomersMutation["importCustomers"]> {

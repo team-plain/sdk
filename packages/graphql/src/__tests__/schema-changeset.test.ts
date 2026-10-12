@@ -24,12 +24,45 @@ describe("schemaChangeset", () => {
     expect(result?.releases).toEqual([{ name: "@team-plain/graphql", type: "patch" }]);
   });
 
-  it("is a minor for additions, with a ui-components major", async () => {
+  it("is a minor for additions, without ui-components", async () => {
     const result = await schemaChangeset(base, base.replace("OPEN DONE", "OPEN DONE SNOOZED"));
+    expect(result?.releases).toEqual([{ name: "@team-plain/graphql", type: "minor" }]);
+    expect(result?.summary).toContain("**New values in returned enums**");
+  });
+
+  it("leaves values of new enums and of enums only sent out of the enum list", async () => {
+    const old = `${base.replace("closeThread(id: ID!)", "closeThread(id: ID!, by: Sort)")} enum Sort { NAME }`;
+    const next = `${old.replace("NAME }", "NAME AGE }").replace("status: Status", "status: Status kind: Kind")} enum Kind { A B }`;
+    const result = await schemaChangeset(old, next);
+    expect(result?.summary).not.toContain("**New values in returned enums**");
+  });
+
+  it("adds a ui-components major to a major, since it leaves the peer range", async () => {
+    const result = await schemaChangeset(base, base.replace("title: String ", ""));
     expect(result?.releases).toEqual([
-      { name: "@team-plain/graphql", type: "minor" },
+      { name: "@team-plain/graphql", type: "major" },
       { name: "@team-plain/ui-components", type: "major" },
     ]);
+  });
+
+  it("is a minor when a value leaves an enum the API only returns", async () => {
+    const result = await schemaChangeset(base, base.replace("OPEN DONE", "OPEN"));
+    expect(result?.releases[0].type).toBe("minor");
+    expect(result?.summary).toContain("**Enum values the API no longer returns**");
+    expect(result?.summary).not.toContain("**Breaking**");
+  });
+
+  it("is a major when a value leaves an enum a method takes", async () => {
+    const old = base.replace("closeThread(id: ID!)", "closeThread(id: ID!, to: Status)");
+    const result = await schemaChangeset(old, old.replace("OPEN DONE", "OPEN"));
+    expect(result?.releases[0].type).toBe("major");
+    expect(result?.summary).toContain("**Breaking**");
+  });
+
+  it("is a major when a value leaves an enum an input type holds", async () => {
+    const old = `${base} input ThreadFilter { status: [Status!] }`;
+    const result = await schemaChangeset(old, old.replace("OPEN DONE", "OPEN"));
+    expect(result?.releases[0].type).toBe("major");
   });
 
   it("lists new methods", async () => {
