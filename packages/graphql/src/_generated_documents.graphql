@@ -14,9 +14,6 @@ fragment AccountFields on Account {
     __typename
     ... on SlackThreadChannelAssociation {
       id
-      companyId
-      tenantId
-      tenantMembershipPolicy
       accountId
       accountMembershipPolicy
       createdAt {
@@ -1214,18 +1211,8 @@ fragment BroadcastAudienceFields on BroadcastAudience {
   name
   type
   filters {
-    tenantIds
     accountIds
     tierIds
-    tenantFields {
-      externalFieldId
-      stringValue
-      booleanValue
-      numberValue
-      stringArrayValue
-      userReferenceValues
-      tenantReferenceValues
-    }
     accountFields {
       externalFieldId
       stringValue
@@ -2354,9 +2341,6 @@ fragment CompanyFields on Company {
     __typename
     ... on SlackThreadChannelAssociation {
       id
-      companyId
-      tenantId
-      tenantMembershipPolicy
       accountId
       accountMembershipPolicy
       createdAt {
@@ -2788,6 +2772,7 @@ fragment CreditSpendItemFields on CreditSpendItem {
   }
   workflowId
   workflowName
+  workflowExecutionId
   credits
   resolvedAt {
     unixTimestamp
@@ -3147,9 +3132,6 @@ fragment CustomerFields on Customer {
   assignedAt {
     unixTimestamp
     iso8601
-  }
-  company {
-    id
   }
   isAnonymous
   isTestCustomer
@@ -6029,9 +6011,7 @@ fragment HelpCenterFields on HelpCenter {
   }
   access {
     tierIds
-    tenantIds
     accountIds
-    companyIds
     customerIds
   }
   authMechanism {
@@ -6449,6 +6429,18 @@ fragment HelpCenterIndexFields on HelpCenterIndex {
       }
     }
   }
+}
+
+fragment ImportBroadcastAudienceChannelsResultFields on ImportBroadcastAudienceChannelsResult {
+  isDryRun
+  broadcastAudience {
+    id
+  }
+  addedCount
+  alreadyInAudienceCount
+  notFoundCount
+  ambiguousCount
+  invalidCount
 }
 
 fragment ImportBroadcastRecipientUnsubscribesResultFields on ImportBroadcastRecipientUnsubscribesResult {
@@ -11846,6 +11838,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
 fragment IndexedDocumentFields on IndexedDocument {
   id
   url
+  knowledgeSourceId
   status {
     __typename
     ... on IndexedDocumentStatusIndexed {
@@ -12123,6 +12116,9 @@ fragment InternalNotificationFields on InternalNotification {
     }
     ... on WebhookTargetNotificationDetail {
       webhookTargetId
+    }
+    ... on ThreadNotificationDetail {
+      threadId
     }
   }
   readAt {
@@ -12421,6 +12417,7 @@ fragment KnowledgeSourceCitationFields on KnowledgeSourceCitation {
     ... on IndexedDocument {
       id
       url
+      knowledgeSourceId
       status {
         __typename
         ... on IndexedDocumentStatusIndexed {
@@ -13602,6 +13599,81 @@ fragment NumberSettingFields on NumberSetting {
   }
 }
 
+fragment OAuthAppFields on OAuthApp {
+  id
+  name
+  description
+  clientId
+  redirectUrls
+  isEnabled
+  clientSecret {
+    id
+    secretHint
+    lastUsedAt {
+      unixTimestamp
+      iso8601
+    }
+    createdAt {
+      unixTimestamp
+      iso8601
+    }
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
 fragment PerSeatRecurringPriceFields on PerSeatRecurringPrice {
   billingIntervalUnit
   billingIntervalCount
@@ -13871,8 +13943,6 @@ fragment SavedThreadsViewFields on SavedThreadsView {
     assignedToUser
     participants
     customerGroups
-    companies
-    tenants
     accounts
     tiers
     serviceLevelAgreementPolicyIds
@@ -13898,7 +13968,6 @@ fragment SavedThreadsViewFields on SavedThreadsView {
     displayOptions {
       hasStatus
       hasCustomer
-      hasCompany
       hasPreviewText
       hasTier
       hasCustomerGroups
@@ -13913,9 +13982,7 @@ fragment SavedThreadsViewFields on SavedThreadsView {
       hasIssueTrackerIssues
       hasTasks
       hasThreadFieldKeys
-      hasTenants
       hasAccounts
-      hasTenantFieldExternalIds
       hasAccountFieldExternalIds
     }
     groupBy
@@ -14781,9 +14848,6 @@ fragment SlackReplyEntryFields on SlackReplyEntry {
 
 fragment SlackThreadChannelAssociationFields on SlackThreadChannelAssociation {
   id
-  companyId
-  tenantId
-  tenantMembershipPolicy
   accountId
   accountMembershipPolicy
   createdAt {
@@ -15114,12 +15178,6 @@ fragment TaskFields on Task {
   description
   status
   priority
-  company {
-    id
-  }
-  tenant {
-    id
-  }
   account {
     id
   }
@@ -15548,9 +15606,6 @@ fragment TenantFields on Tenant {
     __typename
     ... on SlackThreadChannelAssociation {
       id
-      companyId
-      tenantId
-      tenantMembershipPolicy
       accountId
       accountMembershipPolicy
       createdAt {
@@ -16726,9 +16781,6 @@ fragment ThreadFields on Thread {
   }
   supportEmailAddresses
   isFromPlainManagedDomain
-  tenant {
-    id
-  }
   account {
     id
   }
@@ -18454,16 +18506,6 @@ fragment ThreadLinkGroupFields on ThreadLinkGroup {
       totalCount
     }
   }
-  companyMetrics {
-    noCompany {
-      totalCount
-    }
-  }
-  tenantMetrics {
-    noTenant {
-      totalCount
-    }
-  }
   accountMetrics {
     noAccount {
       totalCount
@@ -19203,6 +19245,10 @@ fragment ThreadLinkTargetDeletedEntryFields on ThreadLinkTargetDeletedEntry {
     ref
     title
   }
+}
+
+fragment ThreadNotificationDetailFields on ThreadNotificationDetail {
+  threadId
 }
 
 fragment ThreadPriorityChangedEntryFields on ThreadPriorityChangedEntry {
@@ -26150,6 +26196,7 @@ fragment WorkflowExecutionFields on WorkflowExecution {
       }
     }
   }
+  credits
 }
 
 fragment WorkflowRuleFields on WorkflowRule {
@@ -27801,6 +27848,29 @@ query MachineUsers($filters: MachineUsersFilter, $first: Int, $after: String, $l
   }
 }
 
+query OauthApp($oauthAppId: ID!) {
+  oauthApp(oauthAppId: $oauthAppId) {
+    ...OAuthAppFields
+  }
+}
+
+query OauthApps($first: Int, $after: String, $last: Int, $before: String) {
+  oauthApps(first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...OAuthAppFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
 query Permissions {
   permissions {
     permissions
@@ -28913,6 +28983,24 @@ query SidekickMcpServer($id: ID!) {
 
 query ImporterTenantLists($serviceAuthorizationId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
   importerTenantLists(serviceAuthorizationId: $serviceAuthorizationId, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        id
+        name
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query ImporterAccountLists($serviceAuthorizationId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
+  importerAccountLists(serviceAuthorizationId: $serviceAuthorizationId, first: $first, after: $after, last: $last, before: $before) {
     edges {
       node {
         id
@@ -30340,6 +30428,24 @@ mutation UpdateBroadcastAudience($input: UpdateBroadcastAudienceInput!) {
   updateBroadcastAudience(input: $input) {
     broadcastAudience {
       ...BroadcastAudienceFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ImportBroadcastAudienceChannels($input: ImportBroadcastAudienceChannelsInput!) {
+  importBroadcastAudienceChannels(input: $input) {
+    result {
+      ...ImportBroadcastAudienceChannelsResultFields
     }
     error {
       message
@@ -31807,6 +31913,97 @@ mutation DeleteApiKey($input: DeleteApiKeyInput!) {
   deleteApiKey(input: $input) {
     apiKey {
       ...ApiKeyFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateOAuthApp($input: CreateOAuthAppInput!) {
+  createOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
+    }
+    clientSecret
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateOAuthApp($input: UpdateOAuthAppInput!) {
+  updateOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation EnableOAuthApp($input: EnableOAuthAppInput!) {
+  enableOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DisableOAuthApp($input: DisableOAuthAppInput!) {
+  disableOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteOAuthApp($input: DeleteOAuthAppInput!) {
+  deleteOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
     }
     error {
       message
@@ -34387,6 +34584,24 @@ mutation ImportTenantFieldSchemasFromService($input: ImportTenantFieldSchemasFro
   }
 }
 
+mutation ImportAccountFieldSchemasFromService($input: ImportAccountFieldSchemasFromServiceInput!) {
+  importAccountFieldSchemasFromService(input: $input) {
+    accountFieldSchemas {
+      ...AccountFieldSchemaFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation UpdateImportJobDefinition($input: UpdateImportJobDefinitionInput!) {
   updateImportJobDefinition(input: $input) {
     importJobDefinition {
@@ -35786,8 +36001,48 @@ mutation ImportTenantFieldSchemas($input: ImportTenantFieldSchemasInput!) {
   }
 }
 
+mutation ImportAccountFieldSchemas($input: ImportAccountFieldSchemasInput!) {
+  importAccountFieldSchemas(input: $input) {
+    result {
+      added
+      updated
+      skipped
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation ImportTenants($input: ImportTenantsInput!) {
   importTenants(input: $input) {
+    result {
+      added
+      updated
+      skipped
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ImportAccounts($input: ImportAccountsInput!) {
+  importAccounts(input: $input) {
     result {
       added
       updated

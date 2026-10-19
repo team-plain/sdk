@@ -482,13 +482,13 @@ type Customer {
   customerGroupMemberships(filters: CustomerGroupMembershipsFilter, first: Int, after: String, last: Int, before: String): CustomerGroupMembershipConnection!
 
   """A subquery to fetch the customer's tenants."""
-  tenantMemberships(first: Int, after: String, last: Int, before: String): CustomerTenantMembershipConnection!
+  tenantMemberships(first: Int, after: String, last: Int, before: String): CustomerTenantMembershipConnection! @deprecated(reason: "Use accountMemberships instead")
 
   """A subquery to fetch the customer's accounts."""
   accountMemberships(first: Int, after: String, last: Int, before: String): CustomerAccountMembershipConnection!
 
   """The company the customer belongs to."""
-  company: Company
+  company: Company @deprecated(reason: "Use accountMemberships instead")
 
   """
   True when the customer was auto-created without a known identity (e.g. from an anonymous chat session). Anonymous customers may have limited profile data.
@@ -1554,6 +1554,11 @@ enum WorkflowStepType {
   Pauses execution for a configured duration, then continues to the next step.
   """
   WAIT
+
+  """
+  A canvas sticky note. Holds text only, is never executed, and has no transitions.
+  """
+  NOTE
 }
 
 type WorkflowStep {
@@ -1571,6 +1576,7 @@ type WorkflowStep {
   - CONDITION: a condition. `type` is either a leaf check (e.g. `contains_label`, `thread_field_equals`, `thread_field_is_set`, `priority_equals`, `assigned_to`, `customer_equals`, `ai_workflow_rule_condition`) or a combinator (`and`, `or`, `not`, `else_if`) that nests other conditions under `conditions`/`condition`.
   - ACTION: an action, e.g. `apply_labels`, `remove_labels`, `set_priority`, `set_status`, `set_tier`, `set_service_level_agreement_policy`, `assign_to_user`, `assign_to_team`, `add_note`, `send_message`, `send_slack_notification`, `send_http_request`, `set_thread_field`, `snooze_thread`, `escalate_thread`.
   - WAIT: `{ "duration": <seconds>, "businessHoursScheduleIds"?: [<ID>, ...], "cancelCondition"?: <condition> }`. When `businessHoursScheduleIds` is set, `duration` counts open time while any selected schedule is open.
+  - NOTE: `{ "text": <string> }`, plain text. A canvas sticky note; it is never executed.
   Examples: `{"version":1,"type":"apply_labels","labelTypeIds":["lt_..."]}`, `{"version":1,"type":"else_if","conditions":[...]}`.
   `apply_labels` and `set_priority` also accept an AI-triage mode (`{"version":1,"type":"apply_labels","aiTriage":true}` / `{"version":1,"type":"set_priority","aiTriage":true}`) where the AI picks the labels (from label types not excluded from AI) or the priority instead of a fixed value.
   Payloads embed workspace-specific IDs (label type IDs, user IDs, tier IDs, etc.), which are not portable: copying a payload into another workspace references IDs that do not exist there and the step silently applies nothing.
@@ -1667,6 +1673,11 @@ type WorkflowExecution {
 
   """The step executions for this workflow execution."""
   stepExecutions: [WorkflowStepExecution!]!
+
+  """
+  Credits charged for the AI triage and Sidekick work this run's steps did. Null when nothing has been charged yet, or without the `billing:read` permission.
+  """
+  credits: Int
 }
 
 enum WorkflowStepExecutionStatus {
@@ -1711,6 +1722,11 @@ type WorkflowStepExecution {
   What the step did, in the actor's own words, e.g. the one-line report an AI step gives when it completes its task.
   """
   summary: String
+
+  """
+  Credits charged for this step within its run, shown on its latest attempt; earlier attempts of a retried step are null. A charge tied to no step counts only toward the run's `credits`. Null when nothing has been charged yet, or without the `billing:read` permission.
+  """
+  credits: Int
 }
 
 type WorkflowExecutionEdge {
@@ -1920,7 +1936,7 @@ type SavedThreadsViewFilterThreadLinkSource {
 type ThreadsDisplayOptions {
   hasStatus: Boolean!
   hasCustomer: Boolean!
-  hasCompany: Boolean!
+  hasCompany: Boolean! @deprecated(reason: "Use hasAccounts instead")
   hasPreviewText: Boolean!
   hasTier: Boolean!
   hasCustomerGroups: Boolean!
@@ -1937,9 +1953,9 @@ type ThreadsDisplayOptions {
   hasIssueTrackerIssues: Boolean!
   hasTasks: Boolean!
   hasThreadFieldKeys: [String!]!
-  hasTenants: Boolean!
+  hasTenants: Boolean! @deprecated(reason: "Use hasAccounts instead")
   hasAccounts: Boolean!
-  hasTenantFieldExternalIds: [ID!]!
+  hasTenantFieldExternalIds: [ID!]! @deprecated(reason: "Use hasAccountFieldExternalIds instead")
   hasAccountFieldExternalIds: [ID!]!
 }
 
@@ -1952,14 +1968,14 @@ enum ThreadsGroupBy {
   NONE
   PRIORITY
   STATUS
-  COMPANY
+  COMPANY @deprecated(reason: "Use ACCOUNT instead")
   LABEL
   TIER
   CHANNEL
   ASSIGNEE
   CUSTOMER_GROUP
   ACCOUNT
-  TENANT
+  TENANT @deprecated(reason: "Use ACCOUNT instead")
   SERVICE_LEVEL_AGREEMENT_POLICY
 }
 
@@ -1977,8 +1993,8 @@ type SavedThreadsViewNestedFilter {
   assignedToUser: [ID!]!
   participants: [ID!]!
   customerGroups: [ID!]!
-  companies: [ID!]!
-  tenants: [ID!]!
+  companies: [ID!]! @deprecated(reason: "Use accounts instead")
+  tenants: [ID!]! @deprecated(reason: "Use accounts instead")
   accounts: [ID!]!
   tiers: [ID!]!
   serviceLevelAgreementPolicyIds: [ID!]!
@@ -1988,7 +2004,7 @@ type SavedThreadsViewNestedFilter {
   slaTypes: [String!]!
   slaStatuses: [String!]!
   threadFields: [SavedThreadsViewFilterThreadField!]!
-  tenantFields: [SavedThreadsViewFilterTenantField!]!
+  tenantFields: [SavedThreadsViewFilterTenantField!]! @deprecated(reason: "Use accountFields instead")
   accountFields: [SavedThreadsViewFilterAccountField!]!
   threadLinkGroupIds: [ID!]!
   threadLinkSources: [SavedThreadsViewFilterThreadLinkSource!]!
@@ -2006,8 +2022,8 @@ type SavedThreadsViewFilter {
   assignedToUser: [ID!]!
   participants: [ID!]!
   customerGroups: [ID!]!
-  companies: [ID!]!
-  tenants: [ID!]!
+  companies: [ID!]! @deprecated(reason: "Use accounts instead")
+  tenants: [ID!]! @deprecated(reason: "Use accounts instead")
   accounts: [ID!]!
   tiers: [ID!]!
   serviceLevelAgreementPolicyIds: [ID!]!
@@ -2017,7 +2033,7 @@ type SavedThreadsViewFilter {
   slaTypes: [String!]!
   slaStatuses: [String!]!
   threadFields: [SavedThreadsViewFilterThreadField!]!
-  tenantFields: [SavedThreadsViewFilterTenantField!]!
+  tenantFields: [SavedThreadsViewFilterTenantField!]! @deprecated(reason: "Use accountFields instead")
   accountFields: [SavedThreadsViewFilterAccountField!]!
   threadLinkGroupIds: [ID!]!
   threadLinkSources: [SavedThreadsViewFilterThreadLinkSource!]!
@@ -2853,12 +2869,12 @@ type Task {
   """
   The company this task is linked to, if any. Mutually exclusive with `tenant`.
   """
-  company: Company
+  company: Company @deprecated(reason: "Use account instead")
 
   """
   The tenant this task is linked to, if any. Mutually exclusive with `company`.
   """
-  tenant: Tenant
+  tenant: Tenant @deprecated(reason: "Use account instead")
 
   """
   The account this task is linked to, if any. Mutually exclusive with `company`.
@@ -3024,7 +3040,13 @@ type WebhookTargetNotificationDetail {
   webhookTargetId: ID!
 }
 
-union InternalNotificationDetail = NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | EmailBounceNotificationDetail | DiscussionResolvedNotificationDetail | IntegrationReauthRequiredNotificationDetail | WebhookTargetNotificationDetail
+"""A notification that refers to a thread, e.g. one sent by a workflow."""
+type ThreadNotificationDetail {
+  """The ID of the thread this notification refers to."""
+  threadId: ID!
+}
+
+union InternalNotificationDetail = NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | EmailBounceNotificationDetail | DiscussionResolvedNotificationDetail | IntegrationReauthRequiredNotificationDetail | WebhookTargetNotificationDetail | ThreadNotificationDetail
 
 """
 An internal notification displayed to workspace members in the Plain app.
@@ -3038,7 +3060,7 @@ type InternalNotification {
   userId: ID!
 
   """
-  The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', 'discussion_resolved', 'integration_reauth_required', and 'webhook_target'. Use `details` for type-specific data.
+  The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', 'discussion_resolved', 'integration_reauth_required', 'webhook_target', and 'thread_notification'. Use `details` for type-specific data.
   """
   type: String!
 
@@ -3241,14 +3263,14 @@ input CustomersFilter {
   Customers who dont belong to any of the given companies will not be included.
   Can be combined with other company filters.
   """
-  companyIdentifiers: [CompanyIdentifierInput!]
+  companyIdentifiers: [CompanyIdentifierInput!] @deprecated(reason: "Use accountIdentifiers instead")
 
   """
   Filters customers to those belonging to the given tenants.
   Customers who dont belong to any of the given tenants will not be included.
   Can be combined with other company filters.
   """
-  tenantIdentifiers: [TenantIdentifierInput!]
+  tenantIdentifiers: [TenantIdentifierInput!] @deprecated(reason: "Use accountIdentifiers instead")
 
   """
   Filters customers to those belonging to the given accounts.
@@ -3500,10 +3522,10 @@ together, values within a dimension OR. An empty dimension does not constrain th
 written — omit it instead.
 """
 type BroadcastAudienceFilter {
-  tenantIds: [ID!]!
+  tenantIds: [ID!]! @deprecated(reason: "Use accountIds instead")
   accountIds: [ID!]!
   tierIds: [ID!]!
-  tenantFields: [BroadcastAudienceTenantFieldFilter!]!
+  tenantFields: [BroadcastAudienceTenantFieldFilter!]! @deprecated(reason: "Use accountFields instead")
   accountFields: [BroadcastAudienceAccountFieldFilter!]!
 
   """
@@ -4479,6 +4501,58 @@ type ApiKeyEdge {
 
 type ApiKeyConnection {
   edges: [ApiKeyEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+An OAuth app owned by this workspace. People in the workspace can authorize it to call the Plain API as them, with the permissions their role gives them.
+"""
+type OAuthApp {
+  id: ID!
+  name: String!
+  description: String
+
+  """
+  The OAuth client ID the app sends when it asks someone to authorize it.
+  """
+  clientId: String!
+
+  """
+  The URLs the app may be redirected to after someone authorizes it. Each one is an absolute URL using https, or http on localhost.
+  """
+  redirectUrls: [String!]!
+
+  """
+  When false, the Plain API rejects every token issued to the app, including ones it already holds.
+  """
+  isEnabled: Boolean!
+
+  """
+  The app's client secret. Only a hint of the secret is returned; the full secret is only returned once, when the app is created. An app's secret can't be replaced, so an app whose secret is lost has to be replaced with a new app.
+  """
+  clientSecret: OAuthAppClientSecret
+  createdBy: InternalActor!
+  createdAt: DateTime!
+  updatedBy: InternalActor!
+  updatedAt: DateTime!
+}
+
+type OAuthAppClientSecret {
+  id: ID!
+
+  """The last characters of the secret, to tell secrets apart."""
+  secretHint: String!
+  lastUsedAt: DateTime
+  createdAt: DateTime!
+}
+
+type OAuthAppEdge {
+  cursor: String!
+  node: OAuthApp!
+}
+
+type OAuthAppConnection {
+  edges: [OAuthAppEdge!]!
   pageInfo: PageInfo!
 }
 
@@ -5687,6 +5761,16 @@ type Query {
   machineUsers(filters: MachineUsersFilter, first: Int, after: String, last: Int, before: String): MachineUserConnection!
 
   """
+  Fetches a single OAuth app by ID. Returns null if no OAuth app with the given ID exists in the workspace. Requires the `oauthApp:read` permission.
+  """
+  oauthApp(oauthAppId: ID!): OAuthApp
+
+  """
+  Returns a paginated list of the workspace's OAuth apps, oldest first. Requires the `oauthApp:read` permission.
+  """
+  oauthApps(first: Int, after: String, last: Int, before: String): OAuthAppConnection!
+
+  """
   Returns the complete list of all permission strings defined in Plain, sorted alphabetically. Use this to discover valid permission values when building role or API key management UIs. Requires the `permission:read` permission.
   """
   permissions: Permissions!
@@ -6165,17 +6249,17 @@ type Query {
   """
   Returns a paginated list of all companies in your workspace. Supports cursor-based pagination and optional filtering by ID or deletion status. Requires the `company:read` permission.
   """
-  companies(first: Int, after: String, last: Int, before: String, filters: CompaniesFilter): CompanyConnection!
+  companies(first: Int, after: String, last: Int, before: String, filters: CompaniesFilter): CompanyConnection! @deprecated(reason: "Use accounts instead")
 
   """
   Fetches a single company by its ID. Returns null if no company with that ID exists. Requires the `company:read` permission.
   """
-  company(companyId: ID!): Company
+  company(companyId: ID!): Company @deprecated(reason: "Use account instead")
 
   """
   Searches companies by name or domain using a case-insensitive partial match. The search term must be at least 2 characters long. Supports cursor-based pagination and optional filtering. Each match is returned as a `CompanySearchResult` that wraps the matched company. Requires the `company:read` permission.
   """
-  searchCompanies(searchQuery: CompaniesSearchQuery!, filters: CompaniesFilter, first: Int, after: String, last: Int, before: String): CompanySearchResultConnection!
+  searchCompanies(searchQuery: CompaniesSearchQuery!, filters: CompaniesFilter, first: Int, after: String, last: Int, before: String): CompanySearchResultConnection! @deprecated(reason: "Use searchAccounts instead")
 
   """
   Fetch the settings for a team (label type of kind TEAM) identified by its label type ID. Returns null if no settings have been configured yet for the team.
@@ -6185,12 +6269,12 @@ type Query {
   """
   Returns a paginated list of tenants in the workspace. Use the `filters` argument to narrow the results and `sortBy` to order them (by name ascending when omitted). Requires the `tenant:read` permission.
   """
-  tenants(first: Int, after: String, last: Int, before: String, filters: TenantsFilter, sortBy: TenantsSort): TenantConnection!
+  tenants(first: Int, after: String, last: Int, before: String, filters: TenantsFilter, sortBy: TenantsSort): TenantConnection! @deprecated(reason: "Use accounts instead")
 
   """
   Fetches a single tenant by its Plain-assigned ID. Returns null if no matching tenant is found. Requires the `tenant:read` permission.
   """
-  tenant(tenantId: ID!): Tenant
+  tenant(tenantId: ID!): Tenant @deprecated(reason: "Use account instead")
 
   """
   Returns a paginated list of accounts in the workspace. Use the `filters` argument to narrow the results and `sortBy` to order them (by name ascending when omitted). Requires the `tenant:read` permission.
@@ -6220,7 +6304,7 @@ type Query {
   """
   Returns the list of tenant field schemas defined in the workspace. Use the `source` and `isVisible` filters to narrow results. Supports cursor-based pagination.
   """
-  tenantFieldSchemas(filters: TenantFieldSchemasFilter, first: Int, after: String, last: Int, before: String): TenantFieldSchemaConnection!
+  tenantFieldSchemas(filters: TenantFieldSchemasFilter, first: Int, after: String, last: Int, before: String): TenantFieldSchemaConnection! @deprecated(reason: "Use accountFieldSchemas instead")
 
   """
   Returns the list of account field schemas defined in the workspace. Use the `source` and `isVisible` filters to narrow results. Supports cursor-based pagination.
@@ -6232,7 +6316,7 @@ type Query {
   The search term must be at least 2 characters long. Returns a paginated list of results.
   Requires the `tenant:read` permission.
   """
-  searchTenants(searchQuery: TenantsSearchQuery!, filters: TenantsFilter, first: Int, after: String, last: Int, before: String): TenantSearchResultConnection!
+  searchTenants(searchQuery: TenantsSearchQuery!, filters: TenantsFilter, first: Int, after: String, last: Int, before: String): TenantSearchResultConnection! @deprecated(reason: "Use searchAccounts instead")
 
   """
   Searches accounts by name or domain (case-insensitive partial match), or by external ID (exact match).
@@ -6324,7 +6408,12 @@ type Query {
   """
   Fetch the available tenant lists (e.g. company lists or account views) from a connected external service such as Attio, HubSpot, or Salesforce. Use this to let users choose which list to sync when setting up an import. Requires a completed service authorization ID.
   """
-  importerTenantLists(serviceAuthorizationId: ID!, first: Int, after: String, last: Int, before: String): ImporterTenantListConnection!
+  importerTenantLists(serviceAuthorizationId: ID!, first: Int, after: String, last: Int, before: String): ImporterTenantListConnection! @deprecated(reason: "Use importerAccountLists instead")
+
+  """
+  Fetch the available account lists (e.g. company lists or account views) from a connected external service such as Attio, HubSpot, or Salesforce. Use this to let users choose which list to sync when setting up an import. Requires a completed service authorization ID.
+  """
+  importerAccountLists(serviceAuthorizationId: ID!, first: Int, after: String, last: Int, before: String): ImporterAccountListConnection!
 
   """
   Fetch the import job definition for a connected service integration. Pass isEnabled: true to return only the currently active definition, or isEnabled: false to return any definition regardless of enabled state. Returns null if no matching definition exists.
@@ -6393,7 +6482,8 @@ type Query {
 
   """
   Perform a semantic (vector) search across your workspace's knowledge sources and help center articles.
-  Returns up to `pageSize` results (default 10, max 50) ranked by relevance. Use `options` to restrict
+  Matches up to `pageSize` chunks (default 10, max 50), then returns one result per source containing its
+  full indexed text, ordered by each source's most relevant chunk. Use `options` to restrict
   results by label type, content type (indexed documents vs help center articles), or to include
   help center articles that are not publicly accessible.
   """
@@ -6584,7 +6674,7 @@ type Query {
   knowledgeGap(knowledgeGapId: ID!): KnowledgeGap
 
   """
-  Paginated list of knowledge gaps detected in the workspace. Sort by signal count or recency. Defaults to descending signal count order. Requires the `knowledgeGap:read` permission.
+  Paginated list of knowledge gaps detected in the workspace. Filter by status or by when gaps were last seen. Sort by signal count or recency. Defaults to descending signal count order. Requires the `knowledgeGap:read` permission.
   """
   knowledgeGaps(filters: KnowledgeGapsFilter, sortBy: KnowledgeGapsSort, first: Int, after: String, last: Int, before: String): KnowledgeGapConnection!
 
@@ -6920,8 +7010,8 @@ type ThreadClusterConnection {
 
 input ThreadClustersFilter {
   variant: String
-  companyIds: [ID!]
-  tenantIds: [ID!]
+  companyIds: [ID!] @deprecated(reason: "Use accountIds instead")
+  tenantIds: [ID!] @deprecated(reason: "Use accountIds instead")
   accountIds: [ID!]
 }
 
@@ -7307,7 +7397,7 @@ enum MetricDimensionType {
   PRIORITY
   THREAD_FIELD
   ACCOUNT_FIELD
-  TENANT_FIELD
+  TENANT_FIELD @deprecated(reason: "Use ACCOUNT_FIELD instead")
   TIER
 }
 
@@ -7420,7 +7510,7 @@ enum TimeSeriesMetricDimensionType {
   """
   A custom field attached to the thread's tenant. Requires `subDimension` set to the field's external ID.
   """
-  TENANT_FIELD
+  TENANT_FIELD @deprecated(reason: "Use ACCOUNT_FIELD instead")
   TIER
 }
 
@@ -7585,7 +7675,7 @@ enum ThreadMetricGroupBy {
   The thread's assignee. Groups a thread under each distinct user who is its current primary or additional (secondary) assignee. Requires `metricsAgent:read`.
   """
   ASSIGNEE
-  COMPANY
+  COMPANY @deprecated(reason: "Use ACCOUNT instead")
   CUSTOMER_GROUP
   LABEL_TYPE
 
@@ -7598,12 +7688,12 @@ enum ThreadMetricGroupBy {
   A custom field attached to the thread's account. Requires `subKey` set to the field's external ID.
   """
   ACCOUNT_FIELD
-  TENANT
+  TENANT @deprecated(reason: "Use ACCOUNT instead")
 
   """
   A custom field attached to the thread's tenant. Requires `subKey` set to the field's external ID.
   """
-  TENANT_FIELD
+  TENANT_FIELD @deprecated(reason: "Use ACCOUNT_FIELD instead")
 
   """
   A custom field attached to the thread. Requires `subKey` set to the field key.
@@ -7636,8 +7726,8 @@ input ThreadMetricGroupByInput {
 
 input ThreadMetricFilters {
   labelTypeIds: [ID!]
-  companyIdentifiers: [CompanyIdentifierInput!]
-  tenantIdentifiers: [TenantIdentifierInput!]
+  companyIdentifiers: [CompanyIdentifierInput!] @deprecated(reason: "Use accountIdentifiers instead")
+  tenantIdentifiers: [TenantIdentifierInput!] @deprecated(reason: "Use accountIdentifiers instead")
   accountIdentifiers: [AccountIdentifierInput!]
   tierIdentifiers: [TierIdentifierInput!]
   customerGroupIdentifiers: [CustomerGroupIdentifier!]
@@ -7649,7 +7739,7 @@ input ThreadMetricFilters {
   priorities: [Int!]
   messageSource: [MessageSource!]
   threadFields: [ThreadFieldFilter!]
-  tenantFields: [TenantFieldFilter!]
+  tenantFields: [TenantFieldFilter!] @deprecated(reason: "Use accountFields instead")
   accountFields: [AccountFieldFilter!]
   surveyResponse: SurveyResponseFilter
 
@@ -7946,10 +8036,10 @@ type SurveyResponseFilterOutput {
 
 input TasksFilter {
   assignedToUser: [ID!]
-  companyIds: [ID!]
+  companyIds: [ID!] @deprecated(reason: "Use accountIds instead")
   isAssigned: Boolean
   statuses: [TaskStatus!]
-  tenantIds: [ID!]
+  tenantIds: [ID!] @deprecated(reason: "Use accountIds instead")
   accountIds: [ID!]
   and: [TasksFilter!]
   or: [TasksFilter!]
@@ -7983,9 +8073,9 @@ input ThreadsFilter {
   tierIdentifiers: [TierIdentifierInput!]
   serviceLevelAgreementPolicyIds: [ID!]
   threadFields: [ThreadFieldFilter!]
-  tenantIdentifiers: [TenantIdentifierInput!]
+  tenantIdentifiers: [TenantIdentifierInput!] @deprecated(reason: "Use accountIdentifiers instead")
   accountIdentifiers: [AccountIdentifierInput!]
-  companyIdentifiers: [CompanyIdentifierInput!]
+  companyIdentifiers: [CompanyIdentifierInput!] @deprecated(reason: "Use accountIdentifiers instead")
   messageSource: [MessageSource!]
   participantIds: [ID!]
   statusChangedAt: DatetimeFilter
@@ -7999,7 +8089,7 @@ input ThreadsFilter {
   createdAt: DatetimeFilter
   updatedAt: DatetimeFilter
   surveyResponse: SurveyResponseFilter
-  tenantFields: [TenantFieldFilter!]
+  tenantFields: [TenantFieldFilter!] @deprecated(reason: "Use accountFields instead")
   accountFields: [AccountFieldFilter!]
   agentStatus: AgentStatusFilter
   and: [ThreadsFilter!]
@@ -8328,8 +8418,8 @@ enum ThreadScopePrimitiveType {
   """
   CHANNEL
   ACCOUNT
-  TENANT
-  COMPANY
+  TENANT @deprecated(reason: "Use ACCOUNT instead")
+  COMPANY @deprecated(reason: "Use ACCOUNT instead")
 }
 
 enum RoleScopeAccessMode {
@@ -9040,7 +9130,7 @@ input BulkUpsertWorkflowStepInput {
   payload: String!
 
   """
-  Transition step IDs. ACTION steps: [nextStepId], CONDITION steps: [trueStepId, falseStepId]. Use null for terminal/no branch.
+  Transition step IDs. ACTION steps: [nextStepId], CONDITION steps: [trueStepId, falseStepId], WAIT steps: [completedStepId, cancelledStepId], NOTE steps: []. Use null for terminal/no branch. A NOTE step cannot be a transition target or the startStepId.
   """
   transitions: [ID]!
 
@@ -9523,7 +9613,7 @@ type ThreadLinkGroup {
   """
   Breakdown of linked thread counts by company, including threads with no company.
   """
-  companyMetrics: ThreadLinkGroupCompanyMetrics!
+  companyMetrics: ThreadLinkGroupCompanyMetrics! @deprecated(reason: "Use accountMetrics instead")
 
   """
   Breakdown of linked thread counts by tenant, including threads with no tenant.
@@ -9531,7 +9621,7 @@ type ThreadLinkGroup {
   is a member of. The thread will be counted once per tenant, so total counts for
   tenant metrics may sum to more than the group's total thread links.
   """
-  tenantMetrics: ThreadLinkGroupTenantMetrics!
+  tenantMetrics: ThreadLinkGroupTenantMetrics! @deprecated(reason: "Use accountMetrics instead")
 
   """
   Breakdown of linked thread counts by account, including threads with no account.
@@ -9568,9 +9658,9 @@ input ThreadLinkGroupFilter {
   """Defaults to [TODO, IN_PROGRESS]"""
   statuses: [ThreadLinkStatus!]
   threadLinkGroupIds: [ID!]
-  companyIds: [ID!]
+  companyIds: [ID!] @deprecated(reason: "Use accountIds instead")
   tierIds: [ID!]
-  tenantIds: [ID!]
+  tenantIds: [ID!] @deprecated(reason: "Use accountIds instead")
   accountIds: [ID!]
 }
 
@@ -9611,7 +9701,7 @@ type UpdateNoteOutput {
 input ThreadsDisplayOptionsInput {
   hasStatus: Boolean!
   hasCustomer: Boolean!
-  hasCompany: Boolean!
+  hasCompany: Boolean @deprecated(reason: "Use hasAccounts instead")
   hasPreviewText: Boolean!
   hasTier: Boolean!
   hasCustomerGroups: Boolean!
@@ -9628,9 +9718,9 @@ input ThreadsDisplayOptionsInput {
   hasIssueTrackerIssues: Boolean
   hasTasks: Boolean
   hasThreadFieldKeys: [String!]
-  hasTenants: Boolean
+  hasTenants: Boolean @deprecated(reason: "Use hasAccounts instead")
   hasAccounts: Boolean
-  hasTenantFieldExternalIds: [ID!]
+  hasTenantFieldExternalIds: [ID!] @deprecated(reason: "Use hasAccountFieldExternalIds instead")
   hasAccountFieldExternalIds: [ID!]
 }
 
@@ -9641,8 +9731,8 @@ input SavedThreadsViewFilterInput {
   assignedToUser: [ID!]!
   participants: [ID!]!
   customerGroups: [ID!]!
-  companies: [ID!]!
-  tenants: [ID!]
+  companies: [ID!] @deprecated(reason: "Use accounts instead")
+  tenants: [ID!] @deprecated(reason: "Use accounts instead")
   accounts: [ID!]
   tiers: [ID!]!
 
@@ -9654,7 +9744,7 @@ input SavedThreadsViewFilterInput {
   slaTypes: [String!]!
   slaStatuses: [String!]!
   threadFields: [ThreadFieldFilter!]!
-  tenantFields: [TenantFieldFilter!]
+  tenantFields: [TenantFieldFilter!] @deprecated(reason: "Use accountFields instead")
   accountFields: [AccountFieldFilter!]
   threadLinkGroupIds: [ID!]!
   threadLinkSources: [ThreadLinkSourceFilter!]!
@@ -10016,10 +10106,10 @@ input BroadcastAudienceAccountFieldFilterInput {
 }
 
 input BroadcastAudienceFilterInput {
-  tenantIds: [ID!]
+  tenantIds: [ID!] @deprecated(reason: "Use accountIds instead")
   accountIds: [ID!]
   tierIds: [ID!]
-  tenantFields: [BroadcastAudienceTenantFieldFilterInput!]
+  tenantFields: [BroadcastAudienceTenantFieldFilterInput!] @deprecated(reason: "Use accountFields instead")
   accountFields: [BroadcastAudienceAccountFieldFilterInput!]
   slackChannels: [BroadcastSlackChannelRefInput!]
   slackChannelNameContains: [String!]
@@ -10082,6 +10172,74 @@ input UpdateBroadcastAudienceInput {
 
 type UpdateBroadcastAudienceOutput {
   broadcastAudience: BroadcastAudience
+  error: MutationError
+}
+
+input ImportBroadcastAudienceChannelRowInput {
+  """1-based spreadsheet row number (header is 1)."""
+  rowNumber: Int!
+
+  """
+  Recipient identifier to pin on the audience. Today this is a Slack channel id (`C…` / `G…` / `D…`)
+  or exact Slack channel name (optional leading `#`).
+  """
+  recipient: String!
+
+  """
+  Optional Slack team id when the same Slack channel name exists on more than one connected team.
+  """
+  slackTeamId: ID
+}
+
+input ImportBroadcastAudienceChannelsInput {
+  broadcastAudienceId: ID!
+
+  """Structured rows to pin (max 500). CSV parsing is client-side."""
+  rows: [ImportBroadcastAudienceChannelRowInput!]!
+
+  """When true, resolve and report without writing."""
+  isDryRun: Boolean!
+}
+
+enum ImportBroadcastAudienceChannelRowStatus {
+  ADDED
+  ALREADY_IN_AUDIENCE
+  NOT_FOUND
+  AMBIGUOUS
+  INVALID
+}
+
+type ImportBroadcastAudienceChannelMatch {
+  slackTeamId: ID!
+  slackChannelId: ID!
+  name: String!
+}
+
+type ImportBroadcastAudienceChannelRowResult {
+  rowNumber: Int!
+  status: ImportBroadcastAudienceChannelRowStatus!
+
+  """The recipient identifier from the import row (after normalization)."""
+  recipient: String
+  slackTeamId: ID
+  slackChannelId: ID
+  message: String
+  matches: [ImportBroadcastAudienceChannelMatch!]!
+}
+
+type ImportBroadcastAudienceChannelsResult {
+  isDryRun: Boolean!
+  broadcastAudience: BroadcastAudience!
+  rows: [ImportBroadcastAudienceChannelRowResult!]!
+  addedCount: Int!
+  alreadyInAudienceCount: Int!
+  notFoundCount: Int!
+  ambiguousCount: Int!
+  invalidCount: Int!
+}
+
+type ImportBroadcastAudienceChannelsOutput {
+  result: ImportBroadcastAudienceChannelsResult
   error: MutationError
 }
 
@@ -10150,8 +10308,8 @@ input CreateTaskInput {
   description: String
   status: TaskStatus
   priority: Int
-  companyId: ID
-  tenantId: ID
+  companyId: ID @deprecated(reason: "Use accountId instead")
+  tenantId: ID @deprecated(reason: "Use accountId instead")
   accountId: ID
   assignedTo: CreateTaskAssignedToInput
 }
@@ -10177,12 +10335,12 @@ input UpdateTaskInput {
   """
   Only one of companyId or tenantId can be set. Cannot specify both. Setting companyId will unset tenantId if it already exists.
   """
-  companyId: ID
+  companyId: ID @deprecated(reason: "Use accountId instead")
 
   """
   Only one of companyId or tenantId can be set. Cannot specify both. Setting tenantId will unset companyId if it already exists.
   """
-  tenantId: ID
+  tenantId: ID @deprecated(reason: "Use accountId instead")
 
   """
   Only one of companyId or accountId can be set. Cannot specify both. Setting accountId will unset companyId if it already exists.
@@ -10868,7 +11026,7 @@ input UpsertCustomerOnCreateInput {
   shortName: String
   email: EmailAddressInput!
   customerGroupIdentifiers: [CustomerGroupIdentifier!]
-  tenantIdentifiers: [TenantIdentifierInput!]
+  tenantIdentifiers: [TenantIdentifierInput!] @deprecated(reason: "Use accountIdentifiers instead")
   accountIdentifiers: [AccountIdentifierInput!]
 }
 
@@ -10997,6 +11155,67 @@ input DeleteApiKeyInput {
 
 type DeleteApiKeyOutput {
   apiKey: ApiKey
+  error: MutationError
+}
+
+input CreateOAuthAppInput {
+  name: String!
+  description: String
+
+  """
+  Absolute URLs using https, or http on localhost. At least one is required.
+  """
+  redirectUrls: [String!]!
+}
+
+type CreateOAuthAppOutput {
+  oauthApp: OAuthApp
+
+  """
+  The app's first client secret. This value is only returned once, when it's created, and can't be retrieved later. Store it securely straight away.
+  """
+  clientSecret: String
+  error: MutationError
+}
+
+input UpdateOAuthAppInput {
+  oauthAppId: ID!
+  name: StringInput
+  description: OptionalStringInput
+
+  """Replaces the whole list of redirect URLs."""
+  redirectUrls: StringArrayInput
+}
+
+type UpdateOAuthAppOutput {
+  oauthApp: OAuthApp
+  error: MutationError
+}
+
+input EnableOAuthAppInput {
+  oauthAppId: ID!
+}
+
+type EnableOAuthAppOutput {
+  oauthApp: OAuthApp
+  error: MutationError
+}
+
+input DisableOAuthAppInput {
+  oauthAppId: ID!
+}
+
+type DisableOAuthAppOutput {
+  oauthApp: OAuthApp
+  error: MutationError
+}
+
+input DeleteOAuthAppInput {
+  oauthAppId: ID!
+}
+
+type DeleteOAuthAppOutput {
+  oauthApp: OAuthApp
   error: MutationError
 }
 
@@ -11783,6 +12002,12 @@ type Mutation {
   updateBroadcastAudience(input: UpdateBroadcastAudienceInput!): UpdateBroadcastAudienceOutput!
 
   """
+  Bulk-imports Slack channels into a broadcast audience's pinned `slackChannels` filter (by channel
+  id or exact name). Idempotent. Requires `broadcastAudience:edit` and the broadcasts feature flag.
+  """
+  importBroadcastAudienceChannels(input: ImportBroadcastAudienceChannelsInput!): ImportBroadcastAudienceChannelsOutput!
+
+  """
   Soft-deletes a broadcast audience. Rejected with `cannot_delete_broadcast_audience` while a
   broadcast targeting it is scheduled or being sent, since past `SCHEDULED` its author can no longer
   edit the reference away. Requires the `broadcastAudience:delete` permission.
@@ -11849,7 +12074,7 @@ type Mutation {
   Assigns a customer to a different company, or clears their company association. Requires the
   `customer:edit` permission.
   """
-  updateCustomerCompany(input: UpdateCustomerCompanyInput!): UpdateCustomerCompanyOutput!
+  updateCustomerCompany(input: UpdateCustomerCompanyInput!): UpdateCustomerCompanyOutput! @deprecated(reason: "Use setCustomerAccounts instead")
 
   """
   Permanently deletes a customer and all associated data (threads, timeline entries, etc.).
@@ -12284,6 +12509,31 @@ type Mutation {
   deleteApiKey(input: DeleteApiKeyInput!): DeleteApiKeyOutput!
 
   """
+  Creates an OAuth app owned by the workspace, along with its first client secret. The secret is returned only once in `clientSecret` and can't be retrieved again. Requires the `oauthApp:create` permission.
+  """
+  createOAuthApp(input: CreateOAuthAppInput!): CreateOAuthAppOutput!
+
+  """
+  Updates the name, description or redirect URLs of an OAuth app. Requires the `oauthApp:edit` permission.
+  """
+  updateOAuthApp(input: UpdateOAuthAppInput!): UpdateOAuthAppOutput!
+
+  """
+  Turns an OAuth app on, so the Plain API accepts its tokens again. Requires the `oauthApp:edit` permission.
+  """
+  enableOAuthApp(input: EnableOAuthAppInput!): EnableOAuthAppOutput!
+
+  """
+  Turns an OAuth app off. The Plain API rejects every token issued to it, including ones it already holds, until it's turned back on. Requires the `oauthApp:edit` permission.
+  """
+  disableOAuthApp(input: DisableOAuthAppInput!): DisableOAuthAppOutput!
+
+  """
+  Permanently deletes an OAuth app. Every token it holds is rejected straight away. Requires the `oauthApp:delete` permission.
+  """
+  deleteOAuthApp(input: DeleteOAuthAppInput!): DeleteOAuthAppOutput!
+
+  """
   Connects the current user's personal Slack notifications integration using an OAuth auth code obtained from the Slack OAuth flow. Get the installation URL from mySlackInstallationInfo.
   """
   createMySlackIntegration(input: CreateMySlackIntegrationInput!): CreateMySlackIntegrationOutput!
@@ -12590,7 +12840,7 @@ type Mutation {
   """
   Move a thread to a different tenant, or pass `tenantIdentifier: null` to detach it from its current tenant. Requires the `thread:edit` permission.
   """
-  updateThreadTenant(input: UpdateThreadTenantInput!): UpdateThreadTenantOutput!
+  updateThreadTenant(input: UpdateThreadTenantInput!): UpdateThreadTenantOutput! @deprecated(reason: "Use updateThreadAccount instead")
 
   """
   Move a thread to a different account, or pass `accountIdentifier: null` to detach it from its current account. Requires the `thread:edit` permission.
@@ -12838,7 +13088,7 @@ type Mutation {
   Use `upsertTenant` instead if you want to create or update a tenant idempotently.
   Requires the `tenant:create` permission.
   """
-  createTenant(input: CreateTenantInput!): CreateTenantOutput!
+  createTenant(input: CreateTenantInput!): CreateTenantOutput! @deprecated(reason: "Use createAccount instead")
 
   """
   Creates a new account. Fails with a validation error if an account already exists with the provided `externalId`.
@@ -12853,7 +13103,7 @@ type Mutation {
   The `result` field on the output indicates whether a record was created or updated.
   Requires the `tenant:read` and `tenant:create` permissions.
   """
-  upsertTenant(input: UpsertTenantInput!): UpsertTenantOutput!
+  upsertTenant(input: UpsertTenantInput!): UpsertTenantOutput! @deprecated(reason: "Use upsertAccount instead")
 
   """
   Creates a new account or updates an existing one identified by `externalId` or `accountId`.
@@ -12869,7 +13119,7 @@ type Mutation {
   The tenant can be identified by either its Plain `tenantId` or its `externalId`.
   Requires the `tenant:delete` permission.
   """
-  deleteTenant(input: DeleteTenantInput!): DeleteTenantOutput!
+  deleteTenant(input: DeleteTenantInput!): DeleteTenantOutput! @deprecated(reason: "Use deleteAccount instead")
 
   """
   Permanently deletes an account, unlinking it from all customers and removing its fields.
@@ -12884,7 +13134,7 @@ type Mutation {
   If the customer is already a member of a given tenant the operation is a no-op for that tenant.
   Requires the `customer:edit` and `customerTenantMembership:create` permissions.
   """
-  addCustomerToTenants(input: AddCustomerToTenantsInput!): AddCustomerToTenantsOutput!
+  addCustomerToTenants(input: AddCustomerToTenantsInput!): AddCustomerToTenantsOutput! @deprecated(reason: "Use addCustomerToAccounts instead")
 
   """
   Adds a customer to one or more accounts. The customer can be identified by their Plain ID, external ID, or email address.
@@ -12898,7 +13148,7 @@ type Mutation {
   If the customer is not currently a member of a specified tenant the operation is a no-op for that tenant.
   Requires the `customer:edit` and `customerTenantMembership:delete` permissions.
   """
-  removeCustomerFromTenants(input: RemoveCustomerFromTenantsInput!): RemoveCustomerFromTenantsOutput!
+  removeCustomerFromTenants(input: RemoveCustomerFromTenantsInput!): RemoveCustomerFromTenantsOutput! @deprecated(reason: "Use removeCustomerFromAccounts instead")
 
   """
   Removes a customer from one or more accounts. The customer can be identified by their Plain ID, external ID, or email address.
@@ -12913,7 +13163,7 @@ type Mutation {
   Use this when syncing tenant membership from your own system rather than tracking individual add/remove changes.
   Requires the `customer:edit`, `customerTenantMembership:create`, and `customerTenantMembership:delete` permissions.
   """
-  setCustomerTenants(input: SetCustomerTenantsInput!): SetCustomerTenantsOutput!
+  setCustomerTenants(input: SetCustomerTenantsInput!): SetCustomerTenantsOutput! @deprecated(reason: "Use setCustomerAccounts instead")
 
   """
   Replaces the full set of account memberships for a customer in a single call.
@@ -12926,7 +13176,7 @@ type Mutation {
   """
   Creates or updates one or more tenant field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission.
   """
-  upsertTenantFieldSchema(input: UpsertTenantFieldSchemaInput!): UpsertTenantFieldSchemaOutput!
+  upsertTenantFieldSchema(input: UpsertTenantFieldSchemaInput!): UpsertTenantFieldSchemaOutput! @deprecated(reason: "Use upsertAccountFieldSchema instead")
 
   """
   Creates or updates one or more account field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission.
@@ -12936,7 +13186,7 @@ type Mutation {
   """
   Permanently deletes a tenant field schema and all field values stored against it across all tenants. This action cannot be undone. Requires `tenantFieldSchema:delete` permission.
   """
-  deleteTenantFieldSchema(input: DeleteTenantFieldSchemaInput!): DeleteTenantFieldSchemaOutput!
+  deleteTenantFieldSchema(input: DeleteTenantFieldSchemaInput!): DeleteTenantFieldSchemaOutput! @deprecated(reason: "Use deleteAccountFieldSchema instead")
 
   """
   Permanently deletes an account field schema and all field values stored against it across all accounts. This action cannot be undone. Requires `tenantFieldSchema:delete` permission.
@@ -12946,7 +13196,7 @@ type Mutation {
   """
   Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `tenantReferenceValues`). Requires `tenant:edit` permission.
   """
-  upsertTenantField(input: UpsertTenantFieldInput!): UpsertTenantFieldOutput!
+  upsertTenantField(input: UpsertTenantFieldInput!): UpsertTenantFieldOutput! @deprecated(reason: "Use upsertAccountField instead")
 
   """
   Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `accountReferenceValues`). Requires `tenant:edit` permission.
@@ -12956,7 +13206,7 @@ type Mutation {
   """
   Clears a tenant's value for a specific field without removing the field schema itself. Use this to unset a field value while keeping the schema available for other tenants. Requires `tenant:edit` permission.
   """
-  deleteTenantField(input: DeleteTenantFieldInput!): DeleteTenantFieldOutput!
+  deleteTenantField(input: DeleteTenantFieldInput!): DeleteTenantFieldOutput! @deprecated(reason: "Use deleteAccountField instead")
 
   """
   Clears an account's value for a specific field without removing the field schema itself. Use this to unset a field value while keeping the schema available for other accounts. Requires `tenant:edit` permission.
@@ -12966,7 +13216,7 @@ type Mutation {
   """
   Maps a tenant field schema to a built-in Plain concept such as `TIER`, enabling automatic tier assignment based on the field's value. Only one schema can be mapped to a given concept at a time.
   """
-  setupTenantFieldSchemaMapping(input: SetupTenantFieldSchemaMappingInput!): SetupTenantFieldSchemaMappingOutput!
+  setupTenantFieldSchemaMapping(input: SetupTenantFieldSchemaMappingInput!): SetupTenantFieldSchemaMappingOutput! @deprecated(reason: "Use setupAccountFieldSchemaMapping instead")
 
   """
   Maps an account field schema to a built-in Plain concept such as `TIER`, enabling automatic tier assignment based on the field's value. Only one schema can be mapped to a given concept at a time.
@@ -12976,7 +13226,7 @@ type Mutation {
   """
   Removes the mapping between a tenant field schema and a built-in Plain concept, disabling any automatic behaviour (such as tier assignment) driven by that field.
   """
-  removeTenantFieldSchemaMapping(input: RemoveTenantFieldSchemaMappingInput!): RemoveTenantFieldSchemaMappingOutput!
+  removeTenantFieldSchemaMapping(input: RemoveTenantFieldSchemaMappingInput!): RemoveTenantFieldSchemaMappingOutput! @deprecated(reason: "Use removeAccountFieldSchemaMapping instead")
 
   """
   Removes the mapping between an account field schema and a built-in Plain concept, disabling any automatic behaviour (such as tier assignment) driven by that field.
@@ -12986,12 +13236,12 @@ type Mutation {
   """
   Creates a new company or updates an existing one identified by `companyId` or `companyDomainName`. The output includes a `result` field of either `CREATED` or `UPDATED` so you can tell which happened. You can pass a bare domain (e.g. `plain.com`) or a full URL and Plain will extract the domain. Requires the `company:create` and `company:edit` permissions.
   """
-  upsertCompany(input: UpsertCompanyInput!): UpsertCompanyOutput!
+  upsertCompany(input: UpsertCompanyInput!): UpsertCompanyOutput! @deprecated(reason: "Use upsertAccount instead")
 
   """
   Deletes a company identified by `companyId` or `companyDomainName`. Deleting a company unlinks it from all of its customers — the customers themselves are not deleted. Requires the `company:delete` permission.
   """
-  deleteCompany(input: DeleteCompanyInput!): DeleteCompanyOutput!
+  deleteCompany(input: DeleteCompanyInput!): DeleteCompanyOutput! @deprecated(reason: "Use deleteAccount instead")
 
   """
   Begin the OAuth authorization flow for a third-party service integration. Returns connection details including a serviceAuthorizationId and an HMAC digest that must be passed to the authorization URL to securely link the callback back to this workspace. After the user completes the OAuth flow in the third-party service, call completeServiceAuthorization to finalize the connection.
@@ -13083,7 +13333,12 @@ type Mutation {
   """
   Fetches tenant field schemas from a connected external service (identified by `serviceIntegrationKey`) and upserts them into Plain. The service must already be authorized and connected. Returns the full list of schemas that were imported.
   """
-  importTenantFieldSchemasFromService(input: ImportTenantFieldSchemasFromServiceInput!): ImportTenantFieldSchemasFromServiceOutput!
+  importTenantFieldSchemasFromService(input: ImportTenantFieldSchemasFromServiceInput!): ImportTenantFieldSchemasFromServiceOutput! @deprecated(reason: "Use importAccountFieldSchemasFromService instead")
+
+  """
+  Fetches account field schemas from a connected external service (identified by `serviceIntegrationKey`) and upserts them into Plain. The service must already be authorized and connected. Returns the full list of schemas that were imported.
+  """
+  importAccountFieldSchemasFromService(input: ImportAccountFieldSchemasFromServiceInput!): ImportAccountFieldSchemasFromServiceOutput!
 
   """
   Disable the active import job definition for a service integration. This is the only supported update — pass isEnabled: false to stop future sync runs. Returns an error if no enabled definition exists for the given service.
@@ -13148,12 +13403,12 @@ type Mutation {
   """
   Sets the tier for a single company, identified by its Plain ID or domain name. Pass a null `tierIdentifier` to remove the company from its current tier. Use `addMembersToTier` when you need to move multiple companies at once. Requires the `tierMembership:read` and `tierMembership:create` permissions.
   """
-  updateCompanyTier(input: UpdateCompanyTierInput!): UpdateCompanyTierOutput!
+  updateCompanyTier(input: UpdateCompanyTierInput!): UpdateCompanyTierOutput! @deprecated(reason: "Use updateAccountTier instead")
 
   """
   Sets the tier for a single tenant, identified by its Plain ID or external ID. Pass a null `tierIdentifier` to remove the tenant from its current tier. Use `addMembersToTier` when you need to move multiple tenants at once. Requires the `tierMembership:read` and `tierMembership:create` permissions.
   """
-  updateTenantTier(input: UpdateTenantTierInput!): UpdateTenantTierOutput!
+  updateTenantTier(input: UpdateTenantTierInput!): UpdateTenantTierOutput! @deprecated(reason: "Use updateAccountTier instead")
 
   """
   Sets the tier for a single account, identified by its Plain ID or external ID. Pass a null `tierIdentifier` to remove the account from its current tier. Use `addMembersToTier` when you need to move multiple accounts at once. Requires the `tierMembership:read` and `tierMembership:create` permissions.
@@ -13292,7 +13547,7 @@ type Mutation {
   """
   Changes how tenants are assigned for an existing thread channel association. Requires the `threadChannelAssociation:edit` permission.
   """
-  updateThreadChannelAssociationTenantMembershipPolicy(input: UpdateThreadChannelAssociationTenantMembershipPolicyInput!): UpdateThreadChannelAssociationTenantMembershipPolicyOutput!
+  updateThreadChannelAssociationTenantMembershipPolicy(input: UpdateThreadChannelAssociationTenantMembershipPolicyInput!): UpdateThreadChannelAssociationTenantMembershipPolicyOutput! @deprecated(reason: "Use updateThreadChannelAssociationAccountMembershipPolicy instead")
 
   """
   Changes how accounts are assigned for an existing thread channel association. Requires the `threadChannelAssociation:edit` permission.
@@ -13483,12 +13738,22 @@ type Mutation {
   """
   Upsert up to 50 tenant field schemas from an external system using their externalFieldId for idempotency. Set isDeleted: true on a schema to mark it as deleted in Plain. Returns an ImportResult with added, updated, and skipped counts.
   """
-  importTenantFieldSchemas(input: ImportTenantFieldSchemasInput!): ImportTenantFieldSchemasOutput!
+  importTenantFieldSchemas(input: ImportTenantFieldSchemasInput!): ImportTenantFieldSchemasOutput! @deprecated(reason: "Use importAccountFieldSchemas instead")
+
+  """
+  Upsert up to 50 account field schemas from an external system using their externalFieldId for idempotency. Set isDeleted: true on a schema to mark it as deleted in Plain. Returns an ImportResult with added, updated, and skipped counts.
+  """
+  importAccountFieldSchemas(input: ImportAccountFieldSchemasInput!): ImportAccountFieldSchemasOutput!
 
   """
   Upsert up to 25 tenants from an external system using their externalId for idempotency. Optionally include tenant field values to sync custom fields alongside the tenant record. Returns an ImportResult with added, updated, and skipped counts.
   """
-  importTenants(input: ImportTenantsInput!): ImportTenantsOutput!
+  importTenants(input: ImportTenantsInput!): ImportTenantsOutput! @deprecated(reason: "Use importAccounts instead")
+
+  """
+  Upsert up to 25 accounts from an external system using their externalId for idempotency. Optionally include account field values to sync custom fields alongside the account record. Returns an ImportResult with added, updated, and skipped counts.
+  """
+  importAccounts(input: ImportAccountsInput!): ImportAccountsOutput!
 
   """
   Upsert up to 25 customers from an external system using their externalId for idempotency. Each customer can include an optional list of tenants to associate with. Returns an ImportResult with added, updated, and skipped counts.
@@ -13890,6 +14155,9 @@ type IndexedDocument {
   id: ID!
   url: String!
 
+  """The ID of the knowledge source this document was ingested from."""
+  knowledgeSourceId: ID!
+
   """
   Label types associated with this document, used to scope AI search results to specific topics.
   """
@@ -14156,7 +14424,7 @@ enum KnowledgeSourceSearchResultType {
 
 input SearchKnowledgeSourcesOptions {
   """
-  Restrict results to documents and help center articles that have at least one of these label types. Unlabelled records are always included, so label scoping narrows but never hides general content.
+  Restrict results to documents and help center articles that have at least one of these label types. Unlabelled records may also be included, depending on the workspace's label filtering behaviour.
   """
   labelTypeIds: [ID!]
 
@@ -14175,7 +14443,7 @@ union KnowledgeSourceSearchResult = IndexedDocumentSearchResult | HelpCenterArti
 
 type IndexedDocumentSearchResult {
   """
-  The extracted text content of the matched document chunk, as indexed by Plain AI.
+  The full extracted text content of the matched document, as indexed by Plain AI.
   """
   content: String!
   indexedDocument: IndexedDocument!
@@ -14183,7 +14451,7 @@ type IndexedDocumentSearchResult {
 
 type HelpCenterArticleSearchResult {
   """
-  The extracted text content of the matched article chunk, as indexed by Plain AI.
+  The full extracted text content of the matched article, as indexed by Plain AI.
   """
   content: String!
   helpCenterArticle: HelpCenterArticle!
@@ -14256,9 +14524,9 @@ enum DiscussionAgentType {
 }
 
 enum DiscussionSourceEntityType {
-  COMPANY
+  COMPANY @deprecated(reason: "Use ACCOUNT instead")
   ACCOUNT
-  TENANT
+  TENANT @deprecated(reason: "Use ACCOUNT instead")
   LABEL
   CHANNEL
   TIER
@@ -14773,8 +15041,8 @@ input BeforeBreachActionInput {
 }
 
 input TierMemberIdentifierInput {
-  companyId: ID
-  tenantId: ID
+  companyId: ID @deprecated(reason: "Use accountId instead")
+  tenantId: ID @deprecated(reason: "Use accountId instead")
   accountId: ID
 }
 
@@ -16259,15 +16527,15 @@ interface ThreadChannelAssociation {
   """
   The ID of the company this channel is associated with. Null if the association targets a tenant instead.
   """
-  companyId: ID
+  companyId: ID @deprecated(reason: "Use accountId instead")
 
   """
   The ID of the tenant this channel is associated with. Null if the association targets a company instead.
   """
-  tenantId: ID
+  tenantId: ID @deprecated(reason: "Use accountId instead")
 
   """How tenants are assigned when a message from this channel is received."""
-  tenantMembershipPolicy: TenantMembershipPolicy!
+  tenantMembershipPolicy: TenantMembershipPolicy! @deprecated(reason: "Use accountMembershipPolicy instead")
 
   """
   The ID of the account this channel is associated with. Null if the association targets a company instead.
@@ -16287,9 +16555,9 @@ interface ThreadChannelAssociation {
 """A thread channel association backed by a connected Slack channel."""
 type SlackThreadChannelAssociation implements ThreadChannelAssociation {
   id: ID!
-  companyId: ID
-  tenantId: ID
-  tenantMembershipPolicy: TenantMembershipPolicy!
+  companyId: ID @deprecated(reason: "Use accountId instead")
+  tenantId: ID @deprecated(reason: "Use accountId instead")
+  tenantMembershipPolicy: TenantMembershipPolicy! @deprecated(reason: "Use accountMembershipPolicy instead")
   accountId: ID
   accountMembershipPolicy: AccountMembershipPolicy!
   createdAt: DateTime!
@@ -16304,14 +16572,14 @@ type SlackThreadChannelAssociation implements ThreadChannelAssociation {
 }
 
 input CreateThreadChannelAssociationInput {
-  companyIdentifier: CompanyIdentifierInput
-  tenantIdentifier: TenantIdentifierInput
+  companyIdentifier: CompanyIdentifierInput @deprecated(reason: "Use accountIdentifier instead")
+  tenantIdentifier: TenantIdentifierInput @deprecated(reason: "Use accountIdentifier instead")
   connectedSlackChannelId: ID
 
   """
   How tenants are assigned when a message from this channel is received. Defaults to ALWAYS_ADD.
   """
-  tenantMembershipPolicy: TenantMembershipPolicy
+  tenantMembershipPolicy: TenantMembershipPolicy @deprecated(reason: "Use accountMembershipPolicy instead")
   accountIdentifier: AccountIdentifierInput
 
   """
@@ -16624,7 +16892,7 @@ type Thread {
   isFromPlainManagedDomain: Boolean!
 
   """The tenant this thread is associated with."""
-  tenant: Tenant
+  tenant: Tenant @deprecated(reason: "Use account instead")
 
   """The account this thread is associated with."""
   account: Account
@@ -16933,7 +17201,7 @@ input CreateThreadInput {
   priority: Int
 
   """A thread may be assigned to a specific tenant."""
-  tenantIdentifier: TenantIdentifierInput
+  tenantIdentifier: TenantIdentifierInput @deprecated(reason: "Use accountIdentifier instead")
 
   """A thread may be assigned to a specific account."""
   accountIdentifier: AccountIdentifierInput
@@ -17889,7 +18157,7 @@ input CreateThreadFromSlackMessageInput {
   labelTypeIds: [ID!]
 
   """When set, used instead of the Slack channel's tenant association."""
-  tenantIdentifier: TenantIdentifierInput
+  tenantIdentifier: TenantIdentifierInput @deprecated(reason: "Use accountIdentifier instead")
 
   """When set, used instead of the Slack channel's account association."""
   accountIdentifier: AccountIdentifierInput
@@ -19477,6 +19745,24 @@ type ImporterTenantListConnection {
   pageInfo: PageInfo!
 }
 
+"""
+A list or view of accounts available in a connected external service, used to scope which records are synced during an import.
+"""
+type ImporterAccountList {
+  id: ID!
+  name: String!
+}
+
+type ImporterAccountListEdge {
+  node: ImporterAccountList!
+  cursor: String!
+}
+
+type ImporterAccountListConnection {
+  edges: [ImporterAccountListEdge!]!
+  pageInfo: PageInfo!
+}
+
 input CreateImportSyncInput {
   serviceIntegrationKey: String!
   filters: ImportSyncFiltersInput!
@@ -19971,6 +20257,11 @@ input TenantsFilter {
   """Filter to tenants from any of the given sources."""
   sources: [TenantSource!]
 
+  """
+  Filter to tenants whose primary or alternate domains include any of the given domains. Matching is exact and case-insensitive.
+  """
+  domains: [String!]
+
   """Matches tenants that match every one of these filters."""
   and: [TenantsFilter!]
 
@@ -20034,6 +20325,11 @@ input AccountsFilter {
 
   """Filter to accounts from any of the given sources."""
   sources: [AccountSource!]
+
+  """
+  Filter to accounts whose primary or alternate domains include any of the given domains. Matching is exact and case-insensitive.
+  """
+  domains: [String!]
 
   """Matches accounts that match every one of these filters."""
   and: [AccountsFilter!]
@@ -20465,6 +20761,11 @@ type CreditSpendItem {
 
   """Name of the workflow that caused the spend, when one did."""
   workflowName: String
+
+  """
+  The workflow run that caused the spend, when one did. Read `workflowExecution` for the run.
+  """
+  workflowExecutionId: ID
 
   """
   Credits charged for this item. For a FREE_BETA item, what it would have cost.
@@ -21102,7 +21403,7 @@ type HelpCenterAccessSettings {
   """
   IDs of tenants whose members are allowed to access this PRIVATE help center.
   """
-  tenantIds: [String!]!
+  tenantIds: [String!]! @deprecated(reason: "Use accountIds instead")
 
   """
   IDs of accounts whose members are allowed to access this PRIVATE help center.
@@ -21112,7 +21413,7 @@ type HelpCenterAccessSettings {
   """
   IDs of companies whose customers are allowed to access this PRIVATE help center.
   """
-  companyIds: [String!]!
+  companyIds: [String!]! @deprecated(reason: "Use accountIds instead")
 
   """
   IDs of individual customers explicitly allowed to access this PRIVATE help center.
@@ -21474,9 +21775,9 @@ input HelpCenterPortalSettingsInput {
 
 input HelpCenterAccessSettingsInput {
   tierIds: [String!]
-  tenantIds: [String!]
+  tenantIds: [String!] @deprecated(reason: "Use accountIds instead")
   accountIds: [String!]
-  companyIds: [String!]
+  companyIds: [String!] @deprecated(reason: "Use accountIds instead")
   customerIds: [String!]
 }
 
@@ -21511,10 +21812,10 @@ input HelpCenterPortalSettingsOverrideCustomerAccountsInput {
 }
 
 type HelpCenterPortalSettingsThreadVisibility {
-  customerCompany: Boolean!
-  overrideCustomerCompany: HelpCenterPortalSettingsOverrideCustomerCompany
-  customerTenants: Boolean!
-  overrideCustomerTenants: HelpCenterPortalSettingsOverrideCustomerTenants
+  customerCompany: Boolean! @deprecated(reason: "Use customerAccounts instead")
+  overrideCustomerCompany: HelpCenterPortalSettingsOverrideCustomerCompany @deprecated(reason: "Use overrideCustomerAccounts instead")
+  customerTenants: Boolean! @deprecated(reason: "Use customerAccounts instead")
+  overrideCustomerTenants: HelpCenterPortalSettingsOverrideCustomerTenants @deprecated(reason: "Use overrideCustomerAccounts instead")
   customerAccounts: Boolean!
   overrideCustomerAccounts: HelpCenterPortalSettingsOverrideCustomerAccounts
   customerEmailDomain: Boolean!
@@ -21522,10 +21823,10 @@ type HelpCenterPortalSettingsThreadVisibility {
 }
 
 input HelpCenterPortalSettingsThreadVisibilityInput {
-  customerCompany: Boolean
-  overrideCustomerCompany: HelpCenterPortalSettingsOverrideCustomerCompanyInput
-  customerTenants: Boolean
-  overrideCustomerTenants: HelpCenterPortalSettingsOverrideCustomerTenantsInput
+  customerCompany: Boolean @deprecated(reason: "Use customerAccounts instead")
+  overrideCustomerCompany: HelpCenterPortalSettingsOverrideCustomerCompanyInput @deprecated(reason: "Use overrideCustomerAccounts instead")
+  customerTenants: Boolean @deprecated(reason: "Use customerAccounts instead")
+  overrideCustomerTenants: HelpCenterPortalSettingsOverrideCustomerTenantsInput @deprecated(reason: "Use overrideCustomerAccounts instead")
   customerAccounts: Boolean
   overrideCustomerAccounts: HelpCenterPortalSettingsOverrideCustomerAccountsInput
   customerEmailDomain: Boolean
@@ -21839,6 +22140,15 @@ type ImportTenantFieldSchemasFromServiceOutput {
   error: MutationError
 }
 
+input ImportAccountFieldSchemasFromServiceInput {
+  serviceIntegrationKey: String!
+}
+
+type ImportAccountFieldSchemasFromServiceOutput {
+  accountFieldSchemas: [AccountFieldSchema!]!
+  error: MutationError
+}
+
 input ImportTenantFieldSchemaInput {
   externalFieldId: String!
   type: TenantFieldType!
@@ -21852,6 +22162,23 @@ input ImportTenantFieldSchemasInput {
 }
 
 type ImportTenantFieldSchemasOutput {
+  result: ImportResult
+  error: MutationError
+}
+
+input ImportAccountFieldSchemaInput {
+  externalFieldId: String!
+  type: AccountFieldType!
+  label: String!
+  options: [String!]
+  isDeleted: Boolean!
+}
+
+input ImportAccountFieldSchemasInput {
+  accountFieldSchemas: [ImportAccountFieldSchemaInput!]!
+}
+
+type ImportAccountFieldSchemasOutput {
   result: ImportResult
   error: MutationError
 }
@@ -21874,6 +22201,28 @@ input ImportTenantsInput {
 }
 
 type ImportTenantsOutput {
+  result: ImportResult
+  error: MutationError
+}
+
+input ImportAccountFieldValueInput {
+  fieldId: String!
+  type: AccountFieldType!
+  value: String!
+}
+
+input ImportAccountInput {
+  externalId: String!
+  name: String!
+  url: String
+  accountFields: [ImportAccountFieldValueInput!]
+}
+
+input ImportAccountsInput {
+  accounts: [ImportAccountInput!]!
+}
+
+type ImportAccountsOutput {
   result: ImportResult
   error: MutationError
 }
@@ -21975,6 +22324,11 @@ type KnowledgeGapSignalConnection {
 
 input KnowledgeGapsFilter {
   statuses: [KnowledgeGapStatus!]
+
+  """
+  Only return gaps most recently hit by a customer within this range. Set only `after` to get every gap hit at least once since that time.
+  """
+  lastSeenAt: DatetimeFilter
 }
 
 enum KnowledgeGapStatus {
