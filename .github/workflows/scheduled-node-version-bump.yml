@@ -1,0 +1,18 @@
+name: Node.js version bump
+
+on:
+  schedule:
+    - cron: "17 6 * * 1-5"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  bump:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: team-plain/github-actions/.github/workflows/node-version-bump.yml@main
+    secrets:
+      app-id: ${{ secrets.GH_WORKFLOW_APP_ID }}
+      app-private-key: ${{ secrets.GH_WORKFLOW_APP_PRIVATE_KEY }}
