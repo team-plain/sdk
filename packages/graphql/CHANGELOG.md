@@ -1,5 +1,173 @@
 # @team-plain/graphql
 
+## 4.0.0
+
+### Major Changes
+
+- 04354f1: Regenerate against the current API schema.
+  
+  **No longer in the generated result types**
+  
+  - Field 'Customer.tenantMemberships' is deprecated
+  - Field 'Customer.company' is deprecated
+  - Field 'ThreadsDisplayOptions.hasCompany' is deprecated
+  - Field 'ThreadsDisplayOptions.hasTenants' is deprecated
+  - Field 'ThreadsDisplayOptions.hasTenantFieldExternalIds' is deprecated
+  - Field 'SavedThreadsViewNestedFilter.companies' is deprecated
+  - Field 'SavedThreadsViewNestedFilter.tenants' is deprecated
+  - Field 'SavedThreadsViewNestedFilter.tenantFields' is deprecated
+  - Field 'SavedThreadsViewFilter.companies' is deprecated
+  - Field 'SavedThreadsViewFilter.tenants' is deprecated
+  - Field 'SavedThreadsViewFilter.tenantFields' is deprecated
+  - Field 'Task.company' is deprecated
+  - Field 'Task.tenant' is deprecated
+  - Field 'BroadcastAudienceFilter.tenantIds' is deprecated
+  - Field 'BroadcastAudienceFilter.tenantFields' is deprecated
+  - Field 'ThreadLinkGroup.companyMetrics' is deprecated
+  - Field 'ThreadLinkGroup.tenantMetrics' is deprecated
+  - Field 'ThreadChannelAssociation.companyId' is deprecated
+  - Field 'ThreadChannelAssociation.tenantId' is deprecated
+  - Field 'ThreadChannelAssociation.tenantMembershipPolicy' is deprecated
+  - Field 'SlackThreadChannelAssociation.companyId' is deprecated
+  - Field 'SlackThreadChannelAssociation.tenantId' is deprecated
+  - Field 'SlackThreadChannelAssociation.tenantMembershipPolicy' is deprecated
+  - Field 'Thread.tenant' is deprecated
+  - Field 'HelpCenterAccessSettings.tenantIds' is deprecated
+  - Field 'HelpCenterAccessSettings.companyIds' is deprecated
+  - Field 'HelpCenterPortalSettingsThreadVisibility.customerCompany' is deprecated
+  - Field 'HelpCenterPortalSettingsThreadVisibility.overrideCustomerCompany' is deprecated
+  - Field 'HelpCenterPortalSettingsThreadVisibility.customerTenants' is deprecated
+  - Field 'HelpCenterPortalSettingsThreadVisibility.overrideCustomerTenants' is deprecated
+  
+  **New values in returned enums**
+  
+  - Enum value 'CONNECTION_PENDING' was added to enum 'ThreadDiscussionAgentStatus'
+  - Enum value 'NOTE' was added to enum 'WorkflowStepType'
+  - Enum value 'USER_SEATS' was added to enum 'FeatureKey'
+  - Enum value 'committed' was added to enum 'BillingCreditBalanceType'
+  
+  **New methods**
+  
+  - Field 'memberSeatCapCheck' was added to object type 'Query'
+  - Field 'threadTimelineEntry' was added to object type 'Query'
+  - Field 'oauthApp' was added to object type 'Query'
+  - Field 'oauthApps' was added to object type 'Query'
+  - Field 'importerAccountLists' was added to object type 'Query'
+  - Field 'businessHoursOverride' was added to object type 'Query'
+  - Field 'importBroadcastAudienceChannels' was added to object type 'Mutation'
+  - Field 'createOAuthApp' was added to object type 'Mutation'
+  - Field 'updateOAuthApp' was added to object type 'Mutation'
+  - Field 'enableOAuthApp' was added to object type 'Mutation'
+  - Field 'disableOAuthApp' was added to object type 'Mutation'
+  - Field 'deleteOAuthApp' was added to object type 'Mutation'
+  - Field 'importAccountFieldSchemasFromService' was added to object type 'Mutation'
+  - Field 'createBusinessHoursOverride' was added to object type 'Mutation'
+  - Field 'updateBusinessHoursOverride' was added to object type 'Mutation'
+  - Field 'deleteBusinessHoursOverride' was added to object type 'Mutation'
+  - Field 'importAccountFieldSchemas' was added to object type 'Mutation'
+  - Field 'importAccounts' was added to object type 'Mutation'
+  
+  **Deprecated methods, still available**
+  
+  - Field 'Query.companies' is deprecated
+  - Field 'Query.company' is deprecated
+  - Field 'Query.searchCompanies' is deprecated
+  - Field 'Query.tenants' is deprecated
+  - Field 'Query.tenant' is deprecated
+  - Field 'Query.tenantFieldSchemas' is deprecated
+  - Field 'Query.searchTenants' is deprecated
+  - Field 'Query.importerTenantLists' is deprecated
+  - Field 'Mutation.updateCustomerCompany' is deprecated
+  - Field 'Mutation.updateThreadTenant' is deprecated
+  - Field 'Mutation.createTenant' is deprecated
+  - Field 'Mutation.upsertTenant' is deprecated
+  - Field 'Mutation.deleteTenant' is deprecated
+  - Field 'Mutation.addCustomerToTenants' is deprecated
+  - Field 'Mutation.removeCustomerFromTenants' is deprecated
+  - Field 'Mutation.setCustomerTenants' is deprecated
+  - Field 'Mutation.upsertTenantFieldSchema' is deprecated
+  - Field 'Mutation.deleteTenantFieldSchema' is deprecated
+  - Field 'Mutation.upsertTenantField' is deprecated
+  - Field 'Mutation.deleteTenantField' is deprecated
+  - Field 'Mutation.setupTenantFieldSchemaMapping' is deprecated
+  - Field 'Mutation.removeTenantFieldSchemaMapping' is deprecated
+  - Field 'Mutation.upsertCompany' is deprecated
+  - Field 'Mutation.deleteCompany' is deprecated
+  - Field 'Mutation.importTenantFieldSchemasFromService' is deprecated
+  - Field 'Mutation.updateCompanyTier' is deprecated
+  - Field 'Mutation.updateTenantTier' is deprecated
+  - Field 'Mutation.updateThreadChannelAssociationTenantMembershipPolicy' is deprecated
+  - Field 'Mutation.importTenantFieldSchemas' is deprecated
+  - Field 'Mutation.importTenants' is deprecated
+- 3abc931: Regenerate against the current API schema. Adds the Account queries and mutations plus every other operation shipped since the last codegen. No method is removed, but **one field is gone from the generated result types, which is why this is a major.**
+  
+  | field                                                        | TypeScript      | JavaScript  | replacement              |
+  | ------------------------------------------------------------ | --------------- | ----------- | ------------------------ |
+  | `FirstResponseTimeServiceLevelAgreement.useBusinessHoursOnly` | TS2339 at build | `undefined` | `businessHoursSchedules` |
+  | `NextResponseTimeServiceLevelAgreement.useBusinessHoursOnly`  | TS2339 at build | `undefined` | `businessHoursSchedules` |
+  
+  The API deprecated `useBusinessHoursOnly` because an SLA can now be tracked against several named business hours schedules rather than a single on/off flag. The bundled documents skip deprecated fields, so it drops out wherever an SLA is returned: `query.tier` and `query.tiers`, the tier and SLA create, update and delete mutations, and SLA status transitions in timeline entries and `importThreadMessages`.
+  
+  `businessHoursSchedules` is not selected by the bundled documents yet. Until it is, read it with your own query through `PlainGraphQLClient`. An empty list means the SLA is tracked 24/7, the old `useBusinessHoursOnly: false`:
+  
+  ```ts
+  import { PlainGraphQLClient } from "@team-plain/graphql";
+  import { parse } from "graphql";
+  
+  const client = new PlainGraphQLClient({ apiKey });
+  const data = await client.request(
+    parse(`
+      query TierSlaSchedules($tierId: ID!) {
+        tier(tierId: $tierId) {
+          serviceLevelAgreements {
+            ... on FirstResponseTimeServiceLevelAgreement { id businessHoursSchedules { id name } }
+            ... on NextResponseTimeServiceLevelAgreement { id businessHoursSchedules { id name } }
+          }
+        }
+      }
+    `),
+    { tierId },
+  );
+  ```
+  
+  `mutation.createTestThread` gains an optional `input` (`{ channel }`, defaulting to `CHAT` on the API). Calling it with no arguments still works: the generator now treats an argument with a schema default as optional instead of required.
+
+### Minor Changes
+
+- 700285e: New method `mutation.createThreadFromSlackMessage({ input: { slackChannelId, slackMessageTimestamp } })` creates a thread from a top-level message in a connected customer Slack channel. It triggers the new `API_ONLY` ingestion mode (`SlackIngestionMode`) and works in the other modes too. Ingestion is asynchronous: `thread` is returned only when the message was already ingested; otherwise it is null and the thread arrives later through `query.threadBySlackPermalink` or the `thread.thread_created` webhook. Requires `thread:create`. Replies are rejected.
+  
+  Also new in this schema:
+  
+  - `MachineUser.isAssignableToThreads`: false when custom-agent pricing is on and the machine user is neither a custom agent nor Ari
+  - `SidekickAvailableTool.configurableArgs[].isMultiValued`: when true, the builder may pin several values for that arg
+  - `isWorkflowTask` on the discussions filter: when true, only the Sidekick tasks started by an `ask_sidekick` workflow step
+- 4eae2d5: Support both graphql 16 and 17.
+- 3e418a2: Regenerate against the current API schema.
+  
+  **Enum values the API no longer returns**
+  
+  - Enum value 'DATA_IMPORTERS' was removed from enum 'FeatureKey'
+  
+  **New values in returned enums**
+  
+  - Enum value 'TENANT_REFERENCE_TYPE' was added to enum 'TenantFieldType'
+  - Enum value 'ACCOUNT_REFERENCE_TYPE' was added to enum 'AccountFieldType'
+  - Enum value 'HELP_CENTERS' was added to enum 'FeatureKey'
+  - Enum value 'AI_TRIAGE' was added to enum 'CreditSpendKind'
+  - Enum value 'FREE_BETA' was added to enum 'CreditSpendStatus'
+  
+  **New methods**
+  
+  - Field 'interpolationVariables' was added to object type 'Query'
+  - Field 'duplicateBroadcast' was added to object type 'Mutation'
+  - Field 'importBroadcastRecipientUnsubscribes' was added to object type 'Mutation'
+  - Field 'answerSidekickQuestion' was added to object type 'Mutation'
+  - Field 'dismissSidekickQuestion' was added to object type 'Mutation'
+
+### Patch Changes
+
+- b9757b8: Update dependencies.
+
 ## 3.2.0
 
 ### Minor Changes
