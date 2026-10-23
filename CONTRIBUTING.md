@@ -92,6 +92,7 @@ Files prefixed with `_generated_` are auto-generated — don't edit them manuall
 | `pnpm --filter @team-plain/ui-components build` | Build just ui-components |
 | `pnpm --filter @team-plain/ui-components test` | Test ui-components |
 | `pnpm --filter @team-plain/webhooks codegen` | Fetch + regenerate webhook schema types |
+| `pnpm --filter @team-plain/webhooks update-schema` | Fetch + regenerate webhook schema types, and write a changeset |
 | `pnpm --filter @team-plain/webhooks build` | Build just webhooks |
 | `pnpm --filter @team-plain/webhooks test` | Test webhooks |
 | `pnpm format` | Format with biome |
@@ -110,7 +111,7 @@ The pipeline has two stages:
 
 ### Update the GraphQL schema
 
-A scheduled workflow (`update-schema.yml`) does this every Monday and opens a pull request when the schema changed. To do it by hand:
+A scheduled workflow (`update-schema.yml`) does this every Monday, together with the webhook schema, and opens a pull request when either changed. To do it by hand:
 
 ```bash
 pnpm --filter @team-plain/graphql-codegen-plugin build
@@ -138,8 +139,10 @@ Edit files in `packages/graphql/src/`, export from `index.ts`, then `pnpm build`
 
 ### Update the webhook schema
 
+The same scheduled workflow regenerates the webhook schema from the latest version and adds it to the same pull request. To do it by hand:
+
 ```bash
-pnpm --filter @team-plain/webhooks codegen
+pnpm --filter @team-plain/webhooks update-schema
 pnpm --filter @team-plain/webhooks build
 pnpm --filter @team-plain/webhooks test
 ```

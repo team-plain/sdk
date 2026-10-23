@@ -1,3 +1,5 @@
+import { schemaVersion } from "../schema-version.js";
+
 const agentCreatedBy = {
   actorType: "user",
   userId: "u_01HD44FHDPG82VQ4QNHDR4N2T0",
@@ -50,7 +52,7 @@ export default {
   id: "pEv_01HD44FHDPMZ3YJB5GEB1EZKQV",
   webhookMetadata: {
     webhookTargetId: "whTarget_01HD4400VTDJQ646V6RY37SR7K",
-    webhookTargetVersion: "2026-09-11",
+    webhookTargetVersion: schemaVersion,
     webhookDeliveryAttemptId: "whAttempt_01HD44FJ45FJKVFHM3MDVYPGRS",
     webhookDeliveryAttemptNumber: 1,
     webhookDeliveryAttemptTimestamp: "2026-08-20T12:00:00.861Z",

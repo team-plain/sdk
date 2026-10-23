@@ -1,3 +1,5 @@
+import { schemaVersion } from "../schema-version.js";
+
 export default {
   timestamp: "2024-03-06T12:33:25.295Z",
   workspaceId: "w_01FXQ6A83FXNN9XA00415VR1XP",
@@ -115,7 +117,7 @@ export default {
   id: "pEv_01HR9W25SFVMS2Y4Q8W75M86G4",
   webhookMetadata: {
     webhookTargetId: "whTarget_01HR9VYX2GYKX1XCTFXRG1K3MX",
-    webhookTargetVersion: "2026-09-11",
+    webhookTargetVersion: schemaVersion,
     webhookDeliveryAttemptId: "whAttempt_01HR9W26906XCJ64JQZG8RJCCQ",
     webhookDeliveryAttemptNumber: 1,
     webhookDeliveryAttemptTimestamp: "2024-03-06T12:33:25.792Z",

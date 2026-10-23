@@ -1,7 +1,11 @@
+import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlainWebhookPayloadError, PlainWebhookSignatureVerificationError } from "../errors.js";
 import { verifyPlainWebhook } from "../verify.js";
 import threadCreatedPayload from "./webhook-payloads/thread-created.js";
+
+const sign = (payload: string) =>
+  createHmac("sha256", "secret").update(payload, "utf8").digest("hex");
 
 describe("verifyPlainWebhook", () => {
   beforeEach(() => {
@@ -63,7 +67,7 @@ describe("verifyPlainWebhook", () => {
   it("returns an error when the signature matches but the timestamp is too far in the past", () => {
     const result = verifyPlainWebhook(
       JSON.stringify(threadCreatedPayload),
-      "6ced93354d2b5d60da58ae0b6ed91faac57f5c7e152c1c83cfd602618b3e426b",
+      sign(JSON.stringify(threadCreatedPayload)),
       "secret",
     );
 
@@ -79,7 +83,7 @@ describe("verifyPlainWebhook", () => {
 
     const result = verifyPlainWebhook(
       JSON.stringify(threadCreatedPayload),
-      "6ced93354d2b5d60da58ae0b6ed91faac57f5c7e152c1c83cfd602618b3e426b",
+      sign(JSON.stringify(threadCreatedPayload)),
       "secret",
     );
 
@@ -112,7 +116,7 @@ describe("verifyPlainWebhook", () => {
 
     const result = verifyPlainWebhook(
       JSON.stringify(invalidPayload),
-      "3262e05863bb8a659198efcb44425956d907b8e60b68025536c4cec61a2c8acb",
+      sign(JSON.stringify(invalidPayload)),
       "secret",
     );
 

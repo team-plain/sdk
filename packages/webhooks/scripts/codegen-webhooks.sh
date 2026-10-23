@@ -26,3 +26,4 @@ fs.writeFileSync(path, `${JSON.stringify(schema, null, 2)}\n`);
 JS
 
 ./node_modules/.bin/json2ts --input ./src/webhook-schema.json --output ./src/webhook-schema.ts
+../../node_modules/.bin/biome format --write ./src/webhook-schema.json ./src/webhook-schema.ts

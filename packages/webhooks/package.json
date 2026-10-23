@@ -44,7 +44,8 @@
   "scripts": {
     "build": "tsc && tsdown",
     "test": "vitest run",
-    "codegen": "sh ./scripts/codegen-webhooks.sh"
+    "codegen": "sh ./scripts/codegen-webhooks.sh",
+    "update-schema": "node scripts/update-schema.ts"
   },
   "dependencies": {
     "ajv": "^8.20.0",

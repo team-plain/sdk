@@ -41,15 +41,19 @@ jobs:
       - name: Build the codegen plugin
         run: pnpm --filter @team-plain/graphql-codegen-plugin build
 
-      - name: Download the schema and regenerate
-        id: update
+      - name: Download the GraphQL schema and regenerate
+        id: graphql
         run: pnpm --filter @team-plain/graphql update-schema
 
+      - name: Download the webhook schema and regenerate
+        id: webhooks
+        run: pnpm --filter @team-plain/webhooks update-schema
+
       - name: Open or update the pull request
-        if: steps.update.outputs.changed == 'true'
+        if: steps.graphql.outputs.changed == 'true' || steps.webhooks.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          TITLE: Regenerate against the current API schema (${{ steps.update.outputs.bump }})
+          TITLE: Regenerate against the current API schemas (graphql ${{ steps.graphql.outputs.bump || 'unchanged' }}, webhooks ${{ steps.webhooks.outputs.changed == 'true' && steps.webhooks.outputs.version || 'unchanged' }})
           BODY: The scheduled schema update found changes. Review the generated changeset before merging.
         run: |
           git config user.name "github-actions[bot]"
