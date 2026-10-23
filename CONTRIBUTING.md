@@ -32,6 +32,7 @@ These are important to understand before contributing:
 
 - **Mutation errors are data, not exceptions.** Plain's API returns `*Output` types with an `error: MutationError` field. The SDK preserves this — mutation methods return the full output type. Only network/auth errors throw.
 - **Lazy-loading relations.** Model classes expose object relations as `Promise<T>` getters that make separate API calls using the entity's `id`. Fragments only select `{ id }` for relations.
+- **Deprecated fields stay until the API removes them.** The SDK keeps a field the API deprecates and marks it `@deprecated`, so a deprecation is never a breaking release. The fragments select every field they include in one request, so the API must keep a deprecated field working until a major SDK release has dropped it; deleting it earlier fails every query on an older SDK that selects it.
 
 ### Webhooks-specific
 
@@ -119,7 +120,7 @@ pnpm --filter @team-plain/graphql update-schema
 pnpm typecheck
 ```
 
-`update-schema` downloads the production schema, regenerates the SDK, and writes a changeset with the bump the change needs: major when a field disappears from the generated result types, minor for additions and for values removed from an enum the API only returns, patch for description-only changes. Only a major also bumps `@team-plain/ui-components`, whose peer range on `@team-plain/graphql` it leaves. Review the changeset and add migration notes where a change needs them.
+`update-schema` downloads the production schema, regenerates the SDK, and writes a changeset with the bump the change needs: major when a field disappears from the generated result types, minor for additions and for values removed from an enum the API only returns, patch for description and deprecation changes. Only a major also bumps `@team-plain/ui-components`, whose peer range on `@team-plain/graphql` it leaves. Review the changeset and add migration notes where a change needs them.
 
 Builds, including releases, only ever use the committed `schema.graphql`, and CI fails if the committed generated files don't match it.
 

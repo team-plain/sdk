@@ -9,6 +9,71 @@ import { compileTypeScript, createDocuments, formatDiagnostics } from "./helpers
 // model generation must include at least one object-typed field.
 
 describe("model generation", () => {
+  it("keeps a deprecated field and its lazy relation, marked @deprecated", () => {
+    const schema = buildSchema(`
+      type Query {
+        customer(customerId: ID!): Customer
+        company(companyId: ID!): Company
+      }
+      type Company {
+        id: ID!
+        name: String!
+        parent: Company
+      }
+      type Customer {
+        id: ID!
+        status: String @deprecated(reason: "Use statusDetail instead.")
+        company: Company @deprecated(reason: "Use accountMemberships instead.")
+      }
+    `);
+    const docs = createDocuments(`
+      fragment CompanyFields on Company {
+        id
+        name
+        parent { id }
+      }
+      fragment CustomerFields on Customer {
+        id
+        status
+        company { id }
+      }
+      query Customer($customerId: ID!) {
+        customer(customerId: $customerId) {
+          ...CustomerFields
+        }
+      }
+      query Company($companyId: ID!) {
+        company(companyId: $companyId) {
+          ...CompanyFields
+        }
+      }
+    `);
+
+    const output = plugin(schema, docs, {});
+    const code = typeof output === "string" ? output : output.content;
+
+    const stubs = `
+      type CompanyFieldsFragment = { id: string; name: string; parent: { id: string } | null };
+      type CustomerFieldsFragment = { id: string; status: string | null; company: { id: string } | null };
+      declare const CustomerDocument: any;
+      declare const CompanyDocument: any;
+      type CustomerQuery = { customer: CustomerFieldsFragment | null };
+      type CustomerQueryVariables = { customerId: string };
+      type CompanyQuery = { company: CompanyFieldsFragment | null };
+      type CompanyQueryVariables = { companyId: string };
+    `;
+
+    const diagnostics = compileTypeScript(code, stubs);
+    expect(diagnostics, formatDiagnostics(diagnostics)).toHaveLength(0);
+
+    expect(code).toContain(
+      "/** @deprecated Use statusDetail instead. */\n  public readonly status: CustomerFieldsFragment",
+    );
+    expect(code).toContain(
+      "/** @deprecated Use accountMemberships instead. */\n  public get company(): Promise<CompanyModel | undefined>",
+    );
+  });
+
   it("generates a model class with scalar properties", () => {
     const schema = buildSchema(`
       type Query {

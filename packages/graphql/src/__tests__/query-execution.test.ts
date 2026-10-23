@@ -126,7 +126,7 @@ describe("query execution", () => {
     expect(query).toMatch(/fragment CustomerFields on Customer/);
     expect(query).toContain("...CustomerFields");
 
-    // Scalar fields are selected (status is deprecated so not included)
+    // Scalar fields are selected
     for (const field of ["id", "fullName", "shortName", "externalId", "isAnonymous"]) {
       expect(query).toContain(field);
     }

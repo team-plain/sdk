@@ -1,7 +1,7 @@
-// The bump follows what SDK users see. The document generator skips deprecated fields and fields
-// with a non-null argument, even a defaulted one, so deprecating an object field or giving it such
-// an argument removes it from the generated result types, which the schema diff alone calls
-// non-breaking. The reverse also holds for an enum the API only returns: no request can send a
+// The bump follows what SDK users see. The document generator keeps deprecated fields, so a
+// deprecation stays a patch until the API removes the field. It skips fields with a non-null
+// argument, even a defaulted one, so giving an object field such an argument removes it from the
+// generated result types, which the schema diff alone calls non-breaking. The reverse also holds for an enum the API only returns: no request can send a
 // removed value, so dropping it only flags comparisons against a value that no longer arrives.
 import type { NewChangeset } from "@changesets/types";
 import { type Change, ChangeType, CriticalityLevel, diff } from "@graphql-inspector/core";
@@ -53,12 +53,8 @@ export async function schemaChangeset(
   const breaking = changes.filter(
     (c) => c.criticality.level === CriticalityLevel.Breaking && !unreturned.includes(c),
   );
-  const dropped = moves(
-    [ChangeType.FieldDeprecationAdded, ChangeType.FieldArgumentAdded],
-    oldSchema,
-    newSchema,
-  );
-  const restored = moves([ChangeType.FieldDeprecationRemoved], newSchema, oldSchema);
+  const dropped = moves([ChangeType.FieldArgumentAdded], oldSchema, newSchema);
+  const restored = moves([ChangeType.FieldArgumentRemoved], newSchema, oldSchema);
   const docsOnly = changes.every(
     (c) =>
       /DESCRIPTION|DEPRECATION|DIRECTIVE_USAGE/.test(c.type) &&
@@ -76,6 +72,7 @@ export async function schemaChangeset(
     ["New values in returned enums", added],
     ["New methods", of(ChangeType.FieldAdded, true)],
     ["Deprecated methods, still available", of(ChangeType.FieldDeprecationAdded, true)],
+    ["Deprecated fields, still available", of(ChangeType.FieldDeprecationAdded, false)],
   ] as const;
   const summary = [
     "Regenerate against the current API schema.",
@@ -97,11 +94,7 @@ function isSelected(schema: GraphQLSchema, change: Change): boolean {
   const type = schema.getType(typeName ?? "");
   if (!isObjectType(type) && !isInterfaceType(type)) return false;
   const field = type.getFields()[fieldName ?? ""];
-  return (
-    field !== undefined &&
-    field.deprecationReason == null &&
-    !field.args.some((a) => isNonNullType(a.type))
-  );
+  return field !== undefined && !field.args.some((a) => isNonNullType(a.type));
 }
 
 function usesEnum(schema: GraphQLSchema, change: Change, as: "input" | "output"): boolean {

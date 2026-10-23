@@ -14,6 +14,9 @@ fragment AccountFields on Account {
     __typename
     ... on SlackThreadChannelAssociation {
       id
+      companyId
+      tenantId
+      tenantMembershipPolicy
       accountId
       accountMembershipPolicy
       createdAt {
@@ -948,6 +951,14 @@ fragment BillingPlanFields on BillingPlan {
   features
   highlightedLabel
   isSelfCheckoutEligible
+  monthlyPrice {
+    amount
+    currency
+  }
+  yearlyPrice {
+    amount
+    currency
+  }
   prices {
     __typename
     ... on PerSeatRecurringPrice {
@@ -1237,8 +1248,18 @@ fragment BroadcastAudienceFields on BroadcastAudience {
   name
   type
   filters {
+    tenantIds
     accountIds
     tierIds
+    tenantFields {
+      externalFieldId
+      stringValue
+      booleanValue
+      numberValue
+      stringArrayValue
+      userReferenceValues
+      tenantReferenceValues
+    }
     accountFields {
       externalFieldId
       stringValue
@@ -1499,6 +1520,7 @@ fragment BulkCreateThreadLinkResultFields on BulkCreateThreadLinkResult {
         unixTimestamp
         iso8601
       }
+      linearIssueUrl
     }
     ... on JiraIssueThreadLink {
       id
@@ -2437,6 +2459,9 @@ fragment CompanyFields on Company {
     __typename
     ... on SlackThreadChannelAssociation {
       id
+      companyId
+      tenantId
+      tenantMembershipPolicy
       accountId
       accountMembershipPolicy
       createdAt {
@@ -2609,11 +2634,14 @@ fragment ComponentDateTimeFields on ComponentDateTime {
 
 fragment ComponentDividerFields on ComponentDivider {
   dividerSpacingSize
+  spacingSize
 }
 
 fragment ComponentLinkButtonFields on ComponentLinkButton {
   linkButtonUrl
   linkButtonLabel
+  url
+  label
 }
 
 fragment ComponentPlainTextFields on ComponentPlainText {
@@ -2624,12 +2652,15 @@ fragment ComponentPlainTextFields on ComponentPlainText {
 
 fragment ComponentSpacerFields on ComponentSpacer {
   spacerSize
+  size
 }
 
 fragment ComponentTextFields on ComponentText {
   textSize
   textColor
   text
+  color
+  size
 }
 
 fragment ComponentWorkflowButtonFields on ComponentWorkflowButton {
@@ -2894,6 +2925,8 @@ fragment CustomEntryFields on CustomEntry {
       textSize
       textColor
       text
+      color
+      componentTextSize: size
     }
     ... on ComponentPlainText {
       plainTextSize
@@ -2902,13 +2935,17 @@ fragment CustomEntryFields on CustomEntry {
     }
     ... on ComponentSpacer {
       spacerSize
+      componentSpacerSize: size
     }
     ... on ComponentDivider {
       dividerSpacingSize
+      spacingSize
     }
     ... on ComponentLinkButton {
       linkButtonUrl
       linkButtonLabel
+      url
+      label
     }
     ... on ComponentWorkflowButton {
       workflowButtonWorkflowIdentifier {
@@ -2924,6 +2961,8 @@ fragment CustomEntryFields on CustomEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -2932,13 +2971,17 @@ fragment CustomEntryFields on CustomEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -2976,6 +3019,8 @@ fragment CustomEntryFields on CustomEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -2984,13 +3029,17 @@ fragment CustomEntryFields on CustomEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -3030,6 +3079,8 @@ fragment CustomEntryFields on CustomEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -3038,13 +3089,17 @@ fragment CustomEntryFields on CustomEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -3082,6 +3137,8 @@ fragment CustomEntryFields on CustomEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -3090,13 +3147,17 @@ fragment CustomEntryFields on CustomEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -3134,6 +3195,8 @@ fragment CustomEntryFields on CustomEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -3142,13 +3205,17 @@ fragment CustomEntryFields on CustomEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -3228,6 +3295,9 @@ fragment CustomerFields on Customer {
   assignedAt {
     unixTimestamp
     iso8601
+  }
+  company {
+    id
   }
   isAnonymous
   isTestCustomer
@@ -3342,6 +3412,15 @@ fragment CustomerFields on Customer {
       slackUserId
     }
   }
+  status
+  statusChangedAt {
+    unixTimestamp
+    iso8601
+  }
+  lastIdleAt {
+    unixTimestamp
+    iso8601
+  }
 }
 
 fragment CustomerActorFields on CustomerActor {
@@ -3441,10 +3520,12 @@ fragment CustomerCardInstanceErrorFields on CustomerCardInstanceError {
     }
     ... on CustomerCardInstanceResponseBodyErrorDetail {
       message
+      responseBody
     }
     ... on CustomerCardInstanceStatusCodeErrorDetail {
       message
       statusCode
+      responseBody
     }
     ... on CustomerCardInstanceRequestErrorDetail {
       message
@@ -3551,6 +3632,8 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
       textSize
       textColor
       text
+      color
+      componentTextSize: size
     }
     ... on ComponentPlainText {
       plainTextSize
@@ -3559,13 +3642,17 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
     }
     ... on ComponentSpacer {
       spacerSize
+      componentSpacerSize: size
     }
     ... on ComponentDivider {
       dividerSpacingSize
+      spacingSize
     }
     ... on ComponentLinkButton {
       linkButtonUrl
       linkButtonLabel
+      url
+      label
     }
     ... on ComponentWorkflowButton {
       workflowButtonWorkflowIdentifier {
@@ -3581,6 +3668,8 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -3589,13 +3678,17 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -3633,6 +3726,8 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -3641,13 +3736,17 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -3687,6 +3786,8 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -3695,13 +3796,17 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -3739,6 +3844,8 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -3747,13 +3854,17 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -3791,6 +3902,8 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -3799,13 +3912,17 @@ fragment CustomerCardInstanceLoadedFields on CustomerCardInstanceLoaded {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -4038,11 +4155,13 @@ fragment CustomerCardInstanceRequestErrorDetailFields on CustomerCardInstanceReq
 
 fragment CustomerCardInstanceResponseBodyErrorDetailFields on CustomerCardInstanceResponseBodyErrorDetail {
   message
+  responseBody
 }
 
 fragment CustomerCardInstanceStatusCodeErrorDetailFields on CustomerCardInstanceStatusCodeErrorDetail {
   message
   statusCode
+  responseBody
 }
 
 fragment CustomerCardInstanceTimeoutErrorDetailFields on CustomerCardInstanceTimeoutErrorDetail {
@@ -4064,6 +4183,8 @@ fragment CustomerEventFields on CustomerEvent {
       textSize
       textColor
       text
+      color
+      componentTextSize: size
     }
     ... on ComponentPlainText {
       plainTextSize
@@ -4072,13 +4193,17 @@ fragment CustomerEventFields on CustomerEvent {
     }
     ... on ComponentSpacer {
       spacerSize
+      componentSpacerSize: size
     }
     ... on ComponentDivider {
       dividerSpacingSize
+      spacingSize
     }
     ... on ComponentLinkButton {
       linkButtonUrl
       linkButtonLabel
+      url
+      label
     }
     ... on ComponentWorkflowButton {
       workflowButtonWorkflowIdentifier {
@@ -4094,6 +4219,8 @@ fragment CustomerEventFields on CustomerEvent {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -4102,13 +4229,17 @@ fragment CustomerEventFields on CustomerEvent {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -4146,6 +4277,8 @@ fragment CustomerEventFields on CustomerEvent {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -4154,13 +4287,17 @@ fragment CustomerEventFields on CustomerEvent {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -4200,6 +4337,8 @@ fragment CustomerEventFields on CustomerEvent {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -4208,13 +4347,17 @@ fragment CustomerEventFields on CustomerEvent {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -4252,6 +4395,8 @@ fragment CustomerEventFields on CustomerEvent {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -4260,13 +4405,17 @@ fragment CustomerEventFields on CustomerEvent {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -4304,6 +4453,8 @@ fragment CustomerEventFields on CustomerEvent {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -4312,13 +4463,17 @@ fragment CustomerEventFields on CustomerEvent {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -4460,6 +4615,8 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
       textSize
       textColor
       text
+      color
+      componentTextSize: size
     }
     ... on ComponentPlainText {
       plainTextSize
@@ -4468,13 +4625,17 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
     }
     ... on ComponentSpacer {
       spacerSize
+      componentSpacerSize: size
     }
     ... on ComponentDivider {
       dividerSpacingSize
+      spacingSize
     }
     ... on ComponentLinkButton {
       linkButtonUrl
       linkButtonLabel
+      url
+      label
     }
     ... on ComponentWorkflowButton {
       workflowButtonWorkflowIdentifier {
@@ -4490,6 +4651,8 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -4498,13 +4661,17 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -4542,6 +4709,8 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -4550,13 +4719,17 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -4596,6 +4769,8 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -4604,13 +4779,17 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -4648,6 +4827,8 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -4656,13 +4837,17 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -4700,6 +4885,8 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -4708,13 +4895,17 @@ fragment CustomerEventEntryFields on CustomerEventEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -5727,6 +5918,7 @@ fragment FirstResolutionTimeServiceLevelAgreementFields on FirstResolutionTimeSe
 fragment FirstResponseTimeServiceLevelAgreementFields on FirstResponseTimeServiceLevelAgreement {
   id
   firstResponseTimeMinutes
+  useBusinessHoursOnly
   threadPriorityFilter
   threadLabelTypeIdFilter {
     labelTypeIds
@@ -5852,6 +6044,7 @@ fragment GeneratedReplyFields on GeneratedReply {
   id
   markdown
   timelineEntryId
+  text
   createdAt {
     unixTimestamp
     iso8601
@@ -6107,7 +6300,9 @@ fragment HelpCenterFields on HelpCenter {
   }
   access {
     tierIds
+    tenantIds
     accountIds
+    companyIds
     customerIds
   }
   authMechanism {
@@ -6730,6 +6925,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -6738,13 +6935,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -6760,6 +6961,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -6768,13 +6971,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -6812,6 +7019,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -6820,13 +7029,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -6866,6 +7079,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -6874,13 +7089,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -6918,6 +7137,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                       textSize
                       textColor
                       text
+                      color
+                      componentTextSize: size
                     }
                     ... on ComponentPlainText {
                       plainTextSize
@@ -6926,13 +7147,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                     }
                     ... on ComponentSpacer {
                       spacerSize
+                      componentSpacerSize: size
                     }
                     ... on ComponentDivider {
                       dividerSpacingSize
+                      spacingSize
                     }
                     ... on ComponentLinkButton {
                       linkButtonUrl
                       linkButtonLabel
+                      url
+                      label
                     }
                     ... on ComponentWorkflowButton {
                       workflowButtonWorkflowIdentifier {
@@ -6970,6 +7195,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                       textSize
                       textColor
                       text
+                      color
+                      componentTextSize: size
                     }
                     ... on ComponentPlainText {
                       plainTextSize
@@ -6978,13 +7205,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                     }
                     ... on ComponentSpacer {
                       spacerSize
+                      componentSpacerSize: size
                     }
                     ... on ComponentDivider {
                       dividerSpacingSize
+                      spacingSize
                     }
                     ... on ComponentLinkButton {
                       linkButtonUrl
                       linkButtonLabel
+                      url
+                      label
                     }
                     ... on ComponentWorkflowButton {
                       workflowButtonWorkflowIdentifier {
@@ -8118,11 +8349,60 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 iso8601
               }
             }
+            ... on ThreadStatusDetailSnoozed {
+              snoozedAt {
+                unixTimestamp
+                iso8601
+              }
+              snoozedUntil {
+                unixTimestamp
+                iso8601
+              }
+              statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ThreadStatusDetailUnsnoozed {
+              snoozedAt {
+                unixTimestamp
+                iso8601
+              }
+              statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+            }
             ... on ThreadStatusDetailNewReply {
               statusChangedAt {
                 unixTimestamp
                 iso8601
               }
+              newReplyAt {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ThreadStatusDetailReplied {
+              repliedAt {
+                unixTimestamp
+                iso8601
+              }
+              statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ThreadStatusDetailLinearUpdated {
+              statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+              updatedAt {
+                unixTimestamp
+                iso8601
+              }
+              threadStatusDetailLinearUpdatedLinearIssueId: linearIssueId
             }
             ... on ThreadStatusDetailInProgress {
               statusChangedAt {
@@ -8154,6 +8434,10 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             }
             ... on ThreadStatusDetailThreadLinkUpdated {
               statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+              updatedAt {
                 unixTimestamp
                 iso8601
               }
@@ -8199,11 +8483,60 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 iso8601
               }
             }
+            ... on ThreadStatusDetailSnoozed {
+              snoozedAt {
+                unixTimestamp
+                iso8601
+              }
+              snoozedUntil {
+                unixTimestamp
+                iso8601
+              }
+              statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ThreadStatusDetailUnsnoozed {
+              snoozedAt {
+                unixTimestamp
+                iso8601
+              }
+              statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+            }
             ... on ThreadStatusDetailNewReply {
               statusChangedAt {
                 unixTimestamp
                 iso8601
               }
+              newReplyAt {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ThreadStatusDetailReplied {
+              repliedAt {
+                unixTimestamp
+                iso8601
+              }
+              statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+            }
+            ... on ThreadStatusDetailLinearUpdated {
+              statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+              updatedAt {
+                unixTimestamp
+                iso8601
+              }
+              threadStatusDetailLinearUpdatedLinearIssueId: linearIssueId
             }
             ... on ThreadStatusDetailInProgress {
               statusChangedAt {
@@ -8235,6 +8568,10 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             }
             ... on ThreadStatusDetailThreadLinkUpdated {
               statusChangedAt {
+                unixTimestamp
+                iso8601
+              }
+              updatedAt {
                 unixTimestamp
                 iso8601
               }
@@ -8291,6 +8628,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -8299,13 +8638,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -8321,6 +8664,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -8329,13 +8674,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -8373,6 +8722,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -8381,13 +8732,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -8427,6 +8782,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -8435,13 +8792,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -8479,6 +8840,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                       textSize
                       textColor
                       text
+                      color
+                      componentTextSize: size
                     }
                     ... on ComponentPlainText {
                       plainTextSize
@@ -8487,13 +8850,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                     }
                     ... on ComponentSpacer {
                       spacerSize
+                      componentSpacerSize: size
                     }
                     ... on ComponentDivider {
                       dividerSpacingSize
+                      spacingSize
                     }
                     ... on ComponentLinkButton {
                       linkButtonUrl
                       linkButtonLabel
+                      url
+                      label
                     }
                     ... on ComponentWorkflowButton {
                       workflowButtonWorkflowIdentifier {
@@ -8531,6 +8898,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                       textSize
                       textColor
                       text
+                      color
+                      componentTextSize: size
                     }
                     ... on ComponentPlainText {
                       plainTextSize
@@ -8539,13 +8908,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                     }
                     ... on ComponentSpacer {
                       spacerSize
+                      componentSpacerSize: size
                     }
                     ... on ComponentDivider {
                       dividerSpacingSize
+                      spacingSize
                     }
                     ... on ComponentLinkButton {
                       linkButtonUrl
                       linkButtonLabel
+                      url
+                      label
                     }
                     ... on ComponentWorkflowButton {
                       workflowButtonWorkflowIdentifier {
@@ -8616,6 +8989,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -8624,13 +8999,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -8646,6 +9025,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -8654,13 +9035,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -8698,6 +9083,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -8706,13 +9093,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -8752,6 +9143,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -8760,13 +9153,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -8804,6 +9201,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                       textSize
                       textColor
                       text
+                      color
+                      componentTextSize: size
                     }
                     ... on ComponentPlainText {
                       plainTextSize
@@ -8812,13 +9211,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                     }
                     ... on ComponentSpacer {
                       spacerSize
+                      componentSpacerSize: size
                     }
                     ... on ComponentDivider {
                       dividerSpacingSize
+                      spacingSize
                     }
                     ... on ComponentLinkButton {
                       linkButtonUrl
                       linkButtonLabel
+                      url
+                      label
                     }
                     ... on ComponentWorkflowButton {
                       workflowButtonWorkflowIdentifier {
@@ -8856,6 +9259,8 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                       textSize
                       textColor
                       text
+                      color
+                      componentTextSize: size
                     }
                     ... on ComponentPlainText {
                       plainTextSize
@@ -8864,13 +9269,17 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                     }
                     ... on ComponentSpacer {
                       spacerSize
+                      componentSpacerSize: size
                     }
                     ... on ComponentDivider {
                       dividerSpacingSize
+                      spacingSize
                     }
                     ... on ComponentLinkButton {
                       linkButtonUrl
                       linkButtonLabel
+                      url
+                      label
                     }
                     ... on ComponentWorkflowButton {
                       workflowButtonWorkflowIdentifier {
@@ -9014,6 +9423,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             ... on FirstResponseTimeServiceLevelAgreement {
               id
               firstResponseTimeMinutes
+              useBusinessHoursOnly
               threadPriorityFilter
               threadLabelTypeIdFilter {
                 labelTypeIds
@@ -9137,6 +9547,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
             ... on NextResponseTimeServiceLevelAgreement {
               id
               nextResponseTimeMinutes
+              useBusinessHoursOnly
               threadPriorityFilter
               threadLabelTypeIdFilter {
                 labelTypeIds
@@ -9621,6 +10032,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 unixTimestamp
                 iso8601
               }
+              linearIssueUrl
             }
             ... on JiraIssueThreadLink {
               id
@@ -9981,6 +10393,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 unixTimestamp
                 iso8601
               }
+              linearIssueUrl
             }
             ... on JiraIssueThreadLink {
               id
@@ -10339,6 +10752,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 unixTimestamp
                 iso8601
               }
+              linearIssueUrl
             }
             ... on JiraIssueThreadLink {
               id
@@ -10699,6 +11113,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 unixTimestamp
                 iso8601
               }
+              linearIssueUrl
             }
             ... on JiraIssueThreadLink {
               id
@@ -11059,6 +11474,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 unixTimestamp
                 iso8601
               }
+              linearIssueUrl
             }
             ... on JiraIssueThreadLink {
               id
@@ -11424,6 +11840,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
                 unixTimestamp
                 iso8601
               }
+              linearIssueUrl
             }
             ... on JiraIssueThreadLink {
               id
@@ -13094,6 +13511,7 @@ fragment LinearIssueThreadLinkFields on LinearIssueThreadLink {
     unixTimestamp
     iso8601
   }
+  linearIssueUrl
 }
 
 fragment LinearIssueThreadLinkStateTransitionedEntryFields on LinearIssueThreadLinkStateTransitionedEntry {
@@ -13383,6 +13801,7 @@ fragment MSTeamsThreadChannelDetailsFields on MSTeamsThreadChannelDetails {
 fragment NextResponseTimeServiceLevelAgreementFields on NextResponseTimeServiceLevelAgreement {
   id
   nextResponseTimeMinutes
+  useBusinessHoursOnly
   threadPriorityFilter
   threadLabelTypeIdFilter {
     labelTypeIds
@@ -14026,8 +14445,11 @@ fragment RoleFields on Role {
   name
   description
   permissions
+  isAssignableToCustomer
   isAssignableToThread
   isAssignableToTask
+  assignableBillingSeats
+  requiresBillableSeat
   key
   customRoleId
   customRole {
@@ -14071,6 +14493,8 @@ fragment SavedThreadsViewFields on SavedThreadsView {
     assignedToUser
     participants
     customerGroups
+    companies
+    tenants
     accounts
     tiers
     serviceLevelAgreementPolicyIds
@@ -14096,10 +14520,13 @@ fragment SavedThreadsViewFields on SavedThreadsView {
     displayOptions {
       hasStatus
       hasCustomer
+      hasCompany
       hasPreviewText
       hasTier
       hasCustomerGroups
       hasLabels
+      hasLinearIssues
+      hasJiraIssues
       hasLinkedThreads
       hasServiceLevelAgreements
       hasChannels
@@ -14110,7 +14537,9 @@ fragment SavedThreadsViewFields on SavedThreadsView {
       hasIssueTrackerIssues
       hasTasks
       hasThreadFieldKeys
+      hasTenants
       hasAccounts
+      hasTenantFieldExternalIds
       hasAccountFieldExternalIds
     }
     groupBy
@@ -14345,6 +14774,7 @@ fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgree
     ... on FirstResponseTimeServiceLevelAgreement {
       id
       firstResponseTimeMinutes
+      useBusinessHoursOnly
       threadPriorityFilter
       threadLabelTypeIdFilter {
         labelTypeIds
@@ -14468,6 +14898,7 @@ fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgree
     ... on NextResponseTimeServiceLevelAgreement {
       id
       nextResponseTimeMinutes
+      useBusinessHoursOnly
       threadPriorityFilter
       threadLabelTypeIdFilter {
         labelTypeIds
@@ -14976,6 +15407,9 @@ fragment SlackReplyEntryFields on SlackReplyEntry {
 
 fragment SlackThreadChannelAssociationFields on SlackThreadChannelAssociation {
   id
+  companyId
+  tenantId
+  tenantMembershipPolicy
   accountId
   accountMembershipPolicy
   createdAt {
@@ -15306,6 +15740,12 @@ fragment TaskFields on Task {
   description
   status
   priority
+  company {
+    id
+  }
+  tenant {
+    id
+  }
   account {
     id
   }
@@ -15734,6 +16174,9 @@ fragment TenantFields on Tenant {
     __typename
     ... on SlackThreadChannelAssociation {
       id
+      companyId
+      tenantId
+      tenantMembershipPolicy
       accountId
       accountMembershipPolicy
       createdAt {
@@ -16158,11 +16601,60 @@ fragment ThreadFields on Thread {
         iso8601
       }
     }
+    ... on ThreadStatusDetailSnoozed {
+      snoozedAt {
+        unixTimestamp
+        iso8601
+      }
+      snoozedUntil {
+        unixTimestamp
+        iso8601
+      }
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadStatusDetailUnsnoozed {
+      snoozedAt {
+        unixTimestamp
+        iso8601
+      }
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
     ... on ThreadStatusDetailNewReply {
       statusChangedAt {
         unixTimestamp
         iso8601
       }
+      newReplyAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadStatusDetailReplied {
+      repliedAt {
+        unixTimestamp
+        iso8601
+      }
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadStatusDetailLinearUpdated {
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedAt {
+        unixTimestamp
+        iso8601
+      }
+      threadStatusDetailLinearUpdatedLinearIssueId: linearIssueId
     }
     ... on ThreadStatusDetailInProgress {
       statusChangedAt {
@@ -16194,6 +16686,10 @@ fragment ThreadFields on Thread {
     }
     ... on ThreadStatusDetailThreadLinkUpdated {
       statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedAt {
         unixTimestamp
         iso8601
       }
@@ -16909,6 +17405,9 @@ fragment ThreadFields on Thread {
   }
   supportEmailAddresses
   isFromPlainManagedDomain
+  tenant {
+    id
+  }
   account {
     id
   }
@@ -17285,6 +17784,9 @@ fragment ThreadDiscussionFields on ThreadDiscussion {
       cursorWorkspaceIntegrationId
       repositoryUrl
     }
+    ... on ThreadDiscussionAgentSessionChannelDetails {
+      agentSessionId
+    }
   }
   agentSessionId
   visibility
@@ -17293,6 +17795,16 @@ fragment ThreadDiscussionFields on ThreadDiscussion {
   sourceType
   sourcePageLink
   sourcePageAnchor
+  type
+  slackTeamId
+  slackChannelId
+  slackChannelName
+  slackMessageLink
+  emailRecipients
+}
+
+fragment ThreadDiscussionAgentSessionChannelDetailsFields on ThreadDiscussionAgentSessionChannelDetails {
+  agentSessionId
 }
 
 fragment ThreadDiscussionApprovalRequestEntryPayloadFields on ThreadDiscussionApprovalRequestEntryPayload {
@@ -17724,6 +18236,8 @@ fragment ThreadEventFields on ThreadEvent {
       textSize
       textColor
       text
+      color
+      componentTextSize: size
     }
     ... on ComponentPlainText {
       plainTextSize
@@ -17732,13 +18246,17 @@ fragment ThreadEventFields on ThreadEvent {
     }
     ... on ComponentSpacer {
       spacerSize
+      componentSpacerSize: size
     }
     ... on ComponentDivider {
       dividerSpacingSize
+      spacingSize
     }
     ... on ComponentLinkButton {
       linkButtonUrl
       linkButtonLabel
+      url
+      label
     }
     ... on ComponentWorkflowButton {
       workflowButtonWorkflowIdentifier {
@@ -17754,6 +18272,8 @@ fragment ThreadEventFields on ThreadEvent {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -17762,13 +18282,17 @@ fragment ThreadEventFields on ThreadEvent {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -17806,6 +18330,8 @@ fragment ThreadEventFields on ThreadEvent {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -17814,13 +18340,17 @@ fragment ThreadEventFields on ThreadEvent {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -17860,6 +18390,8 @@ fragment ThreadEventFields on ThreadEvent {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -17868,13 +18400,17 @@ fragment ThreadEventFields on ThreadEvent {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -17912,6 +18448,8 @@ fragment ThreadEventFields on ThreadEvent {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -17920,13 +18458,17 @@ fragment ThreadEventFields on ThreadEvent {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -17964,6 +18506,8 @@ fragment ThreadEventFields on ThreadEvent {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -17972,13 +18516,17 @@ fragment ThreadEventFields on ThreadEvent {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -18120,6 +18668,8 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
       textSize
       textColor
       text
+      color
+      componentTextSize: size
     }
     ... on ComponentPlainText {
       plainTextSize
@@ -18128,13 +18678,17 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
     }
     ... on ComponentSpacer {
       spacerSize
+      componentSpacerSize: size
     }
     ... on ComponentDivider {
       dividerSpacingSize
+      spacingSize
     }
     ... on ComponentLinkButton {
       linkButtonUrl
       linkButtonLabel
+      url
+      label
     }
     ... on ComponentWorkflowButton {
       workflowButtonWorkflowIdentifier {
@@ -18150,6 +18704,8 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -18158,13 +18714,17 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -18202,6 +18762,8 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -18210,13 +18772,17 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -18256,6 +18822,8 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -18264,13 +18832,17 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -18308,6 +18880,8 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -18316,13 +18890,17 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -18360,6 +18938,8 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -18368,13 +18948,17 @@ fragment ThreadEventEntryFields on ThreadEventEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -18636,6 +19220,16 @@ fragment ThreadLinkGroupFields on ThreadLinkGroup {
       totalCount
     }
   }
+  companyMetrics {
+    noCompany {
+      totalCount
+    }
+  }
+  tenantMetrics {
+    noTenant {
+      totalCount
+    }
+  }
   accountMetrics {
     noAccount {
       totalCount
@@ -18727,6 +19321,7 @@ fragment ThreadLinkTargetCreatedEntryFields on ThreadLinkTargetCreatedEntry {
         unixTimestamp
         iso8601
       }
+      linearIssueUrl
     }
     ... on JiraIssueThreadLink {
       id
@@ -19093,6 +19688,7 @@ fragment ThreadLinkTargetDeletedEntryFields on ThreadLinkTargetDeletedEntry {
         unixTimestamp
         iso8601
       }
+      linearIssueUrl
     }
     ... on JiraIssueThreadLink {
       id
@@ -19441,7 +20037,49 @@ fragment ThreadStatusDetailInProgressFields on ThreadStatusDetailInProgress {
   }
 }
 
+fragment ThreadStatusDetailLinearUpdatedFields on ThreadStatusDetailLinearUpdated {
+  statusChangedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  linearIssueId
+}
+
 fragment ThreadStatusDetailNewReplyFields on ThreadStatusDetailNewReply {
+  statusChangedAt {
+    unixTimestamp
+    iso8601
+  }
+  newReplyAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
+fragment ThreadStatusDetailRepliedFields on ThreadStatusDetailReplied {
+  repliedAt {
+    unixTimestamp
+    iso8601
+  }
+  statusChangedAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
+fragment ThreadStatusDetailSnoozedFields on ThreadStatusDetailSnoozed {
+  snoozedAt {
+    unixTimestamp
+    iso8601
+  }
+  snoozedUntil {
+    unixTimestamp
+    iso8601
+  }
   statusChangedAt {
     unixTimestamp
     iso8601
@@ -19461,7 +20099,22 @@ fragment ThreadStatusDetailThreadLinkUpdatedFields on ThreadStatusDetailThreadLi
     unixTimestamp
     iso8601
   }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
   linearIssueId
+}
+
+fragment ThreadStatusDetailUnsnoozedFields on ThreadStatusDetailUnsnoozed {
+  snoozedAt {
+    unixTimestamp
+    iso8601
+  }
+  statusChangedAt {
+    unixTimestamp
+    iso8601
+  }
 }
 
 fragment ThreadStatusDetailWaitingForCustomerFields on ThreadStatusDetailWaitingForCustomer {
@@ -19503,11 +20156,60 @@ fragment ThreadStatusTransitionedEntryFields on ThreadStatusTransitionedEntry {
         iso8601
       }
     }
+    ... on ThreadStatusDetailSnoozed {
+      snoozedAt {
+        unixTimestamp
+        iso8601
+      }
+      snoozedUntil {
+        unixTimestamp
+        iso8601
+      }
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadStatusDetailUnsnoozed {
+      snoozedAt {
+        unixTimestamp
+        iso8601
+      }
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
     ... on ThreadStatusDetailNewReply {
       statusChangedAt {
         unixTimestamp
         iso8601
       }
+      newReplyAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadStatusDetailReplied {
+      repliedAt {
+        unixTimestamp
+        iso8601
+      }
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadStatusDetailLinearUpdated {
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedAt {
+        unixTimestamp
+        iso8601
+      }
+      threadStatusDetailLinearUpdatedLinearIssueId: linearIssueId
     }
     ... on ThreadStatusDetailInProgress {
       statusChangedAt {
@@ -19539,6 +20241,10 @@ fragment ThreadStatusTransitionedEntryFields on ThreadStatusTransitionedEntry {
     }
     ... on ThreadStatusDetailThreadLinkUpdated {
       statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedAt {
         unixTimestamp
         iso8601
       }
@@ -19584,11 +20290,60 @@ fragment ThreadStatusTransitionedEntryFields on ThreadStatusTransitionedEntry {
         iso8601
       }
     }
+    ... on ThreadStatusDetailSnoozed {
+      snoozedAt {
+        unixTimestamp
+        iso8601
+      }
+      snoozedUntil {
+        unixTimestamp
+        iso8601
+      }
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadStatusDetailUnsnoozed {
+      snoozedAt {
+        unixTimestamp
+        iso8601
+      }
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
     ... on ThreadStatusDetailNewReply {
       statusChangedAt {
         unixTimestamp
         iso8601
       }
+      newReplyAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadStatusDetailReplied {
+      repliedAt {
+        unixTimestamp
+        iso8601
+      }
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+    }
+    ... on ThreadStatusDetailLinearUpdated {
+      statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedAt {
+        unixTimestamp
+        iso8601
+      }
+      threadStatusDetailLinearUpdatedLinearIssueId: linearIssueId
     }
     ... on ThreadStatusDetailInProgress {
       statusChangedAt {
@@ -19620,6 +20375,10 @@ fragment ThreadStatusTransitionedEntryFields on ThreadStatusTransitionedEntry {
     }
     ... on ThreadStatusDetailThreadLinkUpdated {
       statusChangedAt {
+        unixTimestamp
+        iso8601
+      }
+      updatedAt {
         unixTimestamp
         iso8601
       }
@@ -19675,6 +20434,7 @@ fragment TierFields on Tier {
   externalId
   color
   isDefault
+  defaultPriority
   defaultThreadPriority
   isMachineTier
   serviceLevelAgreements {
@@ -19682,6 +20442,7 @@ fragment TierFields on Tier {
     ... on FirstResponseTimeServiceLevelAgreement {
       id
       firstResponseTimeMinutes
+      useBusinessHoursOnly
       threadPriorityFilter
       threadLabelTypeIdFilter {
         labelTypeIds
@@ -19805,6 +20566,7 @@ fragment TierFields on Tier {
     ... on NextResponseTimeServiceLevelAgreement {
       id
       nextResponseTimeMinutes
+      useBusinessHoursOnly
       threadPriorityFilter
       threadLabelTypeIdFilter {
         labelTypeIds
@@ -20334,6 +21096,8 @@ fragment TimelineEntryFields on TimelineEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -20342,13 +21106,17 @@ fragment TimelineEntryFields on TimelineEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -20364,6 +21132,8 @@ fragment TimelineEntryFields on TimelineEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -20372,13 +21142,17 @@ fragment TimelineEntryFields on TimelineEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -20416,6 +21190,8 @@ fragment TimelineEntryFields on TimelineEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -20424,13 +21200,17 @@ fragment TimelineEntryFields on TimelineEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -20470,6 +21250,8 @@ fragment TimelineEntryFields on TimelineEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -20478,13 +21260,17 @@ fragment TimelineEntryFields on TimelineEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -20522,6 +21308,8 @@ fragment TimelineEntryFields on TimelineEntry {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -20530,13 +21318,17 @@ fragment TimelineEntryFields on TimelineEntry {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -20574,6 +21366,8 @@ fragment TimelineEntryFields on TimelineEntry {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -20582,13 +21376,17 @@ fragment TimelineEntryFields on TimelineEntry {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -21722,11 +22520,60 @@ fragment TimelineEntryFields on TimelineEntry {
             iso8601
           }
         }
+        ... on ThreadStatusDetailSnoozed {
+          snoozedAt {
+            unixTimestamp
+            iso8601
+          }
+          snoozedUntil {
+            unixTimestamp
+            iso8601
+          }
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailUnsnoozed {
+          snoozedAt {
+            unixTimestamp
+            iso8601
+          }
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
         ... on ThreadStatusDetailNewReply {
           statusChangedAt {
             unixTimestamp
             iso8601
           }
+          newReplyAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailReplied {
+          repliedAt {
+            unixTimestamp
+            iso8601
+          }
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailLinearUpdated {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          threadStatusDetailLinearUpdatedLinearIssueId: linearIssueId
         }
         ... on ThreadStatusDetailInProgress {
           statusChangedAt {
@@ -21758,6 +22605,10 @@ fragment TimelineEntryFields on TimelineEntry {
         }
         ... on ThreadStatusDetailThreadLinkUpdated {
           statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedAt {
             unixTimestamp
             iso8601
           }
@@ -21803,11 +22654,60 @@ fragment TimelineEntryFields on TimelineEntry {
             iso8601
           }
         }
+        ... on ThreadStatusDetailSnoozed {
+          snoozedAt {
+            unixTimestamp
+            iso8601
+          }
+          snoozedUntil {
+            unixTimestamp
+            iso8601
+          }
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailUnsnoozed {
+          snoozedAt {
+            unixTimestamp
+            iso8601
+          }
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
         ... on ThreadStatusDetailNewReply {
           statusChangedAt {
             unixTimestamp
             iso8601
           }
+          newReplyAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailReplied {
+          repliedAt {
+            unixTimestamp
+            iso8601
+          }
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+        }
+        ... on ThreadStatusDetailLinearUpdated {
+          statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedAt {
+            unixTimestamp
+            iso8601
+          }
+          threadStatusDetailLinearUpdatedLinearIssueId: linearIssueId
         }
         ... on ThreadStatusDetailInProgress {
           statusChangedAt {
@@ -21839,6 +22739,10 @@ fragment TimelineEntryFields on TimelineEntry {
         }
         ... on ThreadStatusDetailThreadLinkUpdated {
           statusChangedAt {
+            unixTimestamp
+            iso8601
+          }
+          updatedAt {
             unixTimestamp
             iso8601
           }
@@ -21895,6 +22799,8 @@ fragment TimelineEntryFields on TimelineEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -21903,13 +22809,17 @@ fragment TimelineEntryFields on TimelineEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -21925,6 +22835,8 @@ fragment TimelineEntryFields on TimelineEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -21933,13 +22845,17 @@ fragment TimelineEntryFields on TimelineEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -21977,6 +22893,8 @@ fragment TimelineEntryFields on TimelineEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -21985,13 +22903,17 @@ fragment TimelineEntryFields on TimelineEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -22031,6 +22953,8 @@ fragment TimelineEntryFields on TimelineEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -22039,13 +22963,17 @@ fragment TimelineEntryFields on TimelineEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -22083,6 +23011,8 @@ fragment TimelineEntryFields on TimelineEntry {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -22091,13 +23021,17 @@ fragment TimelineEntryFields on TimelineEntry {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -22135,6 +23069,8 @@ fragment TimelineEntryFields on TimelineEntry {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -22143,13 +23079,17 @@ fragment TimelineEntryFields on TimelineEntry {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -22220,6 +23160,8 @@ fragment TimelineEntryFields on TimelineEntry {
           textSize
           textColor
           text
+          color
+          componentTextSize: size
         }
         ... on ComponentPlainText {
           plainTextSize
@@ -22228,13 +23170,17 @@ fragment TimelineEntryFields on TimelineEntry {
         }
         ... on ComponentSpacer {
           spacerSize
+          componentSpacerSize: size
         }
         ... on ComponentDivider {
           dividerSpacingSize
+          spacingSize
         }
         ... on ComponentLinkButton {
           linkButtonUrl
           linkButtonLabel
+          url
+          label
         }
         ... on ComponentWorkflowButton {
           workflowButtonWorkflowIdentifier {
@@ -22250,6 +23196,8 @@ fragment TimelineEntryFields on TimelineEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -22258,13 +23206,17 @@ fragment TimelineEntryFields on TimelineEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -22302,6 +23254,8 @@ fragment TimelineEntryFields on TimelineEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -22310,13 +23264,17 @@ fragment TimelineEntryFields on TimelineEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -22356,6 +23314,8 @@ fragment TimelineEntryFields on TimelineEntry {
               textSize
               textColor
               text
+              color
+              componentTextSize: size
             }
             ... on ComponentPlainText {
               plainTextSize
@@ -22364,13 +23324,17 @@ fragment TimelineEntryFields on TimelineEntry {
             }
             ... on ComponentSpacer {
               spacerSize
+              componentSpacerSize: size
             }
             ... on ComponentDivider {
               dividerSpacingSize
+              spacingSize
             }
             ... on ComponentLinkButton {
               linkButtonUrl
               linkButtonLabel
+              url
+              label
             }
             ... on ComponentWorkflowButton {
               workflowButtonWorkflowIdentifier {
@@ -22408,6 +23372,8 @@ fragment TimelineEntryFields on TimelineEntry {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -22416,13 +23382,17 @@ fragment TimelineEntryFields on TimelineEntry {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -22460,6 +23430,8 @@ fragment TimelineEntryFields on TimelineEntry {
                   textSize
                   textColor
                   text
+                  color
+                  componentTextSize: size
                 }
                 ... on ComponentPlainText {
                   plainTextSize
@@ -22468,13 +23440,17 @@ fragment TimelineEntryFields on TimelineEntry {
                 }
                 ... on ComponentSpacer {
                   spacerSize
+                  componentSpacerSize: size
                 }
                 ... on ComponentDivider {
                   dividerSpacingSize
+                  spacingSize
                 }
                 ... on ComponentLinkButton {
                   linkButtonUrl
                   linkButtonLabel
+                  url
+                  label
                 }
                 ... on ComponentWorkflowButton {
                   workflowButtonWorkflowIdentifier {
@@ -22618,6 +23594,7 @@ fragment TimelineEntryFields on TimelineEntry {
         ... on FirstResponseTimeServiceLevelAgreement {
           id
           firstResponseTimeMinutes
+          useBusinessHoursOnly
           threadPriorityFilter
           threadLabelTypeIdFilter {
             labelTypeIds
@@ -22741,6 +23718,7 @@ fragment TimelineEntryFields on TimelineEntry {
         ... on NextResponseTimeServiceLevelAgreement {
           id
           nextResponseTimeMinutes
+          useBusinessHoursOnly
           threadPriorityFilter
           threadLabelTypeIdFilter {
             labelTypeIds
@@ -23225,6 +24203,7 @@ fragment TimelineEntryFields on TimelineEntry {
             unixTimestamp
             iso8601
           }
+          linearIssueUrl
         }
         ... on JiraIssueThreadLink {
           id
@@ -23585,6 +24564,7 @@ fragment TimelineEntryFields on TimelineEntry {
             unixTimestamp
             iso8601
           }
+          linearIssueUrl
         }
         ... on JiraIssueThreadLink {
           id
@@ -23943,6 +24923,7 @@ fragment TimelineEntryFields on TimelineEntry {
             unixTimestamp
             iso8601
           }
+          linearIssueUrl
         }
         ... on JiraIssueThreadLink {
           id
@@ -24303,6 +25284,7 @@ fragment TimelineEntryFields on TimelineEntry {
             unixTimestamp
             iso8601
           }
+          linearIssueUrl
         }
         ... on JiraIssueThreadLink {
           id
@@ -24663,6 +25645,7 @@ fragment TimelineEntryFields on TimelineEntry {
             unixTimestamp
             iso8601
           }
+          linearIssueUrl
         }
         ... on JiraIssueThreadLink {
           id
@@ -25028,6 +26011,7 @@ fragment TimelineEntryFields on TimelineEntry {
             unixTimestamp
             iso8601
           }
+          linearIssueUrl
         }
         ... on JiraIssueThreadLink {
           id
@@ -26513,6 +27497,7 @@ fragment WorkspaceFields on Workspace {
   name
   publicName
   isDemoWorkspace
+  domainName
   domainNames
   createdBy {
     __typename
@@ -34130,6 +35115,7 @@ mutation UpsertTenantFieldSchema($input: UpsertTenantFieldSchemaInput!) {
     tenantFieldSchemas {
       ...TenantFieldSchemaFields
     }
+    result
     results
     error {
       message

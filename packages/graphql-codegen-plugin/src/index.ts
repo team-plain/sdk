@@ -129,6 +129,10 @@ function isValueObjectType(type: GraphQLNamedType, _schema: GraphQLSchema): bool
   });
 }
 
+function deprecationDoc(reason: string): string {
+  return `/** @deprecated ${reason.replace(/\s+/g, " ").replace(/\*\//g, "*\\/")} */`;
+}
+
 /**
  * A root field deprecated in the schema stays callable in the SDK, so without this
  * the only warning a consumer gets is the day the server drops it.
@@ -144,7 +148,7 @@ function applyDeprecation(
   bodyStart: number,
 ): void {
   if (!field.deprecationReason) return;
-  const doc = `/** @deprecated ${field.deprecationReason.replace(/\s+/g, " ").replace(/\*\//g, "*\\/")} */`;
+  const doc = deprecationDoc(field.deprecationReason);
   signatures.splice(sigStart, 0, doc);
   for (let i = bodyStart; i < methodBodies.length; i++) {
     methodBodies[i] = `    ${doc}\n${methodBodies[i]}`;
@@ -278,10 +282,6 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
     const name = field.name;
 
-    if (field.deprecationReason != null) {
-      return { name, kind: "skip", hasRequiredArgs };
-    }
-
     if (hasRequiredArgs) {
       return { name, kind: "skip", hasRequiredArgs };
     }
@@ -295,11 +295,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
 
     // Union/interface fields (single or list)
     if (isUnionType(namedType) || isInterfaceType(namedType)) {
-      const memberNames = getUnionMemberNames(namedType).filter((memberName) => {
-        const memberType = schema.getType(memberName);
-        if (!memberType || !isObjectType(memberType)) return true;
-        return Object.values(memberType.getFields()).some((f) => f.deprecationReason == null);
-      });
+      const memberNames = getUnionMemberNames(namedType);
       return {
         name,
         kind: "union",
@@ -360,26 +356,34 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
 
   /**
    * Find fields that have the same name but different type signatures across
-   * union/interface members. Mirrors the same logic in generate-documents.ts.
+   * union/interface members. Mirrors findConflictingUnionFields and needsUnionAlias in
+   * generate-documents.ts: `all` holds every clashing name, `current` only the clashes
+   * between fields that are not deprecated.
    */
-  function findConflictingUnionFields(memberTypeNames: string[]): Set<string> {
-    const fieldTypeSigs = new Map<string, string>();
-    const conflicting = new Set<string>();
-    for (const memberName of memberTypeNames) {
-      const memberType = schema.getType(memberName);
-      if (!memberType || !isObjectType(memberType)) continue;
-      for (const [fieldName, field] of Object.entries(memberType.getFields())) {
-        if (field.deprecationReason != null) continue;
-        const sig = field.type.toString();
-        const existing = fieldTypeSigs.get(fieldName);
-        if (existing === undefined) {
-          fieldTypeSigs.set(fieldName, sig);
-        } else if (existing !== sig) {
-          conflicting.add(fieldName);
+  function findConflictingUnionFields(memberTypeNames: string[]): {
+    all: Set<string>;
+    current: Set<string>;
+  } {
+    const clashes = (includeDeprecated: boolean): Set<string> => {
+      const fieldTypeSigs = new Map<string, string>();
+      const conflicting = new Set<string>();
+      for (const memberName of memberTypeNames) {
+        const memberType = schema.getType(memberName);
+        if (!memberType || !isObjectType(memberType)) continue;
+        for (const [fieldName, field] of Object.entries(memberType.getFields())) {
+          if (!includeDeprecated && field.deprecationReason != null) continue;
+          const sig = field.type.toString();
+          const existing = fieldTypeSigs.get(fieldName);
+          if (existing === undefined) {
+            fieldTypeSigs.set(fieldName, sig);
+          } else if (existing !== sig) {
+            conflicting.add(fieldName);
+          }
         }
       }
-    }
-    return conflicting;
+      return conflicting;
+    };
+    return { all: clashes(true), current: clashes(false) };
   }
 
   /**
@@ -390,19 +394,23 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     memberTypeNames: string[],
     dataExpr: string,
     clientExpr: string,
-    conflictingFields?: Set<string>,
+    conflictingFields?: { all: Set<string>; current: Set<string> },
   ): string {
     const cases: string[] = [];
     for (const memberName of memberTypeNames) {
       if (modelTypes.has(memberName)) {
         const memberModelClass = modelClassName(memberName);
         const remaps: string[] = [];
-        if (conflictingFields && conflictingFields.size > 0) {
+        if (conflictingFields && conflictingFields.all.size > 0) {
           const memberType = schema.getType(memberName);
           if (memberType && isObjectType(memberType)) {
             const memberFields = memberType.getFields();
-            for (const fieldName of conflictingFields) {
-              if (fieldName in memberFields) {
+            for (const fieldName of conflictingFields.all) {
+              const memberField = memberFields[fieldName];
+              if (
+                memberField &&
+                (memberField.deprecationReason != null || conflictingFields.current.has(fieldName))
+              ) {
                 const alias = `${memberName.charAt(0).toLowerCase()}${memberName.slice(1)}${fieldName.charAt(0).toUpperCase()}${fieldName.slice(1)}`;
                 remaps.push(`${fieldName}: (${dataExpr} as any).${alias}`);
               }
@@ -459,6 +467,10 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     const unionFields = fieldInfos.filter((f) => f.kind === "union" && f.unionMemberTypeNames);
 
     const lines: string[] = [];
+    const pushDeprecation = (fieldName: string) => {
+      const reason = gqlType.getFields()[fieldName]?.deprecationReason;
+      if (reason != null) lines.push(`  ${deprecationDoc(reason)}`);
+    };
     lines.push(`export class ${modelClassName(typeName)} {`);
     lines.push(`  protected _client: PlainGraphQLClient;`);
     lines.push(`  protected _data: ${fragTsName};`);
@@ -467,6 +479,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
 
     // Property declarations using indexed access types
     for (const f of scalarFields) {
+      pushDeprecation(f.name);
       lines.push(`  public readonly ${f.name}: ${fragTsName}["${f.name}"];`);
     }
 
@@ -474,6 +487,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     for (const f of unionFields) {
       if (!f.unionMemberTypeNames) continue;
       const unionType = generateUnionModelType(f.unionMemberTypeNames);
+      pushDeprecation(f.name);
       if (f.isList) {
         lines.push(`  public readonly ${f.name}: (${unionType})[];`);
       } else {
@@ -551,6 +565,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       allImportedTypes.add(varsTsName);
 
       lines.push(``);
+      pushDeprecation(f.name);
       lines.push(`  public get ${f.name}(): Promise<${relatedModelClass} | undefined> {`);
       lines.push(`    const id = this._data.${f.name}?.id;`);
       lines.push(`    if (!id) return Promise.resolve(undefined);`);
@@ -601,6 +616,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
         const idArgName = parentQueryMapping.idArgName;
 
         lines.push(``);
+        pushDeprecation(f.name);
         lines.push(
           `  async ${f.name}(variables?: Omit<${varsTsName}, "${idArgName}">): Promise<PlainConnection<${nodeModelClass}>> {`,
         );

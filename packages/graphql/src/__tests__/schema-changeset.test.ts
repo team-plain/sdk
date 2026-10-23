@@ -77,16 +77,28 @@ describe("schemaChangeset", () => {
     expect(result?.summary).toContain("**Breaking**");
   });
 
-  it("is a major when an object field is deprecated, since it leaves the result types", async () => {
+  it("is a patch when an object field is deprecated, since it stays in the result types", async () => {
     const result = await schemaChangeset(base, deprecate(base, "title: String"));
-    expect(result?.releases[0].type).toBe("major");
+    expect(result?.releases).toEqual([{ name: "@team-plain/graphql", type: "patch" }]);
+    expect(result?.summary).toContain("**Deprecated fields, still available**");
     expect(result?.summary).toContain("'Thread.title' is deprecated");
+    expect(result?.summary).not.toContain("**No longer in the generated result types**");
   });
 
-  it("is a minor when an object field is undeprecated, since it rejoins the result types", async () => {
+  it("is a major when a deprecated object field is removed", async () => {
+    const old = deprecate(base, "title: String");
+    const result = await schemaChangeset(
+      old,
+      old.replace(/title: String @deprecated\(reason: "Gone."\) /, ""),
+    );
+    expect(result?.releases[0].type).toBe("major");
+    expect(result?.summary).toContain("**Breaking**");
+  });
+
+  it("is a patch when an object field is undeprecated", async () => {
     const result = await schemaChangeset(deprecate(base, "title: String"), base);
-    expect(result?.releases[0].type).toBe("minor");
-    expect(result?.summary).toContain("**Back in the generated result types**");
+    expect(result?.releases[0].type).toBe("patch");
+    expect(result?.summary).not.toContain("**Back in the generated result types**");
   });
 
   it("is a major when an object field gains a defaulted non-null argument", async () => {
@@ -111,10 +123,10 @@ describe("schemaChangeset", () => {
     expect((await schemaChangeset(base, next))?.releases[0].type).toBe("minor");
   });
 
-  it("is a minor when an already deprecated object field gains a required argument", async () => {
+  it("is a major when a deprecated object field gains a required argument", async () => {
     const old = deprecate(base, "title: String");
     const next = old.replace("title: String", "title(n: Int! = 1): String");
-    expect((await schemaChangeset(old, next))?.releases[0].type).toBe("minor");
+    expect((await schemaChangeset(old, next))?.releases[0].type).toBe("major");
   });
 
   it("is a minor when a new field arrives already deprecated", async () => {

@@ -1,42 +1,10 @@
 ---
-"@team-plain/graphql": major
-"@team-plain/ui-components": major
+"@team-plain/graphql": minor
 ---
 
 Regenerate against the current API schema.
 
-**No longer in the generated result types**
-
-- Field 'Customer.tenantMemberships' is deprecated
-- Field 'Customer.company' is deprecated
-- Field 'ThreadsDisplayOptions.hasCompany' is deprecated
-- Field 'ThreadsDisplayOptions.hasTenants' is deprecated
-- Field 'ThreadsDisplayOptions.hasTenantFieldExternalIds' is deprecated
-- Field 'SavedThreadsViewNestedFilter.companies' is deprecated
-- Field 'SavedThreadsViewNestedFilter.tenants' is deprecated
-- Field 'SavedThreadsViewNestedFilter.tenantFields' is deprecated
-- Field 'SavedThreadsViewFilter.companies' is deprecated
-- Field 'SavedThreadsViewFilter.tenants' is deprecated
-- Field 'SavedThreadsViewFilter.tenantFields' is deprecated
-- Field 'Task.company' is deprecated
-- Field 'Task.tenant' is deprecated
-- Field 'BroadcastAudienceFilter.tenantIds' is deprecated
-- Field 'BroadcastAudienceFilter.tenantFields' is deprecated
-- Field 'ThreadLinkGroup.companyMetrics' is deprecated
-- Field 'ThreadLinkGroup.tenantMetrics' is deprecated
-- Field 'ThreadChannelAssociation.companyId' is deprecated
-- Field 'ThreadChannelAssociation.tenantId' is deprecated
-- Field 'ThreadChannelAssociation.tenantMembershipPolicy' is deprecated
-- Field 'SlackThreadChannelAssociation.companyId' is deprecated
-- Field 'SlackThreadChannelAssociation.tenantId' is deprecated
-- Field 'SlackThreadChannelAssociation.tenantMembershipPolicy' is deprecated
-- Field 'Thread.tenant' is deprecated
-- Field 'HelpCenterAccessSettings.tenantIds' is deprecated
-- Field 'HelpCenterAccessSettings.companyIds' is deprecated
-- Field 'HelpCenterPortalSettingsThreadVisibility.customerCompany' is deprecated
-- Field 'HelpCenterPortalSettingsThreadVisibility.overrideCustomerCompany' is deprecated
-- Field 'HelpCenterPortalSettingsThreadVisibility.customerTenants' is deprecated
-- Field 'HelpCenterPortalSettingsThreadVisibility.overrideCustomerTenants' is deprecated
+The SDK now keeps fields the API deprecates, marked `@deprecated`, instead of dropping them, so this release adds them back to the result types and models (for example `Customer.company`). Unions also gain their deprecated member types, such as `ThreadStatusDetailLinearUpdated` on `Thread.statusDetail`. The API no longer returns those types, but an exhaustive `switch` on `__typename` sees the new members.
 
 **New values in returned enums**
 
@@ -98,3 +66,36 @@ Regenerate against the current API schema.
 - Field 'Mutation.updateThreadChannelAssociationTenantMembershipPolicy' is deprecated
 - Field 'Mutation.importTenantFieldSchemas' is deprecated
 - Field 'Mutation.importTenants' is deprecated
+
+**Deprecated fields, still available**
+
+- Field 'Customer.tenantMemberships' is deprecated
+- Field 'Customer.company' is deprecated
+- Field 'ThreadsDisplayOptions.hasCompany' is deprecated
+- Field 'ThreadsDisplayOptions.hasTenants' is deprecated
+- Field 'ThreadsDisplayOptions.hasTenantFieldExternalIds' is deprecated
+- Field 'SavedThreadsViewNestedFilter.companies' is deprecated
+- Field 'SavedThreadsViewNestedFilter.tenants' is deprecated
+- Field 'SavedThreadsViewNestedFilter.tenantFields' is deprecated
+- Field 'SavedThreadsViewFilter.companies' is deprecated
+- Field 'SavedThreadsViewFilter.tenants' is deprecated
+- Field 'SavedThreadsViewFilter.tenantFields' is deprecated
+- Field 'Task.company' is deprecated
+- Field 'Task.tenant' is deprecated
+- Field 'BroadcastAudienceFilter.tenantIds' is deprecated
+- Field 'BroadcastAudienceFilter.tenantFields' is deprecated
+- Field 'ThreadLinkGroup.companyMetrics' is deprecated
+- Field 'ThreadLinkGroup.tenantMetrics' is deprecated
+- Field 'ThreadChannelAssociation.companyId' is deprecated
+- Field 'ThreadChannelAssociation.tenantId' is deprecated
+- Field 'ThreadChannelAssociation.tenantMembershipPolicy' is deprecated
+- Field 'SlackThreadChannelAssociation.companyId' is deprecated
+- Field 'SlackThreadChannelAssociation.tenantId' is deprecated
+- Field 'SlackThreadChannelAssociation.tenantMembershipPolicy' is deprecated
+- Field 'Thread.tenant' is deprecated
+- Field 'HelpCenterAccessSettings.tenantIds' is deprecated
+- Field 'HelpCenterAccessSettings.companyIds' is deprecated
+- Field 'HelpCenterPortalSettingsThreadVisibility.customerCompany' is deprecated
+- Field 'HelpCenterPortalSettingsThreadVisibility.overrideCustomerCompany' is deprecated
+- Field 'HelpCenterPortalSettingsThreadVisibility.customerTenants' is deprecated
+- Field 'HelpCenterPortalSettingsThreadVisibility.overrideCustomerTenants' is deprecated
