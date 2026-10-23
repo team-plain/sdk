@@ -61,14 +61,14 @@
   "devDependencies": {
     "@changesets/types": "^7.0.0",
     "@changesets/write": "^1.0.1",
-    "@graphql-codegen/cli": "^7.4.5",
+    "@graphql-codegen/cli": "^7.4.6",
     "@graphql-codegen/plugin-helpers": "^7.4.2",
-    "@graphql-codegen/typescript": "^6.1.0",
+    "@graphql-codegen/typescript": "^6.1.2",
     "@graphql-codegen/typescript-operations": "^6.1.9",
     "@graphql-codegen/visitor-plugin-common": "^7.2.7",
-    "@graphql-inspector/core": "^8.0.0",
+    "@graphql-inspector/core": "^8.0.1",
     "@team-plain/graphql-codegen-plugin": "workspace:*",
-    "tsdown": "^0.23.0",
+    "tsdown": "^0.23.1",
     "typescript": "^7.0.2"
   },
   "sideEffects": false
