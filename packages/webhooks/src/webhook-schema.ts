@@ -223,8 +223,13 @@ export type ServiceLevelAgreement =
     }
   | {
       id: Id;
-      tier: Tier;
+      tier: NullableTier;
+      policy?: NullableServiceLevelAgreementPolicy;
+      /**
+       * Deprecated: use businessHoursSchedules. True when the SLA is tracked against business hours instead of 24/7.
+       */
       useBusinessHoursOnly: boolean;
+      businessHoursSchedules?: BusinessHoursSchedules;
       threadPriorityFilter: ThreadPriorityFilter;
       createdAt: Datetime;
       createdBy: InternalActor;
@@ -236,8 +241,13 @@ export type ServiceLevelAgreement =
     }
   | {
       id: Id;
-      tier: Tier;
+      tier: NullableTier;
+      policy?: NullableServiceLevelAgreementPolicy;
+      /**
+       * Deprecated: use businessHoursSchedules. True when the SLA is tracked against business hours instead of 24/7.
+       */
       useBusinessHoursOnly: boolean;
+      businessHoursSchedules?: BusinessHoursSchedules;
       threadPriorityFilter: ThreadPriorityFilter;
       createdAt: Datetime;
       createdBy: InternalActor;
@@ -246,7 +256,55 @@ export type ServiceLevelAgreement =
       type: "NEXT_RESPONSE_TIME";
       nextResponseTimeMinutes: number;
       [k: string]: unknown;
+    }
+  | {
+      id: Id;
+      tier: NullableTier;
+      policy?: NullableServiceLevelAgreementPolicy;
+      /**
+       * Deprecated: use businessHoursSchedules. True when the SLA is tracked against business hours instead of 24/7.
+       */
+      useBusinessHoursOnly: boolean;
+      businessHoursSchedules?: BusinessHoursSchedules;
+      threadPriorityFilter: ThreadPriorityFilter;
+      createdAt: Datetime;
+      createdBy: InternalActor;
+      updatedAt: Datetime;
+      updatedBy: InternalActor;
+      type: "FIRST_RESOLUTION_TIME";
+      firstResolutionTimeMinutes: number;
+      [k: string]: unknown;
+    }
+  | {
+      id: Id;
+      tier: NullableTier;
+      policy?: NullableServiceLevelAgreementPolicy;
+      /**
+       * Deprecated: use businessHoursSchedules. True when the SLA is tracked against business hours instead of 24/7.
+       */
+      useBusinessHoursOnly: boolean;
+      businessHoursSchedules?: BusinessHoursSchedules;
+      threadPriorityFilter: ThreadPriorityFilter;
+      createdAt: Datetime;
+      createdBy: InternalActor;
+      updatedAt: Datetime;
+      updatedBy: InternalActor;
+      type: "TOTAL_RESOLUTION_TIME";
+      totalResolutionTimeMinutes: number;
+      [k: string]: unknown;
     };
+/**
+ * null when the SLA belongs to a policy
+ */
+export type NullableTier = Tier | null;
+/**
+ * null when the SLA belongs to a tier
+ */
+export type NullableServiceLevelAgreementPolicy = ServiceLevelAgreementPolicy | null;
+/**
+ * The business hours schedules the SLA is tracked against. Empty when tracked 24/7.
+ */
+export type BusinessHoursSchedules = BusinessHoursSchedule[];
 /**
  * @minItems 1
  */
@@ -345,7 +403,15 @@ export interface WebhooksSchemaDefinition {
     | TaskCreatedPublicEventPayload
     | TaskUpdatedPublicEventPayload
     | TaskStatusTransitionedPublicEventPayload
-    | TaskDeletedPublicEventPayload;
+    | TaskDeletedPublicEventPayload
+    | DiscussionTurnStopRequestedPublicEventPayload
+    | AccountCreatedPublicEventPayload
+    | AccountUpdatedPublicEventPayload
+    | AccountDeletedPublicEventPayload
+    | AccountMembershipChangedPublicEventPayload
+    | AccountFieldCreatedPublicEventPayload
+    | AccountFieldUpdatedPublicEventPayload
+    | AccountFieldDeletedPublicEventPayload;
   id: Id;
   type:
     | "thread.thread_created"
@@ -369,6 +435,7 @@ export interface WebhooksSchemaDefinition {
     | "discussion.tool_call_approval_requested"
     | "discussion.tool_call_approval_resolved"
     | "discussion.message_created"
+    | "discussion.turn_stop_requested"
     | "thread.thread_labels_changed"
     | "thread.thread_priority_changed"
     | "thread.thread_field_created"
@@ -387,7 +454,14 @@ export interface WebhooksSchemaDefinition {
     | "task.task_created"
     | "task.task_updated"
     | "task.task_status_transitioned"
-    | "task.task_deleted";
+    | "task.task_deleted"
+    | "account.account_created"
+    | "account.account_updated"
+    | "account.account_deleted"
+    | "account.account_membership_changed"
+    | "account.account_field_created"
+    | "account.account_field_updated"
+    | "account.account_field_deleted";
   webhookMetadata: WebhookMetadata;
   [k: string]: unknown;
 }
@@ -981,6 +1055,21 @@ export interface Tier {
   updatedBy: InternalActor;
   [k: string]: unknown;
 }
+export interface ServiceLevelAgreementPolicy {
+  id: Id;
+  name: string;
+  description: NullableString;
+  createdAt: Datetime;
+  createdBy: InternalActor;
+  updatedAt: Datetime;
+  updatedBy: InternalActor;
+  [k: string]: unknown;
+}
+export interface BusinessHoursSchedule {
+  id: Id;
+  name: string;
+  [k: string]: unknown;
+}
 /**
  * A customer has been created
  */
@@ -1239,9 +1328,86 @@ export interface TaskDeletedPublicEventPayload {
   previousTask: Task;
   [k: string]: unknown;
 }
+export interface DiscussionTurnStopRequestedPublicEventPayload {
+  eventType: "discussion.turn_stop_requested";
+  discussion: Discussion;
+  requestedBy: InternalActor;
+  requestedAt: Datetime;
+  [k: string]: unknown;
+}
+export interface AccountCreatedPublicEventPayload {
+  eventType: "account.account_created";
+  account: Account;
+  [k: string]: unknown;
+}
+export interface Account {
+  id: Id;
+  name: string;
+  externalId: string;
+  source: "api" | "salesforce" | "hubspot" | "attio" | "email_domain" | "UNKNOWN_ACCOUNT_SOURCE";
+  primaryDomain: string | null;
+  alternateDomains: string[];
+  isDomainAutoJoinEnabled: boolean;
+  createdAt: Datetime;
+  createdBy: InternalActor;
+  updatedAt: Datetime;
+  updatedBy: InternalActor;
+  [k: string]: unknown;
+}
+export interface AccountUpdatedPublicEventPayload {
+  eventType: "account.account_updated";
+  account: Account;
+  previousAccount: Account;
+  [k: string]: unknown;
+}
+export interface AccountDeletedPublicEventPayload {
+  eventType: "account.account_deleted";
+  previousAccount: Account;
+  [k: string]: unknown;
+}
+export interface AccountMembershipChangedPublicEventPayload {
+  eventType: "account.account_membership_changed";
+  changeType: "ADDED" | "REMOVED" | "UNKNOWN_ACCOUNT_MEMBERSHIP_CHANGE_TYPE";
+  customer: Customer;
+  account: Account;
+  [k: string]: unknown;
+}
+export interface AccountFieldCreatedPublicEventPayload {
+  eventType: "account.account_field_created";
+  accountField: AccountField;
+  [k: string]: unknown;
+}
+export interface AccountField {
+  id: Id;
+  accountId: Id;
+  externalFieldId: string;
+  source: string | null;
+  stringValue: string | null;
+  numberValue: number | null;
+  booleanValue: boolean | null;
+  stringArrayValue: string[] | null;
+  dateValue: Datetime | null;
+  referenceValues: string[] | null;
+  createdAt: Datetime;
+  createdBy: InternalActor;
+  updatedAt: Datetime;
+  updatedBy: InternalActor;
+  [k: string]: unknown;
+}
+export interface AccountFieldUpdatedPublicEventPayload {
+  eventType: "account.account_field_updated";
+  accountField: AccountField;
+  previousAccountField: AccountField;
+  [k: string]: unknown;
+}
+export interface AccountFieldDeletedPublicEventPayload {
+  eventType: "account.account_field_deleted";
+  previousAccountField: AccountField;
+  [k: string]: unknown;
+}
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-09-11";
+  webhookTargetVersion: "2026-10-06";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

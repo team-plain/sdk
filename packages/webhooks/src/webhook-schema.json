@@ -129,6 +129,30 @@
         },
         {
           "$ref": "#/definitions/taskDeletedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/discussionTurnStopRequestedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/accountCreatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/accountUpdatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/accountDeletedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/accountMembershipChangedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/accountFieldCreatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/accountFieldUpdatedPublicEventPayload"
+        },
+        {
+          "$ref": "#/definitions/accountFieldDeletedPublicEventPayload"
         }
       ]
     },
@@ -159,6 +183,7 @@
         "discussion.tool_call_approval_requested",
         "discussion.tool_call_approval_resolved",
         "discussion.message_created",
+        "discussion.turn_stop_requested",
         "thread.thread_labels_changed",
         "thread.thread_priority_changed",
         "thread.thread_field_created",
@@ -177,7 +202,14 @@
         "task.task_created",
         "task.task_updated",
         "task.task_status_transitioned",
-        "task.task_deleted"
+        "task.task_deleted",
+        "account.account_created",
+        "account.account_updated",
+        "account.account_deleted",
+        "account.account_membership_changed",
+        "account.account_field_created",
+        "account.account_field_updated",
+        "account.account_field_deleted"
       ]
     },
     "webhookMetadata": {
@@ -1683,6 +1715,74 @@
       ],
       "additionalProperties": true
     },
+    "nullableTier": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/tier"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "null when the SLA belongs to a policy"
+    },
+    "serviceLevelAgreementPolicy": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "description": {
+          "$ref": "#/definitions/nullableString"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/internalActor"
+        }
+      },
+      "required": ["id", "name", "description", "createdAt", "createdBy", "updatedAt", "updatedBy"],
+      "additionalProperties": true
+    },
+    "nullableServiceLevelAgreementPolicy": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/serviceLevelAgreementPolicy"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "null when the SLA belongs to a tier"
+    },
+    "businessHoursSchedule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "required": ["id", "name"],
+      "additionalProperties": true
+    },
     "threadPriority": {
       "type": "number"
     },
@@ -2559,10 +2659,22 @@
               "$ref": "#/definitions/id"
             },
             "tier": {
-              "$ref": "#/definitions/tier"
+              "$ref": "#/definitions/nullableTier"
+            },
+            "policy": {
+              "$ref": "#/definitions/nullableServiceLevelAgreementPolicy"
             },
             "useBusinessHoursOnly": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "Deprecated: use businessHoursSchedules. True when the SLA is tracked against business hours instead of 24/7."
+            },
+            "businessHoursSchedules": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/businessHoursSchedule"
+              },
+              "default": [],
+              "description": "The business hours schedules the SLA is tracked against. Empty when tracked 24/7."
             },
             "threadPriorityFilter": {
               "$ref": "#/definitions/threadPriorityFilter"
@@ -2608,10 +2720,16 @@
               "$ref": "#/definitions/id"
             },
             "tier": {
-              "$ref": "#/definitions/tier"
+              "$ref": "#/definitions/nullableTier"
+            },
+            "policy": {
+              "$ref": "#/definitions/nullableServiceLevelAgreementPolicy"
             },
             "useBusinessHoursOnly": {
               "$ref": "#/definitions/serviceLevelAgreement/anyOf/1/properties/useBusinessHoursOnly"
+            },
+            "businessHoursSchedules": {
+              "$ref": "#/definitions/serviceLevelAgreement/anyOf/1/properties/businessHoursSchedules"
             },
             "threadPriorityFilter": {
               "$ref": "#/definitions/threadPriorityFilter"
@@ -2647,6 +2765,116 @@
             "updatedBy",
             "type",
             "nextResponseTimeMinutes"
+          ],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/id"
+            },
+            "tier": {
+              "$ref": "#/definitions/nullableTier"
+            },
+            "policy": {
+              "$ref": "#/definitions/nullableServiceLevelAgreementPolicy"
+            },
+            "useBusinessHoursOnly": {
+              "$ref": "#/definitions/serviceLevelAgreement/anyOf/1/properties/useBusinessHoursOnly"
+            },
+            "businessHoursSchedules": {
+              "$ref": "#/definitions/serviceLevelAgreement/anyOf/1/properties/businessHoursSchedules"
+            },
+            "threadPriorityFilter": {
+              "$ref": "#/definitions/threadPriorityFilter"
+            },
+            "createdAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "createdBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "updatedAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updatedBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "type": {
+              "type": "string",
+              "const": "FIRST_RESOLUTION_TIME"
+            },
+            "firstResolutionTimeMinutes": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "tier",
+            "useBusinessHoursOnly",
+            "threadPriorityFilter",
+            "createdAt",
+            "createdBy",
+            "updatedAt",
+            "updatedBy",
+            "type",
+            "firstResolutionTimeMinutes"
+          ],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/id"
+            },
+            "tier": {
+              "$ref": "#/definitions/nullableTier"
+            },
+            "policy": {
+              "$ref": "#/definitions/nullableServiceLevelAgreementPolicy"
+            },
+            "useBusinessHoursOnly": {
+              "$ref": "#/definitions/serviceLevelAgreement/anyOf/1/properties/useBusinessHoursOnly"
+            },
+            "businessHoursSchedules": {
+              "$ref": "#/definitions/serviceLevelAgreement/anyOf/1/properties/businessHoursSchedules"
+            },
+            "threadPriorityFilter": {
+              "$ref": "#/definitions/threadPriorityFilter"
+            },
+            "createdAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "createdBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "updatedAt": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updatedBy": {
+              "$ref": "#/definitions/internalActor"
+            },
+            "type": {
+              "type": "string",
+              "const": "TOTAL_RESOLUTION_TIME"
+            },
+            "totalResolutionTimeMinutes": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "tier",
+            "useBusinessHoursOnly",
+            "threadPriorityFilter",
+            "createdAt",
+            "createdBy",
+            "updatedAt",
+            "updatedBy",
+            "type",
+            "totalResolutionTimeMinutes"
           ],
           "additionalProperties": true
         }
@@ -3012,7 +3240,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-09-11"
+          "const": "2026-10-06"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
@@ -4184,6 +4412,291 @@
         }
       },
       "required": ["eventType", "previousTask"],
+      "additionalProperties": true
+    },
+    "discussionTurnStopRequestedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "discussion.turn_stop_requested"
+        },
+        "discussion": {
+          "$ref": "#/definitions/discussionMessageCreatedPublicEventPayload/properties/discussion"
+        },
+        "requestedBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "requestedAt": {
+          "$ref": "#/definitions/datetime"
+        }
+      },
+      "required": ["eventType", "discussion", "requestedBy", "requestedAt"],
+      "additionalProperties": true
+    },
+    "account": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "externalId": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "api",
+            "salesforce",
+            "hubspot",
+            "attio",
+            "email_domain",
+            "UNKNOWN_ACCOUNT_SOURCE"
+          ]
+        },
+        "primaryDomain": {
+          "type": ["string", "null"]
+        },
+        "alternateDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isDomainAutoJoinEnabled": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/internalActor"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "externalId",
+        "source",
+        "primaryDomain",
+        "alternateDomains",
+        "isDomainAutoJoinEnabled",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "accountField": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "accountId": {
+          "$ref": "#/definitions/id"
+        },
+        "externalFieldId": {
+          "type": "string"
+        },
+        "source": {
+          "type": ["string", "null"]
+        },
+        "stringValue": {
+          "type": ["string", "null"]
+        },
+        "numberValue": {
+          "type": ["number", "null"]
+        },
+        "booleanValue": {
+          "type": ["boolean", "null"]
+        },
+        "stringArrayValue": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dateValue": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/datetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "referenceValues": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "createdBy": {
+          "$ref": "#/definitions/internalActor"
+        },
+        "updatedAt": {
+          "$ref": "#/definitions/datetime"
+        },
+        "updatedBy": {
+          "$ref": "#/definitions/internalActor"
+        }
+      },
+      "required": [
+        "id",
+        "accountId",
+        "externalFieldId",
+        "source",
+        "stringValue",
+        "numberValue",
+        "booleanValue",
+        "stringArrayValue",
+        "dateValue",
+        "referenceValues",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy"
+      ],
+      "additionalProperties": true
+    },
+    "accountCreatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "account.account_created"
+        },
+        "account": {
+          "$ref": "#/definitions/account"
+        }
+      },
+      "required": ["eventType", "account"],
+      "additionalProperties": true
+    },
+    "accountUpdatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "account.account_updated"
+        },
+        "account": {
+          "$ref": "#/definitions/account"
+        },
+        "previousAccount": {
+          "$ref": "#/definitions/account"
+        }
+      },
+      "required": ["eventType", "account", "previousAccount"],
+      "additionalProperties": true
+    },
+    "accountDeletedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "account.account_deleted"
+        },
+        "previousAccount": {
+          "$ref": "#/definitions/account"
+        }
+      },
+      "required": ["eventType", "previousAccount"],
+      "additionalProperties": true
+    },
+    "accountMembershipChangedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "account.account_membership_changed"
+        },
+        "changeType": {
+          "type": "string",
+          "enum": ["ADDED", "REMOVED", "UNKNOWN_ACCOUNT_MEMBERSHIP_CHANGE_TYPE"]
+        },
+        "customer": {
+          "$ref": "#/definitions/customer"
+        },
+        "account": {
+          "$ref": "#/definitions/account"
+        }
+      },
+      "required": ["eventType", "changeType", "customer", "account"],
+      "additionalProperties": true
+    },
+    "accountFieldCreatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "account.account_field_created"
+        },
+        "accountField": {
+          "$ref": "#/definitions/accountField"
+        }
+      },
+      "required": ["eventType", "accountField"],
+      "additionalProperties": true
+    },
+    "accountFieldUpdatedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "account.account_field_updated"
+        },
+        "accountField": {
+          "$ref": "#/definitions/accountField"
+        },
+        "previousAccountField": {
+          "$ref": "#/definitions/accountField"
+        }
+      },
+      "required": ["eventType", "accountField", "previousAccountField"],
+      "additionalProperties": true
+    },
+    "accountFieldDeletedPublicEventPayload": {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "type": "string",
+          "const": "account.account_field_deleted"
+        },
+        "previousAccountField": {
+          "$ref": "#/definitions/accountField"
+        }
+      },
+      "required": ["eventType", "previousAccountField"],
       "additionalProperties": true
     }
   },

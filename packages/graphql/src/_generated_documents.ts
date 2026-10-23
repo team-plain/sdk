@@ -271,6 +271,8 @@ export type AccountsFilter = {
   accountIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Matches accounts that match every one of these filters. */
   and?: InputMaybe<Array<AccountsFilter>>;
+  /** Filter to accounts whose primary or alternate domains include any of the given domains. Matching is exact and case-insensitive. */
+  domains?: InputMaybe<Array<Scalars['String']['input']>>;
   /**
    * True to only return accounts that have been deleted. False to only return accounts that have not been deleted.
    * Omit to return all accounts.
@@ -428,7 +430,23 @@ export type AddWorkspaceAlternateSupportEmailAddressInput = {
 
 export type AddWorkspaceAlternateSupportEmailAddressOutput = {
   error?: Maybe<MutationError>;
+  /**
+   * Populated when the alternate address is on a domain different from the primary support domain and
+   * therefore requires its own DNS setup. Null for same-domain addresses.
+   */
+  pendingDnsRecords?: Maybe<PendingSenderDomainDnsRecords>;
   workspaceEmailDomainSettings?: Maybe<WorkspaceEmailDomainSettings>;
+};
+
+export type AdditionalSenderDomain = {
+  /** The DKIM DNS TXT record that must be added to this domain to authenticate outbound emails. */
+  dkimDnsRecord: DnsRecord;
+  /** The domain of the cross-domain alternate support email address, e.g. otheracme.com. */
+  domainName: Scalars['String']['output'];
+  /** Whether this sender domain's DKIM and return-path DNS records have been verified. */
+  isDomainConfigured: Scalars['Boolean']['output'];
+  /** The return-path (bounce) DNS CNAME record that must be added to this domain to handle bounces and complaints. */
+  returnPathDnsRecord: DnsRecord;
 };
 
 /** Subset of AgentApprovalStatus valid as a resolution input (excludes PENDING). */
@@ -479,7 +497,9 @@ export type AgentSandboxToolPolicy = {
 
 export type AgentSessionDelta = {
   agentSessionId: Scalars['ID']['output'];
-  /** An incremental text chunk from the agent's current response. Append successive chunks to reconstruct the full message. */
+  /** The position of this chunk within the agent's current run, starting at 0. Chunks can arrive out of order or more than once, so order by this value and ignore repeats. Null when no ordering is available; append those chunks in arrival order. */
+  sequence?: Maybe<Scalars['Int']['output']>;
+  /** An incremental text chunk from the agent's current response. Join chunks in `sequence` order to reconstruct the full message; chunks can arrive out of order. */
   text: Scalars['String']['output'];
 };
 
@@ -882,9 +902,22 @@ export type BeforeBreachActionInput = {
   beforeBreachMinutes: Scalars['Int']['input'];
 };
 
-export type BillingCreditBalance = BillingMonthlyAllowanceCreditBalance | BillingTopupCreditBalance;
+export type BillingCommittedCreditBalance = {
+  /** The end of the contract term, when unused committed credits expire. Null when the subscription has no committed line item. */
+  expiresAt?: Maybe<DateTime>;
+  /** Committed credits remaining. Used after the monthly allowance is exhausted and before top-up credits. */
+  remaining: Scalars['Int']['output'];
+  /** Credits granted on the committed product for the contract term, excluding expired credits. Null when the credit ledger is unavailable or does not reconcile against remaining. */
+  termGranted?: Maybe<Scalars['Int']['output']>;
+  /** Credits consumed from the committed product. Null when termGranted is unavailable. */
+  termUsed?: Maybe<Scalars['Int']['output']>;
+  type: BillingCreditBalanceType;
+};
+
+export type BillingCreditBalance = BillingCommittedCreditBalance | BillingMonthlyAllowanceCreditBalance | BillingTopupCreditBalance;
 
 export type BillingCreditBalanceType =
+  | 'committed'
   | 'monthlyAllowance'
   | 'topUp';
 
@@ -980,13 +1013,15 @@ export type BillingSubscription = {
   cancelsAt?: Maybe<DateTime>;
   /** An in-progress Hyperline checkout session, if one exists for this workspace. */
   checkoutSession?: Maybe<HyperlineCheckoutSession>;
-  /** Current credit balances across all credit products (monthly allowance and top-up). Empty array if no credit products are attached. */
+  /** Current credit balances across all credit products (monthly allowance, committed and top-up). Empty array if no credit products are attached. */
   creditBalances: Array<BillingCreditBalance>;
   /** The date the subscription was terminated. Null if still active. */
   endedAt?: Maybe<DateTime>;
   /** List of feature entitlements for the current plan, indicating which features are available and any usage limits. */
   entitlements: Array<BillingFeatureEntitlement>;
   interval?: Maybe<BillingInterval>;
+  /** The plan one tier above the current one. Null on the top plan, or on a plan with no upgrade path. */
+  nextPlan?: Maybe<NextBillingPlan>;
   /** Internal plan code string from the billing provider. */
   planCode?: Maybe<Scalars['String']['output']>;
   planKey: BillingPlanKey;
@@ -1007,7 +1042,7 @@ export type BillingTopupCreditBalance = {
   lifetimeGranted?: Maybe<Scalars['Int']['output']>;
   /** Lifetime credits consumed from the top-up product. Null when lifetimeGranted is unavailable. */
   lifetimeUsed?: Maybe<Scalars['Int']['output']>;
-  /** Credits remaining from purchased top-up bundles. Top-up credits do not expire and are used after the monthly allowance is exhausted. */
+  /** Credits remaining from purchased top-up bundles. Top-up credits do not expire and are used after the monthly allowance and committed credits are exhausted. */
   remaining: Scalars['Int']['output'];
   type: BillingCreditBalanceType;
 };
@@ -1200,7 +1235,9 @@ export type BroadcastAudienceFilter = {
   slackChannelNameContains: Array<Scalars['String']['output']>;
   /** Specific channels, pinned by id. Nothing re-resolves these, so an audience holding only these is a saved channel list. */
   slackChannels: Array<BroadcastSlackChannelRef>;
+  /** @deprecated Use accountFields instead */
   tenantFields: Array<BroadcastAudienceTenantFieldFilter>;
+  /** @deprecated Use accountIds instead */
   tenantIds: Array<Scalars['ID']['output']>;
   tierIds: Array<Scalars['ID']['output']>;
 };
@@ -1230,7 +1267,9 @@ export type BroadcastAudienceFilterInput = {
   or?: InputMaybe<Array<BroadcastAudienceFilterInput>>;
   slackChannelNameContains?: InputMaybe<Array<Scalars['String']['input']>>;
   slackChannels?: InputMaybe<Array<BroadcastSlackChannelRefInput>>;
+  /** @deprecated Use accountFields instead */
   tenantFields?: InputMaybe<Array<BroadcastAudienceTenantFieldFilterInput>>;
+  /** @deprecated Use accountIds instead */
   tenantIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   tierIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -2015,7 +2054,7 @@ export type BulkUpsertWorkflowStepInput = {
   positionY?: InputMaybe<Scalars['Float']['input']>;
   /** Optional step ID - if provided and exists in this workflow, step will be updated. Otherwise created with new ID. */
   stepId?: InputMaybe<Scalars['ID']['input']>;
-  /** Transition step IDs. ACTION steps: [nextStepId], CONDITION steps: [trueStepId, falseStepId]. Use null for terminal/no branch. */
+  /** Transition step IDs. ACTION steps: [nextStepId], CONDITION steps: [trueStepId, falseStepId], WAIT steps: [completedStepId, cancelledStepId], NOTE steps: []. Use null for terminal/no branch. A NOTE step cannot be a transition target or the startStepId. */
   transitions: Array<InputMaybe<Scalars['ID']['input']>>;
   /** The type of step: CONDITION or ACTION. */
   type: WorkflowStepType;
@@ -2060,6 +2099,66 @@ export type BusinessHours = {
   weekDays: BusinessHoursWeekDays;
 };
 
+/** Replaces a schedule's weekly hours on every date from startsOn to endsOn, e.g. a holiday or special opening. */
+export type BusinessHoursOverride = {
+  businessHoursScheduleId: Scalars['ID']['output'];
+  createdAt: DateTime;
+  createdBy: InternalActor;
+  /** The last date (inclusive), in YYYY-MM-DD format, in the schedule's timezone. */
+  endsOn: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  /** Human-readable name, e.g. 'Christmas 2026'. */
+  name: Scalars['String']['output'];
+  /** The open slots, sorted by date then opening time. A date in the range without slots is closed. */
+  slots: Array<BusinessHoursOverrideSlot>;
+  /** The first date, in YYYY-MM-DD format, in the schedule's timezone. */
+  startsOn: Scalars['String']['output'];
+  updatedAt: DateTime;
+  updatedBy: InternalActor;
+};
+
+export type BusinessHoursOverrideConnection = {
+  edges: Array<BusinessHoursOverrideEdge>;
+  pageInfo: PageInfo;
+};
+
+export type BusinessHoursOverrideEdge = {
+  cursor: Scalars['String']['output'];
+  node: BusinessHoursOverride;
+};
+
+export type BusinessHoursOverrideSlot = {
+  /** The time this slot closes, in HH:MM format (e.g. '13:00'). */
+  closesAt: Scalars['String']['output'];
+  /** The date of this slot, in YYYY-MM-DD format. */
+  date: Scalars['String']['output'];
+  /** The time this slot opens, in HH:MM format (e.g. '09:00'). */
+  opensAt: Scalars['String']['output'];
+};
+
+export type BusinessHoursOverrideSlotInput = {
+  /** Closing time in HH:MM format. Must be after opensAt. */
+  closesAt: Scalars['String']['input'];
+  /** A date within the override, in YYYY-MM-DD format. */
+  date: Scalars['String']['input'];
+  /** Opening time in HH:MM format. */
+  opensAt: Scalars['String']['input'];
+};
+
+/** Filters overrides by their start and end dates. For example, current and upcoming overrides are endsOn after today; overrides touching a week are endsOn after its first day and startsOn before the day after its last. */
+export type BusinessHoursOverridesFilter = {
+  endsOn?: InputMaybe<DateFilter>;
+  startsOn?: InputMaybe<DateFilter>;
+};
+
+export type BusinessHoursOverridesSort = {
+  direction: SortDirection;
+  field: BusinessHoursOverridesSortField;
+};
+
+export type BusinessHoursOverridesSortField =
+  | 'STARTS_ON';
+
 /** A named set of business hours slots. A workspace can have several schedules, each covering a different team or region. */
 export type BusinessHoursSchedule = {
   createdAt: DateTime;
@@ -2067,10 +2166,25 @@ export type BusinessHoursSchedule = {
   id: Scalars['ID']['output'];
   /** Human-readable name, unique within the workspace. */
   name: Scalars['String']['output'];
+  /** Overrides that replace this schedule's weekly hours on specific dates, sorted by start date. */
+  overrides: BusinessHoursOverrideConnection;
   /** The slots that make up this schedule. Overlapping and adjacent slots are merged, and the list is sorted by timezone then weekday. */
   slots: Array<BusinessHoursSlot>;
+  /** The timezone the schedule's slots are set in. */
+  timezone: Timezone;
   updatedAt: DateTime;
   updatedBy: InternalActor;
+};
+
+
+/** A named set of business hours slots. A workspace can have several schedules, each covering a different team or region. */
+export type BusinessHoursScheduleOverridesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<BusinessHoursOverridesFilter>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  sortBy?: InputMaybe<BusinessHoursOverridesSort>;
 };
 
 export type BusinessHoursScheduleConnection = {
@@ -2097,7 +2211,11 @@ export type BusinessHoursSlot = {
 export type BusinessHoursSlotInput = {
   closesAt: Scalars['String']['input'];
   opensAt: Scalars['String']['input'];
-  timezone: Scalars['String']['input'];
+  /**
+   * Deprecated: set the timezone on the schedule instead. If given, it must match the schedule's timezone. Omitted, the slot uses the schedule's timezone.
+   * @deprecated Set the timezone on the business hours schedule instead.
+   */
+  timezone?: InputMaybe<Scalars['String']['input']>;
   weekday: WeekDay;
 };
 
@@ -2898,11 +3016,30 @@ export type CreateBroadcastOutput = {
   error?: Maybe<MutationError>;
 };
 
+export type CreateBusinessHoursOverrideInput = {
+  businessHoursScheduleId: Scalars['ID']['input'];
+  /** The last date (inclusive), in YYYY-MM-DD format. An override can cover at most 92 days. */
+  endsOn: Scalars['String']['input'];
+  /** Human-readable name for the override. */
+  name: Scalars['String']['input'];
+  /** The open slots. A date in the range without slots is closed; omit to close every date. Overlapping and adjacent slots on a date are merged. */
+  slots?: InputMaybe<Array<BusinessHoursOverrideSlotInput>>;
+  /** The first date, in YYYY-MM-DD format. Can't be before today in the schedule's timezone; today can be given hours at any time of day. */
+  startsOn: Scalars['String']['input'];
+};
+
+export type CreateBusinessHoursOverrideOutput = {
+  businessHoursOverride?: Maybe<BusinessHoursOverride>;
+  error?: Maybe<MutationError>;
+};
+
 export type CreateBusinessHoursScheduleInput = {
   /** Human-readable name for the schedule. Must be unique within the workspace. */
   name: Scalars['String']['input'];
   /** The slots to open the schedule with. Must contain at least one slot, and every slot must use the same timezone. */
   slots?: InputMaybe<Array<BusinessHoursSlotInput>>;
+  /** The schedule's IANA timezone, e.g. Europe/London. Omit to take it from the slots. If given, every slot must use it. */
+  timezone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateBusinessHoursScheduleOutput = {
@@ -3299,6 +3436,20 @@ export type CreateNoteOutput = {
   note?: Maybe<Note>;
 };
 
+export type CreateOAuthAppInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  /** Absolute URLs using https, or http on localhost. At least one is required. */
+  redirectUrls: Array<Scalars['String']['input']>;
+};
+
+export type CreateOAuthAppOutput = {
+  /** The app's first client secret. This value is only returned once, when it's created, and can't be retrieved later. Store it securely straight away. */
+  clientSecret?: Maybe<Scalars['String']['output']>;
+  error?: Maybe<MutationError>;
+  oauthApp?: Maybe<OAuthApp>;
+};
+
 export type CreateSavedThreadsViewInput = {
   color: Scalars['String']['input'];
   icon: Scalars['String']['input'];
@@ -3385,10 +3536,12 @@ export type CreateTaskAssignedToInput = {
 export type CreateTaskInput = {
   accountId?: InputMaybe<Scalars['ID']['input']>;
   assignedTo?: InputMaybe<CreateTaskAssignedToInput>;
+  /** @deprecated Use accountId instead */
   companyId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   priority?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<TaskStatus>;
+  /** @deprecated Use accountId instead */
   tenantId?: InputMaybe<Scalars['ID']['input']>;
   title: Scalars['String']['input'];
 };
@@ -3434,10 +3587,15 @@ export type CreateThreadChannelAssociationInput = {
   accountIdentifier?: InputMaybe<AccountIdentifierInput>;
   /** How accounts are assigned when a message from this channel is received. Defaults to ALWAYS_ADD. */
   accountMembershipPolicy?: InputMaybe<AccountMembershipPolicy>;
+  /** @deprecated Use accountIdentifier instead */
   companyIdentifier?: InputMaybe<CompanyIdentifierInput>;
   connectedSlackChannelId?: InputMaybe<Scalars['ID']['input']>;
+  /** @deprecated Use accountIdentifier instead */
   tenantIdentifier?: InputMaybe<TenantIdentifierInput>;
-  /** How tenants are assigned when a message from this channel is received. Defaults to ALWAYS_ADD. */
+  /**
+   * How tenants are assigned when a message from this channel is received. Defaults to ALWAYS_ADD.
+   * @deprecated Use accountMembershipPolicy instead
+   */
   tenantMembershipPolicy?: InputMaybe<TenantMembershipPolicy>;
 };
 
@@ -3556,7 +3714,10 @@ export type CreateThreadFromSlackMessageInput = {
   slackChannelId: Scalars['String']['input'];
   /** The Slack `ts` of the top-level message to ingest. Replies are rejected. */
   slackMessageTimestamp: Scalars['String']['input'];
-  /** When set, used instead of the Slack channel's tenant association. */
+  /**
+   * When set, used instead of the Slack channel's tenant association.
+   * @deprecated Use accountIdentifier instead
+   */
   tenantIdentifier?: InputMaybe<TenantIdentifierInput>;
   /** Thread fields to attach to the thread upon creation. */
   threadFields?: InputMaybe<Array<CreateThreadFieldOnThreadInput>>;
@@ -3606,7 +3767,10 @@ export type CreateThreadInput = {
   labelTypeIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** The priority of the thread. Valid values are 0, 1, 2, 3, from most to least urgent, defaults to 2 (normal). */
   priority?: InputMaybe<Scalars['Int']['input']>;
-  /** A thread may be assigned to a specific tenant. */
+  /**
+   * A thread may be assigned to a specific tenant.
+   * @deprecated Use accountIdentifier instead
+   */
   tenantIdentifier?: InputMaybe<TenantIdentifierInput>;
   /** An array of thread fields to attach to the thread upon creation. */
   threadFields?: InputMaybe<Array<CreateThreadFieldOnThreadInput>>;
@@ -3905,6 +4069,8 @@ export type CreditSpendItem = {
   status: CreditSpendStatus;
   /** The thread this spend belongs to, when there is one. A discussion started without a thread has none. */
   threadId?: Maybe<Scalars['ID']['output']>;
+  /** The workflow run that caused the spend, when one did. Read `workflowExecution` for the run. */
+  workflowExecutionId?: Maybe<Scalars['ID']['output']>;
   /** The workflow that caused the spend, when one did. Read `workflows` for its full definition. */
   workflowId?: Maybe<Scalars['ID']['output']>;
   /** Name of the workflow that caused the spend, when one did. */
@@ -4018,7 +4184,10 @@ export type Customer = {
   assignedToUser?: Maybe<UserActor>;
   /** The avatar URL of the customer. */
   avatarUrl?: Maybe<Scalars['String']['output']>;
-  /** The company the customer belongs to. */
+  /**
+   * The company the customer belongs to.
+   * @deprecated Use accountMemberships instead
+   */
   company?: Maybe<Company>;
   createdAt: DateTime;
   createdBy: Actor;
@@ -4050,7 +4219,10 @@ export type Customer = {
   status?: Maybe<CustomerStatus>;
   /** @deprecated Use Thread.statusChangedAt instead */
   statusChangedAt?: Maybe<DateTime>;
-  /** A subquery to fetch the customer's tenants. */
+  /**
+   * A subquery to fetch the customer's tenants.
+   * @deprecated Use accountMemberships instead
+   */
   tenantMemberships: CustomerTenantMembershipConnection;
   updatedAt: DateTime;
   updatedBy: Actor;
@@ -4616,6 +4788,7 @@ export type CustomersFilter = {
    * Filters customers to those belonging to the given companies.
    * Customers who dont belong to any of the given companies will not be included.
    * Can be combined with other company filters.
+   * @deprecated Use accountIdentifiers instead
    */
   companyIdentifiers?: InputMaybe<Array<CompanyIdentifierInput>>;
   /**
@@ -4637,6 +4810,7 @@ export type CustomersFilter = {
    * Filters customers to those belonging to the given tenants.
    * Customers who dont belong to any of the given tenants will not be included.
    * Can be combined with other company filters.
+   * @deprecated Use accountIdentifiers instead
    */
   tenantIdentifiers?: InputMaybe<Array<TenantIdentifierInput>>;
   updatedAt?: InputMaybe<DatetimeFilter>;
@@ -4658,6 +4832,14 @@ export type CustomersSort = {
 
 export type CustomersSortField =
   | 'FULL_NAME';
+
+/** Filters calendar dates, which have no time or timezone. */
+export type DateFilter = {
+  /** On or after this date, in YYYY-MM-DD format. */
+  after?: InputMaybe<Scalars['String']['input']>;
+  /** Before this date, in YYYY-MM-DD format. */
+  before?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type DateTime = {
   iso8601: Scalars['String']['output'];
@@ -4759,6 +4941,14 @@ export type DeleteBroadcastOutput = {
 };
 
 export type DeleteBusinessHoursOutput = {
+  error?: Maybe<MutationError>;
+};
+
+export type DeleteBusinessHoursOverrideInput = {
+  businessHoursOverrideId: Scalars['ID']['input'];
+};
+
+export type DeleteBusinessHoursOverrideOutput = {
   error?: Maybe<MutationError>;
 };
 
@@ -4939,6 +5129,15 @@ export type DeleteNoteInput = {
 export type DeleteNoteOutput = {
   error?: Maybe<MutationError>;
   note?: Maybe<Note>;
+};
+
+export type DeleteOAuthAppInput = {
+  oauthAppId: Scalars['ID']['input'];
+};
+
+export type DeleteOAuthAppOutput = {
+  error?: Maybe<MutationError>;
+  oauthApp?: Maybe<OAuthApp>;
 };
 
 export type DeleteQueuedAgentSessionMessageInput = {
@@ -5309,6 +5508,15 @@ export type DependsOnThreadFieldInput = {
 export type DependsOnThreadFieldType = {
   threadFieldSchemaId: Scalars['ID']['output'];
   threadFieldSchemaValue: Scalars['String']['output'];
+};
+
+export type DisableOAuthAppInput = {
+  oauthAppId: Scalars['ID']['input'];
+};
+
+export type DisableOAuthAppOutput = {
+  error?: Maybe<MutationError>;
+  oauthApp?: Maybe<OAuthApp>;
 };
 
 export type DiscordCustomerIdentity = {
@@ -5721,6 +5929,15 @@ export type EmbedToken = {
   token: Scalars['String']['output'];
 };
 
+export type EnableOAuthAppInput = {
+  oauthAppId: Scalars['ID']['input'];
+};
+
+export type EnableOAuthAppOutput = {
+  error?: Maybe<MutationError>;
+  oauthApp?: Maybe<OAuthApp>;
+};
+
 /** A union of all possible entries that can appear in a timeline. */
 export type Entry = ChatEntry | CustomEntry | CustomerEventEntry | CustomerSurveyRequestedEntry | DiscordMessageEntry | EmailEntry | HelpCenterAiConversationMessageEntry | LinearIssueThreadLinkStateTransitionedEntry | MsTeamsMessageEntry | MergedThreadMessageEntry | NoteEntry | ServiceLevelAgreementStatusTransitionedEntry | SlackMessageEntry | SlackReplyEntry | ThreadAdditionalAssigneesTransitionedEntry | ThreadAssignmentTransitionedEntry | ThreadDiscussionEntry | ThreadDiscussionMessageEntry | ThreadDiscussionResolvedEntry | ThreadEventEntry | ThreadLabelsChangedEntry | ThreadLinkCreatedEntry | ThreadLinkDeletedEntry | ThreadLinkTargetCreatedEntry | ThreadLinkTargetDeletedEntry | ThreadLinkUpdatedEntry | ThreadPriorityChangedEntry | ThreadServiceLevelAgreementPolicyChangedEntry | ThreadStatusTransitionedEntry;
 
@@ -5863,6 +6080,7 @@ export type FeatureKey =
   | 'SLACK_DISCUSSIONS'
   | 'SSO'
   | 'TEAM_REPORTING'
+  | 'USER_SEATS'
   | 'WORKFLOW_RULES'
   | 'ZENDESK_IMPORTER';
 
@@ -6100,11 +6318,17 @@ export type HelpCenterArticlesArgs = {
 export type HelpCenterAccessSettings = {
   /** IDs of accounts whose members are allowed to access this PRIVATE help center. */
   accountIds: Array<Scalars['String']['output']>;
-  /** IDs of companies whose customers are allowed to access this PRIVATE help center. */
+  /**
+   * IDs of companies whose customers are allowed to access this PRIVATE help center.
+   * @deprecated Use accountIds instead
+   */
   companyIds: Array<Scalars['String']['output']>;
   /** IDs of individual customers explicitly allowed to access this PRIVATE help center. */
   customerIds: Array<Scalars['String']['output']>;
-  /** IDs of tenants whose members are allowed to access this PRIVATE help center. */
+  /**
+   * IDs of tenants whose members are allowed to access this PRIVATE help center.
+   * @deprecated Use accountIds instead
+   */
   tenantIds: Array<Scalars['String']['output']>;
   /** IDs of tiers whose members are allowed to access this PRIVATE help center. */
   tierIds: Array<Scalars['String']['output']>;
@@ -6112,8 +6336,10 @@ export type HelpCenterAccessSettings = {
 
 export type HelpCenterAccessSettingsInput = {
   accountIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** @deprecated Use accountIds instead */
   companyIds?: InputMaybe<Array<Scalars['String']['input']>>;
   customerIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** @deprecated Use accountIds instead */
   tenantIds?: InputMaybe<Array<Scalars['String']['input']>>;
   tierIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
@@ -6383,7 +6609,7 @@ export type HelpCenterArticleGroupEdge = {
 };
 
 export type HelpCenterArticleSearchResult = {
-  /** The extracted text content of the matched article chunk, as indexed by Plain AI. */
+  /** The full extracted text content of the matched article, as indexed by Plain AI. */
   content: Scalars['String']['output'];
   helpCenter: HelpCenter;
   helpCenterArticle: HelpCenterArticle;
@@ -6612,23 +6838,31 @@ export type HelpCenterPortalSettingsThreadFieldsInput = {
 
 export type HelpCenterPortalSettingsThreadVisibility = {
   customerAccounts: Scalars['Boolean']['output'];
+  /** @deprecated Use customerAccounts instead */
   customerCompany: Scalars['Boolean']['output'];
   customerEmailDomain: Scalars['Boolean']['output'];
+  /** @deprecated Use customerAccounts instead */
   customerTenants: Scalars['Boolean']['output'];
   overrideCustomerAccounts?: Maybe<HelpCenterPortalSettingsOverrideCustomerAccounts>;
+  /** @deprecated Use overrideCustomerAccounts instead */
   overrideCustomerCompany?: Maybe<HelpCenterPortalSettingsOverrideCustomerCompany>;
   overrideCustomerEmailDomain?: Maybe<HelpCenterPortalSettingsOverrideCustomerTenants>;
+  /** @deprecated Use overrideCustomerAccounts instead */
   overrideCustomerTenants?: Maybe<HelpCenterPortalSettingsOverrideCustomerTenants>;
 };
 
 export type HelpCenterPortalSettingsThreadVisibilityInput = {
   customerAccounts?: InputMaybe<Scalars['Boolean']['input']>;
+  /** @deprecated Use customerAccounts instead */
   customerCompany?: InputMaybe<Scalars['Boolean']['input']>;
   customerEmailDomain?: InputMaybe<Scalars['Boolean']['input']>;
+  /** @deprecated Use customerAccounts instead */
   customerTenants?: InputMaybe<Scalars['Boolean']['input']>;
   overrideCustomerAccounts?: InputMaybe<HelpCenterPortalSettingsOverrideCustomerAccountsInput>;
+  /** @deprecated Use overrideCustomerAccounts instead */
   overrideCustomerCompany?: InputMaybe<HelpCenterPortalSettingsOverrideCustomerCompanyInput>;
   overrideCustomerEmailDomain?: InputMaybe<HelpCenterPortalSettingsOverrideCustomerTenantsInput>;
+  /** @deprecated Use overrideCustomerAccounts instead */
   overrideCustomerTenants?: InputMaybe<HelpCenterPortalSettingsOverrideCustomerTenantsInput>;
 };
 
@@ -6679,6 +6913,114 @@ export type HyperlineCheckoutSessionStatus =
 export type ImpersonationInput = {
   asCustomer?: InputMaybe<CustomerImpersonationInput>;
   asUser?: InputMaybe<UserImpersonationInput>;
+};
+
+export type ImportAccountFieldSchemaInput = {
+  externalFieldId: Scalars['String']['input'];
+  isDeleted: Scalars['Boolean']['input'];
+  label: Scalars['String']['input'];
+  options?: InputMaybe<Array<Scalars['String']['input']>>;
+  type: AccountFieldType;
+};
+
+export type ImportAccountFieldSchemasFromServiceInput = {
+  serviceIntegrationKey: Scalars['String']['input'];
+};
+
+export type ImportAccountFieldSchemasFromServiceOutput = {
+  accountFieldSchemas: Array<AccountFieldSchema>;
+  error?: Maybe<MutationError>;
+};
+
+export type ImportAccountFieldSchemasInput = {
+  accountFieldSchemas: Array<ImportAccountFieldSchemaInput>;
+};
+
+export type ImportAccountFieldSchemasOutput = {
+  error?: Maybe<MutationError>;
+  result?: Maybe<ImportResult>;
+};
+
+export type ImportAccountFieldValueInput = {
+  fieldId: Scalars['String']['input'];
+  type: AccountFieldType;
+  value: Scalars['String']['input'];
+};
+
+export type ImportAccountInput = {
+  accountFields?: InputMaybe<Array<ImportAccountFieldValueInput>>;
+  externalId: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  url?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ImportAccountsInput = {
+  accounts: Array<ImportAccountInput>;
+};
+
+export type ImportAccountsOutput = {
+  error?: Maybe<MutationError>;
+  result?: Maybe<ImportResult>;
+};
+
+export type ImportBroadcastAudienceChannelMatch = {
+  name: Scalars['String']['output'];
+  slackChannelId: Scalars['ID']['output'];
+  slackTeamId: Scalars['ID']['output'];
+};
+
+export type ImportBroadcastAudienceChannelRowInput = {
+  /**
+   * Recipient identifier to pin on the audience. Today this is a Slack channel id (`C…` / `G…` / `D…`)
+   * or exact Slack channel name (optional leading `#`).
+   */
+  recipient: Scalars['String']['input'];
+  /** 1-based spreadsheet row number (header is 1). */
+  rowNumber: Scalars['Int']['input'];
+  /** Optional Slack team id when the same Slack channel name exists on more than one connected team. */
+  slackTeamId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type ImportBroadcastAudienceChannelRowResult = {
+  matches: Array<ImportBroadcastAudienceChannelMatch>;
+  message?: Maybe<Scalars['String']['output']>;
+  /** The recipient identifier from the import row (after normalization). */
+  recipient?: Maybe<Scalars['String']['output']>;
+  rowNumber: Scalars['Int']['output'];
+  slackChannelId?: Maybe<Scalars['ID']['output']>;
+  slackTeamId?: Maybe<Scalars['ID']['output']>;
+  status: ImportBroadcastAudienceChannelRowStatus;
+};
+
+export type ImportBroadcastAudienceChannelRowStatus =
+  | 'ADDED'
+  | 'ALREADY_IN_AUDIENCE'
+  | 'AMBIGUOUS'
+  | 'INVALID'
+  | 'NOT_FOUND';
+
+export type ImportBroadcastAudienceChannelsInput = {
+  broadcastAudienceId: Scalars['ID']['input'];
+  /** When true, resolve and report without writing. */
+  isDryRun: Scalars['Boolean']['input'];
+  /** Structured rows to pin (max 500). CSV parsing is client-side. */
+  rows: Array<ImportBroadcastAudienceChannelRowInput>;
+};
+
+export type ImportBroadcastAudienceChannelsOutput = {
+  error?: Maybe<MutationError>;
+  result?: Maybe<ImportBroadcastAudienceChannelsResult>;
+};
+
+export type ImportBroadcastAudienceChannelsResult = {
+  addedCount: Scalars['Int']['output'];
+  alreadyInAudienceCount: Scalars['Int']['output'];
+  ambiguousCount: Scalars['Int']['output'];
+  broadcastAudience: BroadcastAudience;
+  invalidCount: Scalars['Int']['output'];
+  isDryRun: Scalars['Boolean']['output'];
+  notFoundCount: Scalars['Int']['output'];
+  rows: Array<ImportBroadcastAudienceChannelRowResult>;
 };
 
 export type ImportBroadcastRecipientUnsubscribeMatch = {
@@ -7025,6 +7367,22 @@ export type ImportThreadStatusDetailInput = {
 
 export type ImportedThreadMessage = Note | TimelineEntry;
 
+/** A list or view of accounts available in a connected external service, used to scope which records are synced during an import. */
+export type ImporterAccountList = {
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ImporterAccountListConnection = {
+  edges: Array<ImporterAccountListEdge>;
+  pageInfo: PageInfo;
+};
+
+export type ImporterAccountListEdge = {
+  cursor: Scalars['String']['output'];
+  node: ImporterAccountList;
+};
+
 export type ImporterEntityType =
   | 'CUSTOMERS'
   | 'TENANTS'
@@ -7059,6 +7417,8 @@ export type IndexedDocument = {
   createdAt: DateTime;
   createdBy: InternalActor;
   id: Scalars['ID']['output'];
+  /** The ID of the knowledge source this document was ingested from. */
+  knowledgeSourceId: Scalars['ID']['output'];
   /** Label types associated with this document, used to scope AI search results to specific topics. */
   labelTypes: Array<LabelType>;
   /** The current indexing status of this document: pending (queued), indexed (ready for AI), or failed. */
@@ -7079,7 +7439,7 @@ export type IndexedDocumentEdge = {
 };
 
 export type IndexedDocumentSearchResult = {
-  /** The extracted text content of the matched document chunk, as indexed by Plain AI. */
+  /** The full extracted text content of the matched document, as indexed by Plain AI. */
   content: Scalars['String']['output'];
   indexedDocument: IndexedDocument;
 };
@@ -7172,7 +7532,7 @@ export type InternalNotification = {
   readAt?: Maybe<DateTime>;
   /** The title of the notification. */
   title: Scalars['String']['output'];
-  /** The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', 'discussion_resolved', 'integration_reauth_required', and 'webhook_target'. Use `details` for type-specific data. */
+  /** The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', 'discussion_resolved', 'integration_reauth_required', 'webhook_target', and 'thread_notification'. Use `details` for type-specific data. */
   type: Scalars['String']['output'];
   updatedAt: DateTime;
   updatedBy: InternalActor;
@@ -7192,7 +7552,7 @@ export type InternalNotificationConnection = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type InternalNotificationDetail = DiscussionResolvedNotificationDetail | EmailBounceNotificationDetail | IntegrationReauthRequiredNotificationDetail | NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | WebhookTargetNotificationDetail;
+export type InternalNotificationDetail = DiscussionResolvedNotificationDetail | EmailBounceNotificationDetail | IntegrationReauthRequiredNotificationDetail | NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | ThreadNotificationDetail | WebhookTargetNotificationDetail;
 
 export type InternalNotificationEdge = {
   cursor: Scalars['String']['output'];
@@ -7409,6 +7769,8 @@ export type KnowledgeGapTaskLink = TaskLink & {
 };
 
 export type KnowledgeGapsFilter = {
+  /** Only return gaps most recently hit by a customer within this range. Set only `after` to get every gap hit at least once since that time. */
+  lastSeenAt?: InputMaybe<DatetimeFilter>;
   statuses?: InputMaybe<Array<KnowledgeGapStatus>>;
 };
 
@@ -7571,6 +7933,8 @@ export type LabelTypeEdge = {
 
 export type LabelTypeFilter = {
   isArchived?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Only label types changed in this range, including archiving and unarchiving. Use it to sync changes since a previous read. */
+  updatedAt?: InputMaybe<DatetimeFilter>;
 };
 
 export type LabelTypeType =
@@ -7829,6 +8193,18 @@ export type MarkThreadDiscussionReadOutput = {
   threadDiscussion?: Maybe<ThreadDiscussion>;
 };
 
+export type MemberSeatCapCheck = {
+  /** False when giving these people a paid role would exceed the member seat cap. */
+  isValid: Scalars['Boolean']['output'];
+};
+
+export type MemberSeatCapCheckInput = {
+  /** Emails of the people being invited with a paid role. */
+  emails?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** The member whose role is changing to a paid one. */
+  userId?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type MentionInput = {
   displayName: Scalars['String']['input'];
   userId: Scalars['ID']['input'];
@@ -7941,6 +8317,7 @@ export type Mutation = {
    * Adds a customer to one or more tenants. The customer can be identified by their Plain ID, external ID, or email address.
    * If the customer is already a member of a given tenant the operation is a no-op for that tenant.
    * Requires the `customer:edit` and `customerTenantMembership:create` permissions.
+   * @deprecated Use addCustomerToAccounts instead
    */
   addCustomerToTenants: AddCustomerToTenantsOutput;
   /** Programmatically add a suggested reply to a thread. The reply is surfaced to teammates in Plain so they can review, edit, and send it — the customer sees nothing until a teammate explicitly sends it. The `timelineEntryId` must reference an inbound message on the thread, from the customer or from a machine user. A message the workspace sent, including one your own machine user sent, is not a valid target. The `markdown` field is capped at 5,000 characters. Requires the `generatedReply:create` permission. */
@@ -8072,6 +8449,8 @@ export type Mutation = {
    * Requires the `broadcastAudience:create` permission.
    */
   createBroadcastAudience: CreateBroadcastAudienceOutput;
+  /** Create an override that replaces a schedule's weekly hours from `startsOn` to `endsOn`, e.g. a holiday. Can't overlap another override on the same schedule. Requires the `businessHours:create` permission. */
+  createBusinessHoursOverride: CreateBusinessHoursOverrideOutput;
   /** Create a new named business hours schedule, optionally with its opening slots. Overlapping and adjacent slots are merged on write. Requires the `businessHours:create` permission. */
   createBusinessHoursSchedule: CreateBusinessHoursScheduleOutput;
   /**
@@ -8176,6 +8555,8 @@ export type Mutation = {
    * customer so it appears across all of their threads. Requires the `note:create` permission.
    */
   createNote: CreateNoteOutput;
+  /** Creates an OAuth app owned by the workspace, along with its first client secret. The secret is returned only once in `clientSecret` and can't be retrieved again. Requires the `oauthApp:create` permission. */
+  createOAuthApp: CreateOAuthAppOutput;
   /** Creates a new saved threads view in the workspace. The view stores a named filter configuration (including sort order, grouping, layout, and display options) that can be applied when querying threads. Requires the savedThreadsView:create permission; depending on workspace settings, only admins or all members may be allowed to create views. */
   createSavedThreadsView: CreateSavedThreadsViewOutput;
   /** Create a service level agreement (SLA) for a tier. Each SLA commits your team to a time target and can be scoped by thread priority and/or label type. Provide exactly one of `firstResponseTimeMinutes` (time from thread creation to first reply), `nextResponseTimeMinutes` (time from each customer message to the next reply), `firstResolutionTimeMinutes` (time from thread creation to first Done), or `totalResolutionTimeMinutes` (time from thread creation to Done, including after reopen). A `nextResponseTimeMinutes` SLA can only be created if a `firstResponseTimeMinutes` SLA already exists on the same tier. Requires the `serviceLevelAgreement:create` permission. */
@@ -8194,6 +8575,7 @@ export type Mutation = {
    * Creates a new tenant. Fails with a validation error if a tenant already exists with the provided `externalId`.
    * Use `upsertTenant` instead if you want to create or update a tenant idempotently.
    * Requires the `tenant:create` permission.
+   * @deprecated Use createAccount instead
    */
   createTenant: CreateTenantOutput;
   /**
@@ -8338,6 +8720,8 @@ export type Mutation = {
    * @deprecated Use deleteBusinessHoursSchedule instead.
    */
   deleteBusinessHours: DeleteBusinessHoursOutput;
+  /** Delete an override. The schedule's weekly hours apply to its dates again. Requires the `businessHours:delete` permission. */
+  deleteBusinessHoursOverride: DeleteBusinessHoursOverrideOutput;
   /** Delete a business hours schedule and the slots belonging to it. Requires the `businessHours:delete` permission. */
   deleteBusinessHoursSchedule: DeleteBusinessHoursScheduleOutput;
   /**
@@ -8351,7 +8735,10 @@ export type Mutation = {
    * Requires the `chatAppSecret:delete` permission.
    */
   deleteChatAppSecret: DeleteChatAppSecretOutput;
-  /** Deletes a company identified by `companyId` or `companyDomainName`. Deleting a company unlinks it from all of its customers — the customers themselves are not deleted. Requires the `company:delete` permission. */
+  /**
+   * Deletes a company identified by `companyId` or `companyDomainName`. Deleting a company unlinks it from all of its customers — the customers themselves are not deleted. Requires the `company:delete` permission.
+   * @deprecated Use deleteAccount instead
+   */
   deleteCompany: DeleteCompanyOutput;
   /** Permanently deletes a custom role by its ID. Returns the ID of the deleted role on success. Requires the `roles:edit` permission. */
   deleteCustomRole: DeleteCustomRoleOutput;
@@ -8399,6 +8786,8 @@ export type Mutation = {
   deleteMySlackIntegration: DeleteMySlackIntegrationOutput;
   /** Soft-deletes a note. The note is marked as deleted but its record is retained. Requires the `note:delete` permission. */
   deleteNote: DeleteNoteOutput;
+  /** Permanently deletes an OAuth app. Every token it holds is rejected straight away. Requires the `oauthApp:delete` permission. */
+  deleteOAuthApp: DeleteOAuthAppOutput;
   /**
    * Removes a user message that is waiting in a Sidekick AGENT_SESSION queue. Rejects with
    * `queued_agent_session_message_already_dispatched` if the agent has already picked the
@@ -8428,11 +8817,18 @@ export type Mutation = {
    * Threads that were associated with the tenant retain a tombstone reference but are no longer routed through it.
    * The tenant can be identified by either its Plain `tenantId` or its `externalId`.
    * Requires the `tenant:delete` permission.
+   * @deprecated Use deleteAccount instead
    */
   deleteTenant: DeleteTenantOutput;
-  /** Clears a tenant's value for a specific field without removing the field schema itself. Use this to unset a field value while keeping the schema available for other tenants. Requires `tenant:edit` permission. */
+  /**
+   * Clears a tenant's value for a specific field without removing the field schema itself. Use this to unset a field value while keeping the schema available for other tenants. Requires `tenant:edit` permission.
+   * @deprecated Use deleteAccountField instead
+   */
   deleteTenantField: DeleteTenantFieldOutput;
-  /** Permanently deletes a tenant field schema and all field values stored against it across all tenants. This action cannot be undone. Requires `tenantFieldSchema:delete` permission. */
+  /**
+   * Permanently deletes a tenant field schema and all field values stored against it across all tenants. This action cannot be undone. Requires `tenantFieldSchema:delete` permission.
+   * @deprecated Use deleteAccountFieldSchema instead
+   */
   deleteTenantFieldSchema: DeleteTenantFieldSchemaOutput;
   /** Permanently delete one of the signed-in user's own test threads. Other threads are reported as not found. */
   deleteTestThread: DeleteTestThreadOutput;
@@ -8487,6 +8883,8 @@ export type Mutation = {
   deleteWorkspaceSlackIntegration: DeleteWorkspaceSlackIntegrationOutput;
   /** Removes Plain's Sidekick AI agent from the workspace's Slack. Returns the integration that was deleted. Returns an error if no Sidekick integration exists. Requires the workspaceSlackSidekickIntegration:delete permission. */
   deleteWorkspaceSlackSidekickIntegration: DeleteWorkspaceSlackSidekickIntegrationOutput;
+  /** Turns an OAuth app off. The Plain API rejects every token issued to it, including ones it already holds, until it's turned back on. Requires the `oauthApp:edit` permission. */
+  disableOAuthApp: DisableOAuthAppOutput;
   /** Dismisses a Sidekick question card so the person can reply in the chat instead. */
   dismissSidekickQuestion: DismissSidekickQuestionOutput;
   /** Dismisses one or more pending suggested label types without creating label types. All ids must currently be PENDING. Requires the `labelType:create` permission. */
@@ -8505,6 +8903,8 @@ export type Mutation = {
    * picked the message up.
    */
   editQueuedAgentSessionMessage: EditQueuedAgentSessionMessageOutput;
+  /** Turns an OAuth app on, so the Plain API accepts its tokens again. Requires the `oauthApp:edit` permission. */
+  enableOAuthApp: EnableOAuthAppOutput;
   /** Advance a thread to the next step in its escalation path. The thread must already have an escalation path attached (via `updateThreadEscalationPath`) — if not, this call returns an error. Requires the `thread:edit` permission. */
   escalateThread: EscalateThreadOutput;
   /**
@@ -8518,15 +8918,35 @@ export type Mutation = {
   generateAiToneRulesFromDescription: GenerateAiToneRulesFromDescriptionOutput;
   /** Use AI to generate one or more draft help center articles from the content of a support thread. Returns the generated articles in DRAFT status for review before publishing. Requires the helpCenter:edit permission. */
   generateHelpCenterArticle: GenerateHelpCenterArticleOutput;
+  /** Upsert up to 50 account field schemas from an external system using their externalFieldId for idempotency. Set isDeleted: true on a schema to mark it as deleted in Plain. Returns an ImportResult with added, updated, and skipped counts. */
+  importAccountFieldSchemas: ImportAccountFieldSchemasOutput;
+  /** Fetches account field schemas from a connected external service (identified by `serviceIntegrationKey`) and upserts them into Plain. The service must already be authorized and connected. Returns the full list of schemas that were imported. */
+  importAccountFieldSchemasFromService: ImportAccountFieldSchemasFromServiceOutput;
+  /** Upsert up to 25 accounts from an external system using their externalId for idempotency. Optionally include account field values to sync custom fields alongside the account record. Returns an ImportResult with added, updated, and skipped counts. */
+  importAccounts: ImportAccountsOutput;
+  /**
+   * Bulk-imports Slack channels into a broadcast audience's pinned `slackChannels` filter (by channel
+   * id or exact name). Idempotent. Requires `broadcastAudience:edit` and the broadcasts feature flag.
+   */
+  importBroadcastAudienceChannels: ImportBroadcastAudienceChannelsOutput;
   /** Bulk-imports broadcast recipient unsubscribes by recipient identifier (Slack channel id/name today; email later). Idempotent. Requires `broadcast:edit` and the broadcasts feature flag. */
   importBroadcastRecipientUnsubscribes: ImportBroadcastRecipientUnsubscribesOutput;
   /** Upsert up to 25 customers from an external system using their externalId for idempotency. Each customer can include an optional list of tenants to associate with. Returns an ImportResult with added, updated, and skipped counts. */
   importCustomers: ImportCustomersOutput;
-  /** Upsert up to 50 tenant field schemas from an external system using their externalFieldId for idempotency. Set isDeleted: true on a schema to mark it as deleted in Plain. Returns an ImportResult with added, updated, and skipped counts. */
+  /**
+   * Upsert up to 50 tenant field schemas from an external system using their externalFieldId for idempotency. Set isDeleted: true on a schema to mark it as deleted in Plain. Returns an ImportResult with added, updated, and skipped counts.
+   * @deprecated Use importAccountFieldSchemas instead
+   */
   importTenantFieldSchemas: ImportTenantFieldSchemasOutput;
-  /** Fetches tenant field schemas from a connected external service (identified by `serviceIntegrationKey`) and upserts them into Plain. The service must already be authorized and connected. Returns the full list of schemas that were imported. */
+  /**
+   * Fetches tenant field schemas from a connected external service (identified by `serviceIntegrationKey`) and upserts them into Plain. The service must already be authorized and connected. Returns the full list of schemas that were imported.
+   * @deprecated Use importAccountFieldSchemasFromService instead
+   */
   importTenantFieldSchemasFromService: ImportTenantFieldSchemasFromServiceOutput;
-  /** Upsert up to 25 tenants from an external system using their externalId for idempotency. Optionally include tenant field values to sync custom fields alongside the tenant record. Returns an ImportResult with added, updated, and skipped counts. */
+  /**
+   * Upsert up to 25 tenants from an external system using their externalId for idempotency. Optionally include tenant field values to sync custom fields alongside the tenant record. Returns an ImportResult with added, updated, and skipped counts.
+   * @deprecated Use importAccounts instead
+   */
   importTenants: ImportTenantsOutput;
   /**
    * Import a thread from an external system using its historical creation timestamp.
@@ -8619,6 +9039,7 @@ export type Mutation = {
    * Removes a customer from one or more tenants. The customer can be identified by their Plain ID, external ID, or email address.
    * If the customer is not currently a member of a specified tenant the operation is a no-op for that tenant.
    * Requires the `customer:edit` and `customerTenantMembership:delete` permissions.
+   * @deprecated Use removeCustomerFromAccounts instead
    */
   removeCustomerFromTenants: RemoveCustomerFromTenantsOutput;
   /** Remove one or more labels from a thread by label ID. All provided label IDs must belong to the same thread; mixing labels from different threads returns an error. Requires the `label:delete` permission. */
@@ -8627,7 +9048,10 @@ export type Mutation = {
   removeLabelsFromUser: RemoveLabelsFromUserOutput;
   /** Removes one or more tenants or companies from their current tier (up to 25 per call). After removal the member has no tier. Requires the `tierMembership:read` and `tierMembership:delete` permissions. */
   removeMembersFromTier: RemoveMembersFromTierOutput;
-  /** Removes the mapping between a tenant field schema and a built-in Plain concept, disabling any automatic behaviour (such as tier assignment) driven by that field. */
+  /**
+   * Removes the mapping between a tenant field schema and a built-in Plain concept, disabling any automatic behaviour (such as tier assignment) driven by that field.
+   * @deprecated Use removeAccountFieldSchemaMapping instead
+   */
   removeTenantFieldSchemaMapping: RemoveTenantFieldSchemaMappingOutput;
   /** Moves a user off the active billing rota, freeing their eng-rota seat for another team member. The user must already hold a billing rota seat. Requires the `billingSeat:edit` permission. */
   removeUserFromActiveBillingRota: RemoveUserFromActiveBillingRotaOutput;
@@ -8749,6 +9173,7 @@ export type Mutation = {
    * Any tenants not included in the input are removed; any new ones are added.
    * Use this when syncing tenant membership from your own system rather than tracking individual add/remove changes.
    * Requires the `customer:edit`, `customerTenantMembership:create`, and `customerTenantMembership:delete` permissions.
+   * @deprecated Use setCustomerAccounts instead
    */
   setCustomerTenants: SetCustomerTenantsOutput;
   /**
@@ -8758,7 +9183,10 @@ export type Mutation = {
   setSlackAutoJoinRules: SetSlackAutoJoinRulesOutput;
   /** Maps an account field schema to a built-in Plain concept such as `TIER`, enabling automatic tier assignment based on the field's value. Only one schema can be mapped to a given concept at a time. */
   setupAccountFieldSchemaMapping: SetupAccountFieldSchemaMappingOutput;
-  /** Maps a tenant field schema to a built-in Plain concept such as `TIER`, enabling automatic tier assignment based on the field's value. Only one schema can be mapped to a given concept at a time. */
+  /**
+   * Maps a tenant field schema to a built-in Plain concept such as `TIER`, enabling automatic tier assignment based on the field's value. Only one schema can be mapped to a given concept at a time.
+   * @deprecated Use setupAccountFieldSchemaMapping instead
+   */
   setupTenantFieldSchemaMapping: SetupTenantFieldSchemaMappingOutput;
   /** Sends a direct Slack message to a Plain user sharing a link to the given thread. Useful for notifying a teammate about a thread directly in Slack. */
   shareThreadToUserInSlack: ShareThreadToUserInSlackOutput;
@@ -8836,6 +9264,8 @@ export type Mutation = {
    * broadcast using it will reach on its next send. Requires the `broadcastAudience:edit` permission.
    */
   updateBroadcastAudience: UpdateBroadcastAudienceOutput;
+  /** Update an override's name, dates or slots. Omitted fields are left unchanged. Hours on dates before today can't be changed. Requires the `businessHours:edit` permission. */
+  updateBusinessHoursOverride: UpdateBusinessHoursOverrideOutput;
   /** Update a business hours schedule's name, its slots, or both. Omitted fields are left unchanged; passing an empty `slots` array clears the schedule's business hours. Overlapping and adjacent slots are merged on write. Requires the `businessHours:edit` permission. */
   updateBusinessHoursSchedule: UpdateBusinessHoursScheduleOutput;
   /**
@@ -8843,7 +9273,10 @@ export type Mutation = {
    * Requires the `chatApp:edit` permission.
    */
   updateChatApp: UpdateChatAppOutput;
-  /** Sets the tier for a single company, identified by its Plain ID or domain name. Pass a null `tierIdentifier` to remove the company from its current tier. Use `addMembersToTier` when you need to move multiple companies at once. Requires the `tierMembership:read` and `tierMembership:create` permissions. */
+  /**
+   * Sets the tier for a single company, identified by its Plain ID or domain name. Pass a null `tierIdentifier` to remove the company from its current tier. Use `addMembersToTier` when you need to move multiple companies at once. Requires the `tierMembership:read` and `tierMembership:create` permissions.
+   * @deprecated Use updateAccountTier instead
+   */
   updateCompanyTier: UpdateCompanyTierOutput;
   /** Updates settings for a connected Discord channel, such as enabling or disabling it. Disabled channels will not receive new messages from Plain. */
   updateConnectedDiscordChannel: UpdateConnectedDiscordChannelOutput;
@@ -8860,6 +9293,7 @@ export type Mutation = {
   /**
    * Assigns a customer to a different company, or clears their company association. Requires the
    * `customer:edit` permission.
+   * @deprecated Use setCustomerAccounts instead
    */
   updateCustomerCompany: UpdateCustomerCompanyOutput;
   /** Update the name, key, color, or external ID of an existing customer group. At least one field must be provided in the input. Requires `customerGroup:edit` permission. */
@@ -8910,6 +9344,8 @@ export type Mutation = {
   updateMyUser: UpdateMyUserOutput;
   /** Updates the text, markdown, or attachments of an existing note. Requires the `note:edit` permission. */
   updateNote: UpdateNoteOutput;
+  /** Updates the name, description or redirect URLs of an OAuth app. Requires the `oauthApp:edit` permission. */
+  updateOAuthApp: UpdateOAuthAppOutput;
   /** Updates an existing saved threads view. All fields in the input are optional; only the fields you provide will be changed. Depending on workspace settings, only the view's creator or workspace admins may be allowed to edit a view they did not create. */
   updateSavedThreadsView: UpdateSavedThreadsViewOutput;
   /** Update an existing SLA's time target, priority or label filter, business-hours setting, or breach actions. You cannot change an SLA's type after creation. Use the field-level wrapper inputs (e.g. `{ "value": 60 }`) for the fields you want to change and omit the rest. Requires the `serviceLevelAgreement:edit` permission. */
@@ -8936,7 +9372,10 @@ export type Mutation = {
   updateSnippet: UpdateSnippetOutput;
   /** Update an existing task. Only the fields you include are changed — omitted fields are left as-is. Setting `companyId` clears any existing `tenantId` and vice versa, since a task may be linked to at most one. Requires the `task:edit` permission. */
   updateTask: UpdateTaskOutput;
-  /** Sets the tier for a single tenant, identified by its Plain ID or external ID. Pass a null `tierIdentifier` to remove the tenant from its current tier. Use `addMembersToTier` when you need to move multiple tenants at once. Requires the `tierMembership:read` and `tierMembership:create` permissions. */
+  /**
+   * Sets the tier for a single tenant, identified by its Plain ID or external ID. Pass a null `tierIdentifier` to remove the tenant from its current tier. Use `addMembersToTier` when you need to move multiple tenants at once. Requires the `tierMembership:read` and `tierMembership:create` permissions.
+   * @deprecated Use updateAccountTier instead
+   */
   updateTenantTier: UpdateTenantTierOutput;
   /** Move a thread to a different account, or pass `accountIdentifier: null` to detach it from its current account. Requires the `thread:edit` permission. */
   updateThreadAccount: UpdateThreadAccountOutput;
@@ -8944,7 +9383,10 @@ export type Mutation = {
   updateThreadAgentStatus: UpdateThreadAgentStatusOutput;
   /** Changes how accounts are assigned for an existing thread channel association. Requires the `threadChannelAssociation:edit` permission. */
   updateThreadChannelAssociationAccountMembershipPolicy: UpdateThreadChannelAssociationAccountMembershipPolicyOutput;
-  /** Changes how tenants are assigned for an existing thread channel association. Requires the `threadChannelAssociation:edit` permission. */
+  /**
+   * Changes how tenants are assigned for an existing thread channel association. Requires the `threadChannelAssociation:edit` permission.
+   * @deprecated Use updateThreadChannelAssociationAccountMembershipPolicy instead
+   */
   updateThreadChannelAssociationTenantMembershipPolicy: UpdateThreadChannelAssociationTenantMembershipPolicyOutput;
   /** Attach a thread to a specific escalation path, or pass `escalationPathId: null` to detach it. An escalation path defines the sequence of users or teams the thread escalates through if nobody responds in time. Requires the `thread:edit` permission. */
   updateThreadEscalationPath: UpdateThreadEscalationPathOutput;
@@ -8956,7 +9398,10 @@ export type Mutation = {
   updateThreadServiceLevelAgreementPolicy: UpdateThreadServiceLevelAgreementPolicyOutput;
   /** Accept or dismiss a specific AI-suggested action on a thread's catchup summary. Pass the `suggestedActionId` from the thread's `catchupDetail` and the new `status`. Requires the `thread:edit` permission. */
   updateThreadSuggestedActionStatus: UpdateThreadSuggestedActionStatusOutput;
-  /** Move a thread to a different tenant, or pass `tenantIdentifier: null` to detach it from its current tenant. Requires the `thread:edit` permission. */
+  /**
+   * Move a thread to a different tenant, or pass `tenantIdentifier: null` to detach it from its current tenant. Requires the `thread:edit` permission.
+   * @deprecated Use updateThreadAccount instead
+   */
   updateThreadTenant: UpdateThreadTenantOutput;
   /** Assign a thread to a tier, which governs the SLAs applied to it. Pass `tierIdentifier: null` to detach the thread from its current tier. Requires the `thread:edit` permission. */
   updateThreadTier: UpdateThreadTierOutput;
@@ -8994,7 +9439,10 @@ export type Mutation = {
    * @deprecated Use createBusinessHoursSchedule or updateBusinessHoursSchedule instead.
    */
   upsertBusinessHours: UpsertBusinessHoursOutput;
-  /** Creates a new company or updates an existing one identified by `companyId` or `companyDomainName`. The output includes a `result` field of either `CREATED` or `UPDATED` so you can tell which happened. You can pass a bare domain (e.g. `plain.com`) or a full URL and Plain will extract the domain. Requires the `company:create` and `company:edit` permissions. */
+  /**
+   * Creates a new company or updates an existing one identified by `companyId` or `companyDomainName`. The output includes a `result` field of either `CREATED` or `UPDATED` so you can tell which happened. You can pass a bare domain (e.g. `plain.com`) or a full URL and Plain will extract the domain. Requires the `company:create` and `company:edit` permissions.
+   * @deprecated Use upsertAccount instead
+   */
   upsertCompany: UpsertCompanyOutput;
   /**
    * Creates or updates a customer identified by email address, external ID, or Plain customer ID.
@@ -9030,11 +9478,18 @@ export type Mutation = {
    * Use this to keep Plain's tenant records in sync with the groups or organisations in your own product.
    * The `result` field on the output indicates whether a record was created or updated.
    * Requires the `tenant:read` and `tenant:create` permissions.
+   * @deprecated Use upsertAccount instead
    */
   upsertTenant: UpsertTenantOutput;
-  /** Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `tenantReferenceValues`). Requires `tenant:edit` permission. */
+  /**
+   * Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `tenantReferenceValues`). Requires `tenant:edit` permission.
+   * @deprecated Use upsertAccountField instead
+   */
   upsertTenantField: UpsertTenantFieldOutput;
-  /** Creates or updates one or more tenant field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission. */
+  /**
+   * Creates or updates one or more tenant field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission.
+   * @deprecated Use upsertAccountFieldSchema instead
+   */
   upsertTenantFieldSchema: UpsertTenantFieldSchemaOutput;
   /** Sets (or updates) a single thread field value on a thread, identified by thread ID and field key. Creates the field if it does not exist, or overwrites the existing value if it does. Requires the `threadField:create` and `threadField:update` permissions. */
   upsertThreadField: UpsertThreadFieldOutput;
@@ -9252,6 +9707,11 @@ export type MutationCreateBroadcastAudienceArgs = {
 };
 
 
+export type MutationCreateBusinessHoursOverrideArgs = {
+  input: CreateBusinessHoursOverrideInput;
+};
+
+
 export type MutationCreateBusinessHoursScheduleArgs = {
   input: CreateBusinessHoursScheduleInput;
 };
@@ -9384,6 +9844,11 @@ export type MutationCreateMySlackIntegrationArgs = {
 
 export type MutationCreateNoteArgs = {
   input: CreateNoteInput;
+};
+
+
+export type MutationCreateOAuthAppArgs = {
+  input: CreateOAuthAppInput;
 };
 
 
@@ -9612,6 +10077,11 @@ export type MutationDeleteBroadcastAudienceArgs = {
 };
 
 
+export type MutationDeleteBusinessHoursOverrideArgs = {
+  input: DeleteBusinessHoursOverrideInput;
+};
+
+
 export type MutationDeleteBusinessHoursScheduleArgs = {
   input: DeleteBusinessHoursScheduleInput;
 };
@@ -9704,6 +10174,11 @@ export type MutationDeleteMyServiceAuthorizationArgs = {
 
 export type MutationDeleteNoteArgs = {
   input: DeleteNoteInput;
+};
+
+
+export type MutationDeleteOAuthAppArgs = {
+  input: DeleteOAuthAppInput;
 };
 
 
@@ -9887,6 +10362,11 @@ export type MutationDeleteWorkspaceSlackIntegrationArgs = {
 };
 
 
+export type MutationDisableOAuthAppArgs = {
+  input: DisableOAuthAppInput;
+};
+
+
 export type MutationDismissSidekickQuestionArgs = {
   input: DismissSidekickQuestionInput;
 };
@@ -9904,6 +10384,11 @@ export type MutationDuplicateBroadcastArgs = {
 
 export type MutationEditQueuedAgentSessionMessageArgs = {
   input: EditQueuedAgentSessionMessageInput;
+};
+
+
+export type MutationEnableOAuthAppArgs = {
+  input: EnableOAuthAppInput;
 };
 
 
@@ -9929,6 +10414,26 @@ export type MutationGenerateAiToneRulesFromDescriptionArgs = {
 
 export type MutationGenerateHelpCenterArticleArgs = {
   input: GenerateHelpCenterArticleInput;
+};
+
+
+export type MutationImportAccountFieldSchemasArgs = {
+  input: ImportAccountFieldSchemasInput;
+};
+
+
+export type MutationImportAccountFieldSchemasFromServiceArgs = {
+  input: ImportAccountFieldSchemasFromServiceInput;
+};
+
+
+export type MutationImportAccountsArgs = {
+  input: ImportAccountsInput;
+};
+
+
+export type MutationImportBroadcastAudienceChannelsArgs = {
+  input: ImportBroadcastAudienceChannelsInput;
 };
 
 
@@ -10372,6 +10877,11 @@ export type MutationUpdateBroadcastAudienceArgs = {
 };
 
 
+export type MutationUpdateBusinessHoursOverrideArgs = {
+  input: UpdateBusinessHoursOverrideInput;
+};
+
+
 export type MutationUpdateBusinessHoursScheduleArgs = {
   input: UpdateBusinessHoursScheduleInput;
 };
@@ -10484,6 +10994,11 @@ export type MutationUpdateMyUserArgs = {
 
 export type MutationUpdateNoteArgs = {
   input: UpdateNoteInput;
+};
+
+
+export type MutationUpdateOAuthAppArgs = {
+  input: UpdateOAuthAppInput;
 };
 
 
@@ -10786,6 +11301,13 @@ export type MutationFieldErrorType =
   /** The field was provided, but didn't pass the requirements of the field. See `message` for details on why. */
   | 'VALIDATION';
 
+export type NextBillingPlan = {
+  /** The plan's member seat cap. Null means unlimited. */
+  memberSeatLimit?: Maybe<Scalars['Int']['output']>;
+  name: Scalars['String']['output'];
+  planKey: BillingPlanKey;
+};
+
 /** An SLA that tracks the time from each new customer message until a teammate replies. On a tier, this requires a first-response-time SLA to exist on the same tier; in an SLA policy it stands on its own. */
 export type NextResponseTimeServiceLevelAgreement = ServiceLevelAgreement & {
   breachActions: Array<BreachAction>;
@@ -10856,6 +11378,43 @@ export type NumberSetting = {
   scope: SettingScope;
 };
 
+/** An OAuth app owned by this workspace. People in the workspace can authorize it to call the Plain API as them, with the permissions their role gives them. */
+export type OAuthApp = {
+  /** The OAuth client ID the app sends when it asks someone to authorize it. */
+  clientId: Scalars['String']['output'];
+  /** The app's client secret. Only a hint of the secret is returned; the full secret is only returned once, when the app is created. An app's secret can't be replaced, so an app whose secret is lost has to be replaced with a new app. */
+  clientSecret?: Maybe<OAuthAppClientSecret>;
+  createdAt: DateTime;
+  createdBy: InternalActor;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  /** When false, the Plain API rejects every token issued to the app, including ones it already holds. */
+  isEnabled: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  /** The URLs the app may be redirected to after someone authorizes it. Each one is an absolute URL using https, or http on localhost. */
+  redirectUrls: Array<Scalars['String']['output']>;
+  updatedAt: DateTime;
+  updatedBy: InternalActor;
+};
+
+export type OAuthAppClientSecret = {
+  createdAt: DateTime;
+  id: Scalars['ID']['output'];
+  lastUsedAt?: Maybe<DateTime>;
+  /** The last characters of the secret, to tell secrets apart. */
+  secretHint: Scalars['String']['output'];
+};
+
+export type OAuthAppConnection = {
+  edges: Array<OAuthAppEdge>;
+  pageInfo: PageInfo;
+};
+
+export type OAuthAppEdge = {
+  cursor: Scalars['String']['output'];
+  node: OAuthApp;
+};
+
 export type OptionalBooleanInput = {
   value?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -10885,6 +11444,16 @@ export type PageInfo = {
   hasNextPage: Scalars['Boolean']['output'];
   hasPreviousPage: Scalars['Boolean']['output'];
   startCursor?: Maybe<Scalars['String']['output']>;
+};
+
+/** The DNS records a customer must configure for an alternate support email address on a new domain. */
+export type PendingSenderDomainDnsRecords = {
+  /** The DKIM DNS TXT record that must be added to authenticate outbound emails from this domain. */
+  dkimDnsRecord: DnsRecord;
+  /** The domain that the DNS records must be added to, e.g. otheracme.com. */
+  domainName: Scalars['String']['output'];
+  /** The return-path (bounce) DNS CNAME record that must be added for this domain. */
+  returnPathDnsRecord: DnsRecord;
 };
 
 export type PerSeatRecurringPrice = RecurringPrice & {
@@ -11068,6 +11637,8 @@ export type Query = {
    * @deprecated Use businessHoursSchedules instead.
    */
   businessHours?: Maybe<BusinessHours>;
+  /** Fetches a single business hours override by its ID, or null if no override with that ID exists. Requires the `businessHours:read` permission. */
+  businessHoursOverride?: Maybe<BusinessHoursOverride>;
   /** Fetches a single business hours schedule by its ID, or null if no schedule with that ID exists. Requires the `businessHours:read` permission. */
   businessHoursSchedule?: Maybe<BusinessHoursSchedule>;
   /** Returns a paginated list of the workspace's business hours schedules, sorted by name. Requires the `businessHours:read` permission. */
@@ -11094,9 +11665,15 @@ export type Query = {
    * Requires the `chatApp:read` permission.
    */
   chatApps: ChatAppConnection;
-  /** Returns a paginated list of all companies in your workspace. Supports cursor-based pagination and optional filtering by ID or deletion status. Requires the `company:read` permission. */
+  /**
+   * Returns a paginated list of all companies in your workspace. Supports cursor-based pagination and optional filtering by ID or deletion status. Requires the `company:read` permission.
+   * @deprecated Use accounts instead
+   */
   companies: CompanyConnection;
-  /** Fetches a single company by its ID. Returns null if no company with that ID exists. Requires the `company:read` permission. */
+  /**
+   * Fetches a single company by its ID. Returns null if no company with that ID exists. Requires the `company:read` permission.
+   * @deprecated Use account instead
+   */
   company?: Maybe<Company>;
   /** Returns a paginated list of Discord channels synced from a specific guild. Use `refreshConnectedDiscordChannels` to pull the latest channel list from Discord before querying. */
   connectedDiscordChannels: ConnectedDiscordChannelConnection;
@@ -11212,7 +11789,12 @@ export type Query = {
   importJobDefinition?: Maybe<ImportJobDefinition>;
   /** List import jobs, optionally filtered by service integration key or import job definition ID. Each job represents a single sync run triggered by an import job definition, and contains per-entity-type runs with their progress and status. */
   importJobs: ImportJobConnection;
-  /** Fetch the available tenant lists (e.g. company lists or account views) from a connected external service such as Attio, HubSpot, or Salesforce. Use this to let users choose which list to sync when setting up an import. Requires a completed service authorization ID. */
+  /** Fetch the available account lists (e.g. company lists or account views) from a connected external service such as Attio, HubSpot, or Salesforce. Use this to let users choose which list to sync when setting up an import. Requires a completed service authorization ID. */
+  importerAccountLists: ImporterAccountListConnection;
+  /**
+   * Fetch the available tenant lists (e.g. company lists or account views) from a connected external service such as Attio, HubSpot, or Salesforce. Use this to let users choose which list to sync when setting up an import. Requires a completed service authorization ID.
+   * @deprecated Use importerAccountLists instead
+   */
   importerTenantLists: ImporterTenantListConnection;
   /** List indexed documents across your workspace, newest first. Use the `knowledgeSourceId` filter to retrieve only the documents belonging to a specific knowledge source, and the `statuses` filter to retrieve only documents with a given ingestion status. */
   indexedDocuments: IndexedDocumentConnection;
@@ -11227,7 +11809,7 @@ export type Query = {
   issueTrackerFields: Array<IssueTrackerField>;
   /** Fetch a single knowledge gap by its ID. Returns null if no gap with that ID exists in the workspace. Requires the `knowledgeGap:read` permission. */
   knowledgeGap?: Maybe<KnowledgeGap>;
-  /** Paginated list of knowledge gaps detected in the workspace. Sort by signal count or recency. Defaults to descending signal count order. Requires the `knowledgeGap:read` permission. */
+  /** Paginated list of knowledge gaps detected in the workspace. Filter by status or by when gaps were last seen. Sort by signal count or recency. Defaults to descending signal count order. Requires the `knowledgeGap:read` permission. */
   knowledgeGaps: KnowledgeGapConnection;
   /** Fetch a single knowledge source by its ID. Returns null if no knowledge source with the given ID exists. */
   knowledgeSource?: Maybe<KnowledgeSource>;
@@ -11247,6 +11829,8 @@ export type Query = {
   machineUser?: Maybe<MachineUser>;
   /** Returns a paginated list of all machine users in the workspace. Use the optional `filters.type` argument to restrict results to a specific machine user type (e.g. API_USER or AI_AGENT). */
   machineUsers: MachineUserConnection;
+  /** Checks whether giving these people a paid role keeps the workspace within its member seat cap. People who already hold a paid seat on the billing account don't count against it. Requires the `billingSeat:edit` permission. */
+  memberSeatCapCheck: MemberSeatCapCheck;
   /** Returns the current billing rota for the workspace, listing which users are actively on-rota and which are off-rota. The rota is used to track which users currently consume an active eng-rota seat. */
   myBillingRota?: Maybe<BillingRota>;
   /** Returns the current workspace billing subscription, including plan, status, trial info, feature entitlements, and credit balances. Returns null if the workspace has no billing account. */
@@ -11300,6 +11884,10 @@ export type Query = {
   myWorkspaceInvites: WorkspaceInviteConnection;
   /** Returns all workspaces the currently authenticated human user belongs to, paginated. Not available to machine users. Use this to let users switch between workspaces. */
   myWorkspaces: WorkspaceConnection;
+  /** Fetches a single OAuth app by ID. Returns null if no OAuth app with the given ID exists in the workspace. Requires the `oauthApp:read` permission. */
+  oauthApp?: Maybe<OAuthApp>;
+  /** Returns a paginated list of the workspace's OAuth apps, oldest first. Requires the `oauthApp:read` permission. */
+  oauthApps: OAuthAppConnection;
   /** Returns the complete list of all permission strings defined in Plain, sorted alphabetically. Use this to discover valid permission values when building role or API key management UIs. Requires the `permission:read` permission. */
   permissions: Permissions;
   /** Fetch the full JSON request body that Plain sent (or would send) for a given public event. Returns null if the event has expired — events are retained for 30 days. Use this alongside `webhookDeliveryAttempts` to inspect the exact payload for a failed delivery attempt and replay or debug it. Requires the `webhookTarget:read` permission. */
@@ -11324,7 +11912,10 @@ export type Query = {
    * name match. Requires the `broadcast:read` permission.
    */
   searchBroadcasts: BroadcastConnection;
-  /** Searches companies by name or domain using a case-insensitive partial match. The search term must be at least 2 characters long. Supports cursor-based pagination and optional filtering. Each match is returned as a `CompanySearchResult` that wraps the matched company. Requires the `company:read` permission. */
+  /**
+   * Searches companies by name or domain using a case-insensitive partial match. The search term must be at least 2 characters long. Supports cursor-based pagination and optional filtering. Each match is returned as a `CompanySearchResult` that wraps the matched company. Requires the `company:read` permission.
+   * @deprecated Use searchAccounts instead
+   */
   searchCompanies: CompanySearchResultConnection;
   /**
    * Search for customers using a case-insensitive partial match across name, short name, email, and
@@ -11336,7 +11927,8 @@ export type Query = {
   searchCustomers: CustomerSearchConnection;
   /**
    * Perform a semantic (vector) search across your workspace's knowledge sources and help center articles.
-   * Returns up to `pageSize` results (default 10, max 50) ranked by relevance. Use `options` to restrict
+   * Matches up to `pageSize` chunks (default 10, max 50), then returns one result per source containing its
+   * full indexed text, ordered by each source's most relevant chunk. Use `options` to restrict
    * results by label type, content type (indexed documents vs help center articles), or to include
    * help center articles that are not publicly accessible.
    */
@@ -11358,6 +11950,7 @@ export type Query = {
    * Searches tenants by name or domain (case-insensitive partial match), or by external ID (exact match).
    * The search term must be at least 2 characters long. Returns a paginated list of results.
    * Requires the `tenant:read` permission.
+   * @deprecated Use searchAccounts instead
    */
   searchTenants: TenantSearchResultConnection;
   /** Searches for external entities (e.g. Jira issues) that can be linked to a thread. Filter by `sourceType` to scope the search to a specific issue tracker, and provide a free-text `searchQuery` to match against issue titles or identifiers. Returns candidates that can then be passed to `createThreadLink`. Requires a connected issue tracker integration for the specified source type. */
@@ -11454,11 +12047,20 @@ export type Query = {
   tasks: TaskConnection;
   /** Fetch the settings for a team (label type of kind TEAM) identified by its label type ID. Returns null if no settings have been configured yet for the team. */
   teamSettings?: Maybe<TeamSettings>;
-  /** Fetches a single tenant by its Plain-assigned ID. Returns null if no matching tenant is found. Requires the `tenant:read` permission. */
+  /**
+   * Fetches a single tenant by its Plain-assigned ID. Returns null if no matching tenant is found. Requires the `tenant:read` permission.
+   * @deprecated Use account instead
+   */
   tenant?: Maybe<Tenant>;
-  /** Returns the list of tenant field schemas defined in the workspace. Use the `source` and `isVisible` filters to narrow results. Supports cursor-based pagination. */
+  /**
+   * Returns the list of tenant field schemas defined in the workspace. Use the `source` and `isVisible` filters to narrow results. Supports cursor-based pagination.
+   * @deprecated Use accountFieldSchemas instead
+   */
   tenantFieldSchemas: TenantFieldSchemaConnection;
-  /** Returns a paginated list of tenants in the workspace. Use the `filters` argument to narrow the results and `sortBy` to order them (by name ascending when omitted). Requires the `tenant:read` permission. */
+  /**
+   * Returns a paginated list of tenants in the workspace. Use the `filters` argument to narrow the results and `sortBy` to order them (by name ascending when omitted). Requires the `tenant:read` permission.
+   * @deprecated Use accounts instead
+   */
   tenants: TenantConnection;
   /**
    * The Slack test channel for one workspace Slack integration, or null until the first Slack test thread creates it.
@@ -11539,6 +12141,8 @@ export type Query = {
    * `assignedToUser` to anyone other than the caller additionally requires `metricsAgent:read`.
    */
   threadTimeSeriesMetric: ThreadTimeSeriesMetric;
+  /** Fetches a single timeline entry from a thread. Returns null if the thread does not exist or is not visible to the caller, or if the entry does not exist or belongs to another thread. */
+  threadTimelineEntry?: Maybe<TimelineEntry>;
   /** List threads with optional filtering and sorting, returned as a paginated connection. Supports rich filters (status, assignee, customer, label, priority, date ranges, tenant, tier, thread fields, and more) and multiple sort orders. Use this query to build inbox-style views or to export threads in bulk. Requires the `thread:read` permission. */
   threads: ThreadConnection;
   /** Fetch all threads that share the given external ID, returned as a paginated connection. Unlike `threadByExternalId`, this is not scoped to a customer: because `externalId` is only unique per-customer, the same external ID can appear on threads belonging to different customers, and this query returns all of them. Returns an empty connection if there are no matches. Requires the `thread:read` permission. */
@@ -11842,6 +12446,11 @@ export type QueryBroadcastsArgs = {
 };
 
 
+export type QueryBusinessHoursOverrideArgs = {
+  businessHoursOverrideId: Scalars['ID']['input'];
+};
+
+
 export type QueryBusinessHoursScheduleArgs = {
   businessHoursScheduleId: Scalars['ID']['input'];
 };
@@ -12138,6 +12747,15 @@ export type QueryImportJobsArgs = {
 };
 
 
+export type QueryImporterAccountListsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  serviceAuthorizationId: Scalars['ID']['input'];
+};
+
+
 export type QueryImporterTenantListsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   before?: InputMaybe<Scalars['String']['input']>;
@@ -12229,6 +12847,11 @@ export type QueryMachineUsersArgs = {
 };
 
 
+export type QueryMemberSeatCapCheckArgs = {
+  input: MemberSeatCapCheckInput;
+};
+
+
 export type QueryMyFavoritePagesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   before?: InputMaybe<Scalars['String']['input']>;
@@ -12270,6 +12893,19 @@ export type QueryMyWorkspaceInvitesArgs = {
 
 
 export type QueryMyWorkspacesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryOauthAppArgs = {
+  oauthAppId: Scalars['ID']['input'];
+};
+
+
+export type QueryOauthAppsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -12517,6 +13153,7 @@ export type QuerySnippetArgs = {
 export type QuerySnippetsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   before?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<SnippetsFilter>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -12672,6 +13309,12 @@ export type QueryThreadSlackUserArgs = {
 
 export type QueryThreadTimeSeriesMetricArgs = {
   input: ThreadTimeSeriesMetricInput;
+};
+
+
+export type QueryThreadTimelineEntryArgs = {
+  threadId: Scalars['ID']['input'];
+  timelineEntryId: Scalars['ID']['input'];
 };
 
 
@@ -13456,6 +14099,7 @@ export type SavedThreadsViewFilter = {
   accounts: Array<Scalars['ID']['output']>;
   and?: Maybe<Array<SavedThreadsViewNestedFilter>>;
   assignedToUser: Array<Scalars['ID']['output']>;
+  /** @deprecated Use accounts instead */
   companies: Array<Scalars['ID']['output']>;
   createdAtFilter?: Maybe<DatetimeFilterOutput>;
   customerGroups: Array<Scalars['ID']['output']>;
@@ -13480,7 +14124,9 @@ export type SavedThreadsViewFilter = {
   statuses: Array<ThreadStatus>;
   supportEmailAddresses: Array<Scalars['String']['output']>;
   surveyResponse?: Maybe<SurveyResponseFilterOutput>;
+  /** @deprecated Use accountFields instead */
   tenantFields: Array<SavedThreadsViewFilterTenantField>;
+  /** @deprecated Use accounts instead */
   tenants: Array<Scalars['ID']['output']>;
   threadFields: Array<SavedThreadsViewFilterThreadField>;
   threadLinkGroupIds: Array<Scalars['ID']['output']>;
@@ -13509,7 +14155,8 @@ export type SavedThreadsViewFilterInput = {
   accounts?: InputMaybe<Array<Scalars['ID']['input']>>;
   and?: InputMaybe<Array<SavedThreadsViewFilterInput>>;
   assignedToUser: Array<Scalars['ID']['input']>;
-  companies: Array<Scalars['ID']['input']>;
+  /** @deprecated Use accounts instead */
+  companies?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdAtFilter?: InputMaybe<DatetimeFilter>;
   customerGroups: Array<Scalars['ID']['input']>;
   displayOptions: ThreadsDisplayOptionsInput;
@@ -13530,7 +14177,9 @@ export type SavedThreadsViewFilterInput = {
   statuses: Array<ThreadStatus>;
   supportEmailAddresses: Array<Scalars['String']['input']>;
   surveyResponse?: InputMaybe<SurveyResponseFilter>;
+  /** @deprecated Use accountFields instead */
   tenantFields?: InputMaybe<Array<TenantFieldFilter>>;
+  /** @deprecated Use accounts instead */
   tenants?: InputMaybe<Array<Scalars['ID']['input']>>;
   threadFields: Array<ThreadFieldFilter>;
   threadLinkGroupIds: Array<Scalars['ID']['input']>;
@@ -13594,6 +14243,7 @@ export type SavedThreadsViewNestedFilter = {
   accounts: Array<Scalars['ID']['output']>;
   and?: Maybe<Array<SavedThreadsViewNestedFilter>>;
   assignedToUser: Array<Scalars['ID']['output']>;
+  /** @deprecated Use accounts instead */
   companies: Array<Scalars['ID']['output']>;
   createdAtFilter?: Maybe<DatetimeFilterOutput>;
   customerGroups: Array<Scalars['ID']['output']>;
@@ -13610,7 +14260,9 @@ export type SavedThreadsViewNestedFilter = {
   statuses: Array<ThreadStatus>;
   supportEmailAddresses: Array<Scalars['String']['output']>;
   surveyResponse?: Maybe<SurveyResponseFilterOutput>;
+  /** @deprecated Use accountFields instead */
   tenantFields: Array<SavedThreadsViewFilterTenantField>;
+  /** @deprecated Use accounts instead */
   tenants: Array<Scalars['ID']['output']>;
   threadFields: Array<SavedThreadsViewFilterThreadField>;
   threadLinkGroupIds: Array<Scalars['ID']['output']>;
@@ -13654,7 +14306,7 @@ export type ScopeConditionInput = {
 export type SearchKnowledgeSourcesOptions = {
   /** When true, includes help center articles from help centers that are not configured as AI-accessible. Defaults to false. */
   includeNonCustomerFacing?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Restrict results to documents and help center articles that have at least one of these label types. Unlabelled records are always included, so label scoping narrows but never hides general content. */
+  /** Restrict results to documents and help center articles that have at least one of these label types. Unlabelled records may also be included, depending on the workspace's label filtering behaviour. */
   labelTypeIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Restrict results to specific content types. Omit to search both indexed documents and help center articles. */
   types?: InputMaybe<Array<KnowledgeSourceSearchResultType>>;
@@ -14863,13 +15515,16 @@ export type SlackReplyEntry = {
 export type SlackThreadChannelAssociation = ThreadChannelAssociation & {
   accountId?: Maybe<Scalars['ID']['output']>;
   accountMembershipPolicy: AccountMembershipPolicy;
+  /** @deprecated Use accountId instead */
   companyId?: Maybe<Scalars['ID']['output']>;
   /** The ID of the connected Slack channel that is linked to the company or tenant. */
   connectedSlackChannelId: Scalars['ID']['output'];
   createdAt: DateTime;
   createdBy: InternalActor;
   id: Scalars['ID']['output'];
+  /** @deprecated Use accountId instead */
   tenantId?: Maybe<Scalars['ID']['output']>;
+  /** @deprecated Use accountMembershipPolicy instead */
   tenantMembershipPolicy: TenantMembershipPolicy;
   updatedAt: DateTime;
   updatedBy: InternalActor;
@@ -14947,6 +15602,13 @@ export type SnippetConnection = {
 export type SnippetEdge = {
   cursor: Scalars['String']['output'];
   node: Snippet;
+};
+
+export type SnippetsFilter = {
+  /** Also return deleted snippets, marked by `isDeleted`. Defaults to false. */
+  includeDeleted?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Only snippets changed in this range, including deletion. Use it to sync changes since a previous read. */
+  updatedAt?: InputMaybe<DatetimeFilter>;
 };
 
 export type SnoozeStatusDetail =
@@ -15047,7 +15709,7 @@ export type StringSetting = {
 };
 
 export type Subscription = {
-  /** Streams incremental text tokens from a running Sidekick agent session. Subscribe with the agentSessionId returned when starting a session; each event carries a text chunk that should be appended to the in-progress assistant message. The stream ends when the session status transitions to IDLE or an error occurs. */
+  /** Streams incremental text tokens from a running Sidekick agent session. Subscribe with the agentSessionId returned when starting a session; each event carries a text chunk of the in-progress assistant message, to be placed by its `sequence`. The stream ends when the session status transitions to IDLE or an error occurs. */
   agentSessionDelta: AgentSessionDelta;
   /**
    * Subscribes to customer card instance changes for a given customer.
@@ -15264,7 +15926,10 @@ export type Task = {
   assignedAt?: Maybe<DateTime>;
   /** The user or machine user currently assigned to this task, or null if unassigned. */
   assignedTo?: Maybe<TaskAssignee>;
-  /** The company this task is linked to, if any. Mutually exclusive with `tenant`. */
+  /**
+   * The company this task is linked to, if any. Mutually exclusive with `tenant`.
+   * @deprecated Use account instead
+   */
   company?: Maybe<Company>;
   createdAt: DateTime;
   createdBy: InternalActor;
@@ -15284,7 +15949,10 @@ export type Task = {
   /** Paginated list of the entities that raised this task. Empty for tasks created by any other means. */
   sourceLinks: TaskLinkConnection;
   status: TaskStatus;
-  /** The tenant this task is linked to, if any. Mutually exclusive with `company`. */
+  /**
+   * The tenant this task is linked to, if any. Mutually exclusive with `company`.
+   * @deprecated Use account instead
+   */
   tenant?: Maybe<Tenant>;
   /** Paginated list of threads linked to this task. */
   threadLinks: ThreadLinkConnection;
@@ -15362,11 +16030,13 @@ export type TasksFilter = {
   accountIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   and?: InputMaybe<Array<TasksFilter>>;
   assignedToUser?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** @deprecated Use accountIds instead */
   companyIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   isAssigned?: InputMaybe<Scalars['Boolean']['input']>;
   not?: InputMaybe<TasksFilter>;
   or?: InputMaybe<Array<TasksFilter>>;
   statuses?: InputMaybe<Array<TaskStatus>>;
+  /** @deprecated Use accountIds instead */
   tenantIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -15628,6 +16298,8 @@ export type TenantTierMembership = {
 export type TenantsFilter = {
   /** Matches tenants that match every one of these filters. */
   and?: InputMaybe<Array<TenantsFilter>>;
+  /** Filter to tenants whose primary or alternate domains include any of the given domains. Matching is exact and case-insensitive. */
+  domains?: InputMaybe<Array<Scalars['String']['input']>>;
   /**
    * True to only return tenants that have been deleted. False to only return tenants that have not been deleted.
    * Omit to return all tenants.
@@ -15778,7 +16450,10 @@ export type Thread = {
   supportEmailAddresses: Array<Scalars['String']['output']>;
   /** The survey responses for this thread. */
   surveyResponse?: Maybe<SurveyResponse>;
-  /** The tenant this thread is associated with. */
+  /**
+   * The tenant this thread is associated with.
+   * @deprecated Use account instead
+   */
   tenant?: Maybe<Tenant>;
   /** The thread discussions attached to this thread. */
   threadDiscussions: Array<ThreadDiscussion>;
@@ -15936,14 +16611,23 @@ export type ThreadChannelAssociation = {
   accountId?: Maybe<Scalars['ID']['output']>;
   /** How accounts are assigned when a message from this channel is received. */
   accountMembershipPolicy: AccountMembershipPolicy;
-  /** The ID of the company this channel is associated with. Null if the association targets a tenant instead. */
+  /**
+   * The ID of the company this channel is associated with. Null if the association targets a tenant instead.
+   * @deprecated Use accountId instead
+   */
   companyId?: Maybe<Scalars['ID']['output']>;
   createdAt: DateTime;
   createdBy: InternalActor;
   id: Scalars['ID']['output'];
-  /** The ID of the tenant this channel is associated with. Null if the association targets a company instead. */
+  /**
+   * The ID of the tenant this channel is associated with. Null if the association targets a company instead.
+   * @deprecated Use accountId instead
+   */
   tenantId?: Maybe<Scalars['ID']['output']>;
-  /** How tenants are assigned when a message from this channel is received. */
+  /**
+   * How tenants are assigned when a message from this channel is received.
+   * @deprecated Use accountMembershipPolicy instead
+   */
   tenantMembershipPolicy: TenantMembershipPolicy;
   updatedAt: DateTime;
   updatedBy: InternalActor;
@@ -15996,7 +16680,9 @@ export type ThreadClustersFeedbackDetails = {
 
 export type ThreadClustersFilter = {
   accountIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** @deprecated Use accountIds instead */
   companyIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** @deprecated Use accountIds instead */
   tenantIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   variant?: InputMaybe<Scalars['String']['input']>;
 };
@@ -16110,6 +16796,8 @@ export type ThreadDiscussionAgentSessionChannelDetails = {
 
 /** The state of the agent working on a discussion, independent of whether the discussion itself is open or resolved. */
 export type ThreadDiscussionAgentStatus =
+  /** The agent has stopped and is waiting on the workspace to connect a tool it asked for. */
+  | 'CONNECTION_PENDING'
   /** An agent is attached to the discussion but is not currently working. */
   | 'IDLE'
   /** The agent is working. */
@@ -16331,6 +17019,11 @@ export type ThreadDiscussionToolCallEntryPayload = {
   durationMs: Scalars['Int']['output'];
   error?: Maybe<Scalars['String']['output']>;
   op?: Maybe<Scalars['String']['output']>;
+  /**
+   * The JSON-encoded response of a successful Sidekick write. Null on reads, failed calls,
+   * oversized responses and calls an agent reported.
+   */
+  response?: Maybe<Scalars['String']['output']>;
   /** Null on a call an agent reported: Plain has no name for it. */
   service?: Maybe<Scalars['String']['output']>;
   /** Where the call is in its lifecycle. */
@@ -16635,7 +17328,10 @@ export type ThreadLinkGroup = {
    * account metrics may sum to more than the group's total thread links.
    */
   accountMetrics: ThreadLinkGroupAccountMetrics;
-  /** Breakdown of linked thread counts by company, including threads with no company. */
+  /**
+   * Breakdown of linked thread counts by company, including threads with no company.
+   * @deprecated Use accountMetrics instead
+   */
   companyMetrics: ThreadLinkGroupCompanyMetrics;
   /**
    * The current rank of the thread link group considering groups
@@ -16653,6 +17349,7 @@ export type ThreadLinkGroup = {
    * A thread is matched to its own tenant and to any EMAIL_DOMAIN tenant its customer
    * is a member of. The thread will be counted once per tenant, so total counts for
    * tenant metrics may sum to more than the group's total thread links.
+   * @deprecated Use accountMetrics instead
    */
   tenantMetrics: ThreadLinkGroupTenantMetrics;
   /** The individual thread link records that belong to this group. */
@@ -16707,9 +17404,11 @@ export type ThreadLinkGroupEdge = {
 
 export type ThreadLinkGroupFilter = {
   accountIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** @deprecated Use accountIds instead */
   companyIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Defaults to [TODO, IN_PROGRESS] */
   statuses?: InputMaybe<Array<ThreadLinkStatus>>;
+  /** @deprecated Use accountIds instead */
   tenantIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   threadLinkGroupIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   tierIds?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -16820,6 +17519,7 @@ export type ThreadMetricFilters = {
   and?: InputMaybe<Array<ThreadMetricFilters>>;
   /** Scopes to who the thread is *currently* assigned to (primary or additional/secondary assignee) — not who performed any measured action. For per-agent action metrics (agent_* metrics) use `userIds` instead. Referencing any user other than the caller requires `metricsAgent:read`. */
   assignedToUser?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** @deprecated Use accountIdentifiers instead */
   companyIdentifiers?: InputMaybe<Array<CompanyIdentifierInput>>;
   customerGroupIdentifiers?: InputMaybe<Array<CustomerGroupIdentifier>>;
   labelTypeIds?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -16828,7 +17528,9 @@ export type ThreadMetricFilters = {
   or?: InputMaybe<Array<ThreadMetricFilters>>;
   priorities?: InputMaybe<Array<Scalars['Int']['input']>>;
   surveyResponse?: InputMaybe<SurveyResponseFilter>;
+  /** @deprecated Use accountFields instead */
   tenantFields?: InputMaybe<Array<TenantFieldFilter>>;
+  /** @deprecated Use accountIdentifiers instead */
   tenantIdentifiers?: InputMaybe<Array<TenantIdentifierInput>>;
   threadFields?: InputMaybe<Array<ThreadFieldFilter>>;
   tierIdentifiers?: InputMaybe<Array<TierIdentifierInput>>;
@@ -16888,6 +17590,12 @@ export type ThreadMetricIntervalUnit =
 export type ThreadMetricMode =
   | 'METRIC'
   | 'THREAD_IDS';
+
+/** A notification that refers to a thread, e.g. one sent by a workflow. */
+export type ThreadNotificationDetail = {
+  /** The ID of the thread this notification refers to. */
+  threadId: Scalars['ID']['output'];
+};
 
 export type ThreadPriorityChangedEntry = {
   nextPriority: Scalars['Int']['output'];
@@ -17114,6 +17822,7 @@ export type ThreadsDisplayOptions = {
   hasAccounts: Scalars['Boolean']['output'];
   hasAssignees: Scalars['Boolean']['output'];
   hasChannels: Scalars['Boolean']['output'];
+  /** @deprecated Use hasAccounts instead */
   hasCompany: Scalars['Boolean']['output'];
   hasCreatedAt: Scalars['Boolean']['output'];
   hasCustomer: Scalars['Boolean']['output'];
@@ -17131,7 +17840,9 @@ export type ThreadsDisplayOptions = {
   hasServiceLevelAgreements: Scalars['Boolean']['output'];
   hasStatus: Scalars['Boolean']['output'];
   hasTasks: Scalars['Boolean']['output'];
+  /** @deprecated Use hasAccountFieldExternalIds instead */
   hasTenantFieldExternalIds: Array<Scalars['ID']['output']>;
+  /** @deprecated Use hasAccounts instead */
   hasTenants: Scalars['Boolean']['output'];
   hasThreadFieldKeys: Array<Scalars['String']['output']>;
   hasTier: Scalars['Boolean']['output'];
@@ -17142,7 +17853,8 @@ export type ThreadsDisplayOptionsInput = {
   hasAccounts?: InputMaybe<Scalars['Boolean']['input']>;
   hasAssignees: Scalars['Boolean']['input'];
   hasChannels: Scalars['Boolean']['input'];
-  hasCompany: Scalars['Boolean']['input'];
+  /** @deprecated Use hasAccounts instead */
+  hasCompany?: InputMaybe<Scalars['Boolean']['input']>;
   hasCreatedAt?: InputMaybe<Scalars['Boolean']['input']>;
   hasCustomer: Scalars['Boolean']['input'];
   hasCustomerGroups: Scalars['Boolean']['input'];
@@ -17159,7 +17871,9 @@ export type ThreadsDisplayOptionsInput = {
   hasServiceLevelAgreements: Scalars['Boolean']['input'];
   hasStatus: Scalars['Boolean']['input'];
   hasTasks?: InputMaybe<Scalars['Boolean']['input']>;
+  /** @deprecated Use hasAccountFieldExternalIds instead */
   hasTenantFieldExternalIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** @deprecated Use hasAccounts instead */
   hasTenants?: InputMaybe<Scalars['Boolean']['input']>;
   hasThreadFieldKeys?: InputMaybe<Array<Scalars['String']['input']>>;
   hasTier: Scalars['Boolean']['input'];
@@ -17173,6 +17887,7 @@ export type ThreadsFilter = {
   assignedToUser?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Threads created from a reply to one of these broadcasts. */
   broadcastIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** @deprecated Use accountIdentifiers instead */
   companyIdentifiers?: InputMaybe<Array<CompanyIdentifierInput>>;
   createdAt?: InputMaybe<DatetimeFilter>;
   customerGroupIdentifiers?: InputMaybe<Array<CustomerGroupIdentifier>>;
@@ -17193,7 +17908,9 @@ export type ThreadsFilter = {
   statuses?: InputMaybe<Array<ThreadStatus>>;
   supportEmailAddresses?: InputMaybe<Array<Scalars['String']['input']>>;
   surveyResponse?: InputMaybe<SurveyResponseFilter>;
+  /** @deprecated Use accountFields instead */
   tenantFields?: InputMaybe<Array<TenantFieldFilter>>;
+  /** @deprecated Use accountIdentifiers instead */
   tenantIdentifiers?: InputMaybe<Array<TenantIdentifierInput>>;
   threadFields?: InputMaybe<Array<ThreadFieldFilter>>;
   threadIds?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -17301,7 +18018,9 @@ export type TierIdentifierInput = {
 
 export type TierMemberIdentifierInput = {
   accountId?: InputMaybe<Scalars['ID']['input']>;
+  /** @deprecated Use accountId instead */
   companyId?: InputMaybe<Scalars['ID']['input']>;
+  /** @deprecated Use accountId instead */
   tenantId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -17778,12 +18497,31 @@ export type UpdateBroadcastOutput = {
   error?: Maybe<MutationError>;
 };
 
+export type UpdateBusinessHoursOverrideInput = {
+  businessHoursOverrideId: Scalars['ID']['input'];
+  /** Move the last date (inclusive), in YYYY-MM-DD format. Can't be before today. Dates added are closed; slots on dates removed are dropped. */
+  endsOn?: InputMaybe<Scalars['String']['input']>;
+  /** Rename the override. Omit to leave the name unchanged. */
+  name?: InputMaybe<StringInput>;
+  /** Replace the override's slots in full. Slots on dates before today must be sent back unchanged. A date in the range without slots is closed. Omit to leave the hours unchanged. */
+  slots?: InputMaybe<Array<BusinessHoursOverrideSlotInput>>;
+  /** Move the first date, in YYYY-MM-DD format. Can't be before today, and can't change once it is before today. */
+  startsOn?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateBusinessHoursOverrideOutput = {
+  businessHoursOverride?: Maybe<BusinessHoursOverride>;
+  error?: Maybe<MutationError>;
+};
+
 export type UpdateBusinessHoursScheduleInput = {
   businessHoursScheduleId: Scalars['ID']['input'];
   /** Rename the schedule. Omit to leave the name unchanged. Must be unique within the workspace. */
   name?: InputMaybe<StringInput>;
   /** Replace the schedule's slots in full. Omit to leave them unchanged. If given, must contain at least one slot, and every slot must use the same timezone. */
   slots?: InputMaybe<Array<BusinessHoursSlotInput>>;
+  /** Change the schedule's IANA timezone, e.g. Europe/London. Omit to take it from the slots, or to leave it unchanged when slots are omitted too. If given with slots, every slot must use it. */
+  timezone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateBusinessHoursScheduleOutput = {
@@ -18096,6 +18834,19 @@ export type UpdateNoteOutput = {
   note?: Maybe<Note>;
 };
 
+export type UpdateOAuthAppInput = {
+  description?: InputMaybe<OptionalStringInput>;
+  name?: InputMaybe<StringInput>;
+  oauthAppId: Scalars['ID']['input'];
+  /** Replaces the whole list of redirect URLs. */
+  redirectUrls?: InputMaybe<StringArrayInput>;
+};
+
+export type UpdateOAuthAppOutput = {
+  error?: Maybe<MutationError>;
+  oauthApp?: Maybe<OAuthApp>;
+};
+
 export type UpdateSavedThreadsViewInput = {
   color?: InputMaybe<StringInput>;
   icon?: InputMaybe<StringInput>;
@@ -18293,13 +19044,19 @@ export type UpdateTaskInput = {
   /** Only one of companyId or accountId can be set. Cannot specify both. Setting accountId will unset companyId if it already exists. */
   accountId?: InputMaybe<Scalars['ID']['input']>;
   assignedTo?: InputMaybe<UpdateTaskAssignedToInput>;
-  /** Only one of companyId or tenantId can be set. Cannot specify both. Setting companyId will unset tenantId if it already exists. */
+  /**
+   * Only one of companyId or tenantId can be set. Cannot specify both. Setting companyId will unset tenantId if it already exists.
+   * @deprecated Use accountId instead
+   */
   companyId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   priority?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<TaskStatus>;
   taskId: Scalars['ID']['input'];
-  /** Only one of companyId or tenantId can be set. Cannot specify both. Setting tenantId will unset companyId if it already exists. */
+  /**
+   * Only one of companyId or tenantId can be set. Cannot specify both. Setting tenantId will unset companyId if it already exists.
+   * @deprecated Use accountId instead
+   */
   tenantId?: InputMaybe<Scalars['ID']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -18679,6 +19436,7 @@ export type UpsertCustomerOnCreateInput = {
   externalId?: InputMaybe<Scalars['ID']['input']>;
   fullName: Scalars['String']['input'];
   shortName?: InputMaybe<Scalars['String']['input']>;
+  /** @deprecated Use accountIdentifiers instead */
   tenantIdentifiers?: InputMaybe<Array<TenantIdentifierInput>>;
 };
 
@@ -19363,6 +20121,8 @@ export type WorkflowEdge = {
 export type WorkflowExecution = {
   /** When the execution reached a terminal state (SUCCESS, FAILED, or CANCELLED). */
   completedAt?: Maybe<DateTime>;
+  /** Credits charged for the AI triage and Sidekick work this run's steps did. Null when nothing has been charged yet, or without the `billing:read` permission. */
+  credits?: Maybe<Scalars['Int']['output']>;
   /** The ID of the entity this execution was triggered for. */
   entityId?: Maybe<Scalars['ID']['output']>;
   /** The type of entity this execution was triggered for. */
@@ -19507,6 +20267,7 @@ export type WorkflowStep = {
    * - CONDITION: a condition. `type` is either a leaf check (e.g. `contains_label`, `thread_field_equals`, `thread_field_is_set`, `priority_equals`, `assigned_to`, `customer_equals`, `ai_workflow_rule_condition`) or a combinator (`and`, `or`, `not`, `else_if`) that nests other conditions under `conditions`/`condition`.
    * - ACTION: an action, e.g. `apply_labels`, `remove_labels`, `set_priority`, `set_status`, `set_tier`, `set_service_level_agreement_policy`, `assign_to_user`, `assign_to_team`, `add_note`, `send_message`, `send_slack_notification`, `send_http_request`, `set_thread_field`, `snooze_thread`, `escalate_thread`.
    * - WAIT: `{ "duration": <seconds>, "businessHoursScheduleIds"?: [<ID>, ...], "cancelCondition"?: <condition> }`. When `businessHoursScheduleIds` is set, `duration` counts open time while any selected schedule is open.
+   * - NOTE: `{ "text": <string> }`, plain text. A canvas sticky note; it is never executed.
    * Examples: `{"version":1,"type":"apply_labels","labelTypeIds":["lt_..."]}`, `{"version":1,"type":"else_if","conditions":[...]}`.
    * `apply_labels` and `set_priority` also accept an AI-triage mode (`{"version":1,"type":"apply_labels","aiTriage":true}` / `{"version":1,"type":"set_priority","aiTriage":true}`) where the AI picks the labels (from label types not excluded from AI) or the priority instead of a fixed value.
    * Payloads embed workspace-specific IDs (label type IDs, user IDs, tier IDs, etc.), which are not portable: copying a payload into another workspace references IDs that do not exist there and the step silently applies nothing.
@@ -19536,6 +20297,8 @@ export type WorkflowStepEntityType =
 
 export type WorkflowStepExecution = {
   completedAt?: Maybe<DateTime>;
+  /** Credits charged for this step within its run, shown on its latest attempt; earlier attempts of a retried step are null. A charge tied to no step counts only toward the run's `credits`. Null when nothing has been charged yet, or without the `billing:read` permission. */
+  credits?: Maybe<Scalars['Int']['output']>;
   /** Entities this step produced or affected, for linking to them from the run. */
   entities: Array<WorkflowStepEntityRef>;
   id: Scalars['ID']['output'];
@@ -19561,6 +20324,8 @@ export type WorkflowStepType =
   | 'ACTION'
   /** Evaluates a condition; routes execution to one of two branches based on the result. */
   | 'CONDITION'
+  /** A canvas sticky note. Holds text only, is never executed, and has no transitions. */
+  | 'NOTE'
   /** Pauses execution for a configured duration, then continues to the next step. */
   | 'WAIT';
 
@@ -19799,6 +20564,8 @@ export type WorkspaceEdge = {
 };
 
 export type WorkspaceEmailDomainSettings = {
+  /** Sender domains configured for alternate support email addresses on domains other than the primary support domain. */
+  additionalSenderDomains: Array<AdditionalSenderDomain>;
   /**
    * The list of alternate email addresses that can be used to send emails to and from the workspace.
    * Limited to 5.
@@ -20077,7 +20844,7 @@ export type WorkspaceSlackSidekickIntegration = {
   updatedBy: InternalActor;
 };
 
-export type AccountFieldsFragment = { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type AccountFieldsFragment = { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -20245,6 +21012,8 @@ export type BeforeBreachActionFieldsFragment = { beforeBreachMinutes: number, cr
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
+export type BillingCommittedCreditBalanceFieldsFragment = { type: BillingCreditBalanceType, termGranted?: number | null, termUsed?: number | null, remaining: number, expiresAt?: { unixTimestamp: string, iso8601: string } | null };
+
 export type BillingMonthlyAllowanceCreditBalanceFieldsFragment = { type: BillingCreditBalanceType, allowance: number, used: number, remaining: number, lowBalanceThreshold?: number | null, periodEndsAt: { unixTimestamp: string, iso8601: string } };
 
 export type BillingPlanFieldsFragment = { key: BillingPlanKey, name: string, description: string, features: Array<string>, highlightedLabel?: string | null, isSelfCheckoutEligible: boolean, prices: Array<
@@ -20258,9 +21027,10 @@ export type BillingSubscriptionFieldsFragment = { status: BillingSubscriptionSta
     | { __typename: 'MeteredFeatureEntitlement', feature: FeatureKey, isEntitled: boolean, current: number, limit: number }
     | { __typename: 'ToggleFeatureEntitlement', feature: FeatureKey, isEntitled: boolean }
   >, endedAt?: { unixTimestamp: string, iso8601: string } | null, checkoutSession?: { id: string, status: HyperlineCheckoutSessionStatus, url: string } | null, creditBalances: Array<
+    | { __typename: 'BillingCommittedCreditBalance', type: BillingCreditBalanceType, termGranted?: number | null, termUsed?: number | null, remaining: number, expiresAt?: { unixTimestamp: string, iso8601: string } | null }
     | { __typename: 'BillingMonthlyAllowanceCreditBalance', type: BillingCreditBalanceType, allowance: number, used: number, remaining: number, lowBalanceThreshold?: number | null, periodEndsAt: { unixTimestamp: string, iso8601: string } }
     | { __typename: 'BillingTopupCreditBalance', type: BillingCreditBalanceType, lifetimeGranted?: number | null, lifetimeUsed?: number | null, remaining: number }
-  > };
+  >, nextPlan?: { planKey: BillingPlanKey, name: string, memberSeatLimit?: number | null } | null };
 
 export type BillingTopupCreditBalanceFieldsFragment = { type: BillingCreditBalanceType, lifetimeGranted?: number | null, lifetimeUsed?: number | null, remaining: number };
 
@@ -20283,7 +21053,7 @@ export type BroadcastFieldsFragment = { id: string, name: string, notificationTi
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    | null, reactions: Array<{ emojiName: string, count: number, imageUrl?: string | null }> };
 
-export type BroadcastAudienceFieldsFragment = { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type BroadcastAudienceFieldsFragment = { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -20402,7 +21172,17 @@ export type BusinessHoursFieldsFragment = { createdAt: { unixTimestamp: string, 
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type BusinessHoursScheduleFieldsFragment = { id: string, name: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type BusinessHoursOverrideFieldsFragment = { id: string, businessHoursScheduleId: string, name: string, startsOn: string, endsOn: string, slots: Array<{ date: string, opensAt: string, closesAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+    | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+    | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+    | { __typename: 'UserActor', userId: string, user: { id: string } }
+  , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+    | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+    | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+    | { __typename: 'UserActor', userId: string, user: { id: string } }
+   };
+
+export type BusinessHoursScheduleFieldsFragment = { id: string, name: string, timezone: { name: string }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -20470,7 +21250,7 @@ export type CompanyFieldsFragment = { id: string, name: string, logoUrl?: string
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
-  , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+  , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -20542,7 +21322,7 @@ export type ConnectedSlackChannelFieldsFragment = { id: string, slackTeamId: str
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type CreditSpendItemFieldsFragment = { id: string, kind: CreditSpendKind, label: string, workflowId?: string | null, workflowName?: string | null, credits: number, status: CreditSpendStatus, threadId?: string | null, discussionId?: string | null, actor?:
+export type CreditSpendItemFieldsFragment = { id: string, kind: CreditSpendKind, label: string, workflowId?: string | null, workflowName?: string | null, workflowExecutionId?: string | null, credits: number, status: CreditSpendStatus, threadId?: string | null, discussionId?: string | null, actor?:
     | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
     | { __typename: 'DeletedCustomerActor', customerId: string }
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -20623,7 +21403,7 @@ export type CustomEntryFieldsFragment = { externalId?: string | null, title: str
     | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
   > };
 
-export type CustomerFieldsFragment = { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CustomerFieldsFragment = { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
     | { __typename: 'DeletedCustomerActor', customerId: string }
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -21163,7 +21943,7 @@ export type GithubUserAuthIntegrationFieldsFragment = { id: string, githubUserna
 
 export type HeatmapMetricFieldsFragment = { days: Array<Array<{ percentage: number, total: number, threadIds: Array<string>, messageCount: number }>> };
 
-export type HelpCenterFieldsFragment = { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, tenantIds: Array<string>, accountIds: Array<string>, companyIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type HelpCenterFieldsFragment = { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
     | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
     | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
   , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -21229,6 +22009,8 @@ export type HelpCenterIndexFieldsFragment = { helpCenterId: string, hash: string
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
+
+export type ImportBroadcastAudienceChannelsResultFieldsFragment = { isDryRun: boolean, addedCount: number, alreadyInAudienceCount: number, notFoundCount: number, ambiguousCount: number, invalidCount: number, broadcastAudience: { id: string } };
 
 export type ImportBroadcastRecipientUnsubscribesResultFieldsFragment = { isDryRun: boolean, createdCount: number, alreadyUnsubscribedCount: number, notFoundCount: number, ambiguousCount: number, invalidCount: number };
 
@@ -22057,7 +22839,7 @@ export type ImportThreadMessageResultFieldsFragment = { result?: UpsertResult | 
        | null }
    | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null };
 
-export type IndexedDocumentFieldsFragment = { id: string, url: string, status:
+export type IndexedDocumentFieldsFragment = { id: string, url: string, knowledgeSourceId: string, status:
     | { __typename: 'IndexedDocumentStatusFailed', reason: string, failedAt: { unixTimestamp: string, iso8601: string } }
     | { __typename: 'IndexedDocumentStatusIndexed', indexedAt: { unixTimestamp: string, iso8601: string }, indexedBy?:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -22075,7 +22857,7 @@ export type IndexedDocumentFieldsFragment = { id: string, url: string, status:
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type IndexedDocumentSearchResultFieldsFragment = { content: string, indexedDocument: { id: string, url: string, status:
+export type IndexedDocumentSearchResultFieldsFragment = { content: string, indexedDocument: { id: string, url: string, knowledgeSourceId: string, status:
       | { __typename: 'IndexedDocumentStatusFailed', reason: string, failedAt: { unixTimestamp: string, iso8601: string } }
       | { __typename: 'IndexedDocumentStatusIndexed', indexedAt: { unixTimestamp: string, iso8601: string }, indexedBy?:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -22129,6 +22911,7 @@ export type InternalNotificationFieldsFragment = { id: string, userId: string, t
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        }
+    | { __typename: 'ThreadNotificationDetail', threadId: string }
     | { __typename: 'WebhookTargetNotificationDetail', webhookTargetId: string }
    | null, readAt?: { unixTimestamp: string, iso8601: string } | null, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -22178,7 +22961,7 @@ export type KnowledgeGapFeedbackDetailsFieldsFragment = { reason: string, commen
 
 export type KnowledgeSourceCitationFieldsFragment = { threadId: string, timelineEntryId: string, sourceType: KnowledgeSourceCitationType, title: string, url?: string | null, document?:
     | { __typename: 'HelpCenterArticleDocument', id: string, article: { id: string } }
-    | { __typename: 'IndexedDocument', id: string, url: string, status:
+    | { __typename: 'IndexedDocument', id: string, url: string, knowledgeSourceId: string, status:
         | { __typename: 'IndexedDocumentStatusFailed', reason: string, failedAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'IndexedDocumentStatusIndexed', indexedAt: { unixTimestamp: string, iso8601: string }, indexedBy?:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -22365,6 +23148,18 @@ export type NoteMentionNotificationDetailFieldsFragment = { threadId: string, ti
 
 export type NumberSettingFieldsFragment = { code: string, numberValue: number, scope: { id?: string | null, scopeType: SettingScopeType } };
 
+export type OAuthAppFieldsFragment = { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+    | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+    | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+    | { __typename: 'UserActor', userId: string, user: { id: string } }
+  , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+    | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+    | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+    | { __typename: 'UserActor', userId: string, user: { id: string } }
+  , updatedAt: { unixTimestamp: string, iso8601: string } };
+
+export type PendingSenderDomainDnsRecordsFieldsFragment = { domainName: string, dkimDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null }, returnPathDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null } };
+
 export type PerSeatRecurringPriceFieldsFragment = { billingIntervalUnit: BillingIntervalUnit, billingIntervalCount: number, currency: CurrencyCode, perSeatAmount: number };
 
 export type PlainTaskThreadLinkFieldsFragment = { id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainTaskId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
@@ -22405,7 +23200,7 @@ export type RoleFieldsFragment = { id: string, name: string, description?: strin
 
 export type RoleChangeCostFieldsFragment = { quantity: number, intervalUnit: BillingIntervalUnit, intervalCount: number, addingSeatType: BillingSeatType, removingSeatType?: BillingSeatType | null, totalPrice: { amount: number, currency: CurrencyCode }, fullPrice: { amount: number, currency: CurrencyCode }, adjustedPrice: { amount: number, currency: CurrencyCode }, dueNowPrice: { amount: number, currency: CurrencyCode } };
 
-export type SavedThreadsViewFieldsFragment = { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, companies: Array<string>, tenants: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasCompany: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasTenants: boolean, hasAccounts: boolean, hasTenantFieldExternalIds: Array<string>, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type SavedThreadsViewFieldsFragment = { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasAccounts: boolean, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22533,7 +23328,7 @@ export type SlackMessageEntryFieldsFragment = { slackMessageLink?: string | null
 
 export type SlackReplyEntryFieldsFragment = { slackMessageLink?: string | null, slackWebMessageLink: string, customerId: string, text: string, lastEditedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null, deletedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null };
 
-export type SlackThreadChannelAssociationFieldsFragment = { id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type SlackThreadChannelAssociationFieldsFragment = { id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22589,7 +23384,7 @@ export type SystemActorFieldsFragment = { systemId: string, workflowExecutionId?
 
 export type SystemSidekickSkillFieldsFragment = { name: string, displayName: string, description: string, isEnabled: boolean };
 
-export type TaskFieldsFragment = { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, company?: { id: string } | null, tenant?: { id: string } | null, account?: { id: string } | null, assignedTo?:
+export type TaskFieldsFragment = { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, account?: { id: string } | null, assignedTo?:
     | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -22653,7 +23448,7 @@ export type TeamSettingsFieldsFragment = { id: string, labelTypeId: string, isRo
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type TenantFieldsFragment = { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type TenantFieldsFragment = { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22847,7 +23642,7 @@ export type ThreadFieldsFragment = { id: string, ref: string, title: string, des
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
-  , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+  , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
     | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
     | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
     | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -22934,7 +23729,7 @@ export type ThreadDiscussionMessageFieldsFragment = { id: string, threadDiscussi
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        | null }
-    | { __typename: 'ThreadDiscussionToolCallEntryPayload', service?: string | null, op?: string | null, description: string, args?: string | null, error?: string | null, durationMs: number, threadDiscussionToolCallEntryPayloadToolCallId?: string | null, threadDiscussionToolCallEntryPayloadStatus: DiscussionToolCallStatus }
+    | { __typename: 'ThreadDiscussionToolCallEntryPayload', service?: string | null, op?: string | null, description: string, args?: string | null, error?: string | null, durationMs: number, response?: string | null, threadDiscussionToolCallEntryPayloadToolCallId?: string | null, threadDiscussionToolCallEntryPayloadStatus: DiscussionToolCallStatus }
     | { __typename: 'ThreadDiscussionTurnStoppedEntryPayload', stoppedBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
@@ -22972,7 +23767,7 @@ export type ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment = { appro
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    | null };
 
-export type ThreadDiscussionToolCallEntryPayloadFieldsFragment = { toolCallId?: string | null, service?: string | null, op?: string | null, description: string, args?: string | null, status: DiscussionToolCallStatus, error?: string | null, durationMs: number };
+export type ThreadDiscussionToolCallEntryPayloadFieldsFragment = { toolCallId?: string | null, service?: string | null, op?: string | null, description: string, args?: string | null, status: DiscussionToolCallStatus, error?: string | null, durationMs: number, response?: string | null };
 
 export type ThreadEventFieldsFragment = { id: string, customerId: string, threadId: string, title: string, isCollapsed: boolean, components: Array<
     | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
@@ -23156,7 +23951,7 @@ export type ThreadHeatmapMetricFieldsFragment = { threadIds?: Array<string> | nu
 
 export type ThreadLinkCandidateFieldsFragment = { sourceId: string, sourceType: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, sourceStatus?: { key: string, label: string, color?: string | null, icon?: string | null } | null };
 
-export type ThreadLinkGroupFieldsFragment = { id: string, defaultViewRank?: number | null, currentViewRank: number, tierMetrics: { noTier: { totalCount: number } }, companyMetrics: { noCompany: { totalCount: number } }, tenantMetrics: { noTenant: { totalCount: number } }, accountMetrics: { noAccount: { totalCount: number } } };
+export type ThreadLinkGroupFieldsFragment = { id: string, defaultViewRank?: number | null, currentViewRank: number, tierMetrics: { noTier: { totalCount: number } }, accountMetrics: { noAccount: { totalCount: number } } };
 
 export type ThreadLinkTargetCreatedEntryFieldsFragment = { threadLink:
     | { __typename: 'GenericThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, sourceStatus?: { key: string, label: string, color?: string | null, icon?: string | null } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
@@ -23253,6 +24048,8 @@ export type ThreadLinkTargetDeletedEntryFieldsFragment = { threadLink:
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        }
   , sourceThread: { id: string, ref: string, title?: string | null } };
+
+export type ThreadNotificationDetailFieldsFragment = { threadId: string };
 
 export type ThreadPriorityChangedEntryFieldsFragment = { previousPriority: number, nextPriority: number };
 
@@ -24343,7 +25140,7 @@ export type WorkflowFieldsFragment = { id: string, name: string, trigger: string
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type WorkflowExecutionFieldsFragment = { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
+export type WorkflowExecutionFieldsFragment = { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, credits?: number | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -24754,9 +25551,17 @@ export type MyBillingSubscriptionQuery = { myBillingSubscription?: { status: Bil
       | { __typename: 'MeteredFeatureEntitlement', feature: FeatureKey, isEntitled: boolean, current: number, limit: number }
       | { __typename: 'ToggleFeatureEntitlement', feature: FeatureKey, isEntitled: boolean }
     >, endedAt?: { unixTimestamp: string, iso8601: string } | null, checkoutSession?: { id: string, status: HyperlineCheckoutSessionStatus, url: string } | null, creditBalances: Array<
+      | { __typename: 'BillingCommittedCreditBalance', type: BillingCreditBalanceType, termGranted?: number | null, termUsed?: number | null, remaining: number, expiresAt?: { unixTimestamp: string, iso8601: string } | null }
       | { __typename: 'BillingMonthlyAllowanceCreditBalance', type: BillingCreditBalanceType, allowance: number, used: number, remaining: number, lowBalanceThreshold?: number | null, periodEndsAt: { unixTimestamp: string, iso8601: string } }
       | { __typename: 'BillingTopupCreditBalance', type: BillingCreditBalanceType, lifetimeGranted?: number | null, lifetimeUsed?: number | null, remaining: number }
-    > } | null };
+    >, nextPlan?: { planKey: BillingPlanKey, name: string, memberSeatLimit?: number | null } | null } | null };
+
+export type MemberSeatCapCheckQueryVariables = Exact<{
+  input: MemberSeatCapCheckInput;
+}>;
+
+
+export type MemberSeatCapCheckQuery = { memberSeatCapCheck: { isValid: boolean } };
 
 export type MyBillingRotaQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -24783,7 +25588,7 @@ export type CreditSpendQueryVariables = Exact<{
 }>;
 
 
-export type CreditSpendQuery = { creditSpend: { edges: Array<{ cursor: string, node: { id: string, kind: CreditSpendKind, label: string, workflowId?: string | null, workflowName?: string | null, credits: number, status: CreditSpendStatus, threadId?: string | null, discussionId?: string | null, actor?:
+export type CreditSpendQuery = { creditSpend: { edges: Array<{ cursor: string, node: { id: string, kind: CreditSpendKind, label: string, workflowId?: string | null, workflowName?: string | null, workflowExecutionId?: string | null, credits: number, status: CreditSpendStatus, threadId?: string | null, discussionId?: string | null, actor?:
           | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
           | { __typename: 'DeletedCustomerActor', customerId: string }
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -26513,6 +27318,804 @@ export type TimelineEntryQuery = { timelineEntry?: { id: string, customerId: str
       | { __typename: 'UserActor', userId: string, user: { id: string } }
      | null } | null };
 
+export type ThreadTimelineEntryQueryVariables = Exact<{
+  threadId: string;
+  timelineEntryId: string;
+}>;
+
+
+export type ThreadTimelineEntryQuery = { threadTimelineEntry?: { id: string, customerId: string, threadId: string, llmText?: string | null, timestamp: { unixTimestamp: string, iso8601: string }, entry:
+      | { __typename: 'ChatEntry', chatId: string, chatEntryText?: string | null, customerReadAt?: { unixTimestamp: string, iso8601: string } | null }
+      | { __typename: 'CustomEntry', externalId?: string | null, title: string, customEntryType?: string | null, customEntryComponents: Array<
+          | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+          | { __typename: 'ComponentContainer', containerContent: Array<
+              | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+              | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+              | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+              | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+              | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+              | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+              | { __typename: 'ComponentRow', rowMainContent: Array<
+                  | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+                  | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+                  | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+                  | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+                  | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+                  | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+                  | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+                  | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+                  | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+                  | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+                >, rowAsideContent: Array<
+                  | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+                  | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+                  | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+                  | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+                  | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+                  | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+                  | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+                  | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+                  | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+                  | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+                > }
+              | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+              | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+              | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+              | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+            > }
+          | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+          | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+          | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+          | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+          | { __typename: 'ComponentRow', rowMainContent: Array<
+              | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+              | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+              | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+              | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+              | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+              | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+              | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+              | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+              | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+              | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+            >, rowAsideContent: Array<
+              | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+              | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+              | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+              | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+              | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+              | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+              | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+              | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+              | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+              | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+            > }
+          | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+          | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+          | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+          | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+        > }
+      | { __typename: 'CustomerEventEntry', timelineEventId: string, title: string, customerId: string, externalId?: string | null, isCollapsed: boolean, customerEventEntryComponents: Array<
+          | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+          | { __typename: 'ComponentContainer', containerContent: Array<
+              | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+              | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+              | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+              | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+              | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+              | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+              | { __typename: 'ComponentRow', rowMainContent: Array<
+                  | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+                  | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+                  | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+                  | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+                  | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+                  | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+                  | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+                  | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+                  | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+                  | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+                >, rowAsideContent: Array<
+                  | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+                  | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+                  | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+                  | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+                  | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+                  | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+                  | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+                  | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+                  | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+                  | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+                > }
+              | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+              | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+              | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+              | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+            > }
+          | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+          | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+          | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+          | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+          | { __typename: 'ComponentRow', rowMainContent: Array<
+              | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+              | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+              | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+              | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+              | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+              | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+              | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+              | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+              | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+              | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+            >, rowAsideContent: Array<
+              | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+              | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+              | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+              | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+              | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+              | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+              | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+              | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+              | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+              | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+            > }
+          | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+          | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+          | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+          | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+        > }
+      | { __typename: 'CustomerSurveyRequestedEntry', customerId: string, threadId: string, customerSurveyId: string, surveyResponseId: string, surveyResponsePublicId: string }
+      | { __typename: 'DiscordMessageEntry', customerId: string, discordMessageId: string, markdownContent?: string | null, discordMessageLink: string, lastEditedOnDiscordAt?: { unixTimestamp: string, iso8601: string } | null, deletedOnDiscordAt?: { unixTimestamp: string, iso8601: string } | null }
+      | { __typename: 'EmailEntry', emailId: string, subject?: string | null, textContent?: string | null, hasMoreTextContent: boolean, fullTextContent?: string | null, markdownContent?: string | null, hasMoreMarkdownContent: boolean, fullMarkdownContent?: string | null, authenticity: EmailAuthenticity, sendStatus?: EmailSendStatus | null, isStartOfThread: boolean, category: EmailCategory, to: { name?: string | null, email: string }, from: { name?: string | null, email: string }, sentAt?: { unixTimestamp: string, iso8601: string } | null, receivedAt?: { unixTimestamp: string, iso8601: string } | null }
+      | { __typename: 'HelpCenterAiConversationMessageEntry', helpCenterId: string, helpCenterAiConversationId: string, messageId: string, helpCenterAiConversationMessageEntryMarkdown: string }
+      | { __typename: 'LinearIssueThreadLinkStateTransitionedEntry', linearIssueId: string, previousLinearStateId: string, nextLinearStateId: string }
+      | { __typename: 'MSTeamsMessageEntry', customerId: string, markdownContent?: string | null, msTeamsMessageId: string, msTeamsMessageLink: string, hasUnprocessedAttachments: boolean, mSTeamsMessageEntryText: string, lastEditedOnMsTeamsAt?: { unixTimestamp: string, iso8601: string } | null, deletedOnMsTeamsAt?: { unixTimestamp: string, iso8601: string } | null }
+      | { __typename: 'MergedThreadMessageEntry', threadLinkId: string, childThreadDetails: { id: string, ref: string, title?: string | null }, childTimelineEntry?: { id: string } | null }
+      | { __typename: 'NoteEntry', noteId: string, isEdited: boolean, noteEntryText: string, noteEntryMarkdown?: string | null, editedAt?: { unixTimestamp: string, iso8601: string } | null, editedBy?:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+         | null }
+      | { __typename: 'ServiceLevelAgreementStatusTransitionedEntry', serviceLevelAgreementStatusTransitionedEntryPreviousStatus: ServiceLevelAgreementStatus, serviceLevelAgreementStatusTransitionedEntryNextStatus: ServiceLevelAgreementStatus, serviceLevelAgreement?:
+          | { __typename: 'FirstResolutionTimeServiceLevelAgreement', id: string, firstResolutionTimeMinutes: number, pauseOnStatusDetailTypes: Array<ServiceLevelAgreementPauseStatusDetailType>, useBusinessHoursOnly: boolean, threadPriorityFilter: Array<number>, threadLabelTypeIdFilter?: { labelTypeIds: Array<string>, requireAll: boolean } | null, breachActions: Array<{ __typename: 'BeforeBreachAction', beforeBreachMinutes: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+              , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+               }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'FirstResponseTimeServiceLevelAgreement', id: string, firstResponseTimeMinutes: number, threadPriorityFilter: Array<number>, threadLabelTypeIdFilter?: { labelTypeIds: Array<string>, requireAll: boolean } | null, breachActions: Array<{ __typename: 'BeforeBreachAction', beforeBreachMinutes: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+              , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+               }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'NextResponseTimeServiceLevelAgreement', id: string, nextResponseTimeMinutes: number, threadPriorityFilter: Array<number>, threadLabelTypeIdFilter?: { labelTypeIds: Array<string>, requireAll: boolean } | null, breachActions: Array<{ __typename: 'BeforeBreachAction', beforeBreachMinutes: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+              , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+               }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'TotalResolutionTimeServiceLevelAgreement', id: string, totalResolutionTimeMinutes: number, pauseOnStatusDetailTypes: Array<ServiceLevelAgreementPauseStatusDetailType>, useBusinessHoursOnly: boolean, threadPriorityFilter: Array<number>, threadLabelTypeIdFilter?: { labelTypeIds: Array<string>, requireAll: boolean } | null, breachActions: Array<{ __typename: 'BeforeBreachAction', beforeBreachMinutes: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+              , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+               }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+         | null }
+      | { __typename: 'SlackMessageEntry', slackMessageLink?: string | null, slackWebMessageLink: string, customerId: string, slackMessageEntryText: string, relatedThread?: { threadId: string } | null, lastEditedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null, deletedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null }
+      | { __typename: 'SlackReplyEntry', slackMessageLink?: string | null, slackWebMessageLink: string, customerId: string, slackReplyEntryText: string, lastEditedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null, deletedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null }
+      | { __typename: 'ThreadAdditionalAssigneesTransitionedEntry', previousAssignees: Array<
+          | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+              | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+              | { __typename: 'DeletedCustomerActor', customerId: string }
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             | null }
+          | { __typename: 'System', id: string }
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+              , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+               } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+              | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+              | { __typename: 'DeletedCustomerActor', customerId: string }
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             | null }
+        >, nextAssignees: Array<
+          | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+              | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+              | { __typename: 'DeletedCustomerActor', customerId: string }
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             | null }
+          | { __typename: 'System', id: string }
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+              , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+               } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+              | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+              | { __typename: 'DeletedCustomerActor', customerId: string }
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             | null }
+        > }
+      | { __typename: 'ThreadAssignmentTransitionedEntry', previousAssignee?:
+          | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+              | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+              | { __typename: 'DeletedCustomerActor', customerId: string }
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             | null }
+          | { __typename: 'System', id: string }
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+              , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+               } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+              | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+              | { __typename: 'DeletedCustomerActor', customerId: string }
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             | null }
+         | null, nextAssignee?:
+          | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+              | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+              | { __typename: 'DeletedCustomerActor', customerId: string }
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             | null }
+          | { __typename: 'System', id: string }
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+              , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+                | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+                | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+                | { __typename: 'UserActor', userId: string, user: { id: string } }
+               } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+              | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+              | { __typename: 'DeletedCustomerActor', customerId: string }
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             | null }
+         | null }
+      | { __typename: 'ThreadDiscussionEntry', customerId: string, threadDiscussionId: string, discussionType: ThreadDiscussionType, emailRecipients: Array<string>, slackChannelName?: string | null, slackMessageLink?: string | null }
+      | { __typename: 'ThreadDiscussionMessageEntry', customerId: string, threadDiscussionId: string, threadDiscussionMessageId: string, discussionType: ThreadDiscussionType, resolvedText: string, slackMessageLink?: string | null, slackMessageTimestamp?: string | null, hasUnprocessedAttachments: boolean, threadDiscussionMessageEntryText: string, threadDiscussionMessageEntryType: ThreadDiscussionMessageType, lastEditedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null, deletedOnSlackAt?: { unixTimestamp: string, iso8601: string } | null }
+      | { __typename: 'ThreadDiscussionResolvedEntry', customerId: string, threadDiscussionId: string, discussionType: ThreadDiscussionType, emailRecipients: Array<string>, slackChannelName?: string | null, slackMessageLink?: string | null, resolvedAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadEventEntry', timelineEventId: string, title: string, customerId: string, externalId?: string | null, isCollapsed: boolean, threadEventEntryComponents: Array<
+          | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+          | { __typename: 'ComponentContainer', containerContent: Array<
+              | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+              | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+              | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+              | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+              | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+              | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+              | { __typename: 'ComponentRow', rowMainContent: Array<
+                  | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+                  | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+                  | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+                  | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+                  | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+                  | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+                  | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+                  | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+                  | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+                  | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+                >, rowAsideContent: Array<
+                  | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+                  | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+                  | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+                  | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+                  | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+                  | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+                  | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+                  | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+                  | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+                  | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+                > }
+              | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+              | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+              | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+              | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+            > }
+          | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+          | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+          | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+          | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+          | { __typename: 'ComponentRow', rowMainContent: Array<
+              | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+              | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+              | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+              | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+              | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+              | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+              | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+              | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+              | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+              | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+            >, rowAsideContent: Array<
+              | { __typename: 'ComponentBadge', badgeLabel: string, badgeColor?: ComponentBadgeColor | null }
+              | { __typename: 'ComponentCopyButton', copyButtonValue: string, copyButtonTooltipLabel?: string | null }
+              | { __typename: 'ComponentDateTime', dateTimeIso8601: { unixTimestamp: string, iso8601: string } }
+              | { __typename: 'ComponentDivider', dividerSpacingSize?: ComponentDividerSpacingSize | null }
+              | { __typename: 'ComponentLinkButton', linkButtonUrl: string, linkButtonLabel: string }
+              | { __typename: 'ComponentPlainText', plainTextSize?: ComponentPlainTextSize | null, plainTextColor?: ComponentPlainTextColor | null, plainText: string }
+              | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+              | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+              | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+              | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+            > }
+          | { __typename: 'ComponentSpacer', spacerSize: ComponentSpacerSize }
+          | { __typename: 'ComponentText', textSize?: ComponentTextSize | null, textColor?: ComponentTextColor | null, text: string }
+          | { __typename: 'ComponentUser', user?: { id: string } | null, userMachineUser?: { id: string } | null }
+          | { __typename: 'ComponentWorkflowButton', workflowButtonLabel: string, workflowButtonWorkflowIdentifier: { workflowId?: string | null, workflowKey?: string | null } }
+        > }
+      | { __typename: 'ThreadLabelsChangedEntry' }
+      | { __typename: 'ThreadLinkCreatedEntry', threadLink:
+          | { __typename: 'GenericThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, sourceStatus?: { key: string, label: string, color?: string | null, icon?: string | null } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'JiraIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, jiraIssueId: string, jiraIssueKey: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , jiraIssueType: { name: string, iconUrl: string } }
+          | { __typename: 'LinearIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, linkType: ThreadLinkLinkType, threadId: string, sourceId: string, sourceType: string, linearIssueId: string, linearIssueIdentifier: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , linearIssueState: { type: LinearIssueStateType, label: string, color: string }, linearIssueCreatedAt: { unixTimestamp: string, iso8601: string }, linearIssueUpdatedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'PlainTaskThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainTaskId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'PlainThreadThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainThreadId: string, plainThreadStatusDetailType: StatusDetailType, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+         }
+      | { __typename: 'ThreadLinkDeletedEntry', threadLink:
+          | { __typename: 'GenericThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, sourceStatus?: { key: string, label: string, color?: string | null, icon?: string | null } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'JiraIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, jiraIssueId: string, jiraIssueKey: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , jiraIssueType: { name: string, iconUrl: string } }
+          | { __typename: 'LinearIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, linkType: ThreadLinkLinkType, threadId: string, sourceId: string, sourceType: string, linearIssueId: string, linearIssueIdentifier: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , linearIssueState: { type: LinearIssueStateType, label: string, color: string }, linearIssueCreatedAt: { unixTimestamp: string, iso8601: string }, linearIssueUpdatedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'PlainTaskThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainTaskId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'PlainThreadThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainThreadId: string, plainThreadStatusDetailType: StatusDetailType, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+         }
+      | { __typename: 'ThreadLinkTargetCreatedEntry', threadLink:
+          | { __typename: 'GenericThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, sourceStatus?: { key: string, label: string, color?: string | null, icon?: string | null } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'JiraIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, jiraIssueId: string, jiraIssueKey: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , jiraIssueType: { name: string, iconUrl: string } }
+          | { __typename: 'LinearIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, linkType: ThreadLinkLinkType, threadId: string, sourceId: string, sourceType: string, linearIssueId: string, linearIssueIdentifier: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , linearIssueState: { type: LinearIssueStateType, label: string, color: string }, linearIssueCreatedAt: { unixTimestamp: string, iso8601: string }, linearIssueUpdatedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'PlainTaskThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainTaskId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'PlainThreadThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainThreadId: string, plainThreadStatusDetailType: StatusDetailType, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+        , sourceThread: { id: string, ref: string, title?: string | null } }
+      | { __typename: 'ThreadLinkTargetDeletedEntry', threadLink:
+          | { __typename: 'GenericThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, sourceStatus?: { key: string, label: string, color?: string | null, icon?: string | null } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'JiraIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, jiraIssueId: string, jiraIssueKey: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , jiraIssueType: { name: string, iconUrl: string } }
+          | { __typename: 'LinearIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, linkType: ThreadLinkLinkType, threadId: string, sourceId: string, sourceType: string, linearIssueId: string, linearIssueIdentifier: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , linearIssueState: { type: LinearIssueStateType, label: string, color: string }, linearIssueCreatedAt: { unixTimestamp: string, iso8601: string }, linearIssueUpdatedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'PlainTaskThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainTaskId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'PlainThreadThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainThreadId: string, plainThreadStatusDetailType: StatusDetailType, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+        , sourceThread: { id: string, ref: string, title?: string | null } }
+      | { __typename: 'ThreadLinkUpdatedEntry', threadLink:
+          | { __typename: 'GenericThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, sourceStatus?: { key: string, label: string, color?: string | null, icon?: string | null } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'JiraIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, jiraIssueId: string, jiraIssueKey: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , jiraIssueType: { name: string, iconUrl: string } }
+          | { __typename: 'LinearIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, linkType: ThreadLinkLinkType, threadId: string, sourceId: string, sourceType: string, linearIssueId: string, linearIssueIdentifier: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , linearIssueState: { type: LinearIssueStateType, label: string, color: string }, linearIssueCreatedAt: { unixTimestamp: string, iso8601: string }, linearIssueUpdatedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'PlainTaskThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainTaskId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'PlainThreadThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainThreadId: string, plainThreadStatusDetailType: StatusDetailType, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+        , previousThreadLink:
+          | { __typename: 'GenericThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, sourceStatus?: { key: string, label: string, color?: string | null, icon?: string | null } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'JiraIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, jiraIssueId: string, jiraIssueKey: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , jiraIssueType: { name: string, iconUrl: string } }
+          | { __typename: 'LinearIssueThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, linkType: ThreadLinkLinkType, threadId: string, sourceId: string, sourceType: string, linearIssueId: string, linearIssueIdentifier: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , linearIssueState: { type: LinearIssueStateType, label: string, color: string }, linearIssueCreatedAt: { unixTimestamp: string, iso8601: string }, linearIssueUpdatedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'PlainTaskThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainTaskId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+          | { __typename: 'PlainThreadThreadLink', id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainThreadId: string, plainThreadStatusDetailType: StatusDetailType, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             }
+         }
+      | { __typename: 'ThreadPriorityChangedEntry', previousPriority: number, nextPriority: number }
+      | { __typename: 'ThreadServiceLevelAgreementPolicyChangedEntry', previousServiceLevelAgreementPolicy?: { id: string, name: string } | null, nextServiceLevelAgreementPolicy?: { id: string, name: string } | null }
+      | { __typename: 'ThreadStatusTransitionedEntry', threadStatusTransitionedEntryPreviousStatus: ThreadStatus, threadStatusTransitionedEntryNextStatus: ThreadStatus, previousStatusDetail?:
+          | { __typename: 'ThreadStatusDetailCreated', statusChangedAt: { unixTimestamp: string, iso8601: string }, createdAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailDoneAutomaticallySet', afterSeconds?: number | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailDoneManuallySet', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailIgnored', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailInProgress', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailLinearUpdated' }
+          | { __typename: 'ThreadStatusDetailNewReply', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailReplied' }
+          | { __typename: 'ThreadStatusDetailSnoozed' }
+          | { __typename: 'ThreadStatusDetailThreadDiscussionResolved', threadDiscussionId?: string | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailThreadLinkUpdated', linearIssueId?: string | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailUnsnoozed' }
+          | { __typename: 'ThreadStatusDetailWaitingForCustomer', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailWaitingForDuration', statusChangedAt: { unixTimestamp: string, iso8601: string }, waitingUntil: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailWaitingIndefinitely', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+         | null, nextStatusDetail?:
+          | { __typename: 'ThreadStatusDetailCreated', statusChangedAt: { unixTimestamp: string, iso8601: string }, createdAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailDoneAutomaticallySet', afterSeconds?: number | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailDoneManuallySet', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailIgnored', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailInProgress', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailLinearUpdated' }
+          | { __typename: 'ThreadStatusDetailNewReply', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailReplied' }
+          | { __typename: 'ThreadStatusDetailSnoozed' }
+          | { __typename: 'ThreadStatusDetailThreadDiscussionResolved', threadDiscussionId?: string | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailThreadLinkUpdated', linearIssueId?: string | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailUnsnoozed' }
+          | { __typename: 'ThreadStatusDetailWaitingForCustomer', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailWaitingForDuration', statusChangedAt: { unixTimestamp: string, iso8601: string }, waitingUntil: { unixTimestamp: string, iso8601: string } }
+          | { __typename: 'ThreadStatusDetailWaitingIndefinitely', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+         | null }
+    , actor:
+      | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+      | { __typename: 'DeletedCustomerActor', customerId: string }
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+    , createdBy?:
+      | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+      | { __typename: 'DeletedCustomerActor', customerId: string }
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+     | null } | null };
+
 export type WorkspaceQueryVariables = Exact<{
   workspaceId: string;
 }>;
@@ -26642,7 +28245,7 @@ export type CustomerQueryVariables = Exact<{
 }>;
 
 
-export type CustomerQuery = { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CustomerQuery = { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
       | { __typename: 'DeletedCustomerActor', customerId: string }
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -26674,7 +28277,7 @@ export type CustomersQueryVariables = Exact<{
 }>;
 
 
-export type CustomersQuery = { customers: { totalCount: number, edges: Array<{ cursor: string, node: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CustomersQuery = { customers: { totalCount: number, edges: Array<{ cursor: string, node: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
           | { __typename: 'DeletedCustomerActor', customerId: string }
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -26701,7 +28304,7 @@ export type CustomerByEmailQueryVariables = Exact<{
 }>;
 
 
-export type CustomerByEmailQuery = { customerByEmail?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CustomerByEmailQuery = { customerByEmail?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
       | { __typename: 'DeletedCustomerActor', customerId: string }
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -26728,7 +28331,7 @@ export type CustomerByExternalIdQueryVariables = Exact<{
 }>;
 
 
-export type CustomerByExternalIdQuery = { customerByExternalId?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CustomerByExternalIdQuery = { customerByExternalId?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
       | { __typename: 'DeletedCustomerActor', customerId: string }
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -26952,7 +28555,7 @@ export type SearchCustomersQueryVariables = Exact<{
 }>;
 
 
-export type SearchCustomersQuery = { searchCustomers: { edges: Array<{ cursor: string, node: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type SearchCustomersQuery = { searchCustomers: { edges: Array<{ cursor: string, node: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
           | { __typename: 'DeletedCustomerActor', customerId: string }
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -26975,6 +28578,7 @@ export type SearchCustomersQuery = { searchCustomers: { edges: Array<{ cursor: s
         > } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type SnippetsQueryVariables = Exact<{
+  filters?: SnippetsFilter | null | undefined;
   first?: number | null | undefined;
   after?: string | null | undefined;
   last?: number | null | undefined;
@@ -27118,7 +28722,7 @@ export type BroadcastAudiencesQueryVariables = Exact<{
 }>;
 
 
-export type BroadcastAudiencesQuery = { broadcastAudiences: { edges: Array<{ cursor: string, node: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type BroadcastAudiencesQuery = { broadcastAudiences: { edges: Array<{ cursor: string, node: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -27137,7 +28741,7 @@ export type BroadcastAudienceQueryVariables = Exact<{
 }>;
 
 
-export type BroadcastAudienceQuery = { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type BroadcastAudienceQuery = { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -27225,6 +28829,39 @@ export type MachineUsersQuery = { machineUsers: { edges: Array<{ cursor: string,
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type OauthAppQueryVariables = Exact<{
+  oauthAppId: string;
+}>;
+
+
+export type OauthAppQuery = { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+    , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+    , updatedAt: { unixTimestamp: string, iso8601: string } } | null };
+
+export type OauthAppsQueryVariables = Exact<{
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  last?: number | null | undefined;
+  before?: string | null | undefined;
+}>;
+
+
+export type OauthAppsQuery = { oauthApps: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , updatedAt: { unixTimestamp: string, iso8601: string } } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type PermissionsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -27743,7 +29380,7 @@ export type ThreadBySlackPermalinkQuery = { threadBySlackPermalink?: { id: strin
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
-    , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+    , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
       | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
       | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
       | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -27889,7 +29526,7 @@ export type ThreadBySlackMessageQuery = { threadBySlackMessage?: { id: string, r
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
-    , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+    , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
       | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
       | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
       | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -28201,7 +29838,7 @@ export type WorkflowExecutionQueryVariables = Exact<{
 }>;
 
 
-export type WorkflowExecutionQuery = { workflowExecution?: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
+export type WorkflowExecutionQuery = { workflowExecution?: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, credits?: number | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28216,7 +29853,7 @@ export type WorkflowExecutionsQueryVariables = Exact<{
 }>;
 
 
-export type WorkflowExecutionsQuery = { workflowExecutions: { edges: Array<{ cursor: string, node: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
+export type WorkflowExecutionsQuery = { workflowExecutions: { edges: Array<{ cursor: string, node: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, credits?: number | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28231,7 +29868,7 @@ export type WorkflowExecutionsForWorkspaceQueryVariables = Exact<{
 }>;
 
 
-export type WorkflowExecutionsForWorkspaceQuery = { workflowExecutionsForWorkspace: { edges: Array<{ cursor: string, node: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
+export type WorkflowExecutionsForWorkspaceQuery = { workflowExecutionsForWorkspace: { edges: Array<{ cursor: string, node: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, credits?: number | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28246,7 +29883,7 @@ export type WorkflowExecutionsByEntityQueryVariables = Exact<{
 }>;
 
 
-export type WorkflowExecutionsByEntityQuery = { workflowExecutionsByEntity: { edges: Array<{ cursor: string, node: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
+export type WorkflowExecutionsByEntityQuery = { workflowExecutionsByEntity: { edges: Array<{ cursor: string, node: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, credits?: number | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28448,7 +30085,7 @@ export type ThreadQuery = { thread?: { id: string, ref: string, title: string, d
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
-    , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+    , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
       | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
       | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
       | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -28593,7 +30230,7 @@ export type ThreadByRefQuery = { threadByRef?: { id: string, ref: string, title:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
-    , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+    , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
       | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
       | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
       | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -28739,7 +30376,7 @@ export type ThreadByExternalIdQuery = { threadByExternalId?: { id: string, ref: 
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
-    , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+    , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
       | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
       | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
       | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -28888,7 +30525,7 @@ export type ThreadsByExternalIdQuery = { threadsByExternalId: { edges: Array<{ c
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
-        , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+        , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
           | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
           | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
           | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -29038,7 +30675,7 @@ export type ThreadsQuery = { threads: { totalCount: number, edges: Array<{ curso
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
-        , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+        , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
           | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
           | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
           | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -29181,7 +30818,7 @@ export type TestThreadsQuery = { testThreads: Array<{ id: string, ref: string, t
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
-    , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+    , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
       | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
       | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
       | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -29331,7 +30968,7 @@ export type SearchThreadsQuery = { searchThreads: { edges: Array<{ cursor: strin
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
-          , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+          , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
             | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
             | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
             | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -29465,7 +31102,7 @@ export type CompaniesQuery = { companies: { edges: Array<{ cursor: string, node:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
-        , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29492,7 +31129,7 @@ export type CompanyQuery = { company?: { id: string, name: string, logoUrl?: str
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
-    , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+    , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29524,7 +31161,7 @@ export type SearchCompaniesQuery = { searchCompanies: { edges: Array<{ cursor: s
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
-          , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29563,7 +31200,7 @@ export type TenantsQueryVariables = Exact<{
 }>;
 
 
-export type TenantsQuery = { tenants: { edges: Array<{ cursor: string, node: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type TenantsQuery = { tenants: { edges: Array<{ cursor: string, node: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29586,7 +31223,7 @@ export type TenantQueryVariables = Exact<{
 }>;
 
 
-export type TenantQuery = { tenant?: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type TenantQuery = { tenant?: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29614,7 +31251,7 @@ export type AccountsQueryVariables = Exact<{
 }>;
 
 
-export type AccountsQuery = { accounts: { edges: Array<{ cursor: string, node: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type AccountsQuery = { accounts: { edges: Array<{ cursor: string, node: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29637,7 +31274,7 @@ export type AccountQueryVariables = Exact<{
 }>;
 
 
-export type AccountQuery = { account?: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type AccountQuery = { account?: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29660,7 +31297,7 @@ export type TaskQueryVariables = Exact<{
 }>;
 
 
-export type TaskQuery = { task?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, company?: { id: string } | null, tenant?: { id: string } | null, account?: { id: string } | null, assignedTo?:
+export type TaskQuery = { task?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, account?: { id: string } | null, assignedTo?:
       | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -29719,7 +31356,7 @@ export type TaskByRefQueryVariables = Exact<{
 }>;
 
 
-export type TaskByRefQuery = { taskByRef?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, company?: { id: string } | null, tenant?: { id: string } | null, account?: { id: string } | null, assignedTo?:
+export type TaskByRefQuery = { taskByRef?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, account?: { id: string } | null, assignedTo?:
       | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -29783,7 +31420,7 @@ export type TasksQueryVariables = Exact<{
 }>;
 
 
-export type TasksQuery = { tasks: { totalCount: number, edges: Array<{ cursor: string, node: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, company?: { id: string } | null, tenant?: { id: string } | null, account?: { id: string } | null, assignedTo?:
+export type TasksQuery = { tasks: { totalCount: number, edges: Array<{ cursor: string, node: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, account?: { id: string } | null, assignedTo?:
           | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -29885,7 +31522,7 @@ export type SearchTenantsQueryVariables = Exact<{
 }>;
 
 
-export type SearchTenantsQuery = { searchTenants: { edges: Array<{ cursor: string, node: { tenant: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type SearchTenantsQuery = { searchTenants: { edges: Array<{ cursor: string, node: { tenant: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29913,7 +31550,7 @@ export type SearchAccountsQueryVariables = Exact<{
 }>;
 
 
-export type SearchAccountsQuery = { searchAccounts: { edges: Array<{ cursor: string, node: { account: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type SearchAccountsQuery = { searchAccounts: { edges: Array<{ cursor: string, node: { account: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30133,6 +31770,17 @@ export type ImporterTenantListsQueryVariables = Exact<{
 
 
 export type ImporterTenantListsQuery = { importerTenantLists: { edges: Array<{ cursor: string, node: { id: string, name: string } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type ImporterAccountListsQueryVariables = Exact<{
+  serviceAuthorizationId: string;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  last?: number | null | undefined;
+  before?: string | null | undefined;
+}>;
+
+
+export type ImporterAccountListsQuery = { importerAccountLists: { edges: Array<{ cursor: string, node: { id: string, name: string } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type ImportJobDefinitionQueryVariables = Exact<{
   serviceIntegrationKey: string;
@@ -30389,7 +32037,7 @@ export type BusinessHoursScheduleQueryVariables = Exact<{
 }>;
 
 
-export type BusinessHoursScheduleQuery = { businessHoursSchedule?: { id: string, name: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type BusinessHoursScheduleQuery = { businessHoursSchedule?: { id: string, name: string, timezone: { name: string }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30407,7 +32055,7 @@ export type BusinessHoursSchedulesQueryVariables = Exact<{
 }>;
 
 
-export type BusinessHoursSchedulesQuery = { businessHoursSchedules: { edges: Array<{ cursor: string, node: { id: string, name: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type BusinessHoursSchedulesQuery = { businessHoursSchedules: { edges: Array<{ cursor: string, node: { id: string, name: string, timezone: { name: string }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30416,6 +32064,21 @@ export type BusinessHoursSchedulesQuery = { businessHoursSchedules: { edges: Arr
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type BusinessHoursOverrideQueryVariables = Exact<{
+  businessHoursOverrideId: string;
+}>;
+
+
+export type BusinessHoursOverrideQuery = { businessHoursOverride?: { id: string, businessHoursScheduleId: string, name: string, startsOn: string, endsOn: string, slots: Array<{ date: string, opensAt: string, closesAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+    , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+     } | null };
 
 export type WorkspaceHmacQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -30439,7 +32102,7 @@ export type ThreadLinkGroupsQueryVariables = Exact<{
 }>;
 
 
-export type ThreadLinkGroupsQuery = { threadLinkGroups: { edges: Array<{ cursor: string, node: { id: string, defaultViewRank?: number | null, currentViewRank: number, tierMetrics: { noTier: { totalCount: number } }, companyMetrics: { noCompany: { totalCount: number } }, tenantMetrics: { noTenant: { totalCount: number } }, accountMetrics: { noAccount: { totalCount: number } } } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type ThreadLinkGroupsQuery = { threadLinkGroups: { edges: Array<{ cursor: string, node: { id: string, defaultViewRank?: number | null, currentViewRank: number, tierMetrics: { noTier: { totalCount: number } }, accountMetrics: { noAccount: { totalCount: number } } } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type RelatedThreadsQueryVariables = Exact<{
   threadId: string;
@@ -30457,7 +32120,7 @@ export type SearchKnowledgeSourcesQueryVariables = Exact<{
 
 export type SearchKnowledgeSourcesQuery = { searchKnowledgeSources: Array<
     | { __typename: 'HelpCenterArticleSearchResult', content: string, helpCenterArticle: { id: string }, helpCenter: { id: string } }
-    | { __typename: 'IndexedDocumentSearchResult', content: string, indexedDocument: { id: string, url: string, status:
+    | { __typename: 'IndexedDocumentSearchResult', content: string, indexedDocument: { id: string, url: string, knowledgeSourceId: string, status:
           | { __typename: 'IndexedDocumentStatusFailed', reason: string, failedAt: { unixTimestamp: string, iso8601: string } }
           | { __typename: 'IndexedDocumentStatusIndexed', indexedAt: { unixTimestamp: string, iso8601: string }, indexedBy?:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -30605,7 +32268,7 @@ export type IndexedDocumentsQueryVariables = Exact<{
 }>;
 
 
-export type IndexedDocumentsQuery = { indexedDocuments: { edges: Array<{ cursor: string, node: { id: string, url: string, status:
+export type IndexedDocumentsQuery = { indexedDocuments: { edges: Array<{ cursor: string, node: { id: string, url: string, knowledgeSourceId: string, status:
           | { __typename: 'IndexedDocumentStatusFailed', reason: string, failedAt: { unixTimestamp: string, iso8601: string } }
           | { __typename: 'IndexedDocumentStatusIndexed', indexedAt: { unixTimestamp: string, iso8601: string }, indexedBy?:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -30718,7 +32381,7 @@ export type KnowledgeSourceCitationsByThreadQueryVariables = Exact<{
 
 export type KnowledgeSourceCitationsByThreadQuery = { knowledgeSourceCitationsByThread: Array<{ threadId: string, timelineEntryId: string, sourceType: KnowledgeSourceCitationType, title: string, url?: string | null, document?:
       | { __typename: 'HelpCenterArticleDocument', id: string, article: { id: string } }
-      | { __typename: 'IndexedDocument', id: string, url: string, status:
+      | { __typename: 'IndexedDocument', id: string, url: string, knowledgeSourceId: string, status:
           | { __typename: 'IndexedDocumentStatusFailed', reason: string, failedAt: { unixTimestamp: string, iso8601: string } }
           | { __typename: 'IndexedDocumentStatusIndexed', indexedAt: { unixTimestamp: string, iso8601: string }, indexedBy?:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -30769,7 +32432,7 @@ export type SavedThreadsViewsQueryVariables = Exact<{
 }>;
 
 
-export type SavedThreadsViewsQuery = { savedThreadsViews: { edges: Array<{ cursor: string, node: { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, companies: Array<string>, tenants: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasCompany: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasTenants: boolean, hasAccounts: boolean, hasTenantFieldExternalIds: Array<string>, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type SavedThreadsViewsQuery = { savedThreadsViews: { edges: Array<{ cursor: string, node: { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasAccounts: boolean, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30784,7 +32447,7 @@ export type SavedThreadsViewQueryVariables = Exact<{
 }>;
 
 
-export type SavedThreadsViewQuery = { savedThreadsView?: { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, companies: Array<string>, tenants: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasCompany: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasTenants: boolean, hasAccounts: boolean, hasTenantFieldExternalIds: Array<string>, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type SavedThreadsViewQuery = { savedThreadsView?: { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasAccounts: boolean, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30815,7 +32478,7 @@ export type HelpCentersQueryVariables = Exact<{
 }>;
 
 
-export type HelpCentersQuery = { helpCenters: { edges: Array<{ cursor: string, node: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, tenantIds: Array<string>, accountIds: Array<string>, companyIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type HelpCentersQuery = { helpCenters: { edges: Array<{ cursor: string, node: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
           | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
           | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
         , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -30841,7 +32504,7 @@ export type HelpCenterQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterQuery = { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, tenantIds: Array<string>, accountIds: Array<string>, companyIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type HelpCenterQuery = { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
       | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
       | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
     , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -31081,6 +32744,7 @@ export type MyInternalNotificationsQuery = { myInternalNotifications: { totalCou
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              }
+          | { __typename: 'ThreadNotificationDetail', threadId: string }
           | { __typename: 'WebhookTargetNotificationDetail', webhookTargetId: string }
          | null, readAt?: { unixTimestamp: string, iso8601: string } | null, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -31669,7 +33333,7 @@ export type AddLabelsMutation = { addLabels: { labels: Array<{ id: string, label
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -31855,7 +33519,7 @@ export type RemoveLabelsMutation = { removeLabels: { thread?: { id: string, ref:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -32106,7 +33770,7 @@ export type CreateSavedThreadsViewMutationVariables = Exact<{
 }>;
 
 
-export type CreateSavedThreadsViewMutation = { createSavedThreadsView: { savedThreadsView?: { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, companies: Array<string>, tenants: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasCompany: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasTenants: boolean, hasAccounts: boolean, hasTenantFieldExternalIds: Array<string>, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateSavedThreadsViewMutation = { createSavedThreadsView: { savedThreadsView?: { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasAccounts: boolean, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32121,7 +33785,7 @@ export type UpdateSavedThreadsViewMutationVariables = Exact<{
 }>;
 
 
-export type UpdateSavedThreadsViewMutation = { updateSavedThreadsView: { savedThreadsView?: { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, companies: Array<string>, tenants: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasCompany: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasTenants: boolean, hasAccounts: boolean, hasTenantFieldExternalIds: Array<string>, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateSavedThreadsViewMutation = { updateSavedThreadsView: { savedThreadsView?: { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasAccounts: boolean, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32347,7 +34011,7 @@ export type CreateBroadcastAudienceMutationVariables = Exact<{
 }>;
 
 
-export type CreateBroadcastAudienceMutation = { createBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateBroadcastAudienceMutation = { createBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32366,7 +34030,7 @@ export type UpdateBroadcastAudienceMutationVariables = Exact<{
 }>;
 
 
-export type UpdateBroadcastAudienceMutation = { updateBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateBroadcastAudienceMutation = { updateBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32380,12 +34044,19 @@ export type UpdateBroadcastAudienceMutation = { updateBroadcastAudience: { broad
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
+export type ImportBroadcastAudienceChannelsMutationVariables = Exact<{
+  input: ImportBroadcastAudienceChannelsInput;
+}>;
+
+
+export type ImportBroadcastAudienceChannelsMutation = { importBroadcastAudienceChannels: { result?: { isDryRun: boolean, addedCount: number, alreadyInAudienceCount: number, notFoundCount: number, ambiguousCount: number, invalidCount: number, broadcastAudience: { id: string } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
 export type DeleteBroadcastAudienceMutationVariables = Exact<{
   input: DeleteBroadcastAudienceInput;
 }>;
 
 
-export type DeleteBroadcastAudienceMutation = { deleteBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { tenantIds: Array<string>, accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, tenantFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, tenantReferenceValues: Array<string> }>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type DeleteBroadcastAudienceMutation = { deleteBroadcastAudience: { broadcastAudience?: { id: string, name: string, type: BroadcastType, isDeleted: boolean, filters: { accountIds: Array<string>, tierIds: Array<string>, slackChannelNameContains: Array<string>, audienceIds: Array<string>, accountFields: Array<{ externalFieldId: string, stringValue?: string | null, booleanValue?: boolean | null, numberValue?: number | null, stringArrayValue: Array<string>, userReferenceValues: Array<string>, accountReferenceValues: Array<string> }>, slackChannels: Array<{ slackTeamId: string, slackChannelId: string }> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32463,7 +34134,7 @@ export type CreateTaskMutationVariables = Exact<{
 }>;
 
 
-export type CreateTaskMutation = { createTask: { task?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, company?: { id: string } | null, tenant?: { id: string } | null, account?: { id: string } | null, assignedTo?:
+export type CreateTaskMutation = { createTask: { task?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, account?: { id: string } | null, assignedTo?:
         | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -32522,7 +34193,7 @@ export type UpdateTaskMutationVariables = Exact<{
 }>;
 
 
-export type UpdateTaskMutation = { updateTask: { task?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, company?: { id: string } | null, tenant?: { id: string } | null, account?: { id: string } | null, assignedTo?:
+export type UpdateTaskMutation = { updateTask: { task?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, account?: { id: string } | null, assignedTo?:
         | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -32581,7 +34252,7 @@ export type DeleteTaskMutationVariables = Exact<{
 }>;
 
 
-export type DeleteTaskMutation = { deleteTask: { task?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, company?: { id: string } | null, tenant?: { id: string } | null, account?: { id: string } | null, assignedTo?:
+export type DeleteTaskMutation = { deleteTask: { task?: { id: string, ref: string, title: string, description?: string | null, status: TaskStatus, priority: number, isDeleted: boolean, account?: { id: string } | null, assignedTo?:
         | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -32640,7 +34311,7 @@ export type UpsertCustomerMutationVariables = Exact<{
 }>;
 
 
-export type UpsertCustomerMutation = { upsertCustomer: { result?: UpsertResult | null, customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpsertCustomerMutation = { upsertCustomer: { result?: UpsertResult | null, customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -32667,7 +34338,7 @@ export type UpdateCustomerCompanyMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCustomerCompanyMutation = { updateCustomerCompany: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateCustomerCompanyMutation = { updateCustomerCompany: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -32701,7 +34372,7 @@ export type MarkCustomerAsSpamMutationVariables = Exact<{
 }>;
 
 
-export type MarkCustomerAsSpamMutation = { markCustomerAsSpam: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type MarkCustomerAsSpamMutation = { markCustomerAsSpam: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -32728,7 +34399,7 @@ export type UnmarkCustomerAsSpamMutationVariables = Exact<{
 }>;
 
 
-export type UnmarkCustomerAsSpamMutation = { unmarkCustomerAsSpam: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UnmarkCustomerAsSpamMutation = { unmarkCustomerAsSpam: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -33080,7 +34751,7 @@ export type TriggerWorkflowMutationVariables = Exact<{
 }>;
 
 
-export type TriggerWorkflowMutation = { triggerWorkflow: { workflowExecution?: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
+export type TriggerWorkflowMutation = { triggerWorkflow: { workflowExecution?: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, credits?: number | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33445,7 +35116,7 @@ export type ForkThreadMutation = { forkThread: { thread?: { id: string, ref: str
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -33619,7 +35290,7 @@ export type CreateThreadFromSlackMessageMutation = { createThreadFromSlackMessag
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -33861,7 +35532,7 @@ export type AddWorkspaceAlternateSupportEmailAddressMutationVariables = Exact<{
 }>;
 
 
-export type AddWorkspaceAlternateSupportEmailAddressMutation = { addWorkspaceAlternateSupportEmailAddress: { workspaceEmailDomainSettings?: { domainName: string, supportEmailAddress: string, isPlainManagedDomain: boolean, alternateSupportEmailAddresses: Array<string>, isForwardingConfigured: boolean, inboundForwardingEmail: string, isDomainConfigured: boolean, dkimDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null }, returnPathDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+export type AddWorkspaceAlternateSupportEmailAddressMutation = { addWorkspaceAlternateSupportEmailAddress: { workspaceEmailDomainSettings?: { domainName: string, supportEmailAddress: string, isPlainManagedDomain: boolean, alternateSupportEmailAddresses: Array<string>, isForwardingConfigured: boolean, inboundForwardingEmail: string, isDomainConfigured: boolean, dkimDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null }, returnPathDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null } } | null, pendingDnsRecords?: { domainName: string, dkimDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null }, returnPathDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type RemoveWorkspaceAlternateSupportEmailAddressMutationVariables = Exact<{
   input: RemoveWorkspaceAlternateSupportEmailAddressInput;
@@ -34061,6 +35732,81 @@ export type DeleteApiKeyMutation = { deleteApiKey: { apiKey?: { id: string, desc
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type CreateOAuthAppMutationVariables = Exact<{
+  input: CreateOAuthAppInput;
+}>;
+
+
+export type CreateOAuthAppMutation = { createOAuthApp: { clientSecret?: string | null, oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type UpdateOAuthAppMutationVariables = Exact<{
+  input: UpdateOAuthAppInput;
+}>;
+
+
+export type UpdateOAuthAppMutation = { updateOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type EnableOAuthAppMutationVariables = Exact<{
+  input: EnableOAuthAppInput;
+}>;
+
+
+export type EnableOAuthAppMutation = { enableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type DisableOAuthAppMutationVariables = Exact<{
+  input: DisableOAuthAppInput;
+}>;
+
+
+export type DisableOAuthAppMutation = { disableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type DeleteOAuthAppMutationVariables = Exact<{
+  input: DeleteOAuthAppInput;
+}>;
+
+
+export type DeleteOAuthAppMutation = { deleteOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type CreateMySlackIntegrationMutationVariables = Exact<{
   input: CreateMySlackIntegrationInput;
@@ -34866,7 +36612,7 @@ export type CreateThreadMutation = { createThread: { thread?: { id: string, ref:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -35011,7 +36757,7 @@ export type ImportThreadMutation = { importThread: { result?: UpsertResult | nul
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -35972,7 +37718,7 @@ export type AssignThreadMutation = { assignThread: { thread?: { id: string, ref:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -36117,7 +37863,7 @@ export type UnassignThreadMutation = { unassignThread: { thread?: { id: string, 
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -36262,7 +38008,7 @@ export type AddAdditionalAssigneesMutation = { addAdditionalAssignees: { thread?
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -36407,7 +38153,7 @@ export type RemoveAdditionalAssigneesMutation = { removeAdditionalAssignees: { t
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -36552,7 +38298,7 @@ export type SnoozeThreadMutation = { snoozeThread: { thread?: { id: string, ref:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -36697,7 +38443,7 @@ export type MarkThreadAsDoneMutation = { markThreadAsDone: { thread?: { id: stri
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -36842,7 +38588,7 @@ export type MarkThreadAsTodoMutation = { markThreadAsTodo: { thread?: { id: stri
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -36987,7 +38733,7 @@ export type ChangeThreadCustomerMutation = { changeThreadCustomer: { thread?: { 
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -37132,7 +38878,7 @@ export type ChangeThreadPriorityMutation = { changeThreadPriority: { thread?: { 
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -37277,7 +39023,7 @@ export type UpdateThreadTitleMutation = { updateThreadTitle: { thread?: { id: st
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -37422,7 +39168,7 @@ export type UpdateThreadExternalIdMutation = { updateThreadExternalId: { thread?
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -37567,7 +39313,7 @@ export type UpdateThreadTenantMutation = { updateThreadTenant: { thread?: { id: 
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -37712,7 +39458,7 @@ export type UpdateThreadAccountMutation = { updateThreadAccount: { thread?: { id
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -37857,7 +39603,7 @@ export type UpdateThreadTierMutation = { updateThreadTier: { thread?: { id: stri
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -38002,7 +39748,7 @@ export type UpdateThreadServiceLevelAgreementPolicyMutation = { updateThreadServ
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -38147,7 +39893,7 @@ export type UpdateThreadEscalationPathMutation = { updateThreadEscalationPath: {
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -38292,7 +40038,7 @@ export type LockThreadMutation = { lockThread: { thread?: { id: string, ref: str
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -38437,7 +40183,7 @@ export type UpdateThreadAgentStatusMutation = { updateThreadAgentStatus: { threa
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -38582,7 +40328,7 @@ export type UpdateThreadSuggestedActionStatusMutation = { updateThreadSuggestedA
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -38734,7 +40480,7 @@ export type CreateTestThreadMutation = { createTestThread: { thread?: { id: stri
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -38877,7 +40623,7 @@ export type CreateAllTestThreadsMutation = { createAllTestThreads: { threads: Ar
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -38996,7 +40742,7 @@ export type SendThreadDiscussionMessageMutation = { sendThreadDiscussionMessage:
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
-        | { __typename: 'ThreadDiscussionToolCallEntryPayload', service?: string | null, op?: string | null, description: string, args?: string | null, error?: string | null, durationMs: number, threadDiscussionToolCallEntryPayloadToolCallId?: string | null, threadDiscussionToolCallEntryPayloadStatus: DiscussionToolCallStatus }
+        | { __typename: 'ThreadDiscussionToolCallEntryPayload', service?: string | null, op?: string | null, description: string, args?: string | null, error?: string | null, durationMs: number, response?: string | null, threadDiscussionToolCallEntryPayloadToolCallId?: string | null, threadDiscussionToolCallEntryPayloadStatus: DiscussionToolCallStatus }
         | { __typename: 'ThreadDiscussionTurnStoppedEntryPayload', stoppedBy:
             | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
             | { __typename: 'DeletedCustomerActor', customerId: string }
@@ -39037,7 +40783,7 @@ export type SendDiscussionMessageMutation = { sendDiscussionMessage: { discussio
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
-        | { __typename: 'ThreadDiscussionToolCallEntryPayload', service?: string | null, op?: string | null, description: string, args?: string | null, error?: string | null, durationMs: number, threadDiscussionToolCallEntryPayloadToolCallId?: string | null, threadDiscussionToolCallEntryPayloadStatus: DiscussionToolCallStatus }
+        | { __typename: 'ThreadDiscussionToolCallEntryPayload', service?: string | null, op?: string | null, description: string, args?: string | null, error?: string | null, durationMs: number, response?: string | null, threadDiscussionToolCallEntryPayloadToolCallId?: string | null, threadDiscussionToolCallEntryPayloadStatus: DiscussionToolCallStatus }
         | { __typename: 'ThreadDiscussionTurnStoppedEntryPayload', stoppedBy:
             | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
             | { __typename: 'DeletedCustomerActor', customerId: string }
@@ -39088,7 +40834,7 @@ export type UpsertDiscussionToolCallMutationVariables = Exact<{
 }>;
 
 
-export type UpsertDiscussionToolCallMutation = { upsertDiscussionToolCall: { result?: UpsertResult | null, toolCall?: { toolCallId?: string | null, service?: string | null, op?: string | null, description: string, args?: string | null, status: DiscussionToolCallStatus, error?: string | null, durationMs: number } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+export type UpsertDiscussionToolCallMutation = { upsertDiscussionToolCall: { result?: UpsertResult | null, toolCall?: { toolCallId?: string | null, service?: string | null, op?: string | null, description: string, args?: string | null, status: DiscussionToolCallStatus, error?: string | null, durationMs: number, response?: string | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type RequestDiscussionToolCallApprovalMutationVariables = Exact<{
   input: RequestDiscussionToolCallApprovalInput;
@@ -39325,7 +41071,7 @@ export type CreateTenantMutationVariables = Exact<{
 }>;
 
 
-export type CreateTenantMutation = { createTenant: { tenant?: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateTenantMutation = { createTenant: { tenant?: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39348,7 +41094,7 @@ export type CreateAccountMutationVariables = Exact<{
 }>;
 
 
-export type CreateAccountMutation = { createAccount: { account?: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateAccountMutation = { createAccount: { account?: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39371,7 +41117,7 @@ export type UpsertTenantMutationVariables = Exact<{
 }>;
 
 
-export type UpsertTenantMutation = { upsertTenant: { result?: UpsertResult | null, tenant?: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpsertTenantMutation = { upsertTenant: { result?: UpsertResult | null, tenant?: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39394,7 +41140,7 @@ export type UpsertAccountMutationVariables = Exact<{
 }>;
 
 
-export type UpsertAccountMutation = { upsertAccount: { result?: UpsertResult | null, account?: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpsertAccountMutation = { upsertAccount: { result?: UpsertResult | null, account?: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39417,7 +41163,7 @@ export type DeleteTenantMutationVariables = Exact<{
 }>;
 
 
-export type DeleteTenantMutation = { deleteTenant: { tenant?: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type DeleteTenantMutation = { deleteTenant: { tenant?: { id: string, name: string, externalId: string, url?: string | null, source: TenantSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39440,7 +41186,7 @@ export type DeleteAccountMutationVariables = Exact<{
 }>;
 
 
-export type DeleteAccountMutation = { deleteAccount: { account?: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type DeleteAccountMutation = { deleteAccount: { account?: { id: string, name: string, externalId: string, url?: string | null, source: AccountSource, primaryDomain?: string | null, alternateDomains: Array<string>, logoUrl?: string | null, isDomainAutoJoinEnabled: boolean, tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39463,7 +41209,7 @@ export type AddCustomerToTenantsMutationVariables = Exact<{
 }>;
 
 
-export type AddCustomerToTenantsMutation = { addCustomerToTenants: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type AddCustomerToTenantsMutation = { addCustomerToTenants: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -39490,7 +41236,7 @@ export type AddCustomerToAccountsMutationVariables = Exact<{
 }>;
 
 
-export type AddCustomerToAccountsMutation = { addCustomerToAccounts: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type AddCustomerToAccountsMutation = { addCustomerToAccounts: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -39517,7 +41263,7 @@ export type RemoveCustomerFromTenantsMutationVariables = Exact<{
 }>;
 
 
-export type RemoveCustomerFromTenantsMutation = { removeCustomerFromTenants: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type RemoveCustomerFromTenantsMutation = { removeCustomerFromTenants: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -39544,7 +41290,7 @@ export type RemoveCustomerFromAccountsMutationVariables = Exact<{
 }>;
 
 
-export type RemoveCustomerFromAccountsMutation = { removeCustomerFromAccounts: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type RemoveCustomerFromAccountsMutation = { removeCustomerFromAccounts: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -39571,7 +41317,7 @@ export type SetCustomerTenantsMutationVariables = Exact<{
 }>;
 
 
-export type SetCustomerTenantsMutation = { setCustomerTenants: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type SetCustomerTenantsMutation = { setCustomerTenants: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -39598,7 +41344,7 @@ export type SetCustomerAccountsMutationVariables = Exact<{
 }>;
 
 
-export type SetCustomerAccountsMutation = { setCustomerAccounts: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type SetCustomerAccountsMutation = { setCustomerAccounts: { customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -39845,7 +41591,7 @@ export type UpsertCompanyMutation = { upsertCompany: { result?: UpsertResult | n
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39872,7 +41618,7 @@ export type DeleteCompanyMutation = { deleteCompany: { company?: { id: string, n
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      , tier?: { id: string } | null, threadChannelAssociations: Array<{ __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40086,6 +41832,21 @@ export type ImportTenantFieldSchemasFromServiceMutationVariables = Exact<{
 
 
 export type ImportTenantFieldSchemasFromServiceMutation = { importTenantFieldSchemasFromService: { tenantFieldSchemas: Array<{ id: string, source: string, externalFieldId: string, label: string, type: TenantFieldType, options?: Array<string> | null, isVisible: boolean, order: number, mapsTo?: TenantFieldMappingConcept | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       }>, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type ImportAccountFieldSchemasFromServiceMutationVariables = Exact<{
+  input: ImportAccountFieldSchemasFromServiceInput;
+}>;
+
+
+export type ImportAccountFieldSchemasFromServiceMutation = { importAccountFieldSchemasFromService: { accountFieldSchemas: Array<{ id: string, source: string, externalFieldId: string, label: string, type: AccountFieldType, options?: Array<string> | null, isVisible: boolean, order: number, mapsTo?: AccountFieldMappingConcept | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40764,7 +42525,7 @@ export type CreateBusinessHoursScheduleMutationVariables = Exact<{
 }>;
 
 
-export type CreateBusinessHoursScheduleMutation = { createBusinessHoursSchedule: { businessHoursSchedule?: { id: string, name: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateBusinessHoursScheduleMutation = { createBusinessHoursSchedule: { businessHoursSchedule?: { id: string, name: string, timezone: { name: string }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40779,7 +42540,7 @@ export type UpdateBusinessHoursScheduleMutationVariables = Exact<{
 }>;
 
 
-export type UpdateBusinessHoursScheduleMutation = { updateBusinessHoursSchedule: { businessHoursSchedule?: { id: string, name: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateBusinessHoursScheduleMutation = { updateBusinessHoursSchedule: { businessHoursSchedule?: { id: string, name: string, timezone: { name: string }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40795,6 +42556,43 @@ export type DeleteBusinessHoursScheduleMutationVariables = Exact<{
 
 
 export type DeleteBusinessHoursScheduleMutation = { deleteBusinessHoursSchedule: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type CreateBusinessHoursOverrideMutationVariables = Exact<{
+  input: CreateBusinessHoursOverrideInput;
+}>;
+
+
+export type CreateBusinessHoursOverrideMutation = { createBusinessHoursOverride: { businessHoursOverride?: { id: string, businessHoursScheduleId: string, name: string, startsOn: string, endsOn: string, slots: Array<{ date: string, opensAt: string, closesAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type UpdateBusinessHoursOverrideMutationVariables = Exact<{
+  input: UpdateBusinessHoursOverrideInput;
+}>;
+
+
+export type UpdateBusinessHoursOverrideMutation = { updateBusinessHoursOverride: { businessHoursOverride?: { id: string, businessHoursScheduleId: string, name: string, startsOn: string, endsOn: string, slots: Array<{ date: string, opensAt: string, closesAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type DeleteBusinessHoursOverrideMutationVariables = Exact<{
+  input: DeleteBusinessHoursOverrideInput;
+}>;
+
+
+export type DeleteBusinessHoursOverrideMutation = { deleteBusinessHoursOverride: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type SyncUserWorkingHoursMutationVariables = Exact<{
   input: SyncUserWorkingHoursInput;
@@ -40900,7 +42698,7 @@ export type CreateIndexedDocumentMutationVariables = Exact<{
 }>;
 
 
-export type CreateIndexedDocumentMutation = { createIndexedDocument: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null, indexedDocument?: { id: string, url: string, status:
+export type CreateIndexedDocumentMutation = { createIndexedDocument: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null, indexedDocument?: { id: string, url: string, knowledgeSourceId: string, status:
         | { __typename: 'IndexedDocumentStatusFailed', reason: string, failedAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'IndexedDocumentStatusIndexed', indexedAt: { unixTimestamp: string, iso8601: string }, indexedBy?:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -41029,7 +42827,7 @@ export type CreateThreadChannelAssociationMutationVariables = Exact<{
 }>;
 
 
-export type CreateThreadChannelAssociationMutation = { createThreadChannelAssociation: { threadChannelAssociation?: { __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateThreadChannelAssociationMutation = { createThreadChannelAssociation: { threadChannelAssociation?: { __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -41044,7 +42842,7 @@ export type UpdateThreadChannelAssociationTenantMembershipPolicyMutationVariable
 }>;
 
 
-export type UpdateThreadChannelAssociationTenantMembershipPolicyMutation = { updateThreadChannelAssociationTenantMembershipPolicy: { threadChannelAssociation?: { __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateThreadChannelAssociationTenantMembershipPolicyMutation = { updateThreadChannelAssociationTenantMembershipPolicy: { threadChannelAssociation?: { __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -41059,7 +42857,7 @@ export type UpdateThreadChannelAssociationAccountMembershipPolicyMutationVariabl
 }>;
 
 
-export type UpdateThreadChannelAssociationAccountMembershipPolicyMutation = { updateThreadChannelAssociationAccountMembershipPolicy: { threadChannelAssociation?: { __typename: 'SlackThreadChannelAssociation', id: string, companyId?: string | null, tenantId?: string | null, tenantMembershipPolicy: TenantMembershipPolicy, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateThreadChannelAssociationAccountMembershipPolicyMutation = { updateThreadChannelAssociationAccountMembershipPolicy: { threadChannelAssociation?: { __typename: 'SlackThreadChannelAssociation', id: string, accountId?: string | null, accountMembershipPolicy: AccountMembershipPolicy, connectedSlackChannelId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -41102,7 +42900,7 @@ export type ResolveCustomerForSlackChannelMutationVariables = Exact<{
 }>;
 
 
-export type ResolveCustomerForSlackChannelMutation = { resolveCustomerForSlackChannel: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null, customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type ResolveCustomerForSlackChannelMutation = { resolveCustomerForSlackChannel: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null, customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -41129,7 +42927,7 @@ export type ResolveCustomerForMsTeamsChannelMutationVariables = Exact<{
 }>;
 
 
-export type ResolveCustomerForMsTeamsChannelMutation = { resolveCustomerForMSTeamsChannel: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null, customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, company?: { id: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type ResolveCustomerForMsTeamsChannelMutation = { resolveCustomerForMSTeamsChannel: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null, customer?: { id: string, externalId?: string | null, fullName: string, shortName?: string | null, avatarUrl?: string | null, isAnonymous: boolean, isTestCustomer: boolean, email: { email: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null }, assignedToUser?: { userId: string, user: { id: string } } | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
         | { __typename: 'DeletedCustomerActor', customerId: string }
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -41156,7 +42954,7 @@ export type CreateHelpCenterMutationVariables = Exact<{
 }>;
 
 
-export type CreateHelpCenterMutation = { createHelpCenter: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, tenantIds: Array<string>, accountIds: Array<string>, companyIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type CreateHelpCenterMutation = { createHelpCenter: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
         | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
         | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
       , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -41182,7 +42980,7 @@ export type UpdateHelpCenterMutationVariables = Exact<{
 }>;
 
 
-export type UpdateHelpCenterMutation = { updateHelpCenter: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, tenantIds: Array<string>, accountIds: Array<string>, companyIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type UpdateHelpCenterMutation = { updateHelpCenter: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
         | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
         | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
       , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -41215,7 +43013,7 @@ export type UpdateHelpCenterCustomDomainNameMutationVariables = Exact<{
 }>;
 
 
-export type UpdateHelpCenterCustomDomainNameMutation = { updateHelpCenterCustomDomainName: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, tenantIds: Array<string>, accountIds: Array<string>, companyIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type UpdateHelpCenterCustomDomainNameMutation = { updateHelpCenterCustomDomainName: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
         | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
         | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
       , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -41241,7 +43039,7 @@ export type VerifyHelpCenterCustomDomainNameMutationVariables = Exact<{
 }>;
 
 
-export type VerifyHelpCenterCustomDomainNameMutation = { verifyHelpCenterCustomDomainName: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, tenantIds: Array<string>, accountIds: Array<string>, companyIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type VerifyHelpCenterCustomDomainNameMutation = { verifyHelpCenterCustomDomainName: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
         | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
         | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
       , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -41580,7 +43378,7 @@ export type EscalateThreadMutation = { escalateThread: { thread?: { id: string, 
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
         | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
         | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
         | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -41687,6 +43485,7 @@ export type UpdateInternalNotificationsMutation = { updateInternalNotifications:
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            }
+        | { __typename: 'ThreadNotificationDetail', threadId: string }
         | { __typename: 'WebhookTargetNotificationDetail', webhookTargetId: string }
        | null, readAt?: { unixTimestamp: string, iso8601: string } | null, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -41716,12 +43515,26 @@ export type ImportTenantFieldSchemasMutationVariables = Exact<{
 
 export type ImportTenantFieldSchemasMutation = { importTenantFieldSchemas: { result?: { added: number, updated: number, skipped: number } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
+export type ImportAccountFieldSchemasMutationVariables = Exact<{
+  input: ImportAccountFieldSchemasInput;
+}>;
+
+
+export type ImportAccountFieldSchemasMutation = { importAccountFieldSchemas: { result?: { added: number, updated: number, skipped: number } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
 export type ImportTenantsMutationVariables = Exact<{
   input: ImportTenantsInput;
 }>;
 
 
 export type ImportTenantsMutation = { importTenants: { result?: { added: number, updated: number, skipped: number } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type ImportAccountsMutationVariables = Exact<{
+  input: ImportAccountsInput;
+}>;
+
+
+export type ImportAccountsMutation = { importAccounts: { result?: { added: number, updated: number, skipped: number } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type ImportCustomersMutationVariables = Exact<{
   input: ImportCustomersInput;
@@ -41908,7 +43721,7 @@ export type BroadcastThreadsQuery = { broadcast?: { threads: { totalCount: numbe
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
-          , tenant?: { id: string } | null, account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+          , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
             | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
             | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
             | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
@@ -42891,7 +44704,7 @@ export type ThreadDiscussionMessagesQuery = { threadDiscussion?: { messages: { e
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
                | null }
-            | { __typename: 'ThreadDiscussionToolCallEntryPayload', service?: string | null, op?: string | null, description: string, args?: string | null, error?: string | null, durationMs: number, threadDiscussionToolCallEntryPayloadToolCallId?: string | null, threadDiscussionToolCallEntryPayloadStatus: DiscussionToolCallStatus }
+            | { __typename: 'ThreadDiscussionToolCallEntryPayload', service?: string | null, op?: string | null, description: string, args?: string | null, error?: string | null, durationMs: number, response?: string | null, threadDiscussionToolCallEntryPayloadToolCallId?: string | null, threadDiscussionToolCallEntryPayloadStatus: DiscussionToolCallStatus }
             | { __typename: 'ThreadDiscussionTurnStoppedEntryPayload', stoppedBy:
                 | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
                 | { __typename: 'DeletedCustomerActor', customerId: string }
@@ -42942,6 +44755,27 @@ export type TierMembershipsQuery = { tier?: { memberships: { totalCount: number,
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              }
          }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } } | null };
+
+export type BusinessHoursScheduleOverridesQueryVariables = Exact<{
+  businessHoursScheduleId: string;
+  filters?: BusinessHoursOverridesFilter | null | undefined;
+  sortBy?: BusinessHoursOverridesSort | null | undefined;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  last?: number | null | undefined;
+  before?: string | null | undefined;
+}>;
+
+
+export type BusinessHoursScheduleOverridesQuery = { businessHoursSchedule?: { overrides: { edges: Array<{ cursor: string, node: { id: string, businessHoursScheduleId: string, name: string, startsOn: string, endsOn: string, slots: Array<{ date: string, opensAt: string, closesAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+           } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } } | null };
 
 export type HelpCenterArticleGroupsQueryVariables = Exact<{
   id: string;
@@ -43038,7 +44872,7 @@ export type KnowledgeGapSignalsQueryVariables = Exact<{
 
 export type KnowledgeGapSignalsQuery = { knowledgeGap?: { signals: { totalCount: number, edges: Array<{ cursor: string, node: { __typename: 'AriKnowledgeGapSignal', id: string, type: KnowledgeGapSignalType, threadId: string, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } } | null };
 
-export const AccountFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFields on Account{id name externalId url@include(if:true)source tier@include(if:true){id}threadChannelAssociations{__typename ...on SlackThreadChannelAssociation{id companyId@include(if:true)tenantId@include(if:true)tenantMembershipPolicy accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}}primaryDomain@include(if:true)alternateDomains logoUrl@include(if:true)isDomainAutoJoinEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AccountFieldsFragment, unknown>;
+export const AccountFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFields on Account{id name externalId url@include(if:true)source tier@include(if:true){id}threadChannelAssociations{__typename ...on SlackThreadChannelAssociation{id accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}}primaryDomain@include(if:true)alternateDomains logoUrl@include(if:true)isDomainAutoJoinEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AccountFieldsFragment, unknown>;
 export const AccountFieldFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFieldFields on AccountField{id source@include(if:true)externalFieldId value{__typename ...on AccountFieldStringValue{stringValue}...on AccountFieldNumberValue{numberValue}...on AccountFieldBooleanValue{booleanValue}...on AccountFieldStringArrayValue{arrayValue}...on AccountFieldDateTimeValue{dateValue{unixTimestamp iso8601}}...on AccountFieldUserReferenceValue{userReferenceValues}...on AccountFieldAccountReferenceValue{accountReferenceValues}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AccountFieldFieldsFragment, unknown>;
 export const AccountFieldAccountReferenceValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFieldAccountReferenceValueFields on AccountFieldAccountReferenceValue{accountReferenceValues}") as unknown as DocumentNode<AccountFieldAccountReferenceValueFieldsFragment, unknown>;
 export const AccountFieldBooleanValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AccountFieldBooleanValueFields on AccountFieldBooleanValue{booleanValue}") as unknown as DocumentNode<AccountFieldBooleanValueFieldsFragment, unknown>;
@@ -43066,15 +44900,16 @@ export const AutoresponderPrioritiesConditionFieldsFragmentDoc = /*#__PURE__*/ g
 export const AutoresponderSupportEmailsConditionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AutoresponderSupportEmailsConditionFields on AutoresponderSupportEmailsCondition{supportEmailAddresses}") as unknown as DocumentNode<AutoresponderSupportEmailsConditionFieldsFragment, unknown>;
 export const AutoresponderTierConditionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AutoresponderTierConditionFields on AutoresponderTierCondition{tierId}") as unknown as DocumentNode<AutoresponderTierConditionFieldsFragment, unknown>;
 export const BeforeBreachActionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BeforeBreachActionFields on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BeforeBreachActionFieldsFragment, unknown>;
+export const BillingCommittedCreditBalanceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BillingCommittedCreditBalanceFields on BillingCommittedCreditBalance{type termGranted@include(if:true)termUsed@include(if:true)remaining expiresAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<BillingCommittedCreditBalanceFieldsFragment, unknown>;
 export const BillingMonthlyAllowanceCreditBalanceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BillingMonthlyAllowanceCreditBalanceFields on BillingMonthlyAllowanceCreditBalance{type allowance used remaining periodEndsAt{unixTimestamp iso8601}lowBalanceThreshold@include(if:true)}") as unknown as DocumentNode<BillingMonthlyAllowanceCreditBalanceFieldsFragment, unknown>;
 export const BillingPlanFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BillingPlanFields on BillingPlan{key name description features highlightedLabel@include(if:true)isSelfCheckoutEligible prices{__typename ...on PerSeatRecurringPrice{billingIntervalUnit billingIntervalCount currency perSeatAmount}...on TieredRecurringPrice{billingIntervalUnit billingIntervalCount currency tiers{maxSeats perSeatAmount flatAmount}}}}") as unknown as DocumentNode<BillingPlanFieldsFragment, unknown>;
 export const BillingPlanChangePreviewFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BillingPlanChangePreviewFields on BillingPlanChangePreview{immediateCost{amount currency}earliestEffectiveAt{unixTimestamp iso8601}}") as unknown as DocumentNode<BillingPlanChangePreviewFieldsFragment, unknown>;
-export const BillingSubscriptionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BillingSubscriptionFields on BillingSubscription{status planKey planCode@include(if:true)planName interval@include(if:true)cancelsAt@include(if:true){unixTimestamp iso8601}trialEndsAt@include(if:true){unixTimestamp iso8601}entitlements{__typename ...on ToggleFeatureEntitlement{feature isEntitled}...on MeteredFeatureEntitlement{feature isEntitled current limit}}endedAt@include(if:true){unixTimestamp iso8601}checkoutSession@include(if:true){id status url}creditBalances{__typename ...on BillingMonthlyAllowanceCreditBalance{type allowance used remaining periodEndsAt{unixTimestamp iso8601}lowBalanceThreshold@include(if:true)}...on BillingTopupCreditBalance{type lifetimeGranted@include(if:true)lifetimeUsed@include(if:true)remaining}}}") as unknown as DocumentNode<BillingSubscriptionFieldsFragment, unknown>;
+export const BillingSubscriptionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BillingSubscriptionFields on BillingSubscription{status planKey planCode@include(if:true)planName interval@include(if:true)cancelsAt@include(if:true){unixTimestamp iso8601}trialEndsAt@include(if:true){unixTimestamp iso8601}entitlements{__typename ...on ToggleFeatureEntitlement{feature isEntitled}...on MeteredFeatureEntitlement{feature isEntitled current limit}}endedAt@include(if:true){unixTimestamp iso8601}checkoutSession@include(if:true){id status url}creditBalances{__typename ...on BillingMonthlyAllowanceCreditBalance{type allowance used remaining periodEndsAt{unixTimestamp iso8601}lowBalanceThreshold@include(if:true)}...on BillingCommittedCreditBalance{type termGranted@include(if:true)termUsed@include(if:true)remaining expiresAt@include(if:true){unixTimestamp iso8601}}...on BillingTopupCreditBalance{type lifetimeGranted@include(if:true)lifetimeUsed@include(if:true)remaining}}nextPlan@include(if:true){planKey name memberSeatLimit@include(if:true)}}") as unknown as DocumentNode<BillingSubscriptionFieldsFragment, unknown>;
 export const BillingTopupCreditBalanceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BillingTopupCreditBalanceFields on BillingTopupCreditBalance{type lifetimeGranted@include(if:true)lifetimeUsed@include(if:true)remaining}") as unknown as DocumentNode<BillingTopupCreditBalanceFieldsFragment, unknown>;
 export const BooleanSettingFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BooleanSettingFields on BooleanSetting{code booleanValue scope{id@include(if:true)scopeType}}") as unknown as DocumentNode<BooleanSettingFieldsFragment, unknown>;
 export const UserActorFieldsFragmentDoc = /*#__PURE__*/ gql("fragment UserActorFields on UserActor{userId user{id}}") as unknown as DocumentNode<UserActorFieldsFragment, unknown>;
 export const BroadcastFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastFields on Broadcast{id name notificationTitle@include(if:true)content contentFormat type isLinkUnfurlingEnabled appendUnsubscribeLink@include(if:true)sender@include(if:true){__typename ...on SlackBroadcastSender{user{...UserActorFields}}...on PlainWorkspaceBroadcastSender{workspace{id}}}sendTarget{scope@include(if:true)recipients{type slackTeamId@include(if:true)slackChannelId@include(if:true)}excludeRecipients{type slackTeamId@include(if:true)slackChannelId@include(if:true)}includeUnsubscribed}status latestSend@include(if:true){id status isTest scheduledAt{unixTimestamp iso8601}startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}deliveryCounts{pending sending sent failed skippedUnsubscribed total}}scheduledAt@include(if:true){unixTimestamp iso8601}startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}isDeleted createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}reactions{emojiName count imageUrl@include(if:true)}}", UserActorFieldsFragmentDoc) as unknown as DocumentNode<BroadcastFieldsFragment, unknown>;
-export const BroadcastAudienceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastAudienceFields on BroadcastAudience{id name type filters{tenantIds accountIds tierIds tenantFields{externalFieldId stringValue@include(if:true)booleanValue@include(if:true)numberValue@include(if:true)stringArrayValue userReferenceValues tenantReferenceValues}accountFields{externalFieldId stringValue@include(if:true)booleanValue@include(if:true)numberValue@include(if:true)stringArrayValue userReferenceValues accountReferenceValues}slackChannels{slackTeamId slackChannelId}slackChannelNameContains audienceIds}isDeleted createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BroadcastAudienceFieldsFragment, unknown>;
+export const BroadcastAudienceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastAudienceFields on BroadcastAudience{id name type filters{accountIds tierIds accountFields{externalFieldId stringValue@include(if:true)booleanValue@include(if:true)numberValue@include(if:true)stringArrayValue userReferenceValues accountReferenceValues}slackChannels{slackTeamId slackChannelId}slackChannelNameContains audienceIds}isDeleted createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BroadcastAudienceFieldsFragment, unknown>;
 export const BroadcastRecipientUnsubscribeFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastRecipientUnsubscribeFields on BroadcastRecipientUnsubscribe{id workspaceId recipient{__typename ...on SlackBroadcastRecipientUnsubscribeRecipient{slackTeamId slackChannelId connectedSlackChannel@include(if:true){id}}}source broadcastSendDeliveryId@include(if:true)createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BroadcastRecipientUnsubscribeFieldsFragment, unknown>;
 export const BroadcastSendTargetRecipientsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BroadcastSendTargetRecipientsFields on BroadcastSendTargetRecipients{count emptyReason@include(if:true)unsubscribedExcludedCount}") as unknown as DocumentNode<BroadcastSendTargetRecipientsFieldsFragment, unknown>;
 export const BulkCreateThreadLinkResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BulkCreateThreadLinkResultFields on BulkCreateThreadLinkResult{threadId threadLink@include(if:true){__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}error@include(if:true){message type code fields{field message type}}}") as unknown as DocumentNode<BulkCreateThreadLinkResultFieldsFragment, unknown>;
@@ -43086,7 +44921,8 @@ export const BulkUpsertThreadFieldResultFieldsFragmentDoc = /*#__PURE__*/ gql("f
 export const WorkflowStepFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowStepFields on WorkflowStep{id workflowId type name@include(if:true)payload transitions positionX positionY createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WorkflowStepFieldsFragment, unknown>;
 export const BulkUpsertWorkflowStepResultItemFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BulkUpsertWorkflowStepResultItemFields on BulkUpsertWorkflowStepResultItem{workflowStep{...WorkflowStepFields}result}", WorkflowStepFieldsFragmentDoc) as unknown as DocumentNode<BulkUpsertWorkflowStepResultItemFieldsFragment, unknown>;
 export const BusinessHoursFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BusinessHoursFields on BusinessHours{createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BusinessHoursFieldsFragment, unknown>;
-export const BusinessHoursScheduleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BusinessHoursScheduleFields on BusinessHoursSchedule{id name createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BusinessHoursScheduleFieldsFragment, unknown>;
+export const BusinessHoursOverrideFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BusinessHoursOverrideFields on BusinessHoursOverride{id businessHoursScheduleId name startsOn endsOn slots{date opensAt closesAt}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BusinessHoursOverrideFieldsFragment, unknown>;
+export const BusinessHoursScheduleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BusinessHoursScheduleFields on BusinessHoursSchedule{id name timezone{name}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<BusinessHoursScheduleFieldsFragment, unknown>;
 export const BusinessHoursSlotFieldsFragmentDoc = /*#__PURE__*/ gql("fragment BusinessHoursSlotFields on BusinessHoursSlot{timezone{name}weekday opensAt closesAt}") as unknown as DocumentNode<BusinessHoursSlotFieldsFragment, unknown>;
 export const ChatFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ChatFields on Chat{id text@include(if:true)customerReadAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ChatFieldsFragment, unknown>;
 export const ChatAppFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ChatAppFields on ChatApp{id name logo@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ChatAppFieldsFragment, unknown>;
@@ -43094,7 +44930,7 @@ export const ChatAppHiddenSecretFieldsFragmentDoc = /*#__PURE__*/ gql("fragment 
 export const ChatAppSecretFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ChatAppSecretFields on ChatAppSecret{chatAppId secret createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ChatAppSecretFieldsFragment, unknown>;
 export const ChatEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ChatEntryFields on ChatEntry{chatId text@include(if:true)customerReadAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<ChatEntryFieldsFragment, unknown>;
 export const ChatThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ChatThreadChannelDetailsFields on ChatThreadChannelDetails{customerReadAt{unixTimestamp iso8601}}") as unknown as DocumentNode<ChatThreadChannelDetailsFieldsFragment, unknown>;
-export const CompanyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CompanyFields on Company{id name logoUrl@include(if:true)domainName createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}tier@include(if:true){id}threadChannelAssociations{__typename ...on SlackThreadChannelAssociation{id companyId@include(if:true)tenantId@include(if:true)tenantMembershipPolicy accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}}contractValue@include(if:true)accountOwner@include(if:true){id}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<CompanyFieldsFragment, unknown>;
+export const CompanyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CompanyFields on Company{id name logoUrl@include(if:true)domainName createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}tier@include(if:true){id}threadChannelAssociations{__typename ...on SlackThreadChannelAssociation{id accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}}contractValue@include(if:true)accountOwner@include(if:true){id}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<CompanyFieldsFragment, unknown>;
 export const CompanyTierMembershipFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CompanyTierMembershipFields on CompanyTierMembership{id tierId companyId createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<CompanyTierMembershipFieldsFragment, unknown>;
 export const ComponentBadgeFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ComponentBadgeFields on ComponentBadge{badgeLabel badgeColor@include(if:true)}") as unknown as DocumentNode<ComponentBadgeFieldsFragment, unknown>;
 export const ComponentCopyButtonFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ComponentCopyButtonFields on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}") as unknown as DocumentNode<ComponentCopyButtonFieldsFragment, unknown>;
@@ -43108,10 +44944,10 @@ export const ComponentWorkflowButtonFieldsFragmentDoc = /*#__PURE__*/ gql("fragm
 export const ConnectedDiscordChannelFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ConnectedDiscordChannelFields on ConnectedDiscordChannel{id discordGuildId discordChannelId name isEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ConnectedDiscordChannelFieldsFragment, unknown>;
 export const ConnectedMsTeamsChannelFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ConnectedMSTeamsChannelFields on ConnectedMSTeamsChannel{id workspaceId msTeamsTenantId msTeamsTeamId msTeamsChannelId name createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}teamName}") as unknown as DocumentNode<ConnectedMsTeamsChannelFieldsFragment, unknown>;
 export const ConnectedSlackChannelFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ConnectedSlackChannelFields on ConnectedSlackChannel{id slackTeamId slackChannelId name channelType isEnabled isPrivate createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ConnectedSlackChannelFieldsFragment, unknown>;
-export const CreditSpendItemFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CreditSpendItemFields on CreditSpendItem{id kind label actor@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}workflowId@include(if:true)workflowName@include(if:true)credits resolvedAt{unixTimestamp iso8601}status threadId@include(if:true)discussionId@include(if:true)}") as unknown as DocumentNode<CreditSpendItemFieldsFragment, unknown>;
+export const CreditSpendItemFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CreditSpendItemFields on CreditSpendItem{id kind label actor@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}workflowId@include(if:true)workflowName@include(if:true)workflowExecutionId@include(if:true)credits resolvedAt{unixTimestamp iso8601}status threadId@include(if:true)discussionId@include(if:true)}") as unknown as DocumentNode<CreditSpendItemFieldsFragment, unknown>;
 export const CsatCustomerSurveyTemplateFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CsatCustomerSurveyTemplateFields on CsatCustomerSurveyTemplate{type questionText}") as unknown as DocumentNode<CsatCustomerSurveyTemplateFieldsFragment, unknown>;
 export const CustomEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomEntryFields on CustomEntry{externalId@include(if:true)title type@include(if:true)components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}") as unknown as DocumentNode<CustomEntryFieldsFragment, unknown>;
-export const CustomerFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomerFields on Customer{id externalId@include(if:true)fullName shortName@include(if:true)email{email isVerified verifiedAt@include(if:true){unixTimestamp iso8601}}avatarUrl@include(if:true)assignedToUser@include(if:true){...UserActorFields}assignedAt@include(if:true){unixTimestamp iso8601}company@include(if:true){id}isAnonymous isTestCustomer createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}markedAsSpamAt@include(if:true){unixTimestamp iso8601}markedAsSpamBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}identities{__typename ...on EmailCustomerIdentity{email}...on DiscordCustomerIdentity{discordUserId}...on SlackCustomerIdentity{slackUserId}}}", UserActorFieldsFragmentDoc) as unknown as DocumentNode<CustomerFieldsFragment, unknown>;
+export const CustomerFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomerFields on Customer{id externalId@include(if:true)fullName shortName@include(if:true)email{email isVerified verifiedAt@include(if:true){unixTimestamp iso8601}}avatarUrl@include(if:true)assignedToUser@include(if:true){...UserActorFields}assignedAt@include(if:true){unixTimestamp iso8601}isAnonymous isTestCustomer createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}markedAsSpamAt@include(if:true){unixTimestamp iso8601}markedAsSpamBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}identities{__typename ...on EmailCustomerIdentity{email}...on DiscordCustomerIdentity{discordUserId}...on SlackCustomerIdentity{slackUserId}}}", UserActorFieldsFragmentDoc) as unknown as DocumentNode<CustomerFieldsFragment, unknown>;
 export const CustomerActorFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomerActorFields on CustomerActor{customerId customer{id}}") as unknown as DocumentNode<CustomerActorFieldsFragment, unknown>;
 export const CustomerCardConfigFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomerCardConfigFields on CustomerCardConfig{id order title key defaultTimeToLiveSeconds apiUrl apiHeaders{name value}isEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<CustomerCardConfigFieldsFragment, unknown>;
 export const CustomerCardInstanceCardTooBigErrorDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomerCardInstanceCardTooBigErrorDetailFields on CustomerCardInstanceCardTooBigErrorDetail{message cardKey sizeBytes maxSizeBytes}") as unknown as DocumentNode<CustomerCardInstanceCardTooBigErrorDetailFieldsFragment, unknown>;
@@ -43163,7 +44999,7 @@ export const GeneratedReplyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment Gener
 export const GenericThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment GenericThreadLinkFields on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<GenericThreadLinkFieldsFragment, unknown>;
 export const GithubUserAuthIntegrationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment GithubUserAuthIntegrationFields on GithubUserAuthIntegration{id githubUsername createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<GithubUserAuthIntegrationFieldsFragment, unknown>;
 export const HeatmapMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HeatmapMetricFields on HeatmapMetric{days{percentage total threadIds messageCount}}") as unknown as DocumentNode<HeatmapMetricFieldsFragment, unknown>;
-export const HelpCenterFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterFields on HelpCenter{id type publicName internalName description@include(if:true)domainSettings{domainName customDomainName@include(if:true)customDomainNameVerificationTxtRecord@include(if:true){name value}customDomainNameVerifiedAt@include(if:true){unixTimestamp iso8601}}portalSettings{isEnabled isAdditionalRecipientsEnabled}headCustomJs@include(if:true)bodyCustomJs@include(if:true)isChatEnabled articleCopyOptions{isEnabled options{isPlaintextEnabled isMarkdownEnabled isChatgptEnabled isClaudeEnabled isCursorEnabled}}isCustomerFacingAiEnabled color@include(if:true)socialPreviewImage@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}access@include(if:true){tierIds tenantIds accountIds companyIds customerIds}authMechanism{__typename ...on HelpCenterAuthMechanismWorkosAuthkit{type}...on HelpCenterAuthMechanismWorkosConnect{type appClientId appSecretMasked apiHost}}publishedAt@include(if:true){unixTimestamp iso8601}publishedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<HelpCenterFieldsFragment, unknown>;
+export const HelpCenterFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterFields on HelpCenter{id type publicName internalName description@include(if:true)domainSettings{domainName customDomainName@include(if:true)customDomainNameVerificationTxtRecord@include(if:true){name value}customDomainNameVerifiedAt@include(if:true){unixTimestamp iso8601}}portalSettings{isEnabled isAdditionalRecipientsEnabled}headCustomJs@include(if:true)bodyCustomJs@include(if:true)isChatEnabled articleCopyOptions{isEnabled options{isPlaintextEnabled isMarkdownEnabled isChatgptEnabled isClaudeEnabled isCursorEnabled}}isCustomerFacingAiEnabled color@include(if:true)socialPreviewImage@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}access@include(if:true){tierIds accountIds customerIds}authMechanism{__typename ...on HelpCenterAuthMechanismWorkosAuthkit{type}...on HelpCenterAuthMechanismWorkosConnect{type appClientId appSecretMasked apiHost}}publishedAt@include(if:true){unixTimestamp iso8601}publishedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<HelpCenterFieldsFragment, unknown>;
 export const HelpCenterAiConversationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAiConversationFields on HelpCenterAiConversation{id title@include(if:true)helpCenter{id}customer@include(if:true){id}thread@include(if:true){id}createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}lastMessageAt{unixTimestamp iso8601}messageCount}") as unknown as DocumentNode<HelpCenterAiConversationFieldsFragment, unknown>;
 export const HelpCenterAiConversationMessageEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAiConversationMessageEntryFields on HelpCenterAiConversationMessageEntry{helpCenterId helpCenterAiConversationId messageId markdown}") as unknown as DocumentNode<HelpCenterAiConversationMessageEntryFieldsFragment, unknown>;
 export const HelpCenterArticleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterArticleFields on HelpCenterArticle{id title description@include(if:true)icon@include(if:true)contentHtml slug status statusChangedAt{unixTimestamp iso8601}statusChangedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}helpCenter{id}articleGroup@include(if:true){id}}") as unknown as DocumentNode<HelpCenterArticleFieldsFragment, unknown>;
@@ -43173,6 +45009,7 @@ export const HelpCenterArticleSearchResultFieldsFragmentDoc = /*#__PURE__*/ gql(
 export const HelpCenterAuthMechanismWorkosAuthkitFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAuthMechanismWorkosAuthkitFields on HelpCenterAuthMechanismWorkosAuthkit{type}") as unknown as DocumentNode<HelpCenterAuthMechanismWorkosAuthkitFieldsFragment, unknown>;
 export const HelpCenterAuthMechanismWorkosConnectFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAuthMechanismWorkosConnectFields on HelpCenterAuthMechanismWorkosConnect{type appClientId appSecretMasked apiHost}") as unknown as DocumentNode<HelpCenterAuthMechanismWorkosConnectFieldsFragment, unknown>;
 export const HelpCenterIndexFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterIndexFields on HelpCenterIndex{helpCenterId hash navIndex{type id title slug parentId@include(if:true)status@include(if:true)description@include(if:true)icon@include(if:true)}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<HelpCenterIndexFieldsFragment, unknown>;
+export const ImportBroadcastAudienceChannelsResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportBroadcastAudienceChannelsResultFields on ImportBroadcastAudienceChannelsResult{isDryRun broadcastAudience{id}addedCount alreadyInAudienceCount notFoundCount ambiguousCount invalidCount}") as unknown as DocumentNode<ImportBroadcastAudienceChannelsResultFieldsFragment, unknown>;
 export const ImportBroadcastRecipientUnsubscribesResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportBroadcastRecipientUnsubscribesResultFields on ImportBroadcastRecipientUnsubscribesResult{isDryRun createdCount alreadyUnsubscribedCount notFoundCount ambiguousCount invalidCount}") as unknown as DocumentNode<ImportBroadcastRecipientUnsubscribesResultFieldsFragment, unknown>;
 export const ImportJobFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportJobFields on ImportJob{id status startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<ImportJobFieldsFragment, unknown>;
 export const ImportJobDefinitionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportJobDefinitionFields on ImportJobDefinition{id mode entityTypes metadata@include(if:true){lists{id name@include(if:true)}}enabledAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ImportJobDefinitionFieldsFragment, unknown>;
@@ -43180,7 +45017,7 @@ export const ImportThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fr
 export const RoleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment RoleFields on Role{id name description@include(if:true)permissions isAssignableToThread isAssignableToTask key@include(if:true)customRoleId@include(if:true)customRole@include(if:true){id}}") as unknown as DocumentNode<RoleFieldsFragment, unknown>;
 export const UserWorkingHoursFieldsFragmentDoc = /*#__PURE__*/ gql("fragment UserWorkingHoursFields on UserWorkingHours{id userId timezone{name}isEnabled nextStatusTransitionAt@include(if:true){unixTimestamp iso8601}nextStatusTransitionTo@include(if:true)slots{id weekday startsAt endsAt}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<UserWorkingHoursFieldsFragment, unknown>;
 export const ImportThreadMessageResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportThreadMessageResultFields on ImportThreadMessageResult{threadMessage@include(if:true){__typename ...on TimelineEntry{id customerId threadId timestamp{unixTimestamp iso8601}entry{__typename ...on NoteEntry{noteId noteEntryText:text noteEntryMarkdown:markdown@include(if:true)isEdited editedAt@include(if:true){unixTimestamp iso8601}editedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ChatEntry{chatId chatEntryText:text@include(if:true)customerReadAt@include(if:true){unixTimestamp iso8601}}...on EmailEntry{emailId to{name@include(if:true)email}from{name@include(if:true)email}subject@include(if:true)textContent@include(if:true)hasMoreTextContent fullTextContent@include(if:true)markdownContent@include(if:true)hasMoreMarkdownContent fullMarkdownContent@include(if:true)authenticity sentAt@include(if:true){unixTimestamp iso8601}sendStatus@include(if:true)receivedAt@include(if:true){unixTimestamp iso8601}isStartOfThread category}...on CustomEntry{externalId@include(if:true)title customEntryType:type@include(if:true)customEntryComponents:components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on LinearIssueThreadLinkStateTransitionedEntry{linearIssueId previousLinearStateId nextLinearStateId}...on ThreadAssignmentTransitionedEntry{previousAssignee@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}nextAssignee@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}}...on ThreadAdditionalAssigneesTransitionedEntry{previousAssignees{__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}nextAssignees{__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}}...on ThreadStatusTransitionedEntry{threadStatusTransitionedEntryPreviousStatus:previousStatus previousStatusDetail@include(if:true){__typename ...on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}...on ThreadStatusDetailNewReply{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailInProgress{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForCustomer{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailThreadLinkUpdated{statusChangedAt{unixTimestamp iso8601}linearIssueId@include(if:true)}...on ThreadStatusDetailIgnored{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}...on ThreadStatusDetailThreadDiscussionResolved{statusChangedAt{unixTimestamp iso8601}threadDiscussionId@include(if:true)}}threadStatusTransitionedEntryNextStatus:nextStatus nextStatusDetail@include(if:true){__typename ...on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}...on ThreadStatusDetailNewReply{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailInProgress{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForCustomer{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailThreadLinkUpdated{statusChangedAt{unixTimestamp iso8601}linearIssueId@include(if:true)}...on ThreadStatusDetailIgnored{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}...on ThreadStatusDetailThreadDiscussionResolved{statusChangedAt{unixTimestamp iso8601}threadDiscussionId@include(if:true)}}}...on ThreadPriorityChangedEntry{previousPriority nextPriority}...on ThreadServiceLevelAgreementPolicyChangedEntry{previousServiceLevelAgreementPolicy@include(if:true){id name}nextServiceLevelAgreementPolicy@include(if:true){id name}}...on ThreadEventEntry{timelineEventId title threadEventEntryComponents:components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}customerId externalId@include(if:true)isCollapsed}...on CustomerEventEntry{timelineEventId title customerEventEntryComponents:components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}customerId externalId@include(if:true)isCollapsed}...on SlackMessageEntry{slackMessageLink@include(if:true)slackWebMessageLink slackMessageEntryText:text customerId relatedThread@include(if:true){threadId}lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}...on SlackReplyEntry{slackMessageLink@include(if:true)slackWebMessageLink customerId slackReplyEntryText:text lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}...on ThreadLabelsChangedEntry{__typename}...on ThreadDiscussionEntry{customerId threadDiscussionId discussionType emailRecipients slackChannelName@include(if:true)slackMessageLink@include(if:true)}...on ThreadDiscussionMessageEntry{customerId threadDiscussionId threadDiscussionMessageId discussionType threadDiscussionMessageEntryText:text resolvedText threadDiscussionMessageEntryType:type slackMessageLink@include(if:true)slackMessageTimestamp@include(if:true)hasUnprocessedAttachments lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}...on ThreadDiscussionResolvedEntry{customerId threadDiscussionId discussionType emailRecipients slackChannelName@include(if:true)slackMessageLink@include(if:true)resolvedAt{unixTimestamp iso8601}}...on ServiceLevelAgreementStatusTransitionedEntry{serviceLevelAgreementStatusTransitionedEntryPreviousStatus:previousStatus serviceLevelAgreementStatusTransitionedEntryNextStatus:nextStatus serviceLevelAgreement@include(if:true){__typename ...on FirstResponseTimeServiceLevelAgreement{id firstResponseTimeMinutes threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on NextResponseTimeServiceLevelAgreement{id nextResponseTimeMinutes threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on FirstResolutionTimeServiceLevelAgreement{id firstResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on TotalResolutionTimeServiceLevelAgreement{id totalResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}...on MSTeamsMessageEntry{mSTeamsMessageEntryText:text customerId markdownContent@include(if:true)msTeamsMessageId msTeamsMessageLink hasUnprocessedAttachments lastEditedOnMsTeamsAt@include(if:true){unixTimestamp iso8601}deletedOnMsTeamsAt@include(if:true){unixTimestamp iso8601}}...on DiscordMessageEntry{customerId discordMessageId markdownContent@include(if:true)lastEditedOnDiscordAt@include(if:true){unixTimestamp iso8601}deletedOnDiscordAt@include(if:true){unixTimestamp iso8601}discordMessageLink}...on ThreadLinkCreatedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}...on ThreadLinkUpdatedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}previousThreadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}...on ThreadLinkDeletedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}...on ThreadLinkTargetCreatedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}sourceThread{id ref title@include(if:true)}}...on ThreadLinkTargetDeletedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}sourceThread{id ref title@include(if:true)}}...on HelpCenterAiConversationMessageEntry{helpCenterId helpCenterAiConversationId messageId helpCenterAiConversationMessageEntryMarkdown:markdown}...on CustomerSurveyRequestedEntry{customerId threadId customerSurveyId surveyResponseId surveyResponsePublicId}...on MergedThreadMessageEntry{threadLinkId childThreadDetails{id ref title@include(if:true)}childTimelineEntry@include(if:true){id}}}actor{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}timelineEntryCreatedBy:createdBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}llmText@include(if:true)}...on Note{id text markdown@include(if:true)customer{id}externalId@include(if:true)isEdited editedAt@include(if:true){unixTimestamp iso8601}editedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted createdAt{unixTimestamp iso8601}noteCreatedBy:createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}result@include(if:true)error@include(if:true){message type code fields{field message type}}}", RoleFieldsFragmentDoc, UserWorkingHoursFieldsFragmentDoc) as unknown as DocumentNode<ImportThreadMessageResultFieldsFragment, unknown>;
-export const IndexedDocumentFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexedDocumentFields on IndexedDocument{id url status{__typename ...on IndexedDocumentStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexedDocumentStatusPending{startedAt{unixTimestamp iso8601}}...on IndexedDocumentStatusFailed{reason failedAt{unixTimestamp iso8601}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<IndexedDocumentFieldsFragment, unknown>;
+export const IndexedDocumentFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexedDocumentFields on IndexedDocument{id url knowledgeSourceId status{__typename ...on IndexedDocumentStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexedDocumentStatusPending{startedAt{unixTimestamp iso8601}}...on IndexedDocumentStatusFailed{reason failedAt{unixTimestamp iso8601}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<IndexedDocumentFieldsFragment, unknown>;
 export const IndexedDocumentSearchResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexedDocumentSearchResultFields on IndexedDocumentSearchResult{content indexedDocument{...IndexedDocumentFields}}", IndexedDocumentFieldsFragmentDoc) as unknown as DocumentNode<IndexedDocumentSearchResultFieldsFragment, unknown>;
 export const IndexedDocumentStatusFailedFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexedDocumentStatusFailedFields on IndexedDocumentStatusFailed{reason failedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<IndexedDocumentStatusFailedFieldsFragment, unknown>;
 export const IndexedDocumentStatusIndexedFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexedDocumentStatusIndexedFields on IndexedDocumentStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<IndexedDocumentStatusIndexedFieldsFragment, unknown>;
@@ -43189,14 +45026,14 @@ export const IndexingStatusFailedFieldsFragmentDoc = /*#__PURE__*/ gql("fragment
 export const IndexingStatusIndexedFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexingStatusIndexedFields on IndexingStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<IndexingStatusIndexedFieldsFragment, unknown>;
 export const IndexingStatusPendingFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexingStatusPendingFields on IndexingStatusPending{startedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<IndexingStatusPendingFieldsFragment, unknown>;
 export const IntegrationReauthRequiredNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IntegrationReauthRequiredNotificationDetailFields on IntegrationReauthRequiredNotificationDetail{serviceIntegrationKey serviceAuthorizationId}") as unknown as DocumentNode<IntegrationReauthRequiredNotificationDetailFieldsFragment, unknown>;
-export const InternalNotificationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment InternalNotificationFields on InternalNotification{id userId type title description@include(if:true)details@include(if:true){__typename ...on NoteMentionNotificationDetail{threadId timelineEntryId mentionedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ThreadAssignmentNotificationDetail{threadId assignedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on EmailBounceNotificationDetail{threadId}...on DiscussionResolvedNotificationDetail{threadId threadDiscussionId}...on IntegrationReauthRequiredNotificationDetail{serviceIntegrationKey serviceAuthorizationId}...on WebhookTargetNotificationDetail{webhookTargetId}}readAt@include(if:true){unixTimestamp iso8601}archivedAt@include(if:true){unixTimestamp iso8601}archivedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<InternalNotificationFieldsFragment, unknown>;
+export const InternalNotificationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment InternalNotificationFields on InternalNotification{id userId type title description@include(if:true)details@include(if:true){__typename ...on NoteMentionNotificationDetail{threadId timelineEntryId mentionedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ThreadAssignmentNotificationDetail{threadId assignedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on EmailBounceNotificationDetail{threadId}...on DiscussionResolvedNotificationDetail{threadId threadDiscussionId}...on IntegrationReauthRequiredNotificationDetail{serviceIntegrationKey serviceAuthorizationId}...on WebhookTargetNotificationDetail{webhookTargetId}...on ThreadNotificationDetail{threadId}}readAt@include(if:true){unixTimestamp iso8601}archivedAt@include(if:true){unixTimestamp iso8601}archivedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<InternalNotificationFieldsFragment, unknown>;
 export const IssueTrackerFieldFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IssueTrackerFieldFields on IssueTrackerField{name key type parentFieldKey@include(if:true)options{name value icon@include(if:true)color@include(if:true)}selectedValue@include(if:true)isRequired}") as unknown as DocumentNode<IssueTrackerFieldFieldsFragment, unknown>;
 export const JiraIntegrationTokenFieldsFragmentDoc = /*#__PURE__*/ gql("fragment JiraIntegrationTokenFields on JiraIntegrationToken{token createdAt{unixTimestamp iso8601}}") as unknown as DocumentNode<JiraIntegrationTokenFieldsFragment, unknown>;
 export const JiraIssueThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment JiraIssueThreadLinkFields on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}") as unknown as DocumentNode<JiraIssueThreadLinkFieldsFragment, unknown>;
 export const JiraSiteIntegrationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment JiraSiteIntegrationFields on JiraSiteIntegration{name key site{id name url avatarUrl@include(if:true)}}") as unknown as DocumentNode<JiraSiteIntegrationFieldsFragment, unknown>;
 export const KnowledgeGapFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeGapFields on KnowledgeGap{id title description lastSeenAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}task@include(if:true){id}}") as unknown as DocumentNode<KnowledgeGapFieldsFragment, unknown>;
 export const KnowledgeGapFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeGapFeedbackDetailsFields on KnowledgeGapFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)knowledgeGapId}") as unknown as DocumentNode<KnowledgeGapFeedbackDetailsFieldsFragment, unknown>;
-export const KnowledgeSourceCitationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeSourceCitationFields on KnowledgeSourceCitation{threadId timelineEntryId sourceType title url@include(if:true)document@include(if:true){__typename ...on IndexedDocument{id url status{__typename ...on IndexedDocumentStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexedDocumentStatusPending{startedAt{unixTimestamp iso8601}}...on IndexedDocumentStatusFailed{reason failedAt{unixTimestamp iso8601}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on HelpCenterArticleDocument{id article{id}}}}") as unknown as DocumentNode<KnowledgeSourceCitationFieldsFragment, unknown>;
+export const KnowledgeSourceCitationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeSourceCitationFields on KnowledgeSourceCitation{threadId timelineEntryId sourceType title url@include(if:true)document@include(if:true){__typename ...on IndexedDocument{id url knowledgeSourceId status{__typename ...on IndexedDocumentStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexedDocumentStatusPending{startedAt{unixTimestamp iso8601}}...on IndexedDocumentStatusFailed{reason failedAt{unixTimestamp iso8601}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on HelpCenterArticleDocument{id article{id}}}}") as unknown as DocumentNode<KnowledgeSourceCitationFieldsFragment, unknown>;
 export const KnowledgeSourceSitemapFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeSourceSitemapFields on KnowledgeSourceSitemap{id type url status{__typename ...on IndexingStatusPending{startedAt{unixTimestamp iso8601}}...on IndexingStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexingStatusFailed{reason failedAt{unixTimestamp iso8601}}}indexedDocumentCounts{total pending indexed failed}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<KnowledgeSourceSitemapFieldsFragment, unknown>;
 export const KnowledgeSourceUrlFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeSourceUrlFields on KnowledgeSourceUrl{id type url status{__typename ...on IndexingStatusPending{startedAt{unixTimestamp iso8601}}...on IndexingStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexingStatusFailed{reason failedAt{unixTimestamp iso8601}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<KnowledgeSourceUrlFieldsFragment, unknown>;
 export const LabelFieldsFragmentDoc = /*#__PURE__*/ gql("fragment LabelFields on Label{id labelType{id}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<LabelFieldsFragment, unknown>;
@@ -43216,12 +45053,14 @@ export const NoteFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteFields on N
 export const NoteEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteEntryFields on NoteEntry{noteId text markdown@include(if:true)isEdited editedAt@include(if:true){unixTimestamp iso8601}editedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<NoteEntryFieldsFragment, unknown>;
 export const NoteMentionNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteMentionNotificationDetailFields on NoteMentionNotificationDetail{threadId timelineEntryId mentionedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<NoteMentionNotificationDetailFieldsFragment, unknown>;
 export const NumberSettingFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NumberSettingFields on NumberSetting{code numberValue scope{id@include(if:true)scopeType}}") as unknown as DocumentNode<NumberSettingFieldsFragment, unknown>;
+export const OAuthAppFieldsFragmentDoc = /*#__PURE__*/ gql("fragment OAuthAppFields on OAuthApp{id name description@include(if:true)clientId redirectUrls isEnabled clientSecret@include(if:true){id secretHint lastUsedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<OAuthAppFieldsFragment, unknown>;
+export const PendingSenderDomainDnsRecordsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PendingSenderDomainDnsRecordsFields on PendingSenderDomainDnsRecords{domainName dkimDnsRecord{type name value isVerified verifiedAt@include(if:true){unixTimestamp iso8601}lastCheckedAt@include(if:true){unixTimestamp iso8601}}returnPathDnsRecord{type name value isVerified verifiedAt@include(if:true){unixTimestamp iso8601}lastCheckedAt@include(if:true){unixTimestamp iso8601}}}") as unknown as DocumentNode<PendingSenderDomainDnsRecordsFieldsFragment, unknown>;
 export const PerSeatRecurringPriceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PerSeatRecurringPriceFields on PerSeatRecurringPrice{billingIntervalUnit billingIntervalCount currency perSeatAmount}") as unknown as DocumentNode<PerSeatRecurringPriceFieldsFragment, unknown>;
 export const PlainTaskThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PlainTaskThreadLinkFields on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}") as unknown as DocumentNode<PlainTaskThreadLinkFieldsFragment, unknown>;
 export const PlainThreadThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PlainThreadThreadLinkFields on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}") as unknown as DocumentNode<PlainThreadThreadLinkFieldsFragment, unknown>;
 export const QueuedAgentSessionMessageFieldsFragmentDoc = /*#__PURE__*/ gql("fragment QueuedAgentSessionMessageFields on QueuedAgentSessionMessage{id text createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<QueuedAgentSessionMessageFieldsFragment, unknown>;
 export const RoleChangeCostFieldsFragmentDoc = /*#__PURE__*/ gql("fragment RoleChangeCostFields on RoleChangeCost{totalPrice{amount currency}fullPrice{amount currency}adjustedPrice{amount currency}dueNowPrice{amount currency}quantity intervalUnit intervalCount addingSeatType removingSeatType@include(if:true)}") as unknown as DocumentNode<RoleChangeCostFieldsFragment, unknown>;
-export const SavedThreadsViewFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SavedThreadsViewFields on SavedThreadsView{id name icon color threadsFilter{statuses statusDetails priorities assignedToUser participants customerGroups companies tenants accounts tiers serviceLevelAgreementPolicyIds labelTypeIds messageSource supportEmailAddresses slaTypes slaStatuses threadLinkGroupIds threadLinkSources{sourceType sourceId}createdAtFilter@include(if:true){after@include(if:true)before@include(if:true)}sort{field@include(if:true)direction@include(if:true)threadFieldKey@include(if:true)}displayOptions{hasStatus hasCustomer hasCompany hasPreviewText hasTier hasCustomerGroups hasLabels hasLinkedThreads hasServiceLevelAgreements hasChannels hasLastUpdated hasCreatedAt hasAssignees hasRef hasIssueTrackerIssues hasTasks hasThreadFieldKeys hasTenants hasAccounts hasTenantFieldExternalIds hasAccountFieldExternalIds}groupBy layout}isHidden createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<SavedThreadsViewFieldsFragment, unknown>;
+export const SavedThreadsViewFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SavedThreadsViewFields on SavedThreadsView{id name icon color threadsFilter{statuses statusDetails priorities assignedToUser participants customerGroups accounts tiers serviceLevelAgreementPolicyIds labelTypeIds messageSource supportEmailAddresses slaTypes slaStatuses threadLinkGroupIds threadLinkSources{sourceType sourceId}createdAtFilter@include(if:true){after@include(if:true)before@include(if:true)}sort{field@include(if:true)direction@include(if:true)threadFieldKey@include(if:true)}displayOptions{hasStatus hasCustomer hasPreviewText hasTier hasCustomerGroups hasLabels hasLinkedThreads hasServiceLevelAgreements hasChannels hasLastUpdated hasCreatedAt hasAssignees hasRef hasIssueTrackerIssues hasTasks hasThreadFieldKeys hasAccounts hasAccountFieldExternalIds}groupBy layout}isHidden createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<SavedThreadsViewFieldsFragment, unknown>;
 export const ServiceAuthorizationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ServiceAuthorizationFields on ServiceAuthorization{id serviceIntegration{__typename ...on JiraSiteIntegration{name key site{id name url avatarUrl@include(if:true)}}...on DefaultServiceIntegration{name key}}status createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedAt{unixTimestamp iso8601}connectedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isImportRunnerIntegration}") as unknown as DocumentNode<ServiceAuthorizationFieldsFragment, unknown>;
 export const ServiceLevelAgreementPolicyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ServiceLevelAgreementPolicyFields on ServiceLevelAgreementPolicy{id name description@include(if:true)createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ServiceLevelAgreementPolicyFieldsFragment, unknown>;
 export const ServiceLevelAgreementStatusTransitionedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgreementStatusTransitionedEntry{previousStatus nextStatus serviceLevelAgreement@include(if:true){__typename ...on FirstResponseTimeServiceLevelAgreement{id firstResponseTimeMinutes threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on NextResponseTimeServiceLevelAgreement{id nextResponseTimeMinutes threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on FirstResolutionTimeServiceLevelAgreement{id firstResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on TotalResolutionTimeServiceLevelAgreement{id totalResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}") as unknown as DocumentNode<ServiceLevelAgreementStatusTransitionedEntryFieldsFragment, unknown>;
@@ -43235,7 +45074,7 @@ export const SlackBroadcastRecipientUnsubscribeRecipientFieldsFragmentDoc = /*#_
 export const SlackCustomerIdentityFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SlackCustomerIdentityFields on SlackCustomerIdentity{slackUserId}") as unknown as DocumentNode<SlackCustomerIdentityFieldsFragment, unknown>;
 export const SlackMessageEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SlackMessageEntryFields on SlackMessageEntry{slackMessageLink@include(if:true)slackWebMessageLink text customerId relatedThread@include(if:true){threadId}lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<SlackMessageEntryFieldsFragment, unknown>;
 export const SlackReplyEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SlackReplyEntryFields on SlackReplyEntry{slackMessageLink@include(if:true)slackWebMessageLink customerId text lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<SlackReplyEntryFieldsFragment, unknown>;
-export const SlackThreadChannelAssociationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SlackThreadChannelAssociationFields on SlackThreadChannelAssociation{id companyId@include(if:true)tenantId@include(if:true)tenantMembershipPolicy accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}") as unknown as DocumentNode<SlackThreadChannelAssociationFieldsFragment, unknown>;
+export const SlackThreadChannelAssociationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SlackThreadChannelAssociationFields on SlackThreadChannelAssociation{id accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}") as unknown as DocumentNode<SlackThreadChannelAssociationFieldsFragment, unknown>;
 export const SlackThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SlackThreadChannelDetailsFields on SlackThreadChannelDetails{slackChannelId slackChannelName slackTeamId slackTeamName}") as unknown as DocumentNode<SlackThreadChannelDetailsFieldsFragment, unknown>;
 export const SlackUserFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SlackUserFields on SlackUser{id slackUserId slackAvatarUrl72px@include(if:true)slackHandle fullName isInChannel createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<SlackUserFieldsFragment, unknown>;
 export const SnippetFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SnippetFields on Snippet{id name text markdown@include(if:true)path@include(if:true)isDeleted createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<SnippetFieldsFragment, unknown>;
@@ -43245,9 +45084,9 @@ export const SuggestedLabelTypeFieldsFragmentDoc = /*#__PURE__*/ gql("fragment S
 export const SystemFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SystemFields on System{id}") as unknown as DocumentNode<SystemFieldsFragment, unknown>;
 export const SystemActorFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SystemActorFields on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}") as unknown as DocumentNode<SystemActorFieldsFragment, unknown>;
 export const SystemSidekickSkillFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SystemSidekickSkillFields on SystemSidekickSkill{name displayName description isEnabled}") as unknown as DocumentNode<SystemSidekickSkillFieldsFragment, unknown>;
-export const TaskFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TaskFields on Task{id ref title description@include(if:true)status priority company@include(if:true){id}tenant@include(if:true){id}account@include(if:true){id}assignedTo@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}assignedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}", RoleFieldsFragmentDoc, UserWorkingHoursFieldsFragmentDoc) as unknown as DocumentNode<TaskFieldsFragment, unknown>;
+export const TaskFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TaskFields on Task{id ref title description@include(if:true)status priority account@include(if:true){id}assignedTo@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}assignedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}", RoleFieldsFragmentDoc, UserWorkingHoursFieldsFragmentDoc) as unknown as DocumentNode<TaskFieldsFragment, unknown>;
 export const TeamSettingsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TeamSettingsFields on TeamSettings{id labelTypeId isRoundRobinEnabled roundRobinMaxCapacity createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TeamSettingsFieldsFragment, unknown>;
-export const TenantFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFields on Tenant{id name externalId url@include(if:true)source tier@include(if:true){id}threadChannelAssociations{__typename ...on SlackThreadChannelAssociation{id companyId@include(if:true)tenantId@include(if:true)tenantMembershipPolicy accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}}primaryDomain@include(if:true)alternateDomains logoUrl@include(if:true)isDomainAutoJoinEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TenantFieldsFragment, unknown>;
+export const TenantFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFields on Tenant{id name externalId url@include(if:true)source tier@include(if:true){id}threadChannelAssociations{__typename ...on SlackThreadChannelAssociation{id accountId@include(if:true)accountMembershipPolicy createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedSlackChannelId}}primaryDomain@include(if:true)alternateDomains logoUrl@include(if:true)isDomainAutoJoinEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TenantFieldsFragment, unknown>;
 export const TenantFieldFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldFields on TenantField{id source@include(if:true)externalFieldId value{__typename ...on TenantFieldStringValue{stringValue}...on TenantFieldNumberValue{numberValue}...on TenantFieldBooleanValue{booleanValue}...on TenantFieldStringArrayValue{arrayValue}...on TenantFieldDateTimeValue{dateValue{unixTimestamp iso8601}}...on TenantFieldUserReferenceValue{userReferenceValues}...on TenantFieldTenantReferenceValue{tenantReferenceValues}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TenantFieldFieldsFragment, unknown>;
 export const TenantFieldBooleanValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldBooleanValueFields on TenantFieldBooleanValue{booleanValue}") as unknown as DocumentNode<TenantFieldBooleanValueFieldsFragment, unknown>;
 export const TenantFieldDateTimeValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldDateTimeValueFields on TenantFieldDateTimeValue{dateValue{unixTimestamp iso8601}}") as unknown as DocumentNode<TenantFieldDateTimeValueFieldsFragment, unknown>;
@@ -43258,7 +45097,7 @@ export const TenantFieldStringValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragme
 export const TenantFieldTenantReferenceValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldTenantReferenceValueFields on TenantFieldTenantReferenceValue{tenantReferenceValues}") as unknown as DocumentNode<TenantFieldTenantReferenceValueFieldsFragment, unknown>;
 export const TenantFieldUserReferenceValueFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantFieldUserReferenceValueFields on TenantFieldUserReferenceValue{userReferenceValues}") as unknown as DocumentNode<TenantFieldUserReferenceValueFieldsFragment, unknown>;
 export const TenantTierMembershipFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TenantTierMembershipFields on TenantTierMembership{id tierId tenantId createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TenantTierMembershipFieldsFragment, unknown>;
-export const ThreadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadFields on Thread{id ref customer{id}title description@include(if:true)previewText@include(if:true)priority externalId@include(if:true)isTestThread status statusChangedAt{unixTimestamp iso8601}statusChangedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}statusDetail@include(if:true){__typename ...on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}...on ThreadStatusDetailNewReply{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailInProgress{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForCustomer{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailThreadLinkUpdated{statusChangedAt{unixTimestamp iso8601}linearIssueId@include(if:true)}...on ThreadStatusDetailIgnored{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}...on ThreadStatusDetailThreadDiscussionResolved{statusChangedAt{unixTimestamp iso8601}threadDiscussionId@include(if:true)}}agentStatus@include(if:true)agentStatusDetail@include(if:true){__typename ...on AgentStatusDetailInProgress{type}...on AgentStatusDetailHandedOff{type reason@include(if:true)}...on AgentStatusDetailHandled{type}}agentStatusUpdatedAt@include(if:true){unixTimestamp iso8601}agentStatusUpdatedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}assignedTo@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}assignedAt@include(if:true){unixTimestamp iso8601}additionalAssignees{__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}aiAgentMode@include(if:true)firstInboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}firstOutboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}lastInboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}lastOutboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}supportEmailAddresses isFromPlainManagedDomain tenant@include(if:true){id}account@include(if:true){id}tier@include(if:true){id}serviceLevelAgreementPolicy@include(if:true){id}channel channelDetails@include(if:true){__typename ...on SlackThreadChannelDetails{slackChannelId slackChannelName slackTeamId slackTeamName}...on MSTeamsThreadChannelDetails{msTeamsTeamId msTeamsTeamName msTeamsChannelId msTeamsChannelName msTeamsMessageType}...on ChatThreadChannelDetails{customerReadAt{unixTimestamp iso8601}}...on DiscordThreadChannelDetails{discordGuildId discordChannelId discordChannelName@include(if:true)}...on ImportThreadChannelDetails{importSourceUrl@include(if:true)importIntegrationKey}}surveyResponse@include(if:true){id sentiment@include(if:true)rating@include(if:true)surveyId@include(if:true)comment@include(if:true)respondedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}catchupDetail@include(if:true){summary@include(if:true)completedActions{userId content}customerEvents{customerId content}suggestedSidekickPrompts{label prompt category}generatedAt@include(if:true){unixTimestamp iso8601}}lockedAt@include(if:true){unixTimestamp iso8601}lockedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}importedAt@include(if:true){unixTimestamp iso8601}importedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}broadcast@include(if:true){id}}", RoleFieldsFragmentDoc, UserWorkingHoursFieldsFragmentDoc) as unknown as DocumentNode<ThreadFieldsFragment, unknown>;
+export const ThreadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadFields on Thread{id ref customer{id}title description@include(if:true)previewText@include(if:true)priority externalId@include(if:true)isTestThread status statusChangedAt{unixTimestamp iso8601}statusChangedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}statusDetail@include(if:true){__typename ...on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}...on ThreadStatusDetailNewReply{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailInProgress{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForCustomer{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailThreadLinkUpdated{statusChangedAt{unixTimestamp iso8601}linearIssueId@include(if:true)}...on ThreadStatusDetailIgnored{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}...on ThreadStatusDetailThreadDiscussionResolved{statusChangedAt{unixTimestamp iso8601}threadDiscussionId@include(if:true)}}agentStatus@include(if:true)agentStatusDetail@include(if:true){__typename ...on AgentStatusDetailInProgress{type}...on AgentStatusDetailHandedOff{type reason@include(if:true)}...on AgentStatusDetailHandled{type}}agentStatusUpdatedAt@include(if:true){unixTimestamp iso8601}agentStatusUpdatedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}assignedTo@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}assignedAt@include(if:true){unixTimestamp iso8601}additionalAssignees{__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}aiAgentMode@include(if:true)firstInboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}firstOutboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}lastInboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}lastOutboundMessageInfo@include(if:true){timestamp{unixTimestamp iso8601}messageSource}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}supportEmailAddresses isFromPlainManagedDomain account@include(if:true){id}tier@include(if:true){id}serviceLevelAgreementPolicy@include(if:true){id}channel channelDetails@include(if:true){__typename ...on SlackThreadChannelDetails{slackChannelId slackChannelName slackTeamId slackTeamName}...on MSTeamsThreadChannelDetails{msTeamsTeamId msTeamsTeamName msTeamsChannelId msTeamsChannelName msTeamsMessageType}...on ChatThreadChannelDetails{customerReadAt{unixTimestamp iso8601}}...on DiscordThreadChannelDetails{discordGuildId discordChannelId discordChannelName@include(if:true)}...on ImportThreadChannelDetails{importSourceUrl@include(if:true)importIntegrationKey}}surveyResponse@include(if:true){id sentiment@include(if:true)rating@include(if:true)surveyId@include(if:true)comment@include(if:true)respondedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}catchupDetail@include(if:true){summary@include(if:true)completedActions{userId content}customerEvents{customerId content}suggestedSidekickPrompts{label prompt category}generatedAt@include(if:true){unixTimestamp iso8601}}lockedAt@include(if:true){unixTimestamp iso8601}lockedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}importedAt@include(if:true){unixTimestamp iso8601}importedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}broadcast@include(if:true){id}}", RoleFieldsFragmentDoc, UserWorkingHoursFieldsFragmentDoc) as unknown as DocumentNode<ThreadFieldsFragment, unknown>;
 export const ThreadAssignmentNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadAssignmentNotificationDetailFields on ThreadAssignmentNotificationDetail{threadId assignedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadAssignmentNotificationDetailFieldsFragment, unknown>;
 export const ThreadCatchupFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadCatchupFeedbackDetailsFields on ThreadCatchupFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId}") as unknown as DocumentNode<ThreadCatchupFeedbackDetailsFieldsFragment, unknown>;
 export const ThreadClusterFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadClusterFields on ThreadCluster{id title description category sentiment confidence@include(if:true)emoji createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}threads{threadId customerId tierId@include(if:true)distance}}") as unknown as DocumentNode<ThreadClusterFieldsFragment, unknown>;
@@ -43269,22 +45108,23 @@ export const ThreadDiscussionConnectRequestEntryPayloadFieldsFragmentDoc = /*#__
 export const ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFields on ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails{cursorWorkspaceIntegrationId repositoryUrl@include(if:true)}") as unknown as DocumentNode<ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment, unknown>;
 export const ThreadDiscussionEmailChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionEmailChannelDetailsFields on ThreadDiscussionEmailChannelDetails{emailRecipients}") as unknown as DocumentNode<ThreadDiscussionEmailChannelDetailsFieldsFragment, unknown>;
 export const ThreadDiscussionEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionEntryFields on ThreadDiscussionEntry{customerId threadDiscussionId discussionType emailRecipients slackChannelName@include(if:true)slackMessageLink@include(if:true)}") as unknown as DocumentNode<ThreadDiscussionEntryFieldsFragment, unknown>;
-export const ThreadDiscussionMessageFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage{id threadDiscussionId type text slackMessageLink@include(if:true)hasUnprocessedAttachments lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}entryType entry@include(if:true){__typename ...on ThreadDiscussionMessageEntryPayload{text type isFinal slackBlocks@include(if:true)}...on ThreadDiscussionToolCallEntryPayload{threadDiscussionToolCallEntryPayloadToolCallId:toolCallId@include(if:true)service@include(if:true)op@include(if:true)description args@include(if:true)threadDiscussionToolCallEntryPayloadStatus:status error@include(if:true)durationMs}...on ThreadDiscussionApprovalRequestEntryPayload{approvalId leaseId justification threadDiscussionApprovalRequestEntryPayloadStatus:status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}calls}...on ThreadDiscussionToolCallApprovalEntryPayload{approvalId threadDiscussionToolCallApprovalEntryPayloadToolCallId:toolCallId justification threadDiscussionToolCallApprovalEntryPayloadStatus:status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ThreadDiscussionConnectRequestEntryPayload{connectRequestId justification tools{slug name isConnected}threadDiscussionConnectRequestEntryPayloadStatus:status resolvedAt@include(if:true){unixTimestamp iso8601}}...on ThreadDiscussionQuestionEntryPayload{questionRequestId threadDiscussionQuestionEntryPayloadStatus:status selections{questionId optionIds otherText@include(if:true)}resolvedAt@include(if:true){unixTimestamp iso8601}}...on ThreadDiscussionTurnStoppedEntryPayload{stoppedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadDiscussionMessageFieldsFragment, unknown>;
+export const ThreadDiscussionMessageFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage{id threadDiscussionId type text slackMessageLink@include(if:true)hasUnprocessedAttachments lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}entryType entry@include(if:true){__typename ...on ThreadDiscussionMessageEntryPayload{text type isFinal slackBlocks@include(if:true)}...on ThreadDiscussionToolCallEntryPayload{threadDiscussionToolCallEntryPayloadToolCallId:toolCallId@include(if:true)service@include(if:true)op@include(if:true)description args@include(if:true)threadDiscussionToolCallEntryPayloadStatus:status error@include(if:true)durationMs response@include(if:true)}...on ThreadDiscussionApprovalRequestEntryPayload{approvalId leaseId justification threadDiscussionApprovalRequestEntryPayloadStatus:status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}calls}...on ThreadDiscussionToolCallApprovalEntryPayload{approvalId threadDiscussionToolCallApprovalEntryPayloadToolCallId:toolCallId justification threadDiscussionToolCallApprovalEntryPayloadStatus:status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ThreadDiscussionConnectRequestEntryPayload{connectRequestId justification tools{slug name isConnected}threadDiscussionConnectRequestEntryPayloadStatus:status resolvedAt@include(if:true){unixTimestamp iso8601}}...on ThreadDiscussionQuestionEntryPayload{questionRequestId threadDiscussionQuestionEntryPayloadStatus:status selections{questionId optionIds otherText@include(if:true)}resolvedAt@include(if:true){unixTimestamp iso8601}}...on ThreadDiscussionTurnStoppedEntryPayload{stoppedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadDiscussionMessageFieldsFragment, unknown>;
 export const ThreadDiscussionMessageEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionMessageEntryFields on ThreadDiscussionMessageEntry{customerId threadDiscussionId threadDiscussionMessageId discussionType text resolvedText type slackMessageLink@include(if:true)slackMessageTimestamp@include(if:true)hasUnprocessedAttachments lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadDiscussionMessageEntryFieldsFragment, unknown>;
 export const ThreadDiscussionMessageEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionMessageEntryPayloadFields on ThreadDiscussionMessageEntryPayload{text type isFinal slackBlocks@include(if:true)}") as unknown as DocumentNode<ThreadDiscussionMessageEntryPayloadFieldsFragment, unknown>;
 export const ThreadDiscussionQuestionEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionQuestionEntryPayloadFields on ThreadDiscussionQuestionEntryPayload{questionRequestId status selections{questionId optionIds otherText@include(if:true)}resolvedAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadDiscussionQuestionEntryPayloadFieldsFragment, unknown>;
 export const ThreadDiscussionResolvedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionResolvedEntryFields on ThreadDiscussionResolvedEntry{customerId threadDiscussionId discussionType emailRecipients slackChannelName@include(if:true)slackMessageLink@include(if:true)resolvedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadDiscussionResolvedEntryFieldsFragment, unknown>;
 export const ThreadDiscussionSlackChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionSlackChannelDetailsFields on ThreadDiscussionSlackChannelDetails{slackTeamId slackChannelId slackChannelName slackMessageLink@include(if:true)}") as unknown as DocumentNode<ThreadDiscussionSlackChannelDetailsFieldsFragment, unknown>;
 export const ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionToolCallApprovalEntryPayloadFields on ThreadDiscussionToolCallApprovalEntryPayload{approvalId toolCallId justification status reviewerNote@include(if:true)resolvedAt@include(if:true){unixTimestamp iso8601}resolvedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragment, unknown>;
-export const ThreadDiscussionToolCallEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionToolCallEntryPayloadFields on ThreadDiscussionToolCallEntryPayload{toolCallId@include(if:true)service@include(if:true)op@include(if:true)description args@include(if:true)status error@include(if:true)durationMs}") as unknown as DocumentNode<ThreadDiscussionToolCallEntryPayloadFieldsFragment, unknown>;
+export const ThreadDiscussionToolCallEntryPayloadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadDiscussionToolCallEntryPayloadFields on ThreadDiscussionToolCallEntryPayload{toolCallId@include(if:true)service@include(if:true)op@include(if:true)description args@include(if:true)status error@include(if:true)durationMs response@include(if:true)}") as unknown as DocumentNode<ThreadDiscussionToolCallEntryPayloadFieldsFragment, unknown>;
 export const ThreadEventFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadEventFields on ThreadEvent{id customerId threadId title components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}isCollapsed createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadEventFieldsFragment, unknown>;
 export const ThreadEventEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadEventEntryFields on ThreadEventEntry{timelineEventId title components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}customerId externalId@include(if:true)isCollapsed}") as unknown as DocumentNode<ThreadEventEntryFieldsFragment, unknown>;
 export const ThreadFieldSchemaFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadFieldSchemaFields on ThreadFieldSchema{id label key description order type enumValues defaultStringValue@include(if:true)defaultBooleanValue@include(if:true)defaultNumberValue@include(if:true)defaultDateValue@include(if:true){unixTimestamp iso8601}isRequired isAiAutoFillEnabled isAvailableToAgents isClientReadonly dependsOnThreadField@include(if:true){threadFieldSchemaId threadFieldSchemaValue}dependsOnLabels{labelTypeId}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadFieldSchemaFieldsFragment, unknown>;
 export const ThreadHeatmapMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadHeatmapMetricFields on ThreadHeatmapMetric{days@include(if:true){total percentage}threadIds@include(if:true)}") as unknown as DocumentNode<ThreadHeatmapMetricFieldsFragment, unknown>;
 export const ThreadLinkCandidateFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadLinkCandidateFields on ThreadLinkCandidate{sourceId sourceType title description@include(if:true)url status sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}}") as unknown as DocumentNode<ThreadLinkCandidateFieldsFragment, unknown>;
-export const ThreadLinkGroupFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadLinkGroupFields on ThreadLinkGroup{id tierMetrics{noTier{totalCount}}companyMetrics{noCompany{totalCount}}tenantMetrics{noTenant{totalCount}}accountMetrics{noAccount{totalCount}}defaultViewRank@include(if:true)currentViewRank}") as unknown as DocumentNode<ThreadLinkGroupFieldsFragment, unknown>;
+export const ThreadLinkGroupFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadLinkGroupFields on ThreadLinkGroup{id tierMetrics{noTier{totalCount}}accountMetrics{noAccount{totalCount}}defaultViewRank@include(if:true)currentViewRank}") as unknown as DocumentNode<ThreadLinkGroupFieldsFragment, unknown>;
 export const ThreadLinkTargetCreatedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadLinkTargetCreatedEntryFields on ThreadLinkTargetCreatedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}sourceThread{id ref title@include(if:true)}}") as unknown as DocumentNode<ThreadLinkTargetCreatedEntryFieldsFragment, unknown>;
 export const ThreadLinkTargetDeletedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadLinkTargetDeletedEntryFields on ThreadLinkTargetDeletedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}sourceThread{id ref title@include(if:true)}}") as unknown as DocumentNode<ThreadLinkTargetDeletedEntryFieldsFragment, unknown>;
+export const ThreadNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadNotificationDetailFields on ThreadNotificationDetail{threadId}") as unknown as DocumentNode<ThreadNotificationDetailFieldsFragment, unknown>;
 export const ThreadPriorityChangedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadPriorityChangedEntryFields on ThreadPriorityChangedEntry{previousPriority nextPriority}") as unknown as DocumentNode<ThreadPriorityChangedEntryFieldsFragment, unknown>;
 export const ThreadServiceLevelAgreementPolicyChangedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadServiceLevelAgreementPolicyChangedEntryFields on ThreadServiceLevelAgreementPolicyChangedEntry{previousServiceLevelAgreementPolicy@include(if:true){id name}nextServiceLevelAgreementPolicy@include(if:true){id name}}") as unknown as DocumentNode<ThreadServiceLevelAgreementPolicyChangedEntryFieldsFragment, unknown>;
 export const ThreadSingleValueMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadSingleValueMetricFields on ThreadSingleValueMetric{threadIds@include(if:true)}") as unknown as DocumentNode<ThreadSingleValueMetricFieldsFragment, unknown>;
@@ -43324,7 +45164,7 @@ export const WebhookDeliveryAttemptSuccessfulResultFieldsFragmentDoc = /*#__PURE
 export const WebhookTargetFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WebhookTargetFields on WebhookTarget{id url description eventSubscriptions{eventType}version isEnabled headers{name}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WebhookTargetFieldsFragment, unknown>;
 export const WebhookTargetNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WebhookTargetNotificationDetailFields on WebhookTargetNotificationDetail{webhookTargetId}") as unknown as DocumentNode<WebhookTargetNotificationDetailFieldsFragment, unknown>;
 export const WorkflowFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowFields on Workflow{id name trigger startStepId@include(if:true)publishedAt@include(if:true){unixTimestamp iso8601}position order lastTriggeredAt@include(if:true){unixTimestamp iso8601}sourceTemplateId@include(if:true)references{serviceLevelAgreementPolicyIds}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WorkflowFieldsFragment, unknown>;
-export const WorkflowExecutionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowExecutionFields on WorkflowExecution{id workflowId workflow@include(if:true){id}triggeredBy executionStatus errorMessage@include(if:true)startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}executionDurationMs@include(if:true)entityType@include(if:true)entityId@include(if:true)manuallyTriggeredBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WorkflowExecutionFieldsFragment, unknown>;
+export const WorkflowExecutionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowExecutionFields on WorkflowExecution{id workflowId workflow@include(if:true){id}triggeredBy executionStatus errorMessage@include(if:true)startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}executionDurationMs@include(if:true)entityType@include(if:true)entityId@include(if:true)manuallyTriggeredBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}credits@include(if:true)}") as unknown as DocumentNode<WorkflowExecutionFieldsFragment, unknown>;
 export const WorkflowRuleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowRuleFields on WorkflowRule{id name payload publishedAt@include(if:true){unixTimestamp iso8601}order createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WorkflowRuleFieldsFragment, unknown>;
 export const WorkflowShareLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowShareLinkFields on WorkflowShareLink{name trigger startStepId@include(if:true)steps{id type name@include(if:true)payload transitions positionX positionY}}") as unknown as DocumentNode<WorkflowShareLinkFieldsFragment, unknown>;
 export const WorkflowTemplateFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowTemplateFields on WorkflowTemplate{id title content{type value}tags isFeatured author authorDomain dependencies{integrations features}}") as unknown as DocumentNode<WorkflowTemplateFieldsFragment, unknown>;
@@ -43367,6 +45207,7 @@ export const MyEmailSignatureDocument = /*#__PURE__*/ gql("query MyEmailSignatur
 export const MyFavoritePagesDocument = /*#__PURE__*/ gql("query MyFavoritePages($first:Int$after:String$last:Int$before:String){myFavoritePages(first:$first after:$after last:$last before:$before){edges{node{...FavoritePageFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", FavoritePageFieldsFragmentDoc) as unknown as DocumentNode<MyFavoritePagesQuery, MyFavoritePagesQueryVariables>;
 export const BillingPlansDocument = /*#__PURE__*/ gql("query BillingPlans($first:Int$after:String$last:Int$before:String){billingPlans(first:$first after:$after last:$last before:$before){edges{node{...BillingPlanFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", BillingPlanFieldsFragmentDoc) as unknown as DocumentNode<BillingPlansQuery, BillingPlansQueryVariables>;
 export const MyBillingSubscriptionDocument = /*#__PURE__*/ gql("query MyBillingSubscription{myBillingSubscription@include(if:true){...BillingSubscriptionFields}}", BillingSubscriptionFieldsFragmentDoc) as unknown as DocumentNode<MyBillingSubscriptionQuery, MyBillingSubscriptionQueryVariables>;
+export const MemberSeatCapCheckDocument = /*#__PURE__*/ gql("query MemberSeatCapCheck($input:MemberSeatCapCheckInput!){memberSeatCapCheck(input:$input){isValid}}") as unknown as DocumentNode<MemberSeatCapCheckQuery, MemberSeatCapCheckQueryVariables>;
 export const MyBillingRotaDocument = /*#__PURE__*/ gql("query MyBillingRota{myBillingRota@include(if:true){onRotaUserIds offRotaUserIds}}") as unknown as DocumentNode<MyBillingRotaQuery, MyBillingRotaQueryVariables>;
 export const SidekickCreditUsageByDayDocument = /*#__PURE__*/ gql("query SidekickCreditUsageByDay($input:SidekickCreditUsageByDayInput!){sidekickCreditUsageByDay(input:$input){days{day{unixTimestamp iso8601}credits freeCredits sessionCount}}}") as unknown as DocumentNode<SidekickCreditUsageByDayQuery, SidekickCreditUsageByDayQueryVariables>;
 export const SidekickCreditBalanceDocument = /*#__PURE__*/ gql("query SidekickCreditBalance{sidekickCreditBalance{...SidekickCreditBalanceFields}}", SidekickCreditBalanceFieldsFragmentDoc) as unknown as DocumentNode<SidekickCreditBalanceQuery, SidekickCreditBalanceQueryVariables>;
@@ -43381,6 +45222,7 @@ export const CustomRolesDocument = /*#__PURE__*/ gql("query CustomRoles($first:I
 export const CustomRoleDocument = /*#__PURE__*/ gql("query CustomRole($customRoleId:ID!){customRole(customRoleId:$customRoleId)@include(if:true){...CustomRoleFields}}", CustomRoleFieldsFragmentDoc) as unknown as DocumentNode<CustomRoleQuery, CustomRoleQueryVariables>;
 export const TimelineEntriesDocument = /*#__PURE__*/ gql("query TimelineEntries($customerId:ID!$first:Int$after:String$last:Int$before:String){timelineEntries(customerId:$customerId first:$first after:$after last:$last before:$before){edges{node{...TimelineEntryFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", TimelineEntryFieldsFragmentDoc) as unknown as DocumentNode<TimelineEntriesQuery, TimelineEntriesQueryVariables>;
 export const TimelineEntryDocument = /*#__PURE__*/ gql("query TimelineEntry($customerId:ID!$timelineEntryId:ID!){timelineEntry(customerId:$customerId timelineEntryId:$timelineEntryId)@include(if:true){...TimelineEntryFields}}", TimelineEntryFieldsFragmentDoc) as unknown as DocumentNode<TimelineEntryQuery, TimelineEntryQueryVariables>;
+export const ThreadTimelineEntryDocument = /*#__PURE__*/ gql("query ThreadTimelineEntry($threadId:ID!$timelineEntryId:ID!){threadTimelineEntry(threadId:$threadId timelineEntryId:$timelineEntryId)@include(if:true){...TimelineEntryFields}}", TimelineEntryFieldsFragmentDoc) as unknown as DocumentNode<ThreadTimelineEntryQuery, ThreadTimelineEntryQueryVariables>;
 export const WorkspaceDocument = /*#__PURE__*/ gql("query Workspace($workspaceId:ID!){workspace(workspaceId:$workspaceId)@include(if:true){...WorkspaceFields}}", WorkspaceFieldsFragmentDoc) as unknown as DocumentNode<WorkspaceQuery, WorkspaceQueryVariables>;
 export const UserDocument = /*#__PURE__*/ gql("query User($userId:ID!){user(userId:$userId)@include(if:true){...UserFields}}", UserFieldsFragmentDoc) as unknown as DocumentNode<UserQuery, UserQueryVariables>;
 export const UserByEmailDocument = /*#__PURE__*/ gql("query UserByEmail($email:String!){userByEmail(email:$email)@include(if:true){...UserFields}}", UserFieldsFragmentDoc) as unknown as DocumentNode<UserByEmailQuery, UserByEmailQueryVariables>;
@@ -43396,7 +45238,7 @@ export const ThreadFieldSchemasDocument = /*#__PURE__*/ gql("query ThreadFieldSc
 export const ThreadFieldSchemaDocument = /*#__PURE__*/ gql("query ThreadFieldSchema($threadFieldSchemaId:ID!){threadFieldSchema(threadFieldSchemaId:$threadFieldSchemaId)@include(if:true){...ThreadFieldSchemaFields}}", ThreadFieldSchemaFieldsFragmentDoc) as unknown as DocumentNode<ThreadFieldSchemaQuery, ThreadFieldSchemaQueryVariables>;
 export const CustomerCardInstancesDocument = /*#__PURE__*/ gql("query CustomerCardInstances($customerId:ID!$threadId:ID){customerCardInstances(customerId:$customerId threadId:$threadId){__typename ...on CustomerCardInstanceLoading{...CustomerCardInstanceLoadingFields}...on CustomerCardInstanceLoaded{...CustomerCardInstanceLoadedFields}...on CustomerCardInstanceError{...CustomerCardInstanceErrorFields}}}", CustomerCardInstanceLoadingFieldsFragmentDoc, CustomerCardInstanceLoadedFieldsFragmentDoc, CustomerCardInstanceErrorFieldsFragmentDoc) as unknown as DocumentNode<CustomerCardInstancesQuery, CustomerCardInstancesQueryVariables>;
 export const SearchCustomersDocument = /*#__PURE__*/ gql("query SearchCustomers($searchQuery:CustomersSearchQuery!$filters:CustomersFilter$first:Int$after:String$last:Int$before:String){searchCustomers(searchQuery:$searchQuery filters:$filters first:$first after:$after last:$last before:$before){edges{node{...CustomerFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", CustomerFieldsFragmentDoc) as unknown as DocumentNode<SearchCustomersQuery, SearchCustomersQueryVariables>;
-export const SnippetsDocument = /*#__PURE__*/ gql("query Snippets($first:Int$after:String$last:Int$before:String){snippets(first:$first after:$after last:$last before:$before){edges{node{...SnippetFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", SnippetFieldsFragmentDoc) as unknown as DocumentNode<SnippetsQuery, SnippetsQueryVariables>;
+export const SnippetsDocument = /*#__PURE__*/ gql("query Snippets($filters:SnippetsFilter$first:Int$after:String$last:Int$before:String){snippets(filters:$filters first:$first after:$after last:$last before:$before){edges{node{...SnippetFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", SnippetFieldsFragmentDoc) as unknown as DocumentNode<SnippetsQuery, SnippetsQueryVariables>;
 export const SnippetDocument = /*#__PURE__*/ gql("query Snippet($snippetId:ID!){snippet(snippetId:$snippetId)@include(if:true){...SnippetFields}}", SnippetFieldsFragmentDoc) as unknown as DocumentNode<SnippetQuery, SnippetQueryVariables>;
 export const BroadcastsDocument = /*#__PURE__*/ gql("query Broadcasts($filters:BroadcastsFilter$first:Int$after:String$last:Int$before:String){broadcasts(filters:$filters first:$first after:$after last:$last before:$before){edges{node{...BroadcastFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}totalCount}}", BroadcastFieldsFragmentDoc) as unknown as DocumentNode<BroadcastsQuery, BroadcastsQueryVariables>;
 export const SearchBroadcastsDocument = /*#__PURE__*/ gql("query SearchBroadcasts($searchQuery:BroadcastsSearchQuery!$filters:BroadcastsFilter$first:Int$after:String$last:Int$before:String){searchBroadcasts(searchQuery:$searchQuery filters:$filters first:$first after:$after last:$last before:$before){edges{node{...BroadcastFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}totalCount}}", BroadcastFieldsFragmentDoc) as unknown as DocumentNode<SearchBroadcastsQuery, SearchBroadcastsQueryVariables>;
@@ -43411,6 +45253,8 @@ export const WorkspaceChatSettingsDocument = /*#__PURE__*/ gql("query WorkspaceC
 export const WorkspaceSetupDocument = /*#__PURE__*/ gql("query WorkspaceSetup{workspaceSetup{...WorkspaceSetupFields}}", WorkspaceSetupFieldsFragmentDoc) as unknown as DocumentNode<WorkspaceSetupQuery, WorkspaceSetupQueryVariables>;
 export const MachineUserDocument = /*#__PURE__*/ gql("query MachineUser($machineUserId:ID!){machineUser(machineUserId:$machineUserId)@include(if:true){...MachineUserFields}}", MachineUserFieldsFragmentDoc) as unknown as DocumentNode<MachineUserQuery, MachineUserQueryVariables>;
 export const MachineUsersDocument = /*#__PURE__*/ gql("query MachineUsers($filters:MachineUsersFilter$first:Int$after:String$last:Int$before:String){machineUsers(filters:$filters first:$first after:$after last:$last before:$before){edges{node{...MachineUserFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", MachineUserFieldsFragmentDoc) as unknown as DocumentNode<MachineUsersQuery, MachineUsersQueryVariables>;
+export const OauthAppDocument = /*#__PURE__*/ gql("query OauthApp($oauthAppId:ID!){oauthApp(oauthAppId:$oauthAppId)@include(if:true){...OAuthAppFields}}", OAuthAppFieldsFragmentDoc) as unknown as DocumentNode<OauthAppQuery, OauthAppQueryVariables>;
+export const OauthAppsDocument = /*#__PURE__*/ gql("query OauthApps($first:Int$after:String$last:Int$before:String){oauthApps(first:$first after:$after last:$last before:$before){edges{node{...OAuthAppFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", OAuthAppFieldsFragmentDoc) as unknown as DocumentNode<OauthAppsQuery, OauthAppsQueryVariables>;
 export const PermissionsDocument = /*#__PURE__*/ gql("query Permissions{permissions{permissions}}") as unknown as DocumentNode<PermissionsQuery, PermissionsQueryVariables>;
 export const WorkspaceMsTeamsInstallationInfoDocument = /*#__PURE__*/ gql("query WorkspaceMSTeamsInstallationInfo($redirectUrl:String!){workspaceMSTeamsInstallationInfo(redirectUrl:$redirectUrl){installationUrl}}") as unknown as DocumentNode<WorkspaceMsTeamsInstallationInfoQuery, WorkspaceMsTeamsInstallationInfoQueryVariables>;
 export const WorkspaceMsTeamsIntegrationDocument = /*#__PURE__*/ gql("query WorkspaceMSTeamsIntegration{workspaceMSTeamsIntegration@include(if:true){...WorkspaceMSTeamsIntegrationFields}}", WorkspaceMsTeamsIntegrationFieldsFragmentDoc) as unknown as DocumentNode<WorkspaceMsTeamsIntegrationQuery, WorkspaceMsTeamsIntegrationQueryVariables>;
@@ -43522,6 +45366,7 @@ export const SidekickCustomSkillDocument = /*#__PURE__*/ gql("query SidekickCust
 export const SidekickMcpServersDocument = /*#__PURE__*/ gql("query SidekickMcpServers{sidekickMcpServers{...SidekickMcpServerFields}}", SidekickMcpServerFieldsFragmentDoc) as unknown as DocumentNode<SidekickMcpServersQuery, SidekickMcpServersQueryVariables>;
 export const SidekickMcpServerDocument = /*#__PURE__*/ gql("query SidekickMcpServer($id:ID!){sidekickMcpServer(id:$id)@include(if:true){...SidekickMcpServerFields}}", SidekickMcpServerFieldsFragmentDoc) as unknown as DocumentNode<SidekickMcpServerQuery, SidekickMcpServerQueryVariables>;
 export const ImporterTenantListsDocument = /*#__PURE__*/ gql("query ImporterTenantLists($serviceAuthorizationId:ID!$first:Int$after:String$last:Int$before:String){importerTenantLists(serviceAuthorizationId:$serviceAuthorizationId first:$first after:$after last:$last before:$before){edges{node{id name}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}") as unknown as DocumentNode<ImporterTenantListsQuery, ImporterTenantListsQueryVariables>;
+export const ImporterAccountListsDocument = /*#__PURE__*/ gql("query ImporterAccountLists($serviceAuthorizationId:ID!$first:Int$after:String$last:Int$before:String){importerAccountLists(serviceAuthorizationId:$serviceAuthorizationId first:$first after:$after last:$last before:$before){edges{node{id name}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}") as unknown as DocumentNode<ImporterAccountListsQuery, ImporterAccountListsQueryVariables>;
 export const ImportJobDefinitionDocument = /*#__PURE__*/ gql("query ImportJobDefinition($serviceIntegrationKey:String!$isEnabled:Boolean){importJobDefinition(serviceIntegrationKey:$serviceIntegrationKey isEnabled:$isEnabled)@include(if:true){...ImportJobDefinitionFields}}", ImportJobDefinitionFieldsFragmentDoc) as unknown as DocumentNode<ImportJobDefinitionQuery, ImportJobDefinitionQueryVariables>;
 export const ImportJobsDocument = /*#__PURE__*/ gql("query ImportJobs($filters:ImportJobsFilter$first:Int$after:String$last:Int$before:String){importJobs(filters:$filters first:$first after:$after last:$last before:$before){edges{node{...ImportJobFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", ImportJobFieldsFragmentDoc) as unknown as DocumentNode<ImportJobsQuery, ImportJobsQueryVariables>;
 export const TiersDocument = /*#__PURE__*/ gql("query Tiers($first:Int$after:String$last:Int$before:String){tiers(first:$first after:$after last:$last before:$before){edges{node{...TierFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", TierFieldsFragmentDoc) as unknown as DocumentNode<TiersQuery, TiersQueryVariables>;
@@ -43532,6 +45377,7 @@ export const BusinessHoursDocument = /*#__PURE__*/ gql("query BusinessHours{busi
 export const BusinessHoursSlotsDocument = /*#__PURE__*/ gql("query BusinessHoursSlots{businessHoursSlots{...BusinessHoursSlotFields}}", BusinessHoursSlotFieldsFragmentDoc) as unknown as DocumentNode<BusinessHoursSlotsQuery, BusinessHoursSlotsQueryVariables>;
 export const BusinessHoursScheduleDocument = /*#__PURE__*/ gql("query BusinessHoursSchedule($businessHoursScheduleId:ID!){businessHoursSchedule(businessHoursScheduleId:$businessHoursScheduleId)@include(if:true){...BusinessHoursScheduleFields}}", BusinessHoursScheduleFieldsFragmentDoc) as unknown as DocumentNode<BusinessHoursScheduleQuery, BusinessHoursScheduleQueryVariables>;
 export const BusinessHoursSchedulesDocument = /*#__PURE__*/ gql("query BusinessHoursSchedules($first:Int$after:String$last:Int$before:String){businessHoursSchedules(first:$first after:$after last:$last before:$before){edges{node{...BusinessHoursScheduleFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", BusinessHoursScheduleFieldsFragmentDoc) as unknown as DocumentNode<BusinessHoursSchedulesQuery, BusinessHoursSchedulesQueryVariables>;
+export const BusinessHoursOverrideDocument = /*#__PURE__*/ gql("query BusinessHoursOverride($businessHoursOverrideId:ID!){businessHoursOverride(businessHoursOverrideId:$businessHoursOverrideId)@include(if:true){...BusinessHoursOverrideFields}}", BusinessHoursOverrideFieldsFragmentDoc) as unknown as DocumentNode<BusinessHoursOverrideQuery, BusinessHoursOverrideQueryVariables>;
 export const WorkspaceHmacDocument = /*#__PURE__*/ gql("query WorkspaceHmac{workspaceHmac@include(if:true){...WorkspaceHmacFields}}", WorkspaceHmacFieldsFragmentDoc) as unknown as DocumentNode<WorkspaceHmacQuery, WorkspaceHmacQueryVariables>;
 export const ThreadLinkGroupsDocument = /*#__PURE__*/ gql("query ThreadLinkGroups($first:Int$after:String$last:Int$before:String$filters:ThreadLinkGroupFilter){threadLinkGroups(first:$first after:$after last:$last before:$before filters:$filters){edges{node{...ThreadLinkGroupFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", ThreadLinkGroupFieldsFragmentDoc) as unknown as DocumentNode<ThreadLinkGroupsQuery, ThreadLinkGroupsQueryVariables>;
 export const RelatedThreadsDocument = /*#__PURE__*/ gql("query RelatedThreads($threadId:ID!){relatedThreads(threadId:$threadId){...ThreadWithDistanceFields}}", ThreadWithDistanceFieldsFragmentDoc) as unknown as DocumentNode<RelatedThreadsQuery, RelatedThreadsQueryVariables>;
@@ -43621,6 +45467,7 @@ export const ResubscribeBroadcastRecipientDocument = /*#__PURE__*/ gql("mutation
 export const ImportBroadcastRecipientUnsubscribesDocument = /*#__PURE__*/ gql("mutation ImportBroadcastRecipientUnsubscribes($input:ImportBroadcastRecipientUnsubscribesInput!){importBroadcastRecipientUnsubscribes(input:$input){result@include(if:true){...ImportBroadcastRecipientUnsubscribesResultFields}error@include(if:true){message type code fields{field message type}}}}", ImportBroadcastRecipientUnsubscribesResultFieldsFragmentDoc) as unknown as DocumentNode<ImportBroadcastRecipientUnsubscribesMutation, ImportBroadcastRecipientUnsubscribesMutationVariables>;
 export const CreateBroadcastAudienceDocument = /*#__PURE__*/ gql("mutation CreateBroadcastAudience($input:CreateBroadcastAudienceInput!){createBroadcastAudience(input:$input){broadcastAudience@include(if:true){...BroadcastAudienceFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastAudienceFieldsFragmentDoc) as unknown as DocumentNode<CreateBroadcastAudienceMutation, CreateBroadcastAudienceMutationVariables>;
 export const UpdateBroadcastAudienceDocument = /*#__PURE__*/ gql("mutation UpdateBroadcastAudience($input:UpdateBroadcastAudienceInput!){updateBroadcastAudience(input:$input){broadcastAudience@include(if:true){...BroadcastAudienceFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastAudienceFieldsFragmentDoc) as unknown as DocumentNode<UpdateBroadcastAudienceMutation, UpdateBroadcastAudienceMutationVariables>;
+export const ImportBroadcastAudienceChannelsDocument = /*#__PURE__*/ gql("mutation ImportBroadcastAudienceChannels($input:ImportBroadcastAudienceChannelsInput!){importBroadcastAudienceChannels(input:$input){result@include(if:true){...ImportBroadcastAudienceChannelsResultFields}error@include(if:true){message type code fields{field message type}}}}", ImportBroadcastAudienceChannelsResultFieldsFragmentDoc) as unknown as DocumentNode<ImportBroadcastAudienceChannelsMutation, ImportBroadcastAudienceChannelsMutationVariables>;
 export const DeleteBroadcastAudienceDocument = /*#__PURE__*/ gql("mutation DeleteBroadcastAudience($input:DeleteBroadcastAudienceInput!){deleteBroadcastAudience(input:$input){broadcastAudience@include(if:true){...BroadcastAudienceFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastAudienceFieldsFragmentDoc) as unknown as DocumentNode<DeleteBroadcastAudienceMutation, DeleteBroadcastAudienceMutationVariables>;
 export const ScheduleBroadcastDocument = /*#__PURE__*/ gql("mutation ScheduleBroadcast($input:ScheduleBroadcastInput!){scheduleBroadcast(input:$input){broadcast@include(if:true){...BroadcastFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastFieldsFragmentDoc) as unknown as DocumentNode<ScheduleBroadcastMutation, ScheduleBroadcastMutationVariables>;
 export const SendTestBroadcastDocument = /*#__PURE__*/ gql("mutation SendTestBroadcast($input:SendTestBroadcastInput!){sendTestBroadcast(input:$input){broadcast@include(if:true){...BroadcastFields}error@include(if:true){message type code fields{field message type}}}}", BroadcastFieldsFragmentDoc) as unknown as DocumentNode<SendTestBroadcastMutation, SendTestBroadcastMutationVariables>;
@@ -43691,7 +45538,7 @@ export const DeleteEmailSuppressionDocument = /*#__PURE__*/ gql("mutation Delete
 export const VerifyWorkspaceEmailForwardingSettingsDocument = /*#__PURE__*/ gql("mutation VerifyWorkspaceEmailForwardingSettings($input:VerifyWorkspaceEmailForwardingSettingsInput!){verifyWorkspaceEmailForwardingSettings(input:$input){workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc) as unknown as DocumentNode<VerifyWorkspaceEmailForwardingSettingsMutation, VerifyWorkspaceEmailForwardingSettingsMutationVariables>;
 export const VerifyWorkspaceEmailDnsSettingsDocument = /*#__PURE__*/ gql("mutation VerifyWorkspaceEmailDnsSettings{verifyWorkspaceEmailDnsSettings{workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc) as unknown as DocumentNode<VerifyWorkspaceEmailDnsSettingsMutation, VerifyWorkspaceEmailDnsSettingsMutationVariables>;
 export const UpdateWorkspaceEmailSettingsDocument = /*#__PURE__*/ gql("mutation UpdateWorkspaceEmailSettings($input:UpdateWorkspaceEmailSettingsInput!){updateWorkspaceEmailSettings(input:$input){workspaceEmailSettings@include(if:true){...WorkspaceEmailSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailSettingsFieldsFragmentDoc) as unknown as DocumentNode<UpdateWorkspaceEmailSettingsMutation, UpdateWorkspaceEmailSettingsMutationVariables>;
-export const AddWorkspaceAlternateSupportEmailAddressDocument = /*#__PURE__*/ gql("mutation AddWorkspaceAlternateSupportEmailAddress($input:AddWorkspaceAlternateSupportEmailAddressInput!){addWorkspaceAlternateSupportEmailAddress(input:$input){workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc) as unknown as DocumentNode<AddWorkspaceAlternateSupportEmailAddressMutation, AddWorkspaceAlternateSupportEmailAddressMutationVariables>;
+export const AddWorkspaceAlternateSupportEmailAddressDocument = /*#__PURE__*/ gql("mutation AddWorkspaceAlternateSupportEmailAddress($input:AddWorkspaceAlternateSupportEmailAddressInput!){addWorkspaceAlternateSupportEmailAddress(input:$input){workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}pendingDnsRecords@include(if:true){...PendingSenderDomainDnsRecordsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc, PendingSenderDomainDnsRecordsFieldsFragmentDoc) as unknown as DocumentNode<AddWorkspaceAlternateSupportEmailAddressMutation, AddWorkspaceAlternateSupportEmailAddressMutationVariables>;
 export const RemoveWorkspaceAlternateSupportEmailAddressDocument = /*#__PURE__*/ gql("mutation RemoveWorkspaceAlternateSupportEmailAddress($input:RemoveWorkspaceAlternateSupportEmailAddressInput!){removeWorkspaceAlternateSupportEmailAddress(input:$input){workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc) as unknown as DocumentNode<RemoveWorkspaceAlternateSupportEmailAddressMutation, RemoveWorkspaceAlternateSupportEmailAddressMutationVariables>;
 export const SendNewEmailDocument = /*#__PURE__*/ gql("mutation SendNewEmail($input:SendNewEmailInput!){sendNewEmail(input:$input){email@include(if:true){...EmailFields}error@include(if:true){message type code fields{field message type}}}}", EmailFieldsFragmentDoc) as unknown as DocumentNode<SendNewEmailMutation, SendNewEmailMutationVariables>;
 export const ReplyToEmailDocument = /*#__PURE__*/ gql("mutation ReplyToEmail($input:ReplyToEmailInput!){replyToEmail(input:$input){email@include(if:true){...EmailFields}error@include(if:true){message type code fields{field message type}}}}", EmailFieldsFragmentDoc) as unknown as DocumentNode<ReplyToEmailMutation, ReplyToEmailMutationVariables>;
@@ -43705,6 +45552,11 @@ export const UpdateMachineUserDocument = /*#__PURE__*/ gql("mutation UpdateMachi
 export const CreateApiKeyDocument = /*#__PURE__*/ gql("mutation CreateApiKey($input:CreateApiKeyInput!){createApiKey(input:$input){apiKey@include(if:true){...ApiKeyFields}apiKeySecret@include(if:true)error@include(if:true){message type code fields{field message type}}}}", ApiKeyFieldsFragmentDoc) as unknown as DocumentNode<CreateApiKeyMutation, CreateApiKeyMutationVariables>;
 export const UpdateApiKeyDocument = /*#__PURE__*/ gql("mutation UpdateApiKey($input:UpdateApiKeyInput!){updateApiKey(input:$input){apiKey@include(if:true){...ApiKeyFields}error@include(if:true){message type code fields{field message type}}}}", ApiKeyFieldsFragmentDoc) as unknown as DocumentNode<UpdateApiKeyMutation, UpdateApiKeyMutationVariables>;
 export const DeleteApiKeyDocument = /*#__PURE__*/ gql("mutation DeleteApiKey($input:DeleteApiKeyInput!){deleteApiKey(input:$input){apiKey@include(if:true){...ApiKeyFields}error@include(if:true){message type code fields{field message type}}}}", ApiKeyFieldsFragmentDoc) as unknown as DocumentNode<DeleteApiKeyMutation, DeleteApiKeyMutationVariables>;
+export const CreateOAuthAppDocument = /*#__PURE__*/ gql("mutation CreateOAuthApp($input:CreateOAuthAppInput!){createOAuthApp(input:$input){oauthApp@include(if:true){...OAuthAppFields}clientSecret@include(if:true)error@include(if:true){message type code fields{field message type}}}}", OAuthAppFieldsFragmentDoc) as unknown as DocumentNode<CreateOAuthAppMutation, CreateOAuthAppMutationVariables>;
+export const UpdateOAuthAppDocument = /*#__PURE__*/ gql("mutation UpdateOAuthApp($input:UpdateOAuthAppInput!){updateOAuthApp(input:$input){oauthApp@include(if:true){...OAuthAppFields}error@include(if:true){message type code fields{field message type}}}}", OAuthAppFieldsFragmentDoc) as unknown as DocumentNode<UpdateOAuthAppMutation, UpdateOAuthAppMutationVariables>;
+export const EnableOAuthAppDocument = /*#__PURE__*/ gql("mutation EnableOAuthApp($input:EnableOAuthAppInput!){enableOAuthApp(input:$input){oauthApp@include(if:true){...OAuthAppFields}error@include(if:true){message type code fields{field message type}}}}", OAuthAppFieldsFragmentDoc) as unknown as DocumentNode<EnableOAuthAppMutation, EnableOAuthAppMutationVariables>;
+export const DisableOAuthAppDocument = /*#__PURE__*/ gql("mutation DisableOAuthApp($input:DisableOAuthAppInput!){disableOAuthApp(input:$input){oauthApp@include(if:true){...OAuthAppFields}error@include(if:true){message type code fields{field message type}}}}", OAuthAppFieldsFragmentDoc) as unknown as DocumentNode<DisableOAuthAppMutation, DisableOAuthAppMutationVariables>;
+export const DeleteOAuthAppDocument = /*#__PURE__*/ gql("mutation DeleteOAuthApp($input:DeleteOAuthAppInput!){deleteOAuthApp(input:$input){oauthApp@include(if:true){...OAuthAppFields}error@include(if:true){message type code fields{field message type}}}}", OAuthAppFieldsFragmentDoc) as unknown as DocumentNode<DeleteOAuthAppMutation, DeleteOAuthAppMutationVariables>;
 export const CreateMySlackIntegrationDocument = /*#__PURE__*/ gql("mutation CreateMySlackIntegration($input:CreateMySlackIntegrationInput!){createMySlackIntegration(input:$input){integration@include(if:true){...UserSlackIntegrationFields}error@include(if:true){message type code fields{field message type}}}}", UserSlackIntegrationFieldsFragmentDoc) as unknown as DocumentNode<CreateMySlackIntegrationMutation, CreateMySlackIntegrationMutationVariables>;
 export const DeleteMySlackIntegrationDocument = /*#__PURE__*/ gql("mutation DeleteMySlackIntegration{deleteMySlackIntegration{error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteMySlackIntegrationMutation, DeleteMySlackIntegrationMutationVariables>;
 export const CreateUserAuthSlackIntegrationDocument = /*#__PURE__*/ gql("mutation CreateUserAuthSlackIntegration($input:CreateUserAuthSlackIntegrationInput!){createUserAuthSlackIntegration(input:$input){integration@include(if:true){...UserAuthSlackIntegrationFields}error@include(if:true){message type code fields{field message type}}}}", UserAuthSlackIntegrationFieldsFragmentDoc) as unknown as DocumentNode<CreateUserAuthSlackIntegrationMutation, CreateUserAuthSlackIntegrationMutationVariables>;
@@ -43783,7 +45635,7 @@ export const CreateDiscussionDocument = /*#__PURE__*/ gql("mutation CreateDiscus
 export const SendThreadDiscussionMessageDocument = /*#__PURE__*/ gql("mutation SendThreadDiscussionMessage($input:SendThreadDiscussionMessageInput!){sendThreadDiscussionMessage(input:$input){threadDiscussionMessage@include(if:true){...ThreadDiscussionMessageFields}error@include(if:true){message type code fields{field message type}}}}", ThreadDiscussionMessageFieldsFragmentDoc) as unknown as DocumentNode<SendThreadDiscussionMessageMutation, SendThreadDiscussionMessageMutationVariables>;
 export const SendDiscussionMessageDocument = /*#__PURE__*/ gql("mutation SendDiscussionMessage($input:SendDiscussionMessageInput!){sendDiscussionMessage(input:$input){discussionMessage@include(if:true){...ThreadDiscussionMessageFields}error@include(if:true){message type code fields{field message type}}}}", ThreadDiscussionMessageFieldsFragmentDoc) as unknown as DocumentNode<SendDiscussionMessageMutation, SendDiscussionMessageMutationVariables>;
 export const UpdateDiscussionAgentStatusDocument = /*#__PURE__*/ gql("mutation UpdateDiscussionAgentStatus($input:UpdateDiscussionAgentStatusInput!){updateDiscussionAgentStatus(input:$input){discussion@include(if:true){...ThreadDiscussionFields}error@include(if:true){message type code fields{field message type}}}}", ThreadDiscussionFieldsFragmentDoc) as unknown as DocumentNode<UpdateDiscussionAgentStatusMutation, UpdateDiscussionAgentStatusMutationVariables>;
-export const UpsertDiscussionToolCallDocument = /*#__PURE__*/ gql("mutation UpsertDiscussionToolCall($input:UpsertDiscussionToolCallInput!){upsertDiscussionToolCall(input:$input){toolCall@include(if:true){toolCallId@include(if:true)service@include(if:true)op@include(if:true)description args@include(if:true)status error@include(if:true)durationMs}result@include(if:true)error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<UpsertDiscussionToolCallMutation, UpsertDiscussionToolCallMutationVariables>;
+export const UpsertDiscussionToolCallDocument = /*#__PURE__*/ gql("mutation UpsertDiscussionToolCall($input:UpsertDiscussionToolCallInput!){upsertDiscussionToolCall(input:$input){toolCall@include(if:true){toolCallId@include(if:true)service@include(if:true)op@include(if:true)description args@include(if:true)status error@include(if:true)durationMs response@include(if:true)}result@include(if:true)error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<UpsertDiscussionToolCallMutation, UpsertDiscussionToolCallMutationVariables>;
 export const RequestDiscussionToolCallApprovalDocument = /*#__PURE__*/ gql("mutation RequestDiscussionToolCallApproval($input:RequestDiscussionToolCallApprovalInput!){requestDiscussionToolCallApproval(input:$input){approval@include(if:true){...ThreadDiscussionToolCallApprovalEntryPayloadFields}error@include(if:true){message type code fields{field message type}}}}", ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragmentDoc) as unknown as DocumentNode<RequestDiscussionToolCallApprovalMutation, RequestDiscussionToolCallApprovalMutationVariables>;
 export const ResolveDiscussionApprovalDocument = /*#__PURE__*/ gql("mutation ResolveDiscussionApproval($input:ResolveDiscussionApprovalInput!){resolveDiscussionApproval(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ResolveDiscussionApprovalMutation, ResolveDiscussionApprovalMutationVariables>;
 export const StopDiscussionTurnDocument = /*#__PURE__*/ gql("mutation StopDiscussionTurn($input:StopDiscussionTurnInput!){stopDiscussionTurn(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<StopDiscussionTurnMutation, StopDiscussionTurnMutationVariables>;
@@ -43848,6 +45700,7 @@ export const DeleteSidekickMcpServerDocument = /*#__PURE__*/ gql("mutation Delet
 export const RefreshSidekickMcpServerToolsDocument = /*#__PURE__*/ gql("mutation RefreshSidekickMcpServerTools($input:RefreshSidekickMcpServerToolsInput!){refreshSidekickMcpServerTools(input:$input){server@include(if:true){...SidekickMcpServerFields}error@include(if:true){message type code fields{field message type}}}}", SidekickMcpServerFieldsFragmentDoc) as unknown as DocumentNode<RefreshSidekickMcpServerToolsMutation, RefreshSidekickMcpServerToolsMutationVariables>;
 export const CreateImportSyncDocument = /*#__PURE__*/ gql("mutation CreateImportSync($input:CreateImportSyncInput!){createImportSync(input:$input){importJobDefinition@include(if:true){...ImportJobDefinitionFields}error@include(if:true){message type code fields{field message type}}}}", ImportJobDefinitionFieldsFragmentDoc) as unknown as DocumentNode<CreateImportSyncMutation, CreateImportSyncMutationVariables>;
 export const ImportTenantFieldSchemasFromServiceDocument = /*#__PURE__*/ gql("mutation ImportTenantFieldSchemasFromService($input:ImportTenantFieldSchemasFromServiceInput!){importTenantFieldSchemasFromService(input:$input){tenantFieldSchemas{...TenantFieldSchemaFields}error@include(if:true){message type code fields{field message type}}}}", TenantFieldSchemaFieldsFragmentDoc) as unknown as DocumentNode<ImportTenantFieldSchemasFromServiceMutation, ImportTenantFieldSchemasFromServiceMutationVariables>;
+export const ImportAccountFieldSchemasFromServiceDocument = /*#__PURE__*/ gql("mutation ImportAccountFieldSchemasFromService($input:ImportAccountFieldSchemasFromServiceInput!){importAccountFieldSchemasFromService(input:$input){accountFieldSchemas{...AccountFieldSchemaFields}error@include(if:true){message type code fields{field message type}}}}", AccountFieldSchemaFieldsFragmentDoc) as unknown as DocumentNode<ImportAccountFieldSchemasFromServiceMutation, ImportAccountFieldSchemasFromServiceMutationVariables>;
 export const UpdateImportJobDefinitionDocument = /*#__PURE__*/ gql("mutation UpdateImportJobDefinition($input:UpdateImportJobDefinitionInput!){updateImportJobDefinition(input:$input){importJobDefinition@include(if:true){...ImportJobDefinitionFields}error@include(if:true){message type code fields{field message type}}}}", ImportJobDefinitionFieldsFragmentDoc) as unknown as DocumentNode<UpdateImportJobDefinitionMutation, UpdateImportJobDefinitionMutationVariables>;
 export const CreateTierDocument = /*#__PURE__*/ gql("mutation CreateTier($input:CreateTierInput!){createTier(input:$input){tier@include(if:true){...TierFields}error@include(if:true){message type code fields{field message type}}}}", TierFieldsFragmentDoc) as unknown as DocumentNode<CreateTierMutation, CreateTierMutationVariables>;
 export const UpdateTierDocument = /*#__PURE__*/ gql("mutation UpdateTier($input:UpdateTierInput!){updateTier(input:$input){tier@include(if:true){...TierFields}error@include(if:true){message type code fields{field message type}}}}", TierFieldsFragmentDoc) as unknown as DocumentNode<UpdateTierMutation, UpdateTierMutationVariables>;
@@ -43869,6 +45722,9 @@ export const SyncBusinessHoursSlotsDocument = /*#__PURE__*/ gql("mutation SyncBu
 export const CreateBusinessHoursScheduleDocument = /*#__PURE__*/ gql("mutation CreateBusinessHoursSchedule($input:CreateBusinessHoursScheduleInput!){createBusinessHoursSchedule(input:$input){businessHoursSchedule@include(if:true){...BusinessHoursScheduleFields}error@include(if:true){message type code fields{field message type}}}}", BusinessHoursScheduleFieldsFragmentDoc) as unknown as DocumentNode<CreateBusinessHoursScheduleMutation, CreateBusinessHoursScheduleMutationVariables>;
 export const UpdateBusinessHoursScheduleDocument = /*#__PURE__*/ gql("mutation UpdateBusinessHoursSchedule($input:UpdateBusinessHoursScheduleInput!){updateBusinessHoursSchedule(input:$input){businessHoursSchedule@include(if:true){...BusinessHoursScheduleFields}error@include(if:true){message type code fields{field message type}}}}", BusinessHoursScheduleFieldsFragmentDoc) as unknown as DocumentNode<UpdateBusinessHoursScheduleMutation, UpdateBusinessHoursScheduleMutationVariables>;
 export const DeleteBusinessHoursScheduleDocument = /*#__PURE__*/ gql("mutation DeleteBusinessHoursSchedule($input:DeleteBusinessHoursScheduleInput!){deleteBusinessHoursSchedule(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteBusinessHoursScheduleMutation, DeleteBusinessHoursScheduleMutationVariables>;
+export const CreateBusinessHoursOverrideDocument = /*#__PURE__*/ gql("mutation CreateBusinessHoursOverride($input:CreateBusinessHoursOverrideInput!){createBusinessHoursOverride(input:$input){businessHoursOverride@include(if:true){...BusinessHoursOverrideFields}error@include(if:true){message type code fields{field message type}}}}", BusinessHoursOverrideFieldsFragmentDoc) as unknown as DocumentNode<CreateBusinessHoursOverrideMutation, CreateBusinessHoursOverrideMutationVariables>;
+export const UpdateBusinessHoursOverrideDocument = /*#__PURE__*/ gql("mutation UpdateBusinessHoursOverride($input:UpdateBusinessHoursOverrideInput!){updateBusinessHoursOverride(input:$input){businessHoursOverride@include(if:true){...BusinessHoursOverrideFields}error@include(if:true){message type code fields{field message type}}}}", BusinessHoursOverrideFieldsFragmentDoc) as unknown as DocumentNode<UpdateBusinessHoursOverrideMutation, UpdateBusinessHoursOverrideMutationVariables>;
+export const DeleteBusinessHoursOverrideDocument = /*#__PURE__*/ gql("mutation DeleteBusinessHoursOverride($input:DeleteBusinessHoursOverrideInput!){deleteBusinessHoursOverride(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteBusinessHoursOverrideMutation, DeleteBusinessHoursOverrideMutationVariables>;
 export const SyncUserWorkingHoursDocument = /*#__PURE__*/ gql("mutation SyncUserWorkingHours($input:SyncUserWorkingHoursInput!){syncUserWorkingHours(input:$input){userWorkingHours@include(if:true){...UserWorkingHoursFields}error@include(if:true){message type code fields{field message type}}}}", UserWorkingHoursFieldsFragmentDoc) as unknown as DocumentNode<SyncUserWorkingHoursMutation, SyncUserWorkingHoursMutationVariables>;
 export const CreateHyperlineCheckoutSessionDocument = /*#__PURE__*/ gql("mutation CreateHyperlineCheckoutSession($input:CreateHyperlineCheckoutSessionInput!){createHyperlineCheckoutSession(input:$input){checkoutUrl@include(if:true)error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<CreateHyperlineCheckoutSessionMutation, CreateHyperlineCheckoutSessionMutationVariables>;
 export const CreateHyperlineBillingPortalSessionDocument = /*#__PURE__*/ gql("mutation CreateHyperlineBillingPortalSession{createHyperlineBillingPortalSession{billingPortalSessionUrl@include(if:true)error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<CreateHyperlineBillingPortalSessionMutation, CreateHyperlineBillingPortalSessionMutationVariables>;
@@ -43924,7 +45780,9 @@ export const DeleteAiToneRulesDocument = /*#__PURE__*/ gql("mutation DeleteAiTon
 export const UpdateInternalNotificationsDocument = /*#__PURE__*/ gql("mutation UpdateInternalNotifications($input:UpdateInternalNotificationsInput!){updateInternalNotifications(input:$input){internalNotifications{...InternalNotificationFields}error@include(if:true){message type code fields{field message type}}}}", InternalNotificationFieldsFragmentDoc) as unknown as DocumentNode<UpdateInternalNotificationsMutation, UpdateInternalNotificationsMutationVariables>;
 export const UpdateAllMyInternalNotificationsDocument = /*#__PURE__*/ gql("mutation UpdateAllMyInternalNotifications($input:UpdateAllMyInternalNotificationsInput!){updateAllMyInternalNotifications(input:$input){updatedCount error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<UpdateAllMyInternalNotificationsMutation, UpdateAllMyInternalNotificationsMutationVariables>;
 export const ImportTenantFieldSchemasDocument = /*#__PURE__*/ gql("mutation ImportTenantFieldSchemas($input:ImportTenantFieldSchemasInput!){importTenantFieldSchemas(input:$input){result@include(if:true){added updated skipped}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ImportTenantFieldSchemasMutation, ImportTenantFieldSchemasMutationVariables>;
+export const ImportAccountFieldSchemasDocument = /*#__PURE__*/ gql("mutation ImportAccountFieldSchemas($input:ImportAccountFieldSchemasInput!){importAccountFieldSchemas(input:$input){result@include(if:true){added updated skipped}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ImportAccountFieldSchemasMutation, ImportAccountFieldSchemasMutationVariables>;
 export const ImportTenantsDocument = /*#__PURE__*/ gql("mutation ImportTenants($input:ImportTenantsInput!){importTenants(input:$input){result@include(if:true){added updated skipped}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ImportTenantsMutation, ImportTenantsMutationVariables>;
+export const ImportAccountsDocument = /*#__PURE__*/ gql("mutation ImportAccounts($input:ImportAccountsInput!){importAccounts(input:$input){result@include(if:true){added updated skipped}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ImportAccountsMutation, ImportAccountsMutationVariables>;
 export const ImportCustomersDocument = /*#__PURE__*/ gql("mutation ImportCustomers($input:ImportCustomersInput!){importCustomers(input:$input){result@include(if:true){added updated skipped}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ImportCustomersMutation, ImportCustomersMutationVariables>;
 export const MachineUserApiKeysDocument = /*#__PURE__*/ gql("query MachineUserApiKeys($machineUserId:ID!$first:Int$after:String$last:Int$before:String){machineUser(machineUserId:$machineUserId)@include(if:true){apiKeys(first:$first after:$after last:$last before:$before){edges{node{...ApiKeyFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}}", ApiKeyFieldsFragmentDoc) as unknown as DocumentNode<MachineUserApiKeysQuery, MachineUserApiKeysQueryVariables>;
 export const CustomerCustomerGroupMembershipsDocument = /*#__PURE__*/ gql("query CustomerCustomerGroupMemberships($customerId:ID!$filters:CustomerGroupMembershipsFilter$first:Int$after:String$last:Int$before:String){customer(customerId:$customerId)@include(if:true){customerGroupMemberships(filters:$filters first:$first after:$after last:$last before:$before){edges{node{...CustomerGroupMembershipFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}}", CustomerGroupMembershipFieldsFragmentDoc) as unknown as DocumentNode<CustomerCustomerGroupMembershipsQuery, CustomerCustomerGroupMembershipsQueryVariables>;
@@ -43936,6 +45794,7 @@ export const TaskThreadLinksDocument = /*#__PURE__*/ gql("query TaskThreadLinks(
 export const TaskSourceLinksDocument = /*#__PURE__*/ gql("query TaskSourceLinks($taskId:ID!$first:Int$after:String$last:Int$before:String){task(taskId:$taskId)@include(if:true){sourceLinks(first:$first after:$after last:$last before:$before){edges{node{__typename ...on KnowledgeGapTaskLink{id taskId sourceId sourceType createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}totalCount}}}") as unknown as DocumentNode<TaskSourceLinksQuery, TaskSourceLinksQueryVariables>;
 export const ThreadDiscussionMessagesDocument = /*#__PURE__*/ gql("query ThreadDiscussionMessages($threadDiscussionId:ID!$first:Int$after:String$last:Int$before:String){threadDiscussion(threadDiscussionId:$threadDiscussionId)@include(if:true){messages(first:$first after:$after last:$last before:$before){edges{node{...ThreadDiscussionMessageFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}}", ThreadDiscussionMessageFieldsFragmentDoc) as unknown as DocumentNode<ThreadDiscussionMessagesQuery, ThreadDiscussionMessagesQueryVariables>;
 export const TierMembershipsDocument = /*#__PURE__*/ gql("query TierMemberships($tierId:ID!$first:Int$after:String$last:Int$before:String){tier(tierId:$tierId)@include(if:true){memberships(first:$first after:$after last:$last before:$before){edges{node{__typename ...on TenantTierMembership{...TenantTierMembershipFields}...on CompanyTierMembership{...CompanyTierMembershipFields}}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}totalCount}}}", TenantTierMembershipFieldsFragmentDoc, CompanyTierMembershipFieldsFragmentDoc) as unknown as DocumentNode<TierMembershipsQuery, TierMembershipsQueryVariables>;
+export const BusinessHoursScheduleOverridesDocument = /*#__PURE__*/ gql("query BusinessHoursScheduleOverrides($businessHoursScheduleId:ID!$filters:BusinessHoursOverridesFilter$sortBy:BusinessHoursOverridesSort$first:Int$after:String$last:Int$before:String){businessHoursSchedule(businessHoursScheduleId:$businessHoursScheduleId)@include(if:true){overrides(filters:$filters sortBy:$sortBy first:$first after:$after last:$last before:$before){edges{node{...BusinessHoursOverrideFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}}", BusinessHoursOverrideFieldsFragmentDoc) as unknown as DocumentNode<BusinessHoursScheduleOverridesQuery, BusinessHoursScheduleOverridesQueryVariables>;
 export const HelpCenterArticleGroupsDocument = /*#__PURE__*/ gql("query HelpCenterArticleGroups($id:ID!$first:Int$after:String$last:Int$before:String){helpCenter(id:$id)@include(if:true){articleGroups(first:$first after:$after last:$last before:$before){edges{node{...HelpCenterArticleGroupFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}}", HelpCenterArticleGroupFieldsFragmentDoc) as unknown as DocumentNode<HelpCenterArticleGroupsQuery, HelpCenterArticleGroupsQueryVariables>;
 export const HelpCenterArticlesDocument = /*#__PURE__*/ gql("query HelpCenterArticles($id:ID!$first:Int$after:String$last:Int$before:String){helpCenter(id:$id)@include(if:true){articles(first:$first after:$after last:$last before:$before){edges{node{...HelpCenterArticleFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}}", HelpCenterArticleFieldsFragmentDoc) as unknown as DocumentNode<HelpCenterArticlesQuery, HelpCenterArticlesQueryVariables>;
 export const HelpCenterArticleGroupChildArticleGroupsDocument = /*#__PURE__*/ gql("query HelpCenterArticleGroupChildArticleGroups($id:ID!$first:Int$after:String$last:Int$before:String){helpCenterArticleGroup(id:$id)@include(if:true){childArticleGroups(first:$first after:$after last:$last before:$before){edges{node{...HelpCenterArticleGroupFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}}", HelpCenterArticleGroupFieldsFragmentDoc) as unknown as DocumentNode<HelpCenterArticleGroupChildArticleGroupsQuery, HelpCenterArticleGroupChildArticleGroupsQueryVariables>;

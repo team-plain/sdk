@@ -14,9 +14,6 @@ fragment AccountFields on Account {
     __typename
     ... on SlackThreadChannelAssociation {
       id
-      companyId
-      tenantId
-      tenantMembershipPolicy
       accountId
       accountMembershipPolicy
       createdAt {
@@ -921,6 +918,17 @@ fragment BeforeBreachActionFields on BeforeBreachAction {
   }
 }
 
+fragment BillingCommittedCreditBalanceFields on BillingCommittedCreditBalance {
+  type
+  termGranted
+  termUsed
+  remaining
+  expiresAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
 fragment BillingMonthlyAllowanceCreditBalanceFields on BillingMonthlyAllowanceCreditBalance {
   type
   allowance
@@ -1021,12 +1029,27 @@ fragment BillingSubscriptionFields on BillingSubscription {
       }
       lowBalanceThreshold
     }
+    ... on BillingCommittedCreditBalance {
+      type
+      termGranted
+      termUsed
+      remaining
+      expiresAt {
+        unixTimestamp
+        iso8601
+      }
+    }
     ... on BillingTopupCreditBalance {
       type
       lifetimeGranted
       lifetimeUsed
       remaining
     }
+  }
+  nextPlan {
+    planKey
+    name
+    memberSeatLimit
   }
 }
 
@@ -1214,18 +1237,8 @@ fragment BroadcastAudienceFields on BroadcastAudience {
   name
   type
   filters {
-    tenantIds
     accountIds
     tierIds
-    tenantFields {
-      externalFieldId
-      stringValue
-      booleanValue
-      numberValue
-      stringArrayValue
-      userReferenceValues
-      tenantReferenceValues
-    }
     accountFields {
       externalFieldId
       stringValue
@@ -1927,9 +1940,79 @@ fragment BusinessHoursFields on BusinessHours {
   }
 }
 
+fragment BusinessHoursOverrideFields on BusinessHoursOverride {
+  id
+  businessHoursScheduleId
+  name
+  startsOn
+  endsOn
+  slots {
+    date
+    opensAt
+    closesAt
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
 fragment BusinessHoursScheduleFields on BusinessHoursSchedule {
   id
   name
+  timezone {
+    name
+  }
   createdAt {
     unixTimestamp
     iso8601
@@ -2354,9 +2437,6 @@ fragment CompanyFields on Company {
     __typename
     ... on SlackThreadChannelAssociation {
       id
-      companyId
-      tenantId
-      tenantMembershipPolicy
       accountId
       accountMembershipPolicy
       createdAt {
@@ -2788,6 +2868,7 @@ fragment CreditSpendItemFields on CreditSpendItem {
   }
   workflowId
   workflowName
+  workflowExecutionId
   credits
   resolvedAt {
     unixTimestamp
@@ -3147,9 +3228,6 @@ fragment CustomerFields on Customer {
   assignedAt {
     unixTimestamp
     iso8601
-  }
-  company {
-    id
   }
   isAnonymous
   isTestCustomer
@@ -6029,9 +6107,7 @@ fragment HelpCenterFields on HelpCenter {
   }
   access {
     tierIds
-    tenantIds
     accountIds
-    companyIds
     customerIds
   }
   authMechanism {
@@ -6449,6 +6525,18 @@ fragment HelpCenterIndexFields on HelpCenterIndex {
       }
     }
   }
+}
+
+fragment ImportBroadcastAudienceChannelsResultFields on ImportBroadcastAudienceChannelsResult {
+  isDryRun
+  broadcastAudience {
+    id
+  }
+  addedCount
+  alreadyInAudienceCount
+  notFoundCount
+  ambiguousCount
+  invalidCount
 }
 
 fragment ImportBroadcastRecipientUnsubscribesResultFields on ImportBroadcastRecipientUnsubscribesResult {
@@ -11846,6 +11934,7 @@ fragment ImportThreadMessageResultFields on ImportThreadMessageResult {
 fragment IndexedDocumentFields on IndexedDocument {
   id
   url
+  knowledgeSourceId
   status {
     __typename
     ... on IndexedDocumentStatusIndexed {
@@ -12123,6 +12212,9 @@ fragment InternalNotificationFields on InternalNotification {
     }
     ... on WebhookTargetNotificationDetail {
       webhookTargetId
+    }
+    ... on ThreadNotificationDetail {
+      threadId
     }
   }
   readAt {
@@ -12421,6 +12513,7 @@ fragment KnowledgeSourceCitationFields on KnowledgeSourceCitation {
     ... on IndexedDocument {
       id
       url
+      knowledgeSourceId
       status {
         __typename
         ... on IndexedDocumentStatusIndexed {
@@ -13602,6 +13695,113 @@ fragment NumberSettingFields on NumberSetting {
   }
 }
 
+fragment OAuthAppFields on OAuthApp {
+  id
+  name
+  description
+  clientId
+  redirectUrls
+  isEnabled
+  clientSecret {
+    id
+    secretHint
+    lastUsedAt {
+      unixTimestamp
+      iso8601
+    }
+    createdAt {
+      unixTimestamp
+      iso8601
+    }
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+}
+
+fragment PendingSenderDomainDnsRecordsFields on PendingSenderDomainDnsRecords {
+  domainName
+  dkimDnsRecord {
+    type
+    name
+    value
+    isVerified
+    verifiedAt {
+      unixTimestamp
+      iso8601
+    }
+    lastCheckedAt {
+      unixTimestamp
+      iso8601
+    }
+  }
+  returnPathDnsRecord {
+    type
+    name
+    value
+    isVerified
+    verifiedAt {
+      unixTimestamp
+      iso8601
+    }
+    lastCheckedAt {
+      unixTimestamp
+      iso8601
+    }
+  }
+}
+
 fragment PerSeatRecurringPriceFields on PerSeatRecurringPrice {
   billingIntervalUnit
   billingIntervalCount
@@ -13871,8 +14071,6 @@ fragment SavedThreadsViewFields on SavedThreadsView {
     assignedToUser
     participants
     customerGroups
-    companies
-    tenants
     accounts
     tiers
     serviceLevelAgreementPolicyIds
@@ -13898,7 +14096,6 @@ fragment SavedThreadsViewFields on SavedThreadsView {
     displayOptions {
       hasStatus
       hasCustomer
-      hasCompany
       hasPreviewText
       hasTier
       hasCustomerGroups
@@ -13913,9 +14110,7 @@ fragment SavedThreadsViewFields on SavedThreadsView {
       hasIssueTrackerIssues
       hasTasks
       hasThreadFieldKeys
-      hasTenants
       hasAccounts
-      hasTenantFieldExternalIds
       hasAccountFieldExternalIds
     }
     groupBy
@@ -14781,9 +14976,6 @@ fragment SlackReplyEntryFields on SlackReplyEntry {
 
 fragment SlackThreadChannelAssociationFields on SlackThreadChannelAssociation {
   id
-  companyId
-  tenantId
-  tenantMembershipPolicy
   accountId
   accountMembershipPolicy
   createdAt {
@@ -15114,12 +15306,6 @@ fragment TaskFields on Task {
   description
   status
   priority
-  company {
-    id
-  }
-  tenant {
-    id
-  }
   account {
     id
   }
@@ -15548,9 +15734,6 @@ fragment TenantFields on Tenant {
     __typename
     ... on SlackThreadChannelAssociation {
       id
-      companyId
-      tenantId
-      tenantMembershipPolicy
       accountId
       accountMembershipPolicy
       createdAt {
@@ -16726,9 +16909,6 @@ fragment ThreadFields on Thread {
   }
   supportEmailAddresses
   isFromPlainManagedDomain
-  tenant {
-    id
-  }
   account {
     id
   }
@@ -17217,6 +17397,7 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
       threadDiscussionToolCallEntryPayloadStatus: status
       error
       durationMs
+      response
     }
     ... on ThreadDiscussionApprovalRequestEntryPayload {
       approvalId
@@ -17529,6 +17710,7 @@ fragment ThreadDiscussionToolCallEntryPayloadFields on ThreadDiscussionToolCallE
   status
   error
   durationMs
+  response
 }
 
 fragment ThreadEventFields on ThreadEvent {
@@ -18454,16 +18636,6 @@ fragment ThreadLinkGroupFields on ThreadLinkGroup {
       totalCount
     }
   }
-  companyMetrics {
-    noCompany {
-      totalCount
-    }
-  }
-  tenantMetrics {
-    noTenant {
-      totalCount
-    }
-  }
   accountMetrics {
     noAccount {
       totalCount
@@ -19203,6 +19375,10 @@ fragment ThreadLinkTargetDeletedEntryFields on ThreadLinkTargetDeletedEntry {
     ref
     title
   }
+}
+
+fragment ThreadNotificationDetailFields on ThreadNotificationDetail {
+  threadId
 }
 
 fragment ThreadPriorityChangedEntryFields on ThreadPriorityChangedEntry {
@@ -26150,6 +26326,7 @@ fragment WorkflowExecutionFields on WorkflowExecution {
       }
     }
   }
+  credits
 }
 
 fragment WorkflowRuleFields on WorkflowRule {
@@ -27326,6 +27503,12 @@ query MyBillingSubscription {
   }
 }
 
+query MemberSeatCapCheck($input: MemberSeatCapCheckInput!) {
+  memberSeatCapCheck(input: $input) {
+    isValid
+  }
+}
+
 query MyBillingRota {
   myBillingRota {
     onRotaUserIds
@@ -27473,6 +27656,12 @@ query TimelineEntries($customerId: ID!, $first: Int, $after: String, $last: Int,
 
 query TimelineEntry($customerId: ID!, $timelineEntryId: ID!) {
   timelineEntry(customerId: $customerId, timelineEntryId: $timelineEntryId) {
+    ...TimelineEntryFields
+  }
+}
+
+query ThreadTimelineEntry($threadId: ID!, $timelineEntryId: ID!) {
+  threadTimelineEntry(threadId: $threadId, timelineEntryId: $timelineEntryId) {
     ...TimelineEntryFields
   }
 }
@@ -27643,8 +27832,8 @@ query SearchCustomers($searchQuery: CustomersSearchQuery!, $filters: CustomersFi
   }
 }
 
-query Snippets($first: Int, $after: String, $last: Int, $before: String) {
-  snippets(first: $first, after: $after, last: $last, before: $before) {
+query Snippets($filters: SnippetsFilter, $first: Int, $after: String, $last: Int, $before: String) {
+  snippets(filters: $filters, first: $first, after: $after, last: $last, before: $before) {
     edges {
       node {
         ...SnippetFields
@@ -27789,6 +27978,29 @@ query MachineUsers($filters: MachineUsersFilter, $first: Int, $after: String, $l
     edges {
       node {
         ...MachineUserFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query OauthApp($oauthAppId: ID!) {
+  oauthApp(oauthAppId: $oauthAppId) {
+    ...OAuthAppFields
+  }
+}
+
+query OauthApps($first: Int, $after: String, $last: Int, $before: String) {
+  oauthApps(first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...OAuthAppFields
       }
       cursor
     }
@@ -28929,6 +29141,24 @@ query ImporterTenantLists($serviceAuthorizationId: ID!, $first: Int, $after: Str
   }
 }
 
+query ImporterAccountLists($serviceAuthorizationId: ID!, $first: Int, $after: String, $last: Int, $before: String) {
+  importerAccountLists(serviceAuthorizationId: $serviceAuthorizationId, first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        id
+        name
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
 query ImportJobDefinition($serviceIntegrationKey: String!, $isEnabled: Boolean) {
   importJobDefinition(serviceIntegrationKey: $serviceIntegrationKey, isEnabled: $isEnabled) {
     ...ImportJobDefinitionFields
@@ -29030,6 +29260,12 @@ query BusinessHoursSchedules($first: Int, $after: String, $last: Int, $before: S
       startCursor
       endCursor
     }
+  }
+}
+
+query BusinessHoursOverride($businessHoursOverrideId: ID!) {
+  businessHoursOverride(businessHoursOverrideId: $businessHoursOverrideId) {
+    ...BusinessHoursOverrideFields
   }
 }
 
@@ -30354,6 +30590,24 @@ mutation UpdateBroadcastAudience($input: UpdateBroadcastAudienceInput!) {
   }
 }
 
+mutation ImportBroadcastAudienceChannels($input: ImportBroadcastAudienceChannelsInput!) {
+  importBroadcastAudienceChannels(input: $input) {
+    result {
+      ...ImportBroadcastAudienceChannelsResultFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation DeleteBroadcastAudience($input: DeleteBroadcastAudienceInput!) {
   deleteBroadcastAudience(input: $input) {
     broadcastAudience {
@@ -31571,6 +31825,9 @@ mutation AddWorkspaceAlternateSupportEmailAddress($input: AddWorkspaceAlternateS
     workspaceEmailDomainSettings {
       ...WorkspaceEmailDomainSettingsFields
     }
+    pendingDnsRecords {
+      ...PendingSenderDomainDnsRecordsFields
+    }
     error {
       message
       type
@@ -31807,6 +32064,97 @@ mutation DeleteApiKey($input: DeleteApiKeyInput!) {
   deleteApiKey(input: $input) {
     apiKey {
       ...ApiKeyFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateOAuthApp($input: CreateOAuthAppInput!) {
+  createOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
+    }
+    clientSecret
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateOAuthApp($input: UpdateOAuthAppInput!) {
+  updateOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation EnableOAuthApp($input: EnableOAuthAppInput!) {
+  enableOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DisableOAuthApp($input: DisableOAuthAppInput!) {
+  disableOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteOAuthApp($input: DeleteOAuthAppInput!) {
+  deleteOAuthApp(input: $input) {
+    oauthApp {
+      ...OAuthAppFields
     }
     error {
       message
@@ -33230,6 +33578,7 @@ mutation UpsertDiscussionToolCall($input: UpsertDiscussionToolCallInput!) {
       status
       error
       durationMs
+      response
     }
     result
     error {
@@ -34387,6 +34736,24 @@ mutation ImportTenantFieldSchemasFromService($input: ImportTenantFieldSchemasFro
   }
 }
 
+mutation ImportAccountFieldSchemasFromService($input: ImportAccountFieldSchemasFromServiceInput!) {
+  importAccountFieldSchemasFromService(input: $input) {
+    accountFieldSchemas {
+      ...AccountFieldSchemaFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation UpdateImportJobDefinition($input: UpdateImportJobDefinitionInput!) {
   updateImportJobDefinition(input: $input) {
     importJobDefinition {
@@ -34795,6 +35162,57 @@ mutation UpdateBusinessHoursSchedule($input: UpdateBusinessHoursScheduleInput!) 
 
 mutation DeleteBusinessHoursSchedule($input: DeleteBusinessHoursScheduleInput!) {
   deleteBusinessHoursSchedule(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateBusinessHoursOverride($input: CreateBusinessHoursOverrideInput!) {
+  createBusinessHoursOverride(input: $input) {
+    businessHoursOverride {
+      ...BusinessHoursOverrideFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateBusinessHoursOverride($input: UpdateBusinessHoursOverrideInput!) {
+  updateBusinessHoursOverride(input: $input) {
+    businessHoursOverride {
+      ...BusinessHoursOverrideFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteBusinessHoursOverride($input: DeleteBusinessHoursOverrideInput!) {
+  deleteBusinessHoursOverride(input: $input) {
     error {
       message
       type
@@ -35786,8 +36204,48 @@ mutation ImportTenantFieldSchemas($input: ImportTenantFieldSchemasInput!) {
   }
 }
 
+mutation ImportAccountFieldSchemas($input: ImportAccountFieldSchemasInput!) {
+  importAccountFieldSchemas(input: $input) {
+    result {
+      added
+      updated
+      skipped
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation ImportTenants($input: ImportTenantsInput!) {
   importTenants(input: $input) {
+    result {
+      added
+      updated
+      skipped
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation ImportAccounts($input: ImportAccountsInput!) {
+  importAccounts(input: $input) {
     result {
       added
       updated
@@ -36084,6 +36542,25 @@ query TierMemberships($tierId: ID!, $first: Int, $after: String, $last: Int, $be
         endCursor
       }
       totalCount
+    }
+  }
+}
+
+query BusinessHoursScheduleOverrides($businessHoursScheduleId: ID!, $filters: BusinessHoursOverridesFilter, $sortBy: BusinessHoursOverridesSort, $first: Int, $after: String, $last: Int, $before: String) {
+  businessHoursSchedule(businessHoursScheduleId: $businessHoursScheduleId) {
+    overrides(filters: $filters, sortBy: $sortBy, first: $first, after: $after, last: $last, before: $before) {
+      edges {
+        node {
+          ...BusinessHoursOverrideFields
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
     }
   }
 }
