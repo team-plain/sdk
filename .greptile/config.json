@@ -4,7 +4,7 @@
     "enabled": true,
     "riskCeiling": "low",
     "filters": {
-      "includePaths": ["**/*.md", "packages/*/src/__tests__/**"],
+      "includePaths": ["**/*.md", ".changeset/*.md", "packages/*/src/**"],
       "excludePaths": [
         "**/.greptile/**",
         ".github/**",
@@ -13,7 +13,7 @@
         "pnpm-workspace.yaml",
         ".nvmrc",
         "**/package.json",
-        ".changeset/**",
+        ".changeset/config.json",
         "**/CHANGELOG.md"
       ]
     }
