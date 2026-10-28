@@ -10,8 +10,6 @@ permissions: {}
 
 jobs:
   ci:
-    # GitHub-hosted, not depot: the repo is public, so fork pull requests must not run on paid
-    # runners.
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -55,7 +53,6 @@ jobs:
         run: pnpm test
 
   package:
-    # GitHub-hosted for the same reason as ci.
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
