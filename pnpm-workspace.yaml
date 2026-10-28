@@ -10,10 +10,6 @@ allowBuilds:
 # is 7 days). Longer, and pnpm rejects whatever Dependabot proposes.
 minimumReleaseAge: 10080
 minimumReleaseAgeIgnoreMissingTime: false
-minimumReleaseAgeExclude:
-  # pnpm gates switching to the packageManager pin on minimumReleaseAge. Drop this once
-  # it's older than the cutoff.
-  - "pnpm@12.8.2"
 
 trustPolicy: no-downgrade
 trustPolicyExclude:

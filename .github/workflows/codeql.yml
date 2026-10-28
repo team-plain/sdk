@@ -13,9 +13,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions: {}
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
+    # GitHub-hosted, not depot: the repo is public, so fork pull requests must not run on paid
+    # runners.
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -31,6 +35,8 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       # build-mode none reads the sources directly, so there is no pnpm install in this job.
       - name: Initialize CodeQL

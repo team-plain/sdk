@@ -3,13 +3,14 @@ version: 2
 
 updates:
   - package-ecosystem: github-actions
+    # A week of soak time before we pick up a release, so a compromised or
+    # yanked version has a chance to be caught upstream first.
+    cooldown:
+      default-days: 7
     schedule:
       interval: weekly
       time: "10:30"
       timezone: "Europe/London"
-    # A week gives compromised action releases time to be discovered before adoption.
-    cooldown:
-      default-days: 7
     groups:
       gha-deps:
         patterns:
@@ -17,19 +18,18 @@ updates:
     directory: "/"
 
   - package-ecosystem: npm
-    schedule:
-      interval: weekly
-      time: "10:30"
-      timezone: "Europe/London"
-    directories:
-      - "/"
-    versioning-strategy: increase
-    # Majors land one per PR, so the default of 5 stalls the queue.
-    open-pull-requests-limit: 15
+    directory: "/"
     # Must be at least minimumReleaseAge in pnpm-workspace.yaml (minutes; 10080 is 7
     # days).
     cooldown:
       default-days: 7
+    schedule:
+      interval: weekly
+      time: "10:30"
+      timezone: "Europe/London"
+    versioning-strategy: increase
+    # Majors land one per PR, so the default of 5 stalls the queue.
+    open-pull-requests-limit: 15
     groups:
       npm-patch:
         applies-to: version-updates
@@ -54,5 +54,4 @@ updates:
     ignore:
       # Tracks the runtime, not latest. Raise it with engines.node.
       - dependency-name: "@types/node"
-        update-types:
-          - "version-update:semver-major"
+        update-types: ["version-update:semver-major"]
