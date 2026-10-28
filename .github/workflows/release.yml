@@ -10,8 +10,6 @@ permissions: {}
 
 jobs:
   release:
-    # GitHub-hosted, not depot: npm trusted publishing and provenance only accept OIDC tokens from
-    # GitHub-hosted runners.
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
