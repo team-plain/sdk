@@ -10,13 +10,14 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-arm-4
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       # Pull requests opened with the default token don't trigger CI, so push and open them as the app.
       - name: Generate a GitHub App token
