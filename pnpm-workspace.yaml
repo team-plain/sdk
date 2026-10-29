@@ -9,10 +9,17 @@ allowBuilds:
 # Must stay at or below the Dependabot cooldown in .github/dependabot.yml (minutes; 10080
 # is 7 days). Longer, and pnpm rejects whatever Dependabot proposes.
 minimumReleaseAge: 10080
+minimumReleaseAgeIgnoreMissingTime: false
 minimumReleaseAgeExclude:
   # pnpm gates switching to the packageManager pin on minimumReleaseAge. Drop this once
   # it's older than the cutoff.
   - "pnpm@12.8.2"
+
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  # Published with weaker trust evidence than earlier versions; arrives via @babel/core.
+  # Pinned so later releases are still checked.
+  - 'semver@6.3.1'
 
 # pnpm 12 writes its own pinned version as a first YAML document in
 # pnpm-lock.yaml, and GitHub's dependency graph reads only that document, so
