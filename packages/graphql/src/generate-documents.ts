@@ -107,20 +107,8 @@ const queryableTypes = new Set<string>();
 const queryType = schema.getQueryType();
 if (queryType) {
   for (const field of Object.values(queryType.getFields())) {
-    const { namedType, isList: fieldIsList } = (() => {
-      let isNonNull = false;
-      let fieldIsList = false;
-      let current = field.type as GraphQLOutputType;
-      if (isNonNullType(current)) {
-        isNonNull = true;
-        current = current.ofType;
-      }
-      if (isListType(current)) {
-        fieldIsList = true;
-      }
-      return { namedType: unwrapType(field.type), isNonNull, isList: fieldIsList };
-    })();
-    if (fieldIsList) continue;
+    if (isList(field.type)) continue;
+    const namedType = unwrapType(field.type);
     if (!isObjectType(namedType)) continue;
     if (isConnectionType(namedType)) continue;
     const idArg = field.args.find(
@@ -786,21 +774,6 @@ function generateMutationOutputSelection(outputType: GraphQLObjectType): string 
     if (isInterfaceType(namedType)) {
       const sel = generateSelectionForType(namedType, "    ", true);
       lines.push(`    ${fieldName}${sel}`);
-      continue;
-    }
-
-    // List types
-    if (isList(field.type)) {
-      if (isObjectType(namedType) && fragmentTypes.has(namedType.name)) {
-        lines.push(`    ${fieldName} {\n      ...${namedType.name}Fields\n    }`);
-      } else if (isObjectType(namedType)) {
-        const inlineFields = generateInlineScalarSelection(namedType, "      ");
-        if (inlineFields) {
-          lines.push(`    ${fieldName} {\n${inlineFields}\n    }`);
-        }
-      } else if (isScalarType(namedType) || isEnumType(namedType)) {
-        lines.push(`    ${fieldName}`);
-      }
     }
   }
 
