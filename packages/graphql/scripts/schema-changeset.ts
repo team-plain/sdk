@@ -4,11 +4,18 @@
 // generated result types, which the schema diff alone calls non-breaking. The reverse also holds for an enum the API only returns: no request can send a
 // removed value, so dropping it only flags comparisons against a value that no longer arrives.
 import type { NewChangeset } from "@changesets/types";
-import { type Change, ChangeType, CriticalityLevel, diff } from "@graphql-inspector/core";
+import {
+  type Change,
+  ChangeType,
+  CriticalityLevel,
+  diff,
+  type TypeOfChangeType,
+} from "@graphql-inspector/core";
 import {
   buildSchema,
   type GraphQLField,
   type GraphQLSchema,
+  type GraphQLType,
   getNamedType,
   isEnumType,
   isInputObjectType,
@@ -32,17 +39,13 @@ export async function schemaChangeset(
   if (changes.length === 0) return null;
 
   const isMethod = (c: Change) => /^(Query|Mutation)\./.test(c.path ?? "");
-  const of = (type: ChangeType, method: boolean) =>
+  const of = (type: TypeOfChangeType, method: boolean) =>
     changes.filter((c) => c.type === type && isMethod(c) === method);
   // Comparing both schemas, rather than trusting the change type, keeps a field that was already
   // skipped, or arrives skipped, out of the lists.
-  const moves = (types: ChangeType[], from: GraphQLSchema, to: GraphQLSchema) =>
+  const moves = (types: TypeOfChangeType[], from: GraphQLSchema, to: GraphQLSchema) =>
     changes.filter(
-      (c) =>
-        types.includes(c.type as ChangeType) &&
-        !isMethod(c) &&
-        isSelected(from, c) &&
-        !isSelected(to, c),
+      (c) => types.includes(c.type) && !isMethod(c) && isSelected(from, c) && !isSelected(to, c),
     );
 
   const unreturned = changes.filter(
@@ -110,7 +113,7 @@ function isSelected(schema: GraphQLSchema, change: Change): boolean {
 
 function usesEnum(schema: GraphQLSchema, change: Change, as: "input" | "output"): boolean {
   const enumName = change.path?.split(".")[0];
-  const isEnum = (t: Parameters<typeof getNamedType>[0]) => getNamedType(t).name === enumName;
+  const isEnum = (t: GraphQLType) => getNamedType(t).name === enumName;
   return Object.values(schema.getTypeMap()).some((type) => {
     if (isInputObjectType(type)) {
       return as === "input" && Object.values(type.getFields()).some((f) => isEnum(f.type));
