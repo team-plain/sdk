@@ -162,3 +162,7 @@ Pick the relevant package(s) when prompted and write a short summary of the chan
 Each package is versioned and released independently.
 
 After merging to `main`, the release workflow automatically opens a "Version Packages" PR that bumps versions and updates changelogs.
+
+## Code Review
+
+Greptile auto-approves a PR it scores 5/5 at Low risk when it only changes Markdown, changesets or package source under `packages/*/src/`. `package.json` files, changelogs, workflows and anything under `.greptile/` always need a human, so every release still gets a human review.
