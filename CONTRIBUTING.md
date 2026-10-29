@@ -120,7 +120,7 @@ pnpm --filter @team-plain/graphql update-schema
 pnpm typecheck
 ```
 
-`update-schema` downloads the production schema, regenerates the SDK, and writes a changeset with the bump the change needs: major when a field disappears from the generated result types, minor for additions and for values removed from an enum the API only returns, patch for description and deprecation changes. Only a major also bumps `@team-plain/ui-components`, whose peer range on `@team-plain/graphql` it leaves. Review the changeset and add migration notes where a change needs them.
+`update-schema` downloads the production schema, regenerates the SDK, and writes a changeset with the bump the change needs: major when a field disappears from the generated result types or comes back under a different result key, minor for additions and for values removed from an enum the API only returns, patch for description and deprecation changes. A deprecation can still be a major: the documents alias a union member's field when it clashes with a field of another type on another member, so deprecating one side of a clash can rename the other side. Only a major also bumps `@team-plain/ui-components`, whose peer range on `@team-plain/graphql` it leaves. Review the changeset and add migration notes where a change needs them.
 
 Builds, including releases, only ever use the committed `schema.graphql`, and CI fails if the committed generated files don't match it.
 

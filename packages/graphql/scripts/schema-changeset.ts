@@ -13,6 +13,7 @@ import {
   isInterfaceType,
   isNonNullType,
   isObjectType,
+  isUnionType,
 } from "graphql";
 
 type Bump = "major" | "minor" | "patch";
@@ -55,6 +56,7 @@ export async function schemaChangeset(
   );
   const dropped = moves([ChangeType.FieldArgumentAdded], oldSchema, newSchema);
   const restored = moves([ChangeType.FieldArgumentRemoved], newSchema, oldSchema);
+  const renamed = renamedUnionFields(oldSchema, newSchema);
   const docsOnly = changes.every(
     (c) =>
       /DESCRIPTION|DEPRECATION|DIRECTIVE_USAGE/.test(c.type) &&
@@ -62,11 +64,16 @@ export async function schemaChangeset(
       !restored.includes(c),
   );
   const bump: Bump =
-    breaking.length > 0 || dropped.length > 0 ? "major" : docsOnly ? "patch" : "minor";
+    breaking.length > 0 || dropped.length > 0 || renamed.length > 0
+      ? "major"
+      : docsOnly
+        ? "patch"
+        : "minor";
 
   const sections = [
     ["Breaking", breaking],
     ["No longer in the generated result types", dropped],
+    ["Renamed in the generated result types", renamed],
     ["Back in the generated result types", restored],
     ["Enum values the API no longer returns", unreturned],
     ["New values in returned enums", added],
@@ -111,4 +118,63 @@ function usesEnum(schema: GraphQLSchema, change: Change, as: "input" | "output")
     }
     return false;
   });
+}
+
+// A deprecation that starts or ends a clash between union members renames the result key of a
+// field that did not itself change, which the schema diff alone calls a patch.
+function renamedUnionFields(
+  oldSchema: GraphQLSchema,
+  newSchema: GraphQLSchema,
+): { message: string }[] {
+  const before = unionFieldKeys(oldSchema);
+  const after = unionFieldKeys(newSchema);
+  return [...before].flatMap(([path, was]) => {
+    const now = after.get(path);
+    if (now === undefined || now === was) return [];
+    const [abstract, member, field] = path.split(".");
+    return [
+      {
+        message: `Field '${member}.${field}' in '${abstract}' is now returned as '${now}' instead of '${was}'`,
+      },
+    ];
+  });
+}
+
+/**
+ * The result key the document generator gives each selected field of each union or interface
+ * member, by `Abstract.Member.field`. Mirrors findConflictingUnionFields and needsUnionAlias in
+ * src/generate-documents.ts: clashes count every field, but fields with a non-null argument are
+ * never selected, so they have no key.
+ */
+export function unionFieldKeys(schema: GraphQLSchema): Map<string, string> {
+  const keys = new Map<string, string>();
+  for (const type of Object.values(schema.getTypeMap())) {
+    if (!isUnionType(type) && !isInterfaceType(type)) continue;
+    const members = schema.getPossibleTypes(type);
+    const clashes = (includeDeprecated: boolean) => {
+      const signatures = new Map<string, string>();
+      const clashing = new Set<string>();
+      for (const member of members) {
+        for (const [name, field] of Object.entries(member.getFields())) {
+          if (!includeDeprecated && field.deprecationReason != null) continue;
+          const signature = field.type.toString();
+          const seen = signatures.get(name);
+          if (seen === undefined) signatures.set(name, signature);
+          else if (seen !== signature) clashing.add(name);
+        }
+      }
+      return clashing;
+    };
+    const all = clashes(true);
+    const current = clashes(false);
+    for (const member of members) {
+      for (const [name, field] of Object.entries(member.getFields())) {
+        if (field.args.some((a) => isNonNullType(a.type))) continue;
+        const aliased = all.has(name) && (field.deprecationReason != null || current.has(name));
+        const alias = `${member.name.charAt(0).toLowerCase()}${member.name.slice(1)}${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+        keys.set(`${type.name}.${member.name}.${name}`, aliased ? alias : name);
+      }
+    }
+  }
+  return keys;
 }
