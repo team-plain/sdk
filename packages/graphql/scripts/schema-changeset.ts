@@ -7,12 +7,16 @@ import type { NewChangeset } from "@changesets/types";
 import { type Change, ChangeType, CriticalityLevel, diff } from "@graphql-inspector/core";
 import {
   buildSchema,
+  type GraphQLField,
   type GraphQLSchema,
   getNamedType,
+  isEnumType,
   isInputObjectType,
   isInterfaceType,
+  isListType,
   isNonNullType,
   isObjectType,
+  isScalarType,
   isUnionType,
 } from "graphql";
 
@@ -142,9 +146,9 @@ function renamedUnionFields(
 
 /**
  * The result key the document generator gives each selected field of each union or interface
- * member, by `Abstract.Member.field`. Mirrors findConflictingUnionFields and needsUnionAlias in
- * src/generate-documents.ts: clashes count every field, but fields with a non-null argument are
- * never selected, so they have no key.
+ * member, by `Abstract.Member.field`. Mirrors findConflictingUnionFields, needsUnionAlias and
+ * generateMemberInlineSelection in src/generate-documents.ts: clashes count every field, but
+ * fields the generator never selects have no key.
  */
 export function unionFieldKeys(schema: GraphQLSchema): Map<string, string> {
   const keys = new Map<string, string>();
@@ -169,7 +173,7 @@ export function unionFieldKeys(schema: GraphQLSchema): Map<string, string> {
     const current = clashes(false);
     for (const member of members) {
       for (const [name, field] of Object.entries(member.getFields())) {
-        if (field.args.some((a) => isNonNullType(a.type))) continue;
+        if (!isSelectedMemberField(field)) continue;
         const aliased = all.has(name) && (field.deprecationReason != null || current.has(name));
         const alias = `${member.name.charAt(0).toLowerCase()}${member.name.slice(1)}${name.charAt(0).toUpperCase()}${name.slice(1)}`;
         keys.set(`${type.name}.${member.name}.${name}`, aliased ? alias : name);
@@ -177,4 +181,23 @@ export function unionFieldKeys(schema: GraphQLSchema): Map<string, string> {
     }
   }
   return keys;
+}
+
+// The generator skips fields with a non-null argument, and connections and lists of objects that
+// are not value objects (objects whose fields are all scalars or enums).
+function isSelectedMemberField(field: GraphQLField<unknown, unknown>): boolean {
+  if (field.args.some((a) => isNonNullType(a.type))) return false;
+  const named = getNamedType(field.type);
+  if (!isObjectType(named)) return true;
+  const fields = Object.values(named.getFields());
+  const isValueObject = fields.every((f) => {
+    const t = getNamedType(f.type);
+    return isScalarType(t) || isEnumType(t);
+  });
+  const isConnection =
+    named.name.endsWith("Connection") &&
+    "edges" in named.getFields() &&
+    "pageInfo" in named.getFields();
+  const isList = isListType(isNonNullType(field.type) ? field.type.ofType : field.type);
+  return isValueObject || !(isList || isConnection);
 }

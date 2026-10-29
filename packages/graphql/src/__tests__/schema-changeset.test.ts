@@ -123,6 +123,16 @@ describe("schemaChangeset", () => {
       expect(result?.summary).not.toContain("'C.text'");
     });
 
+    it("ignores lists of objects and connections, which the generator skips", async () => {
+      const old = `${base} type Item { id: ID! thread: Thread } type ItemConnection { edges: [Item!]! pageInfo: Item! }
+        type A { items: [Item!]! page: ItemConnection! } type B { items: [Item] page: ItemConnection }
+        union Entry = A | B`;
+      const next = deprecate(deprecate(old, "type B { items: [Item]"), "page: ItemConnection ");
+      const result = await schemaChangeset(old, next);
+      expect(result?.releases[0].type).toBe("patch");
+      expect(result?.summary).not.toContain("**Renamed in the generated result types**");
+    });
+
     it("ignores fields the generator skips for a required argument", async () => {
       const old = entries.replace("type B { text: String", "type B { text(n: Int!): String");
       const result = await schemaChangeset(old, deprecate(old, "type A { text: String!"));
