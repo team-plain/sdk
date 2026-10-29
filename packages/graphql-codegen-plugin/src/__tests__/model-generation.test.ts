@@ -1,7 +1,6 @@
 import { buildSchema } from "graphql";
 import { describe, expect, it } from "vitest";
-import { plugin } from "../index.js";
-import { compileTypeScript, createDocuments, formatDiagnostics } from "./helpers.js";
+import { compileTypeScript, createDocuments, formatDiagnostics, generate } from "./helpers.js";
 
 // NOTE: The plugin only generates model classes for types that have at least one
 // non-scalar/non-enum field (i.e., NOT "value objects"). Types whose fields are
@@ -49,8 +48,7 @@ describe("model generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type CompanyFieldsFragment = { id: string; name: string; parent: { id: string } | null };
@@ -106,8 +104,7 @@ describe("model generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type CustomerFieldsFragment = { id: string; fullName: string; email: string | null; isVerified: boolean; createdAt: { iso8601: string; unixTimestamp: number } };
@@ -157,8 +154,7 @@ describe("model generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type TicketFieldsFragment = { id: string; title: string; status: "OPEN" | "CLOSED"; createdAt: { iso8601: string } };
@@ -206,8 +202,7 @@ describe("model generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     expect(code).not.toContain("class DateTimeModel");
     expect(code).toContain("export class EventModel");
@@ -258,8 +253,7 @@ describe("model generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type CustomerFieldsFragment = { id: string; name: string; createdAt: { iso8601: string } };
@@ -312,8 +306,7 @@ describe("model generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     expect(code).toContain("export class OrderModel");
     // No lazy getter for `note` since InternalNote has no root query
@@ -374,8 +367,7 @@ describe("model generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     expect(code).not.toContain("class CreateUserOutputModel");
     expect(code).not.toContain("class MutationErrorModel");
