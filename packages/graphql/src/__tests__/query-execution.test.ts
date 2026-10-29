@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { version } from "../../package.json";
+import packageJson from "../../package.json" with { type: "json" };
 import { CustomerModel } from "../_generated_sdk.js";
 import { PlainClient } from "../client.js";
 import {
@@ -82,7 +82,7 @@ describe("query execution", () => {
     const headers = getRequestHeaders(fetchMock);
     expect(headers.Authorization).toBe("Bearer my-secret-key");
     expect(headers["Content-Type"]).toBe("application/json");
-    expect(headers["User-Agent"]).toBe(`@team-plain/graphql/${version}`);
+    expect(headers["User-Agent"]).toBe(`@team-plain/graphql/${packageJson.version}`);
   });
 
   it("sends request to default API URL", async () => {
