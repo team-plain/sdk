@@ -32,7 +32,7 @@ These are important to understand before contributing:
 
 - **Mutation errors are data, not exceptions.** Plain's API returns `*Output` types with an `error: MutationError` field. The SDK preserves this — mutation methods return the full output type. Only network/auth errors throw.
 - **Lazy-loading relations.** Model classes expose object relations as `Promise<T>` getters that make separate API calls using the entity's `id`. Fragments only select `{ id }` for relations.
-- **Deprecated fields stay until the API removes them.** The SDK keeps a field the API deprecates and marks it `@deprecated`, so a deprecation is never a breaking release. The fragments select every field they include in one request, so the API must keep a deprecated field working until a major SDK release has dropped it; deleting it earlier fails every query on an older SDK that selects it.
+- **Deprecated fields stay in the SDK.** The SDK keeps a field the API deprecates and marks it `@deprecated`, so code that uses it keeps compiling. The API keeps deprecated fields working and only marks them to discourage new use, which is what lets the fragments keep selecting them: each fragment selects all its fields in one request, so a field that stopped working would fail every query that includes it. A deprecation is normally a patch release. It is a major only when it renames a result key through a union field clash (see [Update the GraphQL schema](#update-the-graphql-schema)).
 
 ### Webhooks-specific
 

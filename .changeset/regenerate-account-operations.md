@@ -2,9 +2,11 @@
 "@team-plain/graphql": minor
 ---
 
-Regenerate against the current API schema. Adds the Account queries and mutations plus every other operation shipped since the last codegen. Nothing is removed.
+Regenerate against the current API schema. Adds the Account queries and mutations, plus every other operation the API has shipped since the previous regeneration.
 
-The API deprecated `useBusinessHoursOnly` on `FirstResponseTimeServiceLevelAgreement` and `NextResponseTimeServiceLevelAgreement`, because an SLA can now be tracked against several named business hours schedules rather than a single on/off flag. The field stays in the SDK, marked `@deprecated`, so existing code keeps working. Move to `businessHoursSchedules` before the API removes it.
+The API deprecated `useBusinessHoursOnly` on `FirstResponseTimeServiceLevelAgreement` and `NextResponseTimeServiceLevelAgreement`, because an SLA can now be tracked against several named business hours schedules rather than a single on/off flag. The field stays in the SDK, marked `@deprecated`, so existing code keeps working. Use `businessHoursSchedules` for new code.
+
+The business hours slot methods are deprecated too: `query.businessHoursSlots` in favour of `query.businessHoursSchedules`, and `mutation.syncBusinessHoursSlots` in favour of `mutation.createBusinessHoursSchedule` and `mutation.updateBusinessHoursSchedule`. Both still work and are marked `@deprecated`.
 
 `businessHoursSchedules` is not selected by the bundled documents yet. Until it is, read it with your own query through `PlainGraphQLClient`. An empty list means the SLA is tracked 24/7, the old `useBusinessHoursOnly: false`:
 
@@ -29,3 +31,5 @@ const data = await client.request(
 ```
 
 `mutation.createTestThread` gains an optional `input` (`{ channel }`, defaulting to `CHAT` on the API). Calling it with no arguments still works: the generator now treats an argument with a schema default as optional instead of required.
+
+`Workflow.order` is no longer deprecated, so it is now included in the workflow result types and models.
