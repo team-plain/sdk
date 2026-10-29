@@ -17,8 +17,6 @@ minimumReleaseAgeExclude:
 
 trustPolicy: no-downgrade
 trustPolicyExclude:
-  # Published with weaker trust evidence than earlier versions; arrives via @babel/core.
-  # Pinned so later releases are still checked.
   - 'semver@6.3.1'
 
 # pnpm 12 writes its own pinned version as a first YAML document in
