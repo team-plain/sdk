@@ -86,7 +86,7 @@ Files prefixed with `_generated_` are auto-generated — don't edit them manuall
 | `pnpm build` | Build everything (codegen plugin → SDK → ui-components → webhooks) |
 | `pnpm --filter @team-plain/graphql codegen` | Regenerate documents + SDK from the committed schema |
 | `pnpm --filter @team-plain/graphql update-schema` | Download the production schema, regenerate, and write a changeset |
-| `pnpm typecheck` | Type-check all packages |
+| `pnpm typecheck` | Type-check all packages, including their scripts, tests, and config files (`tsconfig.typecheck.json`) |
 | `pnpm test` | Run tests across all packages |
 | `pnpm --filter @team-plain/graphql-codegen-plugin build` | Build just the codegen plugin |
 | `pnpm --filter @team-plain/graphql build` | Build just the SDK |
