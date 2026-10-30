@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CustomerModel } from "../_generated_sdk.js";
+import type { CustomersQueryVariables } from "../_generated_documents.js";
+import { CustomerGroupMembershipModel, CustomerModel } from "../_generated_sdk.js";
 import { PlainClient } from "../client.js";
 import { PlainConnection } from "../connection.js";
 import { getRequestBody, graphqlResponse, mockFetch } from "./helpers.js";
@@ -11,6 +12,7 @@ describe("connection pagination", () => {
     vi.restoreAllMocks();
   });
 
+  // Helper functions
   function makeCustomersResponse(
     customers: Array<{ id: string; fullName: string; shortName: string }>,
     pageInfo: {
@@ -58,9 +60,152 @@ describe("connection pagination", () => {
           },
         })),
         pageInfo,
+        totalCount: customers.length,
       },
     };
   }
+  // End helper functions
+
+  it.each([
+    { initial: { first: 2, after: "old_after" }, direction: "previous" },
+    { initial: { last: 2, before: "old_before" }, direction: "next" },
+    { initial: { first: 2, after: "old_after" }, direction: "next" },
+    { initial: { last: 2, before: "old_before" }, direction: "previous" },
+  ] as const)("switches root query direction from $initial", async ({ initial, direction }) => {
+    fetchMock = mockFetch();
+    const response = makeCustomersResponse(
+      [{ id: "c_1", fullName: "Alice Smith", shortName: "Alice" }],
+      {
+        hasNextPage: true,
+        hasPreviousPage: true,
+        startCursor: "cursor_start",
+        endCursor: "cursor_end",
+      },
+    );
+    const filters = { isMarkedAsSpam: false };
+    const sortBy = { field: "FULL_NAME", direction: "ASC" } as const;
+    const variables = Object.freeze({ ...initial, filters, sortBy });
+    fetchMock.mockImplementation(async () => graphqlResponse(response));
+    const client = new PlainClient({ apiKey: "test-key" });
+    const page = await client.query.customers(variables);
+    const next = direction === "next" ? await page.fetchNext() : await page.fetchPrevious();
+    const expected =
+      direction === "next"
+        ? { first: 2, after: "cursor_end", filters, sortBy }
+        : { last: 2, before: "cursor_start", filters, sortBy };
+
+    expect(getRequestBody(fetchMock, 0).variables).toEqual(variables);
+    expect(getRequestBody(fetchMock, 1).variables).toEqual(expected);
+    expect(next!.nodes[0]).toBeInstanceOf(CustomerModel);
+    expect(next!.totalCount).toBe(page.totalCount);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    const returned = direction === "next" ? await next!.fetchPrevious() : await next!.fetchNext();
+    expect(getRequestBody(fetchMock, 2).variables).toEqual(
+      direction === "next"
+        ? { last: 2, before: "cursor_start", filters, sortBy }
+        : { first: 2, after: "cursor_end", filters, sortBy },
+    );
+    expect(returned!.nodes[0].id).toBe("c_1");
+    expect(variables).toEqual({ ...initial, filters, sortBy });
+  });
+
+  it.each([
+    { initial: { first: 2, after: "old_after" }, direction: "previous" },
+    { initial: { last: 2, before: "old_before" }, direction: "next" },
+  ] as const)(
+    "switches model connection direction from $initial",
+    async ({ initial, direction }) => {
+      fetchMock = mockFetch();
+      const customerData = makeCustomersResponse(
+        [{ id: "c_1", fullName: "Alice Smith", shortName: "Alice" }],
+        {
+          hasNextPage: true,
+          hasPreviousPage: true,
+          startCursor: "cursor_start",
+          endCursor: "cursor_end",
+        },
+      );
+      const customer = customerData.customers.edges[0].node;
+      const actor = { __typename: "SystemActor", systemId: "sys" };
+      fetchMock.mockResolvedValueOnce(graphqlResponse({ customer }));
+      fetchMock.mockImplementation(async () =>
+        graphqlResponse({
+          customer: {
+            customerGroupMemberships: {
+              edges: [
+                {
+                  node: {
+                    customerId: "c_1",
+                    customerGroup: { id: "cg_1" },
+                    createdAt: customer.createdAt,
+                    updatedAt: customer.updatedAt,
+                    createdBy: actor,
+                    updatedBy: actor,
+                  },
+                },
+              ],
+              pageInfo: customerData.customers.pageInfo,
+            },
+          },
+        }),
+      );
+      const client = new PlainClient({ apiKey: "test-key" });
+      const model = await client.query.customer({ customerId: "c_1" });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const filters = { customerGroupExternalIds: ["group_1"] };
+      const variables = Object.freeze({ ...initial, filters });
+      const page = await model.customerGroupMemberships(variables);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(page.nodes[0]).toBeInstanceOf(CustomerGroupMembershipModel);
+      const next = direction === "next" ? await page.fetchNext() : await page.fetchPrevious();
+      expect(getRequestBody(fetchMock, 2).variables).toEqual({
+        customerId: "c_1",
+        filters,
+        ...(direction === "next"
+          ? { first: 2, after: "cursor_end" }
+          : { last: 2, before: "cursor_start" }),
+      });
+      expect(next!.nodes[0]).toBeInstanceOf(CustomerGroupMembershipModel);
+      const returned = direction === "next" ? await next!.fetchPrevious() : await next!.fetchNext();
+      expect(getRequestBody(fetchMock, 3).variables).toEqual({
+        customerId: "c_1",
+        filters,
+        ...(direction === "next"
+          ? { last: 2, before: "cursor_start" }
+          : { first: 2, after: "cursor_end" }),
+      });
+      expect(returned!.nodes[0].customerId).toBe("c_1");
+      expect(fetchMock).toHaveBeenCalledTimes(4);
+      expect(variables).toEqual({ ...initial, filters });
+    },
+  );
+
+  it.each([undefined, { first: null, last: null, before: null, after: null }] satisfies (
+    | CustomersQueryVariables
+    | undefined
+  )[])("keeps default page sizes when navigating without a count: %j", async (variables) => {
+    fetchMock = mockFetch();
+    const response = makeCustomersResponse([], {
+      hasNextPage: true,
+      hasPreviousPage: true,
+      startCursor: "cursor_start",
+      endCursor: "cursor_end",
+    });
+    fetchMock.mockImplementation(async () => graphqlResponse(response));
+    const client = new PlainClient({ apiKey: "test-key" });
+    const page = await client.query.customers(variables);
+    const previous = await page.fetchPrevious();
+    expect(getRequestBody(fetchMock, 1).variables).toEqual({
+      before: "cursor_start",
+      ...(variables ? { last: null } : {}),
+    });
+    await previous!.fetchNext();
+    expect(getRequestBody(fetchMock, 2).variables).toEqual({
+      after: "cursor_end",
+      ...(variables ? { first: null } : {}),
+    });
+  });
 
   it("returns a PlainConnection with model instances", async () => {
     fetchMock = mockFetch();

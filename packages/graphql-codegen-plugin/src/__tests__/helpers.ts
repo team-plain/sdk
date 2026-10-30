@@ -40,6 +40,11 @@ declare class PlainConnection<N> {
     fetch: (cursor: { after?: string; before?: string }) => Promise<PlainConnection<N>>;
   });
 }
+
+declare function paginationVariables<T>(
+  variables: T,
+  cursor: { after?: string; before?: string }
+): T;
 `;
 
 /**

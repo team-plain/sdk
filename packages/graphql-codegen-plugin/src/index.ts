@@ -620,7 +620,9 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
         lines.push(
           `      pageInfo: conn.pageInfo,${connHasTotalCount ? "\n      totalCount: conn.totalCount," : ""}`,
         );
-        lines.push(`      fetch: (cursor) => this.${f.name}({ ...variables, ...cursor }),`);
+        lines.push(
+          `      fetch: (cursor) => this.${f.name}(paginationVariables(variables, cursor)),`,
+        );
         lines.push(`    });`);
         lines.push(`  }`);
       }
@@ -706,7 +708,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
       return new PlainConnection<${nodeModelClass}>({
         nodes: conn.edges.map(e => new ${nodeModelClass}(_client, e.node)),
         pageInfo: conn.pageInfo,${connHasTotalCount ? "\n        totalCount: conn.totalCount," : ""}
-        fetch: (cursor) => query.${fieldName}({ ...${hasArgs ? "variables" : "{}"}, ...cursor } as ${varsTsName}),
+        fetch: (cursor) => query.${fieldName}(paginationVariables(${hasArgs ? "variables" : "{}"}, cursor) as ${varsTsName}),
       });
     }`,
         );
@@ -842,7 +844,7 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
 
   // Imports
   output.push(`import type { PlainGraphQLClient } from "./graphql-client.js";`);
-  output.push(`import { PlainConnection } from "./connection.js";`);
+  output.push(`import { PlainConnection, paginationVariables } from "./connection.js";`);
 
   const sortedDocs = [...allImportedDocuments].sort();
   const sortedTypes = [...allImportedTypes].sort();

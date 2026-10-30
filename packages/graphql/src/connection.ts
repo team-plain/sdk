@@ -49,3 +49,26 @@ export class PlainConnection<N> {
     return this._fetch({ before: this.pageInfo.startCursor });
   }
 }
+
+// Helper functions
+interface PaginationVariables {
+  first?: number | null;
+  last?: number | null;
+  after?: string | null;
+  before?: string | null;
+}
+
+/** Plain rejects mixed pagination directions, so move the count with the new cursor. */
+export function paginationVariables<T extends PaginationVariables>(
+  variables: T | undefined,
+  cursor: { after?: string; before?: string },
+) {
+  return {
+    ...variables,
+    after: cursor.after,
+    before: cursor.before,
+    first: cursor.after !== undefined ? (variables?.first ?? variables?.last) : undefined,
+    last: cursor.before !== undefined ? (variables?.last ?? variables?.first) : undefined,
+  };
+}
+// End helper functions
