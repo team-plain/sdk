@@ -273,10 +273,7 @@ function expandValueObject(type: GraphQLObjectType, indent: string): string {
     .join("\n");
 }
 
-/**
- * A non-queryable object whose fields are scalars, enums or value objects, e.g. SidekickQuestion
- * with its options. Lists of these are inlined: nothing could load them afterwards.
- */
+// Lists of these are inlined because nothing could load them afterwards (e.g. SidekickQuestion).
 function isNestedValueObjectType(type: GraphQLNamedType): type is GraphQLObjectType {
   if (!isObjectType(type) || queryableTypes.has(type.name)) return false;
   return Object.values(type.getFields()).every((f) => isSimpleType(unwrapType(f.type)));

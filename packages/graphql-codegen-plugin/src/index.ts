@@ -273,6 +273,14 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     return [];
   }
 
+  function isNestedValueObjectType(type: GraphQLNamedType): boolean {
+    if (!isObjectType(type) || typeQueryMap.has(type.name)) return false;
+    return Object.values(type.getFields()).every((f) => {
+      const named = getNamedType(f.type);
+      return isScalarType(named) || isEnumType(named) || isValueObjectType(named, schema);
+    });
+  }
+
   function analyzeField(field: GraphQLField<unknown, unknown>): FieldInfo {
     const { namedType, isList } = unwrapType(field.type);
     const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
@@ -311,6 +319,8 @@ export const plugin: PluginFunction = (schema: GraphQLSchema, documents: Types.D
     }
 
     if (isList) {
+      // Mirrors generate-documents.ts, which inlines these lists in the fragment.
+      if (isNestedValueObjectType(namedType)) return { name, kind: "valueObject", hasRequiredArgs };
       return { name, kind: "list", relatedTypeName: namedType.name, hasRequiredArgs };
     }
     if (isObjectType(namedType) && isConnectionType(namedType.name)) {

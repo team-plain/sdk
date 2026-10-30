@@ -26,7 +26,7 @@ Regenerate against the current API schema.
 
 **Lists the bundled documents used to skip**
 
-Lists of plain objects that have no query of their own are now selected, so these come back where they used to be missing:
+Lists of plain objects that have no query of their own are now selected and exposed on the model classes, so these come back where they used to be missing:
 
 - `ThreadDiscussionQuestionEntryPayload.questions`, with each option's `id`, so `requestDiscussionQuestion` returns the pending card
 - `BusinessHoursSchedule.slots`

@@ -3446,6 +3446,7 @@ export class BusinessHoursScheduleModel {
   public readonly createdAt: BusinessHoursScheduleFieldsFragment["createdAt"];
   public readonly id: BusinessHoursScheduleFieldsFragment["id"];
   public readonly name: BusinessHoursScheduleFieldsFragment["name"];
+  public readonly slots: BusinessHoursScheduleFieldsFragment["slots"];
   public readonly timezone: BusinessHoursScheduleFieldsFragment["timezone"];
   public readonly updatedAt: BusinessHoursScheduleFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -3457,6 +3458,7 @@ export class BusinessHoursScheduleModel {
     this.createdAt = data.createdAt;
     this.id = data.id;
     this.name = data.name;
+    this.slots = data.slots;
     this.timezone = data.timezone;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
@@ -5044,6 +5046,7 @@ export class CustomRoleModel {
   public readonly name: CustomRoleFieldsFragment["name"];
   public readonly permissionsPreset: CustomRoleFieldsFragment["permissionsPreset"];
   public readonly priority: CustomRoleFieldsFragment["priority"];
+  public readonly scopeDefinitions: CustomRoleFieldsFragment["scopeDefinitions"];
   public readonly updatedAt: CustomRoleFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -5057,6 +5060,7 @@ export class CustomRoleModel {
     this.name = data.name;
     this.permissionsPreset = data.permissionsPreset;
     this.priority = data.priority;
+    this.scopeDefinitions = data.scopeDefinitions;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
@@ -6401,6 +6405,7 @@ export class ImportBroadcastAudienceChannelsResultModel {
   public readonly invalidCount: ImportBroadcastAudienceChannelsResultFieldsFragment["invalidCount"];
   public readonly isDryRun: ImportBroadcastAudienceChannelsResultFieldsFragment["isDryRun"];
   public readonly notFoundCount: ImportBroadcastAudienceChannelsResultFieldsFragment["notFoundCount"];
+  public readonly rows: ImportBroadcastAudienceChannelsResultFieldsFragment["rows"];
 
   constructor(client: PlainGraphQLClient, data: ImportBroadcastAudienceChannelsResultFieldsFragment) {
     this._client = client;
@@ -6411,6 +6416,7 @@ export class ImportBroadcastAudienceChannelsResultModel {
     this.invalidCount = data.invalidCount;
     this.isDryRun = data.isDryRun;
     this.notFoundCount = data.notFoundCount;
+    this.rows = data.rows;
   }
 
   public get broadcastAudience(): Promise<BroadcastAudienceModel | undefined> {
@@ -6454,6 +6460,7 @@ export class ImportJobModel {
 
   public readonly completedAt: ImportJobFieldsFragment["completedAt"];
   public readonly id: ImportJobFieldsFragment["id"];
+  public readonly importRuns: ImportJobFieldsFragment["importRuns"];
   public readonly startedAt: ImportJobFieldsFragment["startedAt"];
   public readonly status: ImportJobFieldsFragment["status"];
 
@@ -6462,6 +6469,7 @@ export class ImportJobModel {
     this._data = data;
     this.completedAt = data.completedAt;
     this.id = data.id;
+    this.importRuns = data.importRuns;
     this.startedAt = data.startedAt;
     this.status = data.status;
   }
@@ -9969,6 +9977,7 @@ export class ThreadDiscussionQuestionEntryPayloadModel {
   public readonly __typename = "ThreadDiscussionQuestionEntryPayload" as const;
 
   public readonly questionRequestId: ThreadDiscussionQuestionEntryPayloadFieldsFragment["questionRequestId"];
+  public readonly questions: ThreadDiscussionQuestionEntryPayloadFieldsFragment["questions"];
   public readonly resolvedAt: ThreadDiscussionQuestionEntryPayloadFieldsFragment["resolvedAt"];
   public readonly selections: ThreadDiscussionQuestionEntryPayloadFieldsFragment["selections"];
   public readonly status: ThreadDiscussionQuestionEntryPayloadFieldsFragment["status"];
@@ -9977,6 +9986,7 @@ export class ThreadDiscussionQuestionEntryPayloadModel {
     this._client = client;
     this._data = data;
     this.questionRequestId = data.questionRequestId;
+    this.questions = data.questions;
     this.resolvedAt = data.resolvedAt;
     this.selections = data.selections;
     this.status = data.status;
@@ -10484,11 +10494,13 @@ export class ThreadSingleValueMetricModel {
   public readonly __typename = "ThreadSingleValueMetric" as const;
 
   public readonly threadIds: ThreadSingleValueMetricFieldsFragment["threadIds"];
+  public readonly values: ThreadSingleValueMetricFieldsFragment["values"];
 
   constructor(client: PlainGraphQLClient, data: ThreadSingleValueMetricFieldsFragment) {
     this._client = client;
     this._data = data;
     this.threadIds = data.threadIds;
+    this.values = data.values;
   }
 }
 
@@ -10711,12 +10723,14 @@ export class ThreadTimeSeriesMetricModel {
   protected _data: ThreadTimeSeriesMetricFieldsFragment;
   public readonly __typename = "ThreadTimeSeriesMetric" as const;
 
+  public readonly series: ThreadTimeSeriesMetricFieldsFragment["series"];
   public readonly threadIds: ThreadTimeSeriesMetricFieldsFragment["threadIds"];
   public readonly timestamps: ThreadTimeSeriesMetricFieldsFragment["timestamps"];
 
   constructor(client: PlainGraphQLClient, data: ThreadTimeSeriesMetricFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.series = data.series;
     this.threadIds = data.threadIds;
     this.timestamps = data.timestamps;
   }
@@ -10907,11 +10921,13 @@ export class TimeSeriesMetricModel {
   protected _data: TimeSeriesMetricFieldsFragment;
   public readonly __typename = "TimeSeriesMetric" as const;
 
+  public readonly series: TimeSeriesMetricFieldsFragment["series"];
   public readonly timestamps: TimeSeriesMetricFieldsFragment["timestamps"];
 
   constructor(client: PlainGraphQLClient, data: TimeSeriesMetricFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.series = data.series;
     this.timestamps = data.timestamps;
   }
 }
@@ -11617,6 +11633,7 @@ export class WorkflowExecutionModel {
   public readonly executionStatus: WorkflowExecutionFieldsFragment["executionStatus"];
   public readonly id: WorkflowExecutionFieldsFragment["id"];
   public readonly startedAt: WorkflowExecutionFieldsFragment["startedAt"];
+  public readonly stepExecutions: WorkflowExecutionFieldsFragment["stepExecutions"];
   public readonly triggeredBy: WorkflowExecutionFieldsFragment["triggeredBy"];
   public readonly workflowId: WorkflowExecutionFieldsFragment["workflowId"];
   public readonly manuallyTriggeredBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
@@ -11633,6 +11650,7 @@ export class WorkflowExecutionModel {
     this.executionStatus = data.executionStatus;
     this.id = data.id;
     this.startedAt = data.startedAt;
+    this.stepExecutions = data.stepExecutions;
     this.triggeredBy = data.triggeredBy;
     this.workflowId = data.workflowId;
     this.manuallyTriggeredBy = data.manuallyTriggeredBy ? (() => {
@@ -11782,6 +11800,7 @@ export class WorkflowTemplateModel {
   public readonly isFeatured: WorkflowTemplateFieldsFragment["isFeatured"];
   public readonly tags: WorkflowTemplateFieldsFragment["tags"];
   public readonly title: WorkflowTemplateFieldsFragment["title"];
+  public readonly workflows: WorkflowTemplateFieldsFragment["workflows"];
 
   constructor(client: PlainGraphQLClient, data: WorkflowTemplateFieldsFragment) {
     this._client = client;
@@ -11794,6 +11813,7 @@ export class WorkflowTemplateModel {
     this.isFeatured = data.isFeatured;
     this.tags = data.tags;
     this.title = data.title;
+    this.workflows = data.workflows;
   }
 }
 
