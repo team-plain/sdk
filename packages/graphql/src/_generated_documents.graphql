@@ -17591,6 +17591,16 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
     }
     ... on ThreadDiscussionQuestionEntryPayload {
       questionRequestId
+      questions {
+        id
+        question
+        isMultiSelect
+        options {
+          id
+          label
+          description
+        }
+      }
       threadDiscussionQuestionEntryPayloadStatus: status
       selections {
         questionId

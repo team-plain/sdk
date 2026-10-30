@@ -364,6 +364,10 @@ function generateMemberInlineSelection(
     } else if (isUnionType(namedType) || isInterfaceType(namedType)) {
       // Nested union/interface — recursively generate
       lines.push(generateUnionSelectionInner(fieldRef, namedType, indent));
+    } else if (isList(field.type) && isNestedValueObjectType(namedType)) {
+      lines.push(
+        `${indent}${fieldRef} {\n${expandNestedValueObject(namedType, `${indent}  `)}\n${indent}}`,
+      );
     }
   }
 
