@@ -216,7 +216,9 @@ export type AccountFieldUserReferenceValue = {
 export type AccountFieldValue = AccountFieldAccountReferenceValue | AccountFieldBooleanValue | AccountFieldDateTimeValue | AccountFieldNumberValue | AccountFieldStringArrayValue | AccountFieldStringValue | AccountFieldUserReferenceValue;
 
 export type AccountIdentifierInput = {
+  /** Plain's ID for the account, such as `te_01…`. Not the account's name. */
   accountId?: InputMaybe<Scalars['ID']['input']>;
+  /** Your own ID for the account, set when it was created. Not its name: find an account by name with `searchAccounts`. */
   externalId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -464,10 +466,10 @@ export type AgentMode =
   | 'SHADOW';
 
 /**
- * When Sidekick is allowed to use a tool:
- * - NOT_REQUIRED: Sidekick runs the tool directly.
- * - APPROVAL_REQUIRED: Sidekick must request human approval before running it.
- * - DISABLED: the tool is listed to Sidekick but every call is rejected.
+ * When Sidekick Agent is allowed to use a tool:
+ * - NOT_REQUIRED: Sidekick Agent runs the tool directly.
+ * - APPROVAL_REQUIRED: Sidekick Agent must request human approval before running it.
+ * - DISABLED: the tool is listed to Sidekick Agent but every call is rejected.
  */
 export type AgentSandboxToolMode =
   | 'APPROVAL_REQUIRED'
@@ -475,7 +477,7 @@ export type AgentSandboxToolMode =
   | 'NOT_REQUIRED';
 
 /**
- * The resolved approval policy for one Sidekick tool: its effective mode plus the
+ * The resolved approval policy for one Sidekick Agent tool: its effective mode plus the
  * factory default it derives from.
  */
 export type AgentSandboxToolPolicy = {
@@ -544,7 +546,7 @@ export type AiAgentFeedbackDetailsInput = {
   timelineEntryId: Scalars['ID']['input'];
 };
 
-export type AiFeatureFeedbackDetails = AiAgentFeedbackDetails | KnowledgeGapFeedbackDetails | ThreadCatchupFeedbackDetails | ThreadClustersFeedbackDetails | ToneRuleFeedbackDetails;
+export type AiFeatureFeedbackDetails = AiAgentFeedbackDetails | KnowledgeGapFeedbackDetails | McpFeedbackDetails | ThreadCatchupFeedbackDetails | ThreadClustersFeedbackDetails | ToneRuleFeedbackDetails;
 
 export type AiFeatureFeedbackOutput = {
   details: AiFeatureFeedbackDetails;
@@ -579,10 +581,12 @@ export type AiFeedbackEdge = {
 
 /** The Plain AI feature a piece of feedback relates to. */
 export type AiFeedbackFeature =
-  /** A reply drafted or sent by Ari, Plain's AI agent. */
+  /** A reply drafted or sent by the Customer Agent, Plain's AI agent. */
   | 'AI_AGENT'
   /** A knowledge gap detected from questions your customers are not finding answers to. */
   | 'KNOWLEDGE_GAP'
+  /** Feedback a connected agent reported about Plain's MCP tools. */
+  | 'MCP'
   /** An AI-generated summary of what has happened so far on a thread. */
   | 'THREAD_CATCHUP'
   /** A cluster of related threads surfaced by Plain's AI. */
@@ -2046,7 +2050,13 @@ export type BulkUpsertThreadFieldsOutput = {
 export type BulkUpsertWorkflowStepInput = {
   /** Optional name for the step. */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs. */
+  /**
+   * JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+   * - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
+   * - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
+   * - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
+   * Example, labelling invoice threads: a CONDITION `{"version":1,"type":"any_message_contains","keywords":["invoice"]}` whose true branch goes to an ACTION `{"version":1,"type":"apply_labels","labelTypeIds":["lt_…"]}`. See `WorkflowStep.payload` for every type.
+   */
   payload: Scalars['String']['input'];
   /** X position of this step on the canvas. */
   positionX?: InputMaybe<Scalars['Float']['input']>;
@@ -2056,7 +2066,7 @@ export type BulkUpsertWorkflowStepInput = {
   stepId?: InputMaybe<Scalars['ID']['input']>;
   /** Transition step IDs. ACTION steps: [nextStepId], CONDITION steps: [trueStepId, falseStepId], WAIT steps: [completedStepId, cancelledStepId], NOTE steps: []. Use null for terminal/no branch. A NOTE step cannot be a transition target or the startStepId. */
   transitions: Array<InputMaybe<Scalars['ID']['input']>>;
-  /** The type of step: CONDITION or ACTION. */
+  /** The type of step: ACTION, CONDITION, WAIT or NOTE. */
   type: WorkflowStepType;
 };
 
@@ -2338,6 +2348,8 @@ export type Chat = {
 };
 
 export type ChatApp = {
+  /** The business hours schedules linked to this chat app. Empty if none are selected. */
+  businessHoursSchedules: Array<BusinessHoursSchedule>;
   createdAt: DateTime;
   createdBy: InternalActor;
   id: Scalars['ID']['output'];
@@ -2900,6 +2912,7 @@ export type CreateAiFeedbackOutput = {
 };
 
 export type CreateAiToneRuleInput = {
+  /** The aspect of communication style this rule governs. One of `EMPATHY`, `LANGUAGE`, `FORMALITY`, `PERSONALITY`, or `WARMTH`. */
   category: Scalars['String']['input'];
   description: Scalars['String']['input'];
   isEnabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3133,12 +3146,14 @@ export type CreateCustomerGroupOutput = {
 };
 
 export type CreateCustomerSurveyInput = {
+  /** Which done threads get the survey: by tier, support email, label, priority or message source. Omit to survey every done thread. */
   conditions?: InputMaybe<Array<CustomerSurveyConditionInput>>;
   conditionsOperator?: InputMaybe<CustomerSurveyConditionsOperator>;
   customerIntervalDays?: InputMaybe<Scalars['Int']['input']>;
   isEnabled: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
   order?: InputMaybe<Scalars['Int']['input']>;
+  /** How many minutes after a thread is marked done the survey is sent. */
   responseDelayMinutes?: InputMaybe<Scalars['Int']['input']>;
   template: CustomerSurveyTemplateInput;
 };
@@ -3153,20 +3168,20 @@ export type CreateDiscussionInput = {
    * Free-form context from the UI (e.g. active filters on the current page) injected
    * into the agent's prompt, so it knows what data the user is currently looking at.
    *
-   * Ignored when agentMachineUserId is set. Plain builds the prompt only for its own Sidekick;
+   * Ignored when agentMachineUserId is set. Plain builds the prompt only for its own Sidekick Agent;
    * an agent the workspace built receives the message over the discussion webhook, which does
    * not carry this field. Passing it is accepted but has no effect.
    */
   additionalContext?: InputMaybe<Scalars['String']['input']>;
   /**
-   * Which agent to ask on an AGENT_SESSION discussion. Omit for Plain's Sidekick. Must reference a
+   * Which agent to ask on an AGENT_SESSION discussion. Omit for Plain's Sidekick Agent. Must reference a
    * machine user marked as a custom agent; Plain starts nothing for one, so the agent is expected to
    * reply over the API.
    */
   agentMachineUserId?: InputMaybe<Scalars['ID']['input']>;
   /**
    * Customer-scoped attachments. Used by EMAIL / SLACK / CURSOR discussions.
-   * Sidekick AGENT_SESSION discussions use workspaceFileIds instead.
+   * Sidekick Agent AGENT_SESSION discussions use workspaceFileIds instead.
    */
   attachmentIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   cursorDetails?: InputMaybe<ThreadDiscussionCursorDetailsInput>;
@@ -3200,7 +3215,7 @@ export type CreateDiscussionInput = {
   threadId?: InputMaybe<Scalars['ID']['input']>;
   type: DiscussionType;
   /**
-   * Workspace-scoped files. Used by Sidekick AGENT_SESSION discussions, which
+   * Workspace-scoped files. Used by Sidekick Agent AGENT_SESSION discussions, which
    * are not customer-scoped. Other discussion types ignore this field.
    */
   workspaceFileIds?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -3384,6 +3399,18 @@ export type CreateMachineUserOutput = {
   machineUser?: Maybe<MachineUser>;
 };
 
+export type CreateMcpFeedbackInput = {
+  /** What went wrong or what you would like to be possible, 1 to 5000 characters. Do not include customer data or personal information. */
+  comment: Scalars['String']['input'];
+  reason: McpFeedbackReason;
+  /** The name of the MCP tool the feedback is about, if any: letters, digits, `_`, `.` and `-` only, up to 200 characters. */
+  toolName?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreateMcpFeedbackOutput = {
+  error?: Maybe<MutationError>;
+};
+
 export type CreateMyFavoritePageInput = {
   key: Scalars['String']['input'];
 };
@@ -3437,14 +3464,18 @@ export type CreateNoteOutput = {
 };
 
 export type CreateOAuthAppInput = {
+  /** Browser origins allowed to exchange an authorization code for a token, such as https://app.example.com. Each one is a scheme and host with an optional port, using https, or http on localhost. At least one is required for an app that uses PKCE, which is the default. Omit it, or pass an empty list, for an app with `usesPkce` set to false, which only exchanges codes from a server. */
+  allowedOrigins?: InputMaybe<Array<Scalars['String']['input']>>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   /** Absolute URLs using https, or http on localhost. At least one is required. */
   redirectUrls: Array<Scalars['String']['input']>;
+  /** Defaults to true: the app runs in a browser or on someone's device, authenticates with PKCE and gets no client secret. Set to false for an app that runs on a server, which gets a client secret. This can't be changed after the app is created. */
+  usesPkce?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type CreateOAuthAppOutput = {
-  /** The app's first client secret. This value is only returned once, when it's created, and can't be retrieved later. Store it securely straight away. */
+  /** The app's client secret. This value is only returned once, when it's created, and can't be retrieved later. Store it securely straight away. Null for an app that uses PKCE, which has no client secret. */
   clientSecret?: Maybe<Scalars['String']['output']>;
   error?: Maybe<MutationError>;
   oauthApp?: Maybe<OAuthApp>;
@@ -3691,6 +3722,28 @@ export type CreateThreadFieldSchemaOutput = {
   threadFieldSchema?: Maybe<ThreadFieldSchema>;
 };
 
+/** Identifies the Microsoft Teams message to create a thread from, using the IDs on the Teams activity. */
+export type CreateThreadFromMsTeamsMessageInput = {
+  /**
+   * The Teams conversation ID, as provided by Teams in the activity's `conversation.id`. For a
+   * channel post this includes the post (`19:...@thread.tacv2;messageid=...`).
+   */
+  msTeamsConversationId: Scalars['ID']['input'];
+  /** The Teams message ID, as provided by Teams in the activity's `id`. */
+  msTeamsMessageId: Scalars['ID']['input'];
+};
+
+export type CreateThreadFromMsTeamsMessageOutput = {
+  error?: Maybe<MutationError>;
+  /**
+   * The open thread, when this Teams message's conversation already has one. Null when the request
+   * was accepted and the thread is still being created. Poll `threadByMSTeamsMessage` until it
+   * returns a thread whose `lockedAt` is null, or use the `thread.thread_created` webhook, to
+   * pick it up.
+   */
+  thread?: Maybe<Thread>;
+};
+
 /**
  * Identifies the Slack message to ingest. Optional thread attributes are applied only when a new
  * thread is created. An already-ingested message returns the existing thread and ignores them.
@@ -3874,7 +3927,7 @@ export type CreateWorkflowInput = {
   name: Scalars['String']['input'];
   /** The gallery template this workflow was created from, if any. Recorded once and never updated — the workflow diverges as soon as it is edited. */
   sourceTemplateId?: InputMaybe<Scalars['ID']['input']>;
-  /** JSON-encoded trigger configuration. See `Workflow.trigger` for the valid `type` values and their required fields. */
+  /** JSON-encoded trigger configuration. `type` is lowercase: `{"type":"manual"}`, `{"type":"events","events":["thread.thread_created"]}` or `{"type":"schedule","cron":"0 9 * * 1"}`. See `Workflow.trigger` for every event. */
   trigger: Scalars['String']['input'];
 };
 
@@ -3906,15 +3959,21 @@ export type CreateWorkflowShareLinkOutput = {
 export type CreateWorkflowStepInput = {
   /** Optional name for the step. */
   name?: InputMaybe<Scalars['String']['input']>;
-  /** JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs. */
+  /**
+   * JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+   * - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
+   * - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
+   * - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
+   * Example, labelling invoice threads: a CONDITION `{"version":1,"type":"any_message_contains","keywords":["invoice"]}` whose true branch goes to an ACTION `{"version":1,"type":"apply_labels","labelTypeIds":["lt_…"]}`. See `WorkflowStep.payload` for every type.
+   */
   payload: Scalars['String']['input'];
   /** X position of this step on the canvas. */
   positionX?: InputMaybe<Scalars['Float']['input']>;
   /** Y position of this step on the canvas. */
   positionY?: InputMaybe<Scalars['Float']['input']>;
-  /** Array of next step IDs. For ACTION: 1 element. For CONDITION: 2 elements (true, false). Use null for terminal/no branch. */
+  /** Array of next step IDs. For ACTION: 1 element. For CONDITION: 2 elements (true, false). For WAIT: 1 or 2 elements (completed, cancelled). For NOTE: empty. Use null for terminal/no branch. */
   transitions: Array<InputMaybe<Scalars['ID']['input']>>;
-  /** The type of step: CONDITION or ACTION. */
+  /** The type of step: ACTION, CONDITION, WAIT or NOTE. */
   type: WorkflowStepType;
   workflowId: Scalars['ID']['input'];
 };
@@ -4081,7 +4140,7 @@ export type CreditSpendItem = {
 export type CreditSpendKind =
   /** An AI-triage labels or priority pick made by a workflow step. */
   | 'AI_TRIAGE'
-  /** An Ari outcome: a thread Ari handled that stayed closed for 7 days without a teammate taking over. */
+  /** A Customer Agent outcome: a thread the Customer Agent handled that stayed closed for 7 days without a teammate taking over. */
   | 'ARI_OUTCOME_RESOLUTION'
   /** A discussion handled by one of the workspace's own agents. */
   | 'CUSTOM_AGENT_DISCUSSION'
@@ -4141,6 +4200,8 @@ export type CustomRole = {
   name: Scalars['String']['output'];
   /** The built-in role whose permissions this custom role inherits (e.g. `role_support`, `role_viewer`). Determines what actions users with this role can perform. */
   permissionsPreset: Scalars['String']['output'];
+  /** Decides which role wins when a user is given more than one through SSO or directory sync. Higher wins. See `Role.priority` for the built-in values. */
+  priority: Scalars['Int']['output'];
   /** The thread-visibility scope rules configured for this role. An empty array means no restrictions — users can see all threads. */
   scopeDefinitions: Array<RoleScopeDefinition>;
   updatedAt: DateTime;
@@ -4577,8 +4638,11 @@ export type CustomerGroupEdge = {
 
 /** Identifies a customer group by exactly one of: its Plain-assigned ID, its unique key, or the external ID from your system. Provide exactly one field. */
 export type CustomerGroupIdentifier = {
+  /** Plain's ID for the customer group. Not the group's name. */
   customerGroupId?: InputMaybe<Scalars['ID']['input']>;
+  /** The customer group's key. */
   customerGroupKey?: InputMaybe<Scalars['String']['input']>;
+  /** Your own ID for the customer group. */
   externalId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -4612,8 +4676,11 @@ export type CustomerGroupsFilter = {
 
 /** Only one of the fields can be set. */
 export type CustomerIdentifierInput = {
+  /** Plain's ID for the customer, such as `c_01…`. */
   customerId?: InputMaybe<Scalars['ID']['input']>;
+  /** The customer's email address. */
   emailAddress?: InputMaybe<Scalars['String']['input']>;
+  /** Your own ID for the customer. */
   externalId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -4843,6 +4910,7 @@ export type DateFilter = {
 
 export type DateTime = {
   iso8601: Scalars['String']['output'];
+  /** The same instant as `iso8601`, in milliseconds since the Unix epoch. */
   unixTimestamp: Scalars['String']['output'];
 };
 
@@ -5288,7 +5356,9 @@ export type DeleteThreadDiscussionOutput = {
 };
 
 export type DeleteThreadFieldIdentifier = {
+  /** The thread field schema's key, not its label. */
   key: Scalars['String']['input'];
+  /** Plain's ID for the thread. */
   threadId: Scalars['ID']['input'];
 };
 
@@ -5554,7 +5624,7 @@ export type DiscordThreadChannelDetails = {
 
 /**
  * Which kind of agent is working on a discussion. This is about who runs the agent, not which
- * channel the discussion is on: a Sidekick session can run in Plain, in a workflow or in Slack.
+ * channel the discussion is on: a Sidekick Agent session can run in Plain, in a workflow or in Slack.
  */
 export type DiscussionAgentType =
   /**
@@ -5562,7 +5632,7 @@ export type DiscussionAgentType =
    * conversation and starts nothing.
    */
   | 'CUSTOM_AGENT'
-  /** Plain's own Sidekick, which Plain runs and bills for. */
+  /** Plain's own Sidekick Agent, which Plain runs and bills for. */
   | 'PLAIN_SIDEKICK';
 
 export type DiscussionChange = {
@@ -5627,13 +5697,13 @@ export type DiscussionsFilter = {
   agentTypes?: InputMaybe<Array<DiscussionAgentType>>;
   /** Match discussions that satisfy all of the nested filters. Combined with the other fields on this filter using AND. */
   and?: InputMaybe<Array<DiscussionsFilter>>;
-  /** When true, only return discussions created by a system actor (e.g. workflow-driven Sidekick sessions). When false, only return discussions created by a non-system actor. */
+  /** When true, only return discussions created by a system actor (e.g. workflow-driven Sidekick Agent sessions). When false, only return discussions created by a non-system actor. */
   createdBySystem?: InputMaybe<Scalars['Boolean']['input']>;
   createdByUserIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   discussionTypes?: InputMaybe<Array<DiscussionType>>;
   /** When true, only return discussions that are unread (have an unread agent response). When false, only return read discussions. Can be combined with statuses. */
   isUnread?: InputMaybe<Scalars['Boolean']['input']>;
-  /** When true, only return the bounded Sidekick tasks started by an `ask_sidekick` workflow step. When false, exclude them. These report an outcome to their workflow step rather than being a conversation anyone joins, so human-facing session lists should pass false. */
+  /** When true, only return the bounded Sidekick Agent tasks started by an `ask_sidekick` workflow step. When false, exclude them. These report an outcome to their workflow step rather than being a conversation anyone joins, so human-facing session lists should pass false. */
   isWorkflowTask?: InputMaybe<Scalars['Boolean']['input']>;
   /** Only return discussions whose last activity is at or after this timestamp. ISO 8601 format (e.g. 2024-10-28T18:30:00Z). */
   lastActivityAtAfter?: InputMaybe<Scalars['String']['input']>;
@@ -5646,7 +5716,7 @@ export type DiscussionsFilter = {
   /**
    * Only return discussions in which one of the provided users has authored a message. Independent of
    * who created the discussion: combine it with createdByUserIds via or to get everything a user
-   * either started or took part in. A Sidekick reply that is still queued behind the agent's current
+   * either started or took part in. A Sidekick Agent reply that is still queued behind the agent's current
    * turn already counts, so a session appears the moment the user sends into it.
    */
   participatedByUserIds?: InputMaybe<Array<Scalars['ID']['input']>>;
@@ -6185,6 +6255,17 @@ export type GeneratedReplyFeedbackType =
   | 'POSITIVE'
   | 'UNKNOWN';
 
+export type GeneratedReplyState = {
+  status: GeneratedReplyStatus;
+  timelineEntryId: Scalars['ID']['output'];
+};
+
+export type GeneratedReplyStatus =
+  | 'NONE'
+  | 'PENDING'
+  | 'READY'
+  | 'SUPPRESSED';
+
 export type GenericThreadLink = ThreadLink & {
   createdAt: DateTime;
   createdBy: InternalActor;
@@ -6272,8 +6353,18 @@ export type HelpCenter = {
   /** Subdomain and custom domain configuration for this help center. */
   domainSettings: HelpCenterDomainSettings;
   favicon: HelpCenterThemedImage;
+  /** Ordered featured homepage cards, including article items and embeds. Draft articles stay in this list. */
+  featuredHomepageItems: Array<HelpCenterFeaturedHomepageItem>;
   /** Custom JavaScript injected into the <head> of every help center page. */
   headCustomJs?: Maybe<Scalars['String']['output']>;
+  /** Alignment of the homepage hero. */
+  heroAlignment: HelpCenterHeroAlignment;
+  /** Homepage hero heading. Null or blank keeps the public default (How can we help?). */
+  heroHeading?: Maybe<Scalars['String']['output']>;
+  /** Homepage hero search placeholder. Null or blank keeps the public default, Search help center. */
+  heroSearchPlaceholder?: Maybe<Scalars['String']['output']>;
+  /** Homepage hero subheading. Null or blank keeps the public default, Search the help center, or browse by topic. */
+  heroSubheading?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** The name used to identify this help center within the Plain app (not shown to customers). */
   internalName: Scalars['String']['output'];
@@ -6283,7 +6374,21 @@ export type HelpCenter = {
   isCustomerFacingAiEnabled: Scalars['Boolean']['output'];
   /** Whether this help center has been soft-deleted. */
   isDeleted: Scalars['Boolean']['output'];
+  /** Whether the homepage redesign is enabled for this help center's workspace. False when the flag is off or cannot be evaluated. */
+  isHomepageRedesignEnabled: Scalars['Boolean']['output'];
+  /** When false, the public homepage hides the link-card heading and cards. */
+  isLinkCardsEnabled: Scalars['Boolean']['output'];
+  /** When false, the public homepage hides the popular topics section. */
+  isPopularTopicsEnabled: Scalars['Boolean']['output'];
+  /** Ordered homepage link cards. At most 6. */
+  linkCards: Array<HelpCenterLinkCard>;
+  /** Heading shown above the homepage link cards. Blank or null renders the cards with no heading. */
+  linkCardsHeading?: Maybe<Scalars['String']['output']>;
   logo: HelpCenterThemedImage;
+  /** Ordered article ids shown as popular topics. Column one, then column two. The stored order comes first. Published articles flagged as popular topics that are missing from both columns are appended, filling column one up to 5 and then column two. At most 10. Drafts are omitted. */
+  popularTopicArticleIds: Array<Scalars['ID']['output']>;
+  /** Popular topics split into two ordered columns of at most 5 published articles. Empty slots are not stored. Flagged articles missing from both columns are appended, filling column one first. */
+  popularTopicColumns: HelpCenterPopularTopicColumns;
   /** Settings for the customer support portal embedded in this help center (contact form, thread visibility, etc.). */
   portalSettings: HelpCenterPortalSettings;
   /** The name shown to customers on the help center site. */
@@ -6505,6 +6610,10 @@ export type HelpCenterArticle = {
   /** Opaque icon key that identifies the decorative icon displayed alongside the article title. */
   icon?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  /** Whether this article is in the homepage Featured carousel. Only published articles appear there. */
+  isFeatured: Scalars['Boolean']['output'];
+  /** Whether this article is listed under Popular Topics. Only published articles appear there. */
+  isPopularTopic: Scalars['Boolean']['output'];
   /** Label types associated with this article, used to scope AI retrieval to specific topics. */
   labelTypes: Array<LabelType>;
   /** URL-safe identifier for the article, unique within the help center. Normalized to lowercase. */
@@ -6570,8 +6679,12 @@ export type HelpCenterArticleGroup = {
   childArticleGroups: HelpCenterArticleGroupConnection;
   createdAt: DateTime;
   createdBy: InternalActor;
+  /** Short summary shown on topic cards and the group page. */
+  description?: Maybe<Scalars['String']['output']>;
   /** The help center this group belongs to. */
   helpCenter: HelpCenter;
+  /** Opaque icon key. Unknown keys render nothing on the public site. */
+  icon?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   /** Parent group in the hierarchy. Null for top-level groups. */
@@ -6674,6 +6787,42 @@ export type HelpCenterEdge = {
   node: HelpCenter;
 };
 
+export type HelpCenterFeaturedHomepageItem = {
+  /** Set for ARTICLE items. Null for embeds. */
+  articleId?: Maybe<Scalars['ID']['output']>;
+  /** Optional embed description. Null for articles and when an embed has no description. */
+  description?: Maybe<Scalars['String']['output']>;
+  /** Set for EMBED items. Null for articles. */
+  title?: Maybe<Scalars['String']['output']>;
+  type: HelpCenterFeaturedHomepageItemType;
+  /** Set for EMBED items. An http or https URL. Null for articles. */
+  url?: Maybe<Scalars['String']['output']>;
+};
+
+export type HelpCenterFeaturedHomepageItemInput = {
+  /** Required when type is ARTICLE. */
+  articleId?: InputMaybe<Scalars['ID']['input']>;
+  /** Optional embed description. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Required when type is EMBED. */
+  title?: InputMaybe<Scalars['String']['input']>;
+  type: HelpCenterFeaturedHomepageItemType;
+  /** Required when type is EMBED. Must be an http or https URL. */
+  url?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type HelpCenterFeaturedHomepageItemType =
+  /** A help center article. */
+  | 'ARTICLE'
+  /** An external card with its own title and URL. */
+  | 'EMBED';
+
+export type HelpCenterHeroAlignment =
+  /** Center the homepage hero. */
+  | 'CENTER'
+  /** Align the homepage hero to the left. */
+  | 'LEFT';
+
 export type HelpCenterIndex = {
   createdAt: DateTime;
   createdBy: InternalActor;
@@ -6688,15 +6837,19 @@ export type HelpCenterIndex = {
 };
 
 export type HelpCenterIndexItem = {
-  /** Short summary. Null for ARTICLE_GROUP items and for articles that have no description set. */
+  /** Short summary for an article or group. Null for headings and when unset. */
   description?: Maybe<Scalars['String']['output']>;
-  /** Opaque icon key for ARTICLE items; null for groups or when unset. */
+  /** Opaque icon key for an article or group. Null for headings and when unset. Unknown keys render nothing on the public site. */
   icon?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  /** Whether a published article is in the homepage Featured carousel. False for groups and headings. Drafts are omitted from the public index. */
+  isFeatured: Scalars['Boolean']['output'];
+  /** Whether a published article is listed under Popular Topics. False for groups and headings. Drafts are omitted from the public index. */
+  isPopularTopic: Scalars['Boolean']['output'];
   /** ID of the parent ARTICLE_GROUP item, or null if this item is at the top level. */
   parentId?: Maybe<Scalars['ID']['output']>;
   slug: Scalars['String']['output'];
-  /** Publication status of the article. Null for ARTICLE_GROUP items. */
+  /** Publication status of the article. Null for groups and headings. */
   status?: Maybe<HelpCenterArticleStatus>;
   title: Scalars['String']['output'];
   /** The kind of entry: an article, an article group folder, or a plain heading label. */
@@ -6718,6 +6871,32 @@ export type HelpCenterIndexItemType =
   | 'ARTICLE_GROUP'
   /** A plain text label used to visually separate sections in the sidebar. */
   | 'HEADING';
+
+export type HelpCenterLinkCard = {
+  description?: Maybe<Scalars['String']['output']>;
+  icon?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export type HelpCenterLinkCardInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  icon?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+};
+
+export type HelpCenterPopularTopicColumns = {
+  /** Article ids in the first column, in order. At most 5. Empty slots are not stored. */
+  columnOneArticleIds: Array<Scalars['ID']['output']>;
+  /** Article ids in the second column, in order. At most 5. Empty slots are not stored. */
+  columnTwoArticleIds: Array<Scalars['ID']['output']>;
+};
+
+export type HelpCenterPopularTopicColumnsInput = {
+  columnOneArticleIds: Array<Scalars['ID']['input']>;
+  columnTwoArticleIds: Array<Scalars['ID']['input']>;
+};
 
 export type HelpCenterPortalSettings = {
   formFields: Array<HelpCenterPortalSettingsFormField>;
@@ -7532,7 +7711,7 @@ export type InternalNotification = {
   readAt?: Maybe<DateTime>;
   /** The title of the notification. */
   title: Scalars['String']['output'];
-  /** The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', 'discussion_resolved', 'integration_reauth_required', 'webhook_target', and 'thread_notification'. Use `details` for type-specific data. */
+  /** The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', 'discussion_resolved', 'integration_reauth_required', 'webhook_target', 'thread_notification', and 'knowledge_gap'. Use `details` for type-specific data. */
   type: Scalars['String']['output'];
   updatedAt: DateTime;
   updatedBy: InternalActor;
@@ -7552,7 +7731,7 @@ export type InternalNotificationConnection = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type InternalNotificationDetail = DiscussionResolvedNotificationDetail | EmailBounceNotificationDetail | IntegrationReauthRequiredNotificationDetail | NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | ThreadNotificationDetail | WebhookTargetNotificationDetail;
+export type InternalNotificationDetail = DiscussionResolvedNotificationDetail | EmailBounceNotificationDetail | IntegrationReauthRequiredNotificationDetail | KnowledgeGapNotificationDetail | NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | ThreadNotificationDetail | WebhookTargetNotificationDetail;
 
 export type InternalNotificationEdge = {
   cursor: Scalars['String']['output'];
@@ -7732,6 +7911,12 @@ export type KnowledgeGapFeedbackDetails = {
   knowledgeGapId: Scalars['ID']['output'];
   reason: Scalars['String']['output'];
   sentiment?: Maybe<AiFeedbackSentiment>;
+};
+
+/** A new knowledge gap was detected. */
+export type KnowledgeGapNotificationDetail = {
+  /** The ID of the knowledge gap this notification refers to. */
+  knowledgeGapId: Scalars['ID']['output'];
 };
 
 export type KnowledgeGapSignal = AriKnowledgeGapSignal;
@@ -8101,7 +8286,7 @@ export type MachineUser = {
   /** Internal display name, visible only to workspace members. */
   fullName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  /** False when custom-agent pricing is on for the workspace and this machine user is neither a custom agent nor Ari. Such a machine user cannot be assigned to a thread. True means the agent rule does not refuse this machine user; other gates, such as credits, can still refuse an assignment. */
+  /** False when custom-agent pricing is on for the workspace and this machine user is neither a custom agent nor the Customer Agent. Such a machine user cannot be assigned to a thread. True means the agent rule does not refuse this machine user; other gates, such as credits, can still refuse an assignment. */
   isAssignableToThreads: Scalars['Boolean']['output'];
   /** True when this machine user is an agent the workspace built itself, rather than an ordinary API integration. */
   isCustomAgent: Scalars['Boolean']['output'];
@@ -8193,17 +8378,20 @@ export type MarkThreadDiscussionReadOutput = {
   threadDiscussion?: Maybe<ThreadDiscussion>;
 };
 
-export type MemberSeatCapCheck = {
-  /** False when giving these people a paid role would exceed the member seat cap. */
-  isValid: Scalars['Boolean']['output'];
+export type McpFeedbackDetails = {
+  comment?: Maybe<Scalars['String']['output']>;
+  /** Either `BUG_REPORT` or `FEATURE_REQUEST`. */
+  reason: Scalars['String']['output'];
+  sentiment?: Maybe<AiFeedbackSentiment>;
+  toolName?: Maybe<Scalars['String']['output']>;
 };
 
-export type MemberSeatCapCheckInput = {
-  /** Emails of the people being invited with a paid role. */
-  emails?: InputMaybe<Array<Scalars['String']['input']>>;
-  /** The member whose role is changing to a paid one. */
-  userId?: InputMaybe<Scalars['ID']['input']>;
-};
+/** Why an agent is reporting feedback about Plain's MCP tools. */
+export type McpFeedbackReason =
+  /** A tool failed or returned something wrong. */
+  | 'BUG_REPORT'
+  /** The tools cannot do what the user asked, or could be more useful. */
+  | 'FEATURE_REQUEST';
 
 export type MentionInput = {
   displayName: Scalars['String']['input'];
@@ -8333,9 +8521,10 @@ export type Mutation = {
   /** Adds an alternate support email address to the workspace's custom domain configuration, allowing emails to be sent from and received at that address. A workspace can have up to 5 alternate addresses. */
   addWorkspaceAlternateSupportEmailAddress: AddWorkspaceAlternateSupportEmailAddressOutput;
   /**
-   * Records the person's answer to a Sidekick question card and resumes the agent with those
-   * selections. Only a human may answer. Answering the same card again with the same selections
-   * is a no-op; a different answer is rejected.
+   * Records the person's answer to a question card and resumes the agent with those selections:
+   * Sidekick Agent directly, a connected agent through discussion.question_resolved. Only a human may
+   * answer. Answering the same card again with the same selections is a no-op; a different answer is
+   * rejected.
    */
   answerSidekickQuestion: AnswerSidekickQuestionOutput;
   /** Archives a label type so it can no longer be applied to threads, while preserving it on threads that already have it. To apply an archived label type again, unarchive it first. Requires the `labelType:edit` permission. */
@@ -8372,7 +8561,7 @@ export type Mutation = {
   bulkUpsertThreadFields: BulkUpsertThreadFieldsOutput;
   /**
    * Atomically replace all steps in a workflow. Steps with a matching `stepId` are updated; steps without an ID (or with a new ID) are created; steps that existed before but are absent from the input are deleted.
-   * Optionally updates `startStepId` and the trigger configuration in the same call. Maximum 60 steps per workflow.
+   * Optionally updates `startStepId` and the trigger configuration in the same call. Maximum 60 steps per workflow. Read `workflowBuilderGuide` first for the trigger events and every step payload.
    */
   bulkUpsertWorkflowSteps: BulkUpsertWorkflowStepsOutput;
   /** Calculates the billing cost delta of changing a user's role or seat type, including prorated and full-period amounts. Use this before making a role change to show the user an accurate cost preview. */
@@ -8383,11 +8572,11 @@ export type Mutation = {
   changeBillingPlan: ChangeBillingPlanOutput;
   /** Reassign a thread to a different customer. The original customer retains all their other threads. Requires the `thread:edit` permission. */
   changeThreadCustomer: ChangeThreadCustomerOutput;
-  /** Moves a discussion between OPEN and RESOLVED. Callable by a person, by the custom agent a discussion is bound to, or by the machine user that started a Sidekick discussion. */
+  /** Moves a discussion between OPEN and RESOLVED. Callable by a person, by the custom agent a discussion is bound to, or by the machine user that started a Sidekick Agent discussion. */
   changeThreadDiscussionStatus: ChangeThreadDiscussionStatusOutput;
   /** Set the priority of a thread. Priority is an integer from 0 (urgent) to 3 (low). Requires the `thread:edit` permission. */
   changeThreadPriority: ChangeThreadPriorityOutput;
-  /** Manually set a workspace member's availability status (ONLINE, OFFLINE, or AWAY). This overrides any automatic status derived from working hours until the next scheduled working-hours transition. Requires the `userStatus:edit` permission. */
+  /** Manually set a workspace member's availability status (ONLINE, OFFLINE, or AWAY). ONLINE and OFFLINE do not pause working-hours automation, so the next scheduled transition still fires while automation is enabled; setting AWAY pauses automation until the member leaves AWAY, which resumes it and recomputes the next transition. Requires the `userStatus:edit` permission. */
   changeUserStatus: ChangeUserStatusOutput;
   /** Finalize a service authorization after the user has completed the OAuth flow in the third-party service. For most services, pass the serviceAuthorizationId returned by startServiceAuthorization. For Jira, also provide the jira field with the refreshToken and siteId obtained from Atlassian's OAuth callback. On success, the authorization transitions to CONNECTED status and is ready for use. */
   completeServiceAuthorization: CompleteServiceAuthorizationOutput;
@@ -8484,10 +8673,10 @@ export type Mutation = {
   createCustomerEvent: CreateCustomerEventOutput;
   /** Create a new customer group with a unique key, display name, and color. Use `upsertCustomerGroup` instead if you need idempotent create-or-update behaviour. Requires `customerGroup:create` permission. */
   createCustomerGroup: CreateCustomerGroupOutput;
-  /** Creates a new customer survey (e.g. a CSAT survey) in the workspace. Requires the `customerSurvey:create` permission and a billing entitlement for customer surveys. You must supply a template (currently only `csatTemplate` is supported) and can optionally specify targeting conditions, an enabled state, a send delay, and a per-customer cooldown interval. */
+  /** Creates a new customer survey (e.g. a CSAT survey) in the workspace. A survey is sent to the customer when a thread they're on is marked done and matches the survey's conditions, after `responseDelayMinutes`. Requires the `customerSurvey:create` permission and a billing entitlement for customer surveys. You must supply a template (currently only `csatTemplate` is supported) and can optionally specify targeting conditions, an enabled state, a send delay, and a per-customer cooldown interval. */
   createCustomerSurvey: CreateCustomerSurveyOutput;
   /**
-   * Create a new discussion. Supersedes createThreadDiscussion and additionally supports Sidekick
+   * Create a new discussion. Supersedes createThreadDiscussion and additionally supports Sidekick Agent
    * AGENT_SESSION discussions (which can be started without a thread). For Slack, Email, and Cursor
    * discussion types, a threadId is required. For AGENT_SESSION discussions, threadId is optional and
    * the discussion may be associated with a source entity (company, tenant, etc.) or page instead.
@@ -8515,7 +8704,7 @@ export type Mutation = {
   createHyperlineComponentsAuthToken: CreateHyperlineComponentsAuthTokenOutput;
   /** Create an import job definition that continuously syncs tenant field schemas, tenants, and customers from a connected external service (Attio, HubSpot, or Salesforce). Only one enabled import job definition can exist per service authorization at a time; calling this when one is already enabled returns an error. Use updateImportJobDefinition to disable an existing definition before creating a new one. */
   createImportSync: CreateImportSyncOutput;
-  /** Manually add a single URL as an indexed document within an existing knowledge source. The document is fetched and queued for indexing asynchronously. Requires Plain AI to be enabled on the workspace. */
+  /** Manually add a single URL as an indexed document within an existing knowledge source. The document is fetched and queued for indexing asynchronously. Requires Plain AI to be enabled on the workspace; turn it on with `updateSetting` (code `plain_ai`, WORKSPACE scope, boolean `true`). */
   createIndexedDocument: CreateIndexedDocumentOutput;
   /**
    * Create a new issue in a connected issue tracker (Shortcut, Rootly, incident.io, or GitHub) and return a `ThreadLinkCandidate` that can immediately be used with `createThreadLink` to link it to a thread.
@@ -8527,7 +8716,7 @@ export type Mutation = {
   /**
    * Create a new knowledge source that Plain AI will index and use when generating replies.
    * Use type `SITEMAP` to crawl all URLs listed in a sitemap XML file, or type `URL` to index a
-   * single page. Requires Plain AI to be enabled on the workspace.
+   * single page. Requires Plain AI to be enabled on the workspace; turn it on with `updateSetting` (code `plain_ai`, WORKSPACE scope, boolean `true`).
    */
   createKnowledgeSource: CreateKnowledgeSourceOutput;
   /** Creates a new label type in the workspace. Label types define the labels available to apply to threads and users. Requires the `labelType:create` permission. */
@@ -8535,6 +8724,8 @@ export type Mutation = {
   createLinearAppIntegration: CreateLinearAppIntegrationOutput;
   /** Creates a new machine user in the workspace. Each machine user can hold multiple API keys and optionally has a public-facing name shown to customers. Only one machine user of type AI_AGENT is allowed per workspace. Requires the `machineUser:create` permission. */
   createMachineUser: CreateMachineUserOutput;
+  /** Report a problem or an idea about Plain's MCP tools to the Plain team. Call this when a tool fails unexpectedly, when you cannot do what the user asked with the available tools, or when you have a concrete idea that would make the tools more useful. Describe the problem in `comment` and name the tool in `toolName` if one was involved. Do not include customer data, personal information, or message content in `comment`. Requires the `aiFeatureFeedback:create` permission. */
+  createMcpFeedback: CreateMcpFeedbackOutput;
   /** Saves a page as a favorite for the currently authenticated user. If the caller has already favorited a page with the same key, the existing record is returned unchanged (idempotent). Requires the `favoritePage:create` permission. */
   createMyFavoritePage: CreateMyFavoritePageOutput;
   /**
@@ -8551,21 +8742,22 @@ export type Mutation = {
   /**
    * Creates an internal note visible only to your team. Notes appear in the thread timeline
    * alongside customer messages and are useful for sharing context, reminders, or annotations.
-   * Provide `threadId` to pin the note to a specific thread; omit it to attach the note to the
-   * customer so it appears across all of their threads. Requires the `note:create` permission.
+   * `customerId` and `text` are always required. Also provide `threadId` to pin the note to a
+   * specific thread; omit it to attach the note to the customer so it appears across all of their
+   * threads. Requires the `note:create` permission.
    */
   createNote: CreateNoteOutput;
-  /** Creates an OAuth app owned by the workspace, along with its first client secret. The secret is returned only once in `clientSecret` and can't be retrieved again. Requires the `oauthApp:create` permission. */
+  /** Creates an OAuth app owned by the workspace. When `usesPkce` is false, the app also gets a client secret, which is returned only once in `clientSecret` and can't be retrieved again. Requires the `oauthApp:create` permission. */
   createOAuthApp: CreateOAuthAppOutput;
   /** Creates a new saved threads view in the workspace. The view stores a named filter configuration (including sort order, grouping, layout, and display options) that can be applied when querying threads. Requires the savedThreadsView:create permission; depending on workspace settings, only admins or all members may be allowed to create views. */
   createSavedThreadsView: CreateSavedThreadsViewOutput;
   /** Create a service level agreement (SLA) for a tier. Each SLA commits your team to a time target and can be scoped by thread priority and/or label type. Provide exactly one of `firstResponseTimeMinutes` (time from thread creation to first reply), `nextResponseTimeMinutes` (time from each customer message to the next reply), `firstResolutionTimeMinutes` (time from thread creation to first Done), or `totalResolutionTimeMinutes` (time from thread creation to Done, including after reopen). A `nextResponseTimeMinutes` SLA can only be created if a `firstResponseTimeMinutes` SLA already exists on the same tier. Requires the `serviceLevelAgreement:create` permission. */
   createServiceLevelAgreement: CreateServiceLevelAgreementOutput;
-  /** Create an SLA policy together with its targets. A policy holds at most one target per type, and any combination of types is valid. Business hours are configured on the policy and apply to every target in it. A policy only starts tracking once it is applied to a thread. Requires the `serviceLevelAgreement:create` permission. */
+  /** Create an SLA policy together with its targets. A policy holds at most one target per type, and any combination of types is valid. Business hours schedules are chosen once per policy: every target that uses business hours must reference the same schedules, and a target with none is tracked 24/7. A policy only starts tracking once it is applied to a thread. Requires the `serviceLevelAgreement:create` permission. */
   createServiceLevelAgreementPolicy: CreateServiceLevelAgreementPolicyOutput;
   /** Create a workspace custom skill. The name must be a unique URL-safe slug. */
   createSidekickCustomSkill: CreateSidekickCustomSkillOutput;
-  /** Register a custom (customer-owned) MCP server for Sidekick and mint a Nango Connect session for in-browser OAuth consent. The server is created in an unreachable state; call completeSidekickMcpServerConnection after consent to discover its tools and mark it connected. */
+  /** Register a custom (customer-owned) MCP server for Sidekick Agent and mint a Nango Connect session for in-browser OAuth consent. The server is created in an unreachable state; call completeSidekickMcpServerConnection after consent to discover its tools and mark it connected. */
   createSidekickMcpServer: CreateSidekickMcpServerOutput;
   /** Creates a new snippet in the workspace. The `name` is used to search for the snippet when composing a reply. Provide `markdown` in addition to `text` to supply a rich-text version used in channels that support markdown. The optional `path` (alphanumeric only) places the snippet in a folder in the Plain app. Requires the `snippet:create` permission. */
   createSnippet: CreateSnippetOutput;
@@ -8611,6 +8803,16 @@ export type Mutation = {
   /** Creates a new thread field schema, defining a custom field that can be attached to threads. The `key` must be unique within the workspace and cannot be changed after creation. Requires the `threadFieldSchema:create` permission. */
   createThreadFieldSchema: CreateThreadFieldSchemaOutput;
   /**
+   * Creates a thread from a message in a Microsoft Teams channel or chat that the Plain bot is a
+   * member of. This is the trigger for the `API_ONLY` value of the `ms_teams/ingestion_mode`
+   * workspace setting, and works in `AUTOMATIC` mode too. In a channel, the whole post the message
+   * belongs to becomes the thread. In a chat, the thread also includes the messages before and
+   * after this one, taken from the chat's 50 most recent messages. Thread creation runs asynchronously,
+   * so `thread` is only returned when the message was already on a thread. Requires the
+   * `thread:create` permission.
+   */
+  createThreadFromMSTeamsMessage: CreateThreadFromMsTeamsMessageOutput;
+  /**
    * Creates a thread from a top-level message in a connected customer Slack channel, along with the
    * replies Plain has already received for it. This is the trigger for the `API_ONLY` ingestion
    * mode, and works in every other mode too. Ingestion runs asynchronously, so `thread` is
@@ -8640,7 +8842,7 @@ export type Mutation = {
   createWebhookTarget: CreateWebhookTargetOutput;
   /**
    * Create a new workflow. The workflow starts unpublished with no steps; use `bulkUpsertWorkflowSteps` to add steps and `updateWorkflow` to publish it.
-   * The `trigger` field must be a valid JSON-encoded trigger configuration.
+   * The `trigger` field must be a valid JSON-encoded trigger configuration. Read `workflowBuilderGuide` first for the trigger events and every step payload.
    */
   createWorkflow: CreateWorkflowOutput;
   /**
@@ -8650,7 +8852,7 @@ export type Mutation = {
   createWorkflowRule: CreateWorkflowRuleOutput;
   /** Create a content-addressed share link for a workflow. Returns a short token that can be used to load the workflow in another workspace. */
   createWorkflowShareLink: CreateWorkflowShareLinkOutput;
-  /** Add a single step to a workflow. For bulk changes to a workflow's step graph, prefer `bulkUpsertWorkflowSteps`. */
+  /** Add a single step to a workflow. For bulk changes to a workflow's step graph, prefer `bulkUpsertWorkflowSteps`. `workflowBuilderGuide` lists every step payload. */
   createWorkflowStep: CreateWorkflowStepOutput;
   /** Create a new Plain workspace. The authenticated user becomes the owner of the new workspace. Requires a unique internal name and a public-facing display name. */
   createWorkspace: CreateWorkspaceOutput;
@@ -8680,9 +8882,9 @@ export type Mutation = {
   createWorkspaceSlackChannelIntegration: CreateWorkspaceSlackChannelIntegrationOutput;
   /** Connects a workspace-level Slack notifications integration using an OAuth auth code. This integration enables Plain to post notifications to a Slack channel on behalf of the workspace. Get the installation URL from workspaceSlackInstallationInfo. */
   createWorkspaceSlackIntegration: CreateWorkspaceSlackIntegrationOutput;
-  /** Connects a workspace-level Slack notifications integration reusing a Slack connection the workspace already has, with no second OAuth install. The new integration posts through the given workspace Slack channel integration's connection. Choose the notification channel afterwards with the notification/slack/channel_id setting. */
+  /** Connects a workspace-level Slack notifications integration reusing a Slack connection the workspace already has, with no second OAuth install. Pass the ID of an existing workspace Slack channel integration (`wsSlackInt_…`, as listed by `workspaceSlackChannelIntegrations`); the notifications integration doesn't exist until this creates it. Choose the notification channel afterwards with the notification/slack/channel_id setting. */
   createWorkspaceSlackIntegrationFromAuth: CreateWorkspaceSlackIntegrationFromAuthOutput;
-  /** Installs Plain's Sidekick AI agent into the workspace's Slack. Exchanges the OAuth authorization code (obtained by sending the user through the URL from workspaceSlackSidekickInstallationInfo) for a bot token, creates the Sidekick Slack channel, and persists the integration. The channel is normally #ask-plain; if that name is already taken in the Slack workspace the next free name is used instead, so read askSidekickSlackChannelName off the returned integration and show the user which channel was created rather than assuming #ask-plain. Fails only if every candidate name is taken. Only one Sidekick integration is allowed per workspace and per Slack team; calling this when one already exists returns an error. Requires the workspaceSlackSidekickIntegration:create permission and the ai_agent billing entitlement. */
+  /** Installs Plain's Sidekick Agent into the workspace's Slack. Exchanges the OAuth authorization code (obtained by sending the user through the URL from workspaceSlackSidekickInstallationInfo) for a bot token, creates the Sidekick Agent Slack channel, and persists the integration. The channel is normally #ask-plain; if that name is already taken in the Slack workspace the next free name is used instead, so read askSidekickSlackChannelName off the returned integration and show the user which channel was created rather than assuming #ask-plain. Fails only if every candidate name is taken. Only one Sidekick Agent integration is allowed per workspace and per Slack team; calling this when one already exists returns an error. Requires the workspaceSlackSidekickIntegration:create permission and the ai_agent billing entitlement. */
   createWorkspaceSlackSidekickIntegration: CreateWorkspaceSlackSidekickIntegrationOutput;
   /**
    * Permanently deletes an account, unlinking it from all customers and removing its fields.
@@ -8789,7 +8991,7 @@ export type Mutation = {
   /** Permanently deletes an OAuth app. Every token it holds is rejected straight away. Requires the `oauthApp:delete` permission. */
   deleteOAuthApp: DeleteOAuthAppOutput;
   /**
-   * Removes a user message that is waiting in a Sidekick AGENT_SESSION queue. Rejects with
+   * Removes a user message that is waiting in a Sidekick Agent AGENT_SESSION queue. Rejects with
    * `queued_agent_session_message_already_dispatched` if the agent has already picked the
    * message up — the frontend should reload to reflect the new state.
    */
@@ -8881,11 +9083,11 @@ export type Mutation = {
   deleteWorkspaceSlackChannelIntegration: DeleteWorkspaceSlackChannelIntegrationOutput;
   /** Disconnects and removes a workspace-level Slack notifications integration. */
   deleteWorkspaceSlackIntegration: DeleteWorkspaceSlackIntegrationOutput;
-  /** Removes Plain's Sidekick AI agent from the workspace's Slack. Returns the integration that was deleted. Returns an error if no Sidekick integration exists. Requires the workspaceSlackSidekickIntegration:delete permission. */
+  /** Removes Plain's Sidekick Agent from the workspace's Slack. Returns the integration that was deleted. Returns an error if no Sidekick Agent integration exists. Requires the workspaceSlackSidekickIntegration:delete permission. */
   deleteWorkspaceSlackSidekickIntegration: DeleteWorkspaceSlackSidekickIntegrationOutput;
   /** Turns an OAuth app off. The Plain API rejects every token issued to it, including ones it already holds, until it's turned back on. Requires the `oauthApp:edit` permission. */
   disableOAuthApp: DisableOAuthAppOutput;
-  /** Dismisses a Sidekick question card so the person can reply in the chat instead. */
+  /** Dismisses a question card so the person can reply in the chat instead. A connected agent learns of it through discussion.question_resolved. */
   dismissSidekickQuestion: DismissSidekickQuestionOutput;
   /** Dismisses one or more pending suggested label types without creating label types. All ids must currently be PENDING. Requires the `labelType:create` permission. */
   dismissSuggestedLabelTypes: DismissSuggestedLabelTypesOutput;
@@ -8897,7 +9099,7 @@ export type Mutation = {
    */
   duplicateBroadcast: DuplicateBroadcastOutput;
   /**
-   * Edits the text of a user message that is waiting in a Sidekick AGENT_SESSION queue.
+   * Edits the text of a user message that is waiting in a Sidekick Agent AGENT_SESSION queue.
    * Attachments are not editable in this flow — delete and re-send to change them. Rejects
    * with `queued_agent_session_message_already_dispatched` if the agent has already
    * picked the message up.
@@ -9007,14 +9209,14 @@ export type Mutation = {
   refreshSidekickMcpServerTools: RefreshSidekickMcpServerToolsOutput;
   /** Re-authorizes an existing workspace Slack channel integration with a new OAuth auth code. Use this when isReinstallRequired is true on the integration to restore access. */
   refreshWorkspaceSlackChannelIntegration: RefreshWorkspaceSlackChannelIntegrationOutput;
-  /** Re-authorizes an existing workspace Slack Sidekick integration with a new OAuth auth code. Use this when isReinstallRequired is true on the integration to restore access. Requires the workspaceSlackSidekickIntegration:update permission. */
+  /** Re-authorizes an existing workspace Slack Sidekick Agent integration with a new OAuth auth code. Use this when isReinstallRequired is true on the integration to restore access. Requires the workspaceSlackSidekickIntegration:update permission. */
   refreshWorkspaceSlackSidekickIntegration: RefreshWorkspaceSlackSidekickIntegrationOutput;
   /** Generates a new HMAC secret for the workspace, replacing any existing secret. Plain includes this secret as a signature header on outbound HTTP requests (e.g. workflow rule HTTP steps) so your server can verify the request originated from Plain. Requires the `workspaceHmac:edit` permission. */
   regenerateWorkspaceHmac: RegenerateWorkspaceHmacOutput;
   /**
    * Trigger an immediate re-index of a knowledge source. Use this when the source content has changed
    * and you do not want to wait for the automatic weekly re-index. The knowledge source status is reset
-   * to pending and indexing is queued asynchronously. Requires Plain AI to be enabled on the workspace.
+   * to pending and indexing is queued asynchronously. Requires Plain AI to be enabled on the workspace; turn it on with `updateSetting` (code `plain_ai`, WORKSPACE scope, boolean `true`).
    */
   reindexKnowledgeSource: ReindexKnowledgeSourceOutput;
   /**
@@ -9074,12 +9276,22 @@ export type Mutation = {
   /** Send a reply to the customer on a thread using the most appropriate channel automatically. Supports threads where the last inbound message is an email, a Slack message, or a form submission. If the thread has no messages yet, an email is sent to the customer. Requires the `thread:reply` (or channel-specific send) permission. */
   replyToThread: ReplyToThreadOutput;
   /**
+   * Ask the people on an in-app discussion driven by the calling connected agent to choose among a few
+   * options, shown as a card above the message box. Asking while a card is pending adds the new
+   * questions to it, skipping any with the same text as one already there. Moves the discussion to
+   * TOOL_CALL_APPROVAL_PENDING until a person answers or dismisses the card, which emits
+   * discussion.question_resolved. Callable by the agent the discussion is bound to.
+   */
+  requestDiscussionQuestion: RequestDiscussionQuestionOutput;
+  /**
    * Ask a human to approve a tool call the agent has reported as PENDING. One approval per call,
    * ever, and several may be open on one discussion at once; asking again for the same toolCallId
    * returns the existing approval unchanged. Moves the discussion to TOOL_CALL_APPROVAL_PENDING.
    */
   requestDiscussionToolCallApproval: RequestDiscussionToolCallApprovalOutput;
-  /** Approves or denies a pending Sidekick tool-use approval request identified by its leaseId. When approved, the agent session automatically resumes and executes the approved tools. When denied, the agent is notified so it can explain the denial to the user. An optional reviewerNote is passed back to the agent in both cases. A machine user may resolve only approvals of a Sidekick session it started. */
+  /** Request a Plain AI suggested reply for an inbound message on a thread. Generation runs asynchronously, and the reply is delivered via the `generatedReplies` query and thread subscriptions once ready. Requires the `generatedReply:create` permission. */
+  requestGeneratedReply: RequestGeneratedReplyOutput;
+  /** Approves or denies a pending Sidekick Agent tool-use approval request identified by its leaseId. When approved, the agent session automatically resumes and executes the approved tools. When denied, the agent is notified so it can explain the denial to the user. An optional reviewerNote is passed back to the agent in both cases. A machine user may resolve only approvals of a Sidekick Agent session it started. */
   resolveAgentApproval: ResolveAgentApprovalOutput;
   /** Finds or creates a Plain customer associated with the Microsoft Teams users in the given channel, using the workspace's connected MS Teams integration. Useful for bootstrapping a support thread from a Teams channel conversation. */
   resolveCustomerForMSTeamsChannel: ResolveCustomerForMsTeamsChannelOutput;
@@ -9087,7 +9299,7 @@ export type Mutation = {
   resolveCustomerForSlackChannel: ResolveCustomerForSlackChannelOutput;
   /**
    * Decide a custom agent's approval by its approvalId. Denying fails the tool call it gates, with
-   * reviewerNote as the error; approving leaves the call PENDING for the agent to run. Sidekick's
+   * reviewerNote as the error; approving leaves the call PENDING for the agent to run. Sidekick Agent's
    * approvals are decided with resolveAgentApproval instead.
    */
   resolveDiscussionApproval: ResolveDiscussionApprovalOutput;
@@ -9126,7 +9338,7 @@ export type Mutation = {
   sendDiscordMessage: SendDiscordMessageOutput;
   /**
    * Send a message in an existing discussion. Supersedes sendThreadDiscussionMessage and additionally
-   * supports Sidekick AGENT_SESSION discussions. For Slack and email discussions, use attachmentIds for
+   * supports Sidekick Agent AGENT_SESSION discussions. For Slack and email discussions, use attachmentIds for
    * customer-scoped file attachments. For AGENT_SESSION discussions, use workspaceFileIds instead.
    * The message is delivered to the underlying channel (Slack thread reply, email reply, or agent session).
    */
@@ -9194,12 +9406,12 @@ export type Mutation = {
   snoozeThread: SnoozeThreadOutput;
   /** Begin the OAuth authorization flow for a third-party service integration. Returns connection details including a serviceAuthorizationId and an HMAC digest that must be passed to the authorization URL to securely link the callback back to this workspace. After the user completes the OAuth flow in the third-party service, call completeServiceAuthorization to finalize the connection. */
   startServiceAuthorization: StartServiceAuthorizationOutput;
-  /** Stops the in-flight turn of an in-app Sidekick session; the session and its queue survive, and the oldest queued message runs next. A machine user may stop only a session it started. */
+  /** Stops the in-flight turn of an in-app Sidekick Agent session; the session and its queue survive, and the oldest queued message runs next. A machine user may stop only a session it started. */
   stopAgentSessionTurn: StopAgentSessionTurnOutput;
   /**
    * Stop the in-flight turn of an in-app discussion answered by an agent the workspace built. Plain
    * runs nothing for that agent, so it records the stop and emits discussion.turn_stop_requested for
-   * the agent to act on. Sidekick turns are stopped with stopAgentSessionTurn instead.
+   * the agent to act on. Sidekick Agent turns are stopped with stopAgentSessionTurn instead.
    */
   stopDiscussionTurn: StopDiscussionTurnOutput;
   /**
@@ -9236,7 +9448,7 @@ export type Mutation = {
   /** Atomically adds and removes multiple users from the active billing rota in a single call. At least one user must be added or removed; the same user cannot appear in both lists. Requires the `billingSeat:edit` permission. */
   updateActiveBillingRota: UpdateActiveBillingRotaOutput;
   /**
-   * Set the approval mode for a single Sidekick tool in this workspace. Persisted
+   * Set the approval mode for a single Sidekick Agent tool in this workspace. Persisted
    * as a sparse override; setting a tool to its factory default clears the override.
    */
   updateAgentSandboxToolPolicy: UpdateAgentSandboxToolPolicyOutput;
@@ -9249,7 +9461,7 @@ export type Mutation = {
    * Requires the `user:read` permission.
    */
   updateAllMyInternalNotifications: UpdateAllMyInternalNotificationsOutput;
-  /** Update the description and/or permissions of an existing API key. Permissions are replaced in full — pass the complete desired set. You cannot assign permissions you do not hold. Requires the `apiKey:edit` permission. */
+  /** Update the description and/or permissions of an existing API key. Permissions are replaced in full — pass the complete desired set. Read the key's current permissions first, from the machine user's `apiKeys`. You cannot assign permissions you do not hold. Requires the `apiKey:edit` permission. */
   updateApiKey: UpdateApiKeyOutput;
   /** Update one or more fields on an existing autoresponder. Only fields provided in the input are changed; omitted fields retain their current values. Requires the `autoresponder:edit` permission. */
   updateAutoresponder: UpdateAutoresponderOutput;
@@ -9264,7 +9476,7 @@ export type Mutation = {
    * broadcast using it will reach on its next send. Requires the `broadcastAudience:edit` permission.
    */
   updateBroadcastAudience: UpdateBroadcastAudienceOutput;
-  /** Update an override's name, dates or slots. Omitted fields are left unchanged. Hours on dates before today can't be changed. Requires the `businessHours:edit` permission. */
+  /** Update an override's name, dates or slots. Omitted fields are left unchanged. Requires the `businessHours:edit` permission. */
   updateBusinessHoursOverride: UpdateBusinessHoursOverrideOutput;
   /** Update a business hours schedule's name, its slots, or both. Omitted fields are left unchanged; passing an empty `slots` array clears the schedule's business hours. Overlapping and adjacent slots are merged on write. Requires the `businessHours:edit` permission. */
   updateBusinessHoursSchedule: UpdateBusinessHoursScheduleOutput;
@@ -9303,7 +9515,7 @@ export type Mutation = {
   /**
    * Report what an agent the workspace built is doing on a discussion. Only that agent may call this:
    * Plain runs no session for it, so without a report the discussion looks permanently idle. Plain
-   * sets agentStatus itself for Sidekick discussions, which this mutation rejects.
+   * sets agentStatus itself for Sidekick Agent discussions, which this mutation rejects.
    */
   updateDiscussionAgentStatus: UpdateDiscussionAgentStatusOutput;
   /**
@@ -9344,11 +9556,13 @@ export type Mutation = {
   updateMyUser: UpdateMyUserOutput;
   /** Updates the text, markdown, or attachments of an existing note. Requires the `note:edit` permission. */
   updateNote: UpdateNoteOutput;
-  /** Updates the name, description or redirect URLs of an OAuth app. Requires the `oauthApp:edit` permission. */
+  /** Updates the name, description, redirect URLs or allowed origins of an OAuth app. Requires the `oauthApp:edit` permission. */
   updateOAuthApp: UpdateOAuthAppOutput;
+  /** Sets the order in which roles win when a user is given more than one through SSO or directory sync. Custom roles can be placed anywhere below the admin role and above the none role. Requires the `roles:edit` permission. */
+  updateRolePriorityOrder: UpdateRolePriorityOrderOutput;
   /** Updates an existing saved threads view. All fields in the input are optional; only the fields you provide will be changed. Depending on workspace settings, only the view's creator or workspace admins may be allowed to edit a view they did not create. */
   updateSavedThreadsView: UpdateSavedThreadsViewOutput;
-  /** Update an existing SLA's time target, priority or label filter, business-hours setting, or breach actions. You cannot change an SLA's type after creation. Use the field-level wrapper inputs (e.g. `{ "value": 60 }`) for the fields you want to change and omit the rest. Requires the `serviceLevelAgreement:edit` permission. */
+  /** Update an existing SLA's time target, priority or label filter, business-hours setting, or breach actions. An SLA belongs to a tier or to an SLA policy: read a tier's SLAs with `tier` and a policy's with `serviceLevelAgreementPolicy`, though the SLA's ID alone is enough to update it. You cannot change an SLA's type after creation. Use the field-level wrapper inputs (e.g. `{ "value": 60 }`) for the fields you want to change and omit the rest. Requires the `serviceLevelAgreement:edit` permission. */
   updateServiceLevelAgreement: UpdateServiceLevelAgreementOutput;
   /** Update an SLA policy and its targets. Pass the full set of targets you want the policy to have: a target of an existing type is updated in place, so live SLA trackers are unaffected, a new type is added, and a type you leave out is removed along with its trackers. Requires the `serviceLevelAgreement:edit` permission. */
   updateServiceLevelAgreementPolicy: UpdateServiceLevelAgreementPolicyOutput;
@@ -9356,17 +9570,17 @@ export type Mutation = {
   updateSetting: UpdateSettingOutput;
   /** Update a workspace custom skill. Only the provided fields are changed. */
   updateSidekickCustomSkill: UpdateSidekickCustomSkillOutput;
-  /** Updates which GitHub repositories Sidekick has access to and the operating instructions (workspace-level and per-repo) that guide its behavior. Replaces the full repo selection — omitting a repo removes it. Requires the GitHub service authorization to exist first. */
+  /** Updates which GitHub repositories Sidekick Agent has access to and the operating instructions (workspace-level and per-repo) that guide its behavior. Replaces the full repo selection — omitting a repo removes it. Requires the GitHub service authorization to exist first. */
   updateSidekickGithubConfig: UpdateSidekickGithubConfigOutput;
   /** Update a custom MCP server's name or operating instructions. The server URL and slug are immutable after creation. */
   updateSidekickMcpServer: UpdateSidekickMcpServerOutput;
-  /** Updates the operating instructions and default project that guide how Sidekick uses the PostHog integration. Pass null or an empty string to clear either field. */
+  /** Updates the operating instructions and default project that guide how Sidekick Agent uses the PostHog integration. Pass null or an empty string to clear either field. */
   updateSidekickPosthogConfig: UpdateSidekickPosthogConfigOutput;
-  /** Updates the operating instructions that guide how Sidekick uses a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Pass null or an empty string to clear the instructions. GitHub and PostHog have their own configuration shapes — use updateSidekickGithubConfig / updateSidekickPosthogConfig instead. */
+  /** Updates the operating instructions that guide how Sidekick Agent uses a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Pass null or an empty string to clear the instructions. GitHub and PostHog have their own configuration shapes — use updateSidekickGithubConfig / updateSidekickPosthogConfig instead. */
   updateSidekickServiceConfig: UpdateSidekickServiceConfigOutput;
-  /** Updates workspace-level Sidekick settings, such as the custom prompt appended to every session's system prompt and the tools selected during onboarding. Pass null or an empty string for customPrompt to clear any existing value. Omit a field to leave it unchanged. */
+  /** Updates workspace-level Sidekick Agent settings, such as the custom prompt appended to every session's system prompt and the tools selected during onboarding. Pass null or an empty string for customPrompt to clear any existing value. Omit a field to leave it unchanged. */
   updateSidekickSettings: UpdateSidekickSettingsOutput;
-  /** Updates configuration for the workspace's Slack Sidekick integration. Currently supports setting custom operating instructions that guide Sidekick's behavior. Omitting operatingInstructions is a no-op; passing null or an empty string clears any existing instructions. Requires the workspaceSlackSidekickIntegration:update permission. */
+  /** Updates configuration for the workspace's Slack Sidekick Agent integration. Currently supports setting custom operating instructions that guide Sidekick Agent's behavior. Omitting operatingInstructions is a no-op; passing null or an empty string clears any existing instructions. Requires the workspaceSlackSidekickIntegration:update permission. */
   updateSidekickSlackConfig: UpdateSidekickSlackConfigOutput;
   /** Updates one or more fields of an existing snippet. Each field uses a wrapper input — pass `{ value: "..." }` to set it or omit it entirely to leave it unchanged. To remove the snippet's `path` (un-group it) pass `{ value: null }`. Requires the `snippet:edit` permission. */
   updateSnippet: UpdateSnippetOutput;
@@ -9413,11 +9627,11 @@ export type Mutation = {
   updateUserDefaultSavedThreadsView: UpdateUserDefaultSavedThreadsViewOutput;
   /** Update an existing webhook target. You can change the URL, pause or resume deliveries via `isEnabled`, switch to a newer schema version, change which event types are subscribed to, or replace the custom HTTP headers. Scalar fields use a `{ value: ... }` wrapper so you can omit fields you do not want to change; `eventSubscriptions` and `headers` are full replacements of the previous lists, so include every entry the target should keep. At least one field must be provided. Requires the `webhookTarget:edit` permission. */
   updateWebhookTarget: UpdateWebhookTargetOutput;
-  /** Update a workflow's name, trigger configuration, entry step, or published status. To change where a workflow sits in the list, use `moveWorkflow`. */
+  /** Update a workflow's name, trigger configuration, entry step, or published status. To change where a workflow sits in the list, use `moveWorkflow`. Read `workflowBuilderGuide` first for the trigger events and every step payload. */
   updateWorkflow: UpdateWorkflowOutput;
   /** Update the name, payload, or display order of an existing workflow rule. */
   updateWorkflowRule: UpdateWorkflowRuleOutput;
-  /** Update a single workflow step's configuration, transitions, or canvas position. Replacing `transitions` is a full replacement of the array. */
+  /** Update a single workflow step's configuration, transitions, or canvas position. Replacing `transitions` is a full replacement of the array. `workflowBuilderGuide` lists every step payload. */
   updateWorkflowStep: UpdateWorkflowStepOutput;
   /** Update workspace settings such as the display name, logo, or allowed email domain names. At least one field must be provided. Domain names are stored in lowercase. */
   updateWorkspace: UpdateWorkspaceOutput;
@@ -9427,12 +9641,12 @@ export type Mutation = {
    * Creates a new account or updates an existing one identified by `externalId` or `accountId`.
    * Use this to keep Plain's account records in sync with the groups or organisations in your own product.
    * The `result` field on the output indicates whether a record was created or updated.
-   * Requires the `tenant:read` and `tenant:create` permissions.
+   * Requires the `tenant:create` and `tenant:edit` permissions.
    */
   upsertAccount: UpsertAccountOutput;
-  /** Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `accountReferenceValues`). Requires `tenant:edit` permission. */
+  /** Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `accountReferenceValues`). Requires the `tenantField:create`, `tenantField:update`, and `tenantFieldSchema:read` permissions. Identifying the account by `externalId` also requires the `tenant:read` permission. */
   upsertAccountField: UpsertAccountFieldOutput;
-  /** Creates or updates one or more account field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission. */
+  /** Creates or updates one or more account field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires the `tenantFieldSchema:create`, `tenantFieldSchema:update`, and `tenantFieldSchema:delete` permissions. */
   upsertAccountFieldSchema: UpsertAccountFieldSchemaOutput;
   /**
    * Create or update the workspace's business hours using a per-weekday schedule. Deprecated — use createBusinessHoursSchedule or updateBusinessHoursSchedule instead, which support multiple named, timezone-aware schedules.
@@ -9482,7 +9696,7 @@ export type Mutation = {
    */
   upsertTenant: UpsertTenantOutput;
   /**
-   * Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `tenantReferenceValues`). Requires `tenant:edit` permission.
+   * Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier`: the tenant plus the field's `externalFieldId`, which is the field's key (such as `contract_value`). Pass the field's `type` and the one value argument for it: `STRING_TYPE` uses `stringValue`, `NUMBER_TYPE` `numberValue`, `BOOLEAN_TYPE` `booleanValue`, `STRING_ARRAY` `arrayValue`, `DATETIME_TYPE` `dateValue`, `USER_REFERENCE_TYPE` `userReferenceValues` and `TENANT_REFERENCE_TYPE` `tenantReferenceValues`. When the key and type are known, call this directly; there is no need to look up the field schema first. Requires `tenant:edit` permission.
    * @deprecated Use upsertAccountField instead
    */
   upsertTenantField: UpsertTenantFieldOutput;
@@ -9491,7 +9705,7 @@ export type Mutation = {
    * @deprecated Use upsertAccountFieldSchema instead
    */
   upsertTenantFieldSchema: UpsertTenantFieldSchemaOutput;
-  /** Sets (or updates) a single thread field value on a thread, identified by thread ID and field key. Creates the field if it does not exist, or overwrites the existing value if it does. Requires the `threadField:create` and `threadField:update` permissions. */
+  /** Sets (or updates) a single thread field value on a thread, identified by thread ID and field key. Creates the field if it does not exist, or overwrites the existing value if it does. Requires the `threadField:create` and `threadField:update` permissions. To clear a field on one thread, use `deleteThreadField`. */
   upsertThreadField: UpsertThreadFieldOutput;
   /** Trigger a DNS verification check for the custom domain configured on the help center. Returns an error if the expected TXT record is not yet visible. Requires the helpCenter:edit permission. */
   verifyHelpCenterCustomDomainName: VerifyHelpCenterCustomDomainNameOutput;
@@ -9822,6 +10036,11 @@ export type MutationCreateMachineUserArgs = {
 };
 
 
+export type MutationCreateMcpFeedbackArgs = {
+  input: CreateMcpFeedbackInput;
+};
+
+
 export type MutationCreateMyFavoritePageArgs = {
   input: CreateMyFavoritePageInput;
 };
@@ -9919,6 +10138,11 @@ export type MutationCreateThreadEventArgs = {
 
 export type MutationCreateThreadFieldSchemaArgs = {
   input: CreateThreadFieldSchemaInput;
+};
+
+
+export type MutationCreateThreadFromMsTeamsMessageArgs = {
+  input: CreateThreadFromMsTeamsMessageInput;
 };
 
 
@@ -10647,8 +10871,18 @@ export type MutationReplyToThreadArgs = {
 };
 
 
+export type MutationRequestDiscussionQuestionArgs = {
+  input: RequestDiscussionQuestionInput;
+};
+
+
 export type MutationRequestDiscussionToolCallApprovalArgs = {
   input: RequestDiscussionToolCallApprovalInput;
+};
+
+
+export type MutationRequestGeneratedReplyArgs = {
+  input: RequestGeneratedReplyInput;
 };
 
 
@@ -10999,6 +11233,11 @@ export type MutationUpdateNoteArgs = {
 
 export type MutationUpdateOAuthAppArgs = {
   input: UpdateOAuthAppInput;
+};
+
+
+export type MutationUpdateRolePriorityOrderArgs = {
+  input: UpdateRolePriorityOrderInput;
 };
 
 
@@ -11380,9 +11619,11 @@ export type NumberSetting = {
 
 /** An OAuth app owned by this workspace. People in the workspace can authorize it to call the Plain API as them, with the permissions their role gives them. */
 export type OAuthApp = {
+  /** The browser origins allowed to exchange an authorization code for a token, such as https://app.example.com. Each one is a scheme and host with an optional port, using https, or http on localhost. An app that uses PKCE has at least one. An app that doesn't may have none. */
+  allowedOrigins: Array<Scalars['String']['output']>;
   /** The OAuth client ID the app sends when it asks someone to authorize it. */
   clientId: Scalars['String']['output'];
-  /** The app's client secret. Only a hint of the secret is returned; the full secret is only returned once, when the app is created. An app's secret can't be replaced, so an app whose secret is lost has to be replaced with a new app. */
+  /** The app's client secret. Only a hint of the secret is returned; the full secret is only returned once, when the app is created. An app's secret can't be replaced, so an app whose secret is lost has to be replaced with a new app. Always null for an app that uses PKCE. */
   clientSecret?: Maybe<OAuthAppClientSecret>;
   createdAt: DateTime;
   createdBy: InternalActor;
@@ -11395,6 +11636,8 @@ export type OAuthApp = {
   redirectUrls: Array<Scalars['String']['output']>;
   updatedAt: DateTime;
   updatedBy: InternalActor;
+  /** True when the app authenticates with PKCE instead of a client secret, for an app running in a browser or on someone's device. Such an app has no client secret. This is set when the app is created and can't be changed. */
+  usesPkce: Scalars['Boolean']['output'];
 };
 
 export type OAuthAppClientSecret = {
@@ -11554,6 +11797,13 @@ export type PriceTier = {
   perSeatAmount: Scalars['Int']['output'];
 };
 
+/** Where a Query or Mutation root operation is published. */
+export type PublishTarget =
+  /** Listed in the public API docs. */
+  | 'DOCS'
+  /** Generated as an MCP tool for connected agents. */
+  | 'MCP';
+
 export type PurchaseCreditsInput = {
   /** The number of credits to purchase. Must match the unit count of a configured top-up bundle. */
   count: Scalars['Int']['input'];
@@ -11578,12 +11828,12 @@ export type Query = {
    */
   activeThreadCluster?: Maybe<ThreadCluster>;
   /**
-   * The Sidekick tool approval policies for the workspace: every catalog tool
+   * The Sidekick Agent tool approval policies for the workspace: every catalog tool
    * with its effective approval mode (per-workspace override merged over the
    * factory default). Optionally filter to a single service (e.g. "plain").
    */
   agentSandboxToolPolicies: Array<AgentSandboxToolPolicy>;
-  /** Paginated list of the feedback your team has submitted on Plain's AI features, such as a thumbs up or down on an Ari reply, newest first. Use the optional `filters` argument to narrow results by feature, sentiment or submission time. Requires the `aiFeatureFeedback:read` permission. */
+  /** Paginated list of the feedback your team has submitted on Plain's AI features, such as a thumbs up or down on a Customer Agent reply, newest first. Use the optional `filters` argument to narrow results by feature, sentiment or submission time. Requires the `aiFeatureFeedback:read` permission. */
   aiFeedback: AiFeedbackConnection;
   /** Returns the workspace's AI tone rules, which guide how Plain's AI features phrase replies. Use the optional `isEnabled` filter to retrieve only active rules. Pagination is supported via standard `first`/`after` and `last`/`before` cursor arguments, though in practice all rules are returned in a single page. Requires the `aiToneRule:read` permission. */
   aiToneRules: AiToneRuleConnection;
@@ -11650,7 +11900,7 @@ export type Query = {
   businessHoursSlots: Array<BusinessHoursSlot>;
   /**
    * Fetch a single chat app by its ID. Returns null if no chat app with that ID exists in the workspace.
-   * Requires the `chatApp:read` permission.
+   * Requires the `chatApp:read` permission. Deleting a chat app is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/chat/<chatAppId>` (never the `<workspaceId>` placeholder).
    */
   chatApp?: Maybe<ChatApp>;
   /**
@@ -11662,7 +11912,7 @@ export type Query = {
   chatAppSecret?: Maybe<ChatAppHiddenSecret>;
   /**
    * List all chat apps in the workspace. Supports cursor-based pagination.
-   * Requires the `chatApp:read` permission.
+   * Requires the `chatApp:read` permission. Deleting a chat app is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/chat/<chatAppId>` (never the `<workspaceId>` placeholder).
    */
   chatApps: ChatAppConnection;
   /**
@@ -11675,21 +11925,25 @@ export type Query = {
    * @deprecated Use account instead
    */
   company?: Maybe<Company>;
-  /** Returns a paginated list of Discord channels synced from a specific guild. Use `refreshConnectedDiscordChannels` to pull the latest channel list from Discord before querying. */
+  /** Returns a paginated list of Discord channels synced from a specific guild. Use `refreshConnectedDiscordChannels` to pull the latest channel list from Discord before querying. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/discord` (never the `<workspaceId>` placeholder), which takes them straight to Discord to approve, then read this again to confirm. */
   connectedDiscordChannels: ConnectedDiscordChannelConnection;
-  /** Returns a paginated list of Microsoft Teams channels that are connected to this workspace. Supports forward and backward cursor pagination. */
+  /** Returns a paginated list of Microsoft Teams channels that are connected to this workspace. Supports forward and backward cursor pagination. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/ms-teams` (never the `<workspaceId>` placeholder), which takes them straight to Microsoft Teams to approve, then read this again to confirm. */
   connectedMSTeamsChannels: ConnectedMsTeamsChannelConnection;
   /** Returns a single connected Slack channel by its Plain ID, or null if not found. */
   connectedSlackChannel?: Maybe<ConnectedSlackChannel>;
-  /** Gets all slack channels for this workspace, which match the specified filters. */
+  /**
+   * Gets all slack channels for this workspace, which match the specified filters. To count or list
+   * the channels a broadcast would reach, use `broadcastSendTargetRecipients` instead: it leaves out
+   * channels that unsubscribed.
+   */
   connectedSlackChannels: ConnectedSlackChannelConnection;
   /** Every billable item the workspace has used credits on, newest first: Sidekick sessions, Sidekick actions a workflow ran, and work done by the workspace's own agents. Items with status FREE_BETA were not charged; their credits show what they would have cost. Use it to show the line-by-line breakdown behind a credit total. Supports standard forward and backward pagination. Requires the `billing:read` permission. */
   creditSpend: CreditSpendConnection;
   /** Returns the list of GitHub repositories accessible via the given Cursor integration. Results are fetched live from the Cursor API and cached for up to 5 minutes. Requires the `workspaceCursorIntegration:read` permission. */
   cursorRepositories: Array<CursorRepository>;
-  /** Returns a single custom role by its ID, or null if not found. Requires the `roles:read` permission. */
+  /** Returns a single custom role by its ID, or null if not found. Requires the `roles:read` permission. Changing a role's permissions or which threads it can see is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/roles/<customRoleId>` (never the `<workspaceId>` placeholder). */
   customRole?: Maybe<CustomRole>;
-  /** Returns all custom roles defined in the workspace. Use this to list the custom roles you have created and inspect their scope definitions. Supports cursor-based pagination. Requires the `roles:read` permission. */
+  /** Returns all custom roles defined in the workspace. Use this to list the custom roles you have created and inspect their scope definitions. Supports cursor-based pagination. Requires the `roles:read` permission. Changing a role's permissions or which threads it can see is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/roles/<customRoleId>` (never the `<workspaceId>` placeholder). */
   customRoles: CustomRoleConnection;
   /** Fetch a single customer by their Plain customer ID. Returns null if no customer with that ID exists. Requires the `customer:read` permission. */
   customer?: Maybe<Customer>;
@@ -11697,9 +11951,9 @@ export type Query = {
   customerByEmail?: Maybe<Customer>;
   /** Get a customer by its external ID. A customer's external ID is unique within a workspace. */
   customerByExternalId?: Maybe<Customer>;
-  /** Returns a single customer card config by ID. Returns null if no config with the given ID exists. */
+  /** Returns a single customer card config by ID. Returns null if no config with the given ID exists. Deleting a card is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/customer-cards/<customerCardConfigId>` (never the `<workspaceId>` placeholder). */
   customerCardConfig?: Maybe<CustomerCardConfig>;
-  /** Returns all customer card configs for the workspace, ordered by their `order` field. */
+  /** Returns all customer card configs for the workspace, ordered by their `order` field. Deleting a card is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/customer-cards/<customerCardConfigId>` (never the `<workspaceId>` placeholder). */
   customerCardConfigs: Array<CustomerCardConfig>;
   /**
    * Returns the current customer card instances for a customer, triggering a fresh load for any cards that are expired or in an error state.
@@ -11747,6 +12001,8 @@ export type Query = {
    * Returns the current suggested reply candidates for a thread, scoped to the most recent inbound message from the customer or from a machine user. Suggestions submitted via `addGeneratedReply` are always included. Suggestions generated by Plain AI are excluded when suggested responses are disabled or not available for the workspace, or when an externally submitted suggestion exists for the same message. Returns an empty list if the thread has no such message or no suggestion is available. Requires the `generatedReply:read` permission.
    */
   generatedReplies?: Maybe<Array<GeneratedReply>>;
+  /** The state of the Plain AI suggested reply for the most recent inbound message on a thread. Returns null when suggested responses are disabled or not available for the workspace, or when the thread has no such message. Requires the `generatedReply:read` permission. */
+  generatedReplyState?: Maybe<GeneratedReplyState>;
   /** Fetches the current members of a Microsoft Teams channel directly from the Teams API. Requires a workspace MS Teams integration and calls Microsoft Graph; use this to populate member lists when resolving customers for a channel. */
   getMSTeamsMembersForChannel: MsTeamsChannelMembers;
   /** Returns the GitHub user authentication integration for the currently authenticated user, or null if no integration exists. */
@@ -11773,7 +12029,7 @@ export type Query = {
    * Requires the `helpCenter:read` permission. Not available to machine users.
    */
   helpCenterAiConversations: HelpCenterAiConversationConnection;
-  /** Fetch a single help center article by ID. Returns null if not found. */
+  /** Fetch a single help center article by ID. Returns null if not found. Deleting an article is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/help-center/<helpCenterId>/articles/<articleId>` (never the `<workspaceId>` placeholder). */
   helpCenterArticle?: Maybe<HelpCenterArticle>;
   /** Fetch an article by its URL slug within a specific help center. Slugs are unique per help center. Returns null if no article matches. */
   helpCenterArticleBySlug?: Maybe<HelpCenterArticle>;
@@ -11783,7 +12039,7 @@ export type Query = {
   helpCenterArticleGroupBySlug?: Maybe<HelpCenterArticleGroup>;
   /** Fetch the navigation index for a help center by its ID. Returns null if not found. Use the returned hash when calling updateHelpCenterIndex to avoid clobbering concurrent edits. */
   helpCenterIndex?: Maybe<HelpCenterIndex>;
-  /** List all help centers in the workspace. Supports cursor-based pagination and optional filtering. */
+  /** List all help centers in the workspace. Supports cursor-based pagination and optional filtering. Custom JavaScript, sign-in, access, the type and the subdomain of an existing help center are set by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/help-center/<helpCenterId>` (never the `<workspaceId>` placeholder), or `…/help-center/create` for a new help center that needs them. */
   helpCenters: HelpCenterConnection;
   /** Fetch the import job definition for a connected service integration. Pass isEnabled: true to return only the currently active definition, or isEnabled: false to return any definition regardless of enabled state. Returns null if no matching definition exists. */
   importJobDefinition?: Maybe<ImportJobDefinition>;
@@ -11798,7 +12054,7 @@ export type Query = {
   importerTenantLists: ImporterTenantListConnection;
   /** List indexed documents across your workspace, newest first. Use the `knowledgeSourceId` filter to retrieve only the documents belonging to a specific knowledge source, and the `statuses` filter to retrieve only documents with a given ingestion status. */
   indexedDocuments: IndexedDocumentConnection;
-  /** List the static variables that can be interpolated with `{{ key }}` in snippets, auto-responses, bulk replies and workflow actions, with a label and group for building a picker. Thread field variables are not included; derive them from `threadFieldSchemas` as `threadField.<key>`. Requires the `workspace:read` permission. */
+  /** List the static variables that can be interpolated with `{{ key }}` in snippets, auto-responses, bulk replies and workflow actions, with a label and group for building a picker. Thread field variables are not included; derive them from the thread field schemas as `threadField.<key>`. Requires the `workspace:read` permission. */
   interpolationVariables: Array<InterpolationVariable>;
   /**
    * Fetch the configurable fields for a connected issue tracker (e.g. Shortcut, Rootly, incident.io, GitHub).
@@ -11817,20 +12073,18 @@ export type Query = {
   knowledgeSourceCitationsByThread: Array<KnowledgeSourceCitation>;
   /** List all knowledge sources in the workspace. Use the `type` filter to retrieve only sitemap or single-URL sources. */
   knowledgeSources: KnowledgeSourceConnection;
-  /** Returns a single label type by its ID. Returns null if no label type with that ID exists. Requires the `labelType:read` permission. */
+  /** Returns a single label type by its ID. Returns null if no label type with that ID exists. Requires the `labelType:read` permission. A team's assignment settings, such as its round-robin capacity, come from `teamSettings`. */
   labelType?: Maybe<LabelType>;
   /** Returns a label type by its external ID. Returns null if no match is found. External IDs are unique within a workspace and are set when creating or updating a label type. Requires the `labelType:read` permission. */
   labelTypeByExternalId?: Maybe<LabelType>;
   /** Returns a paginated list of label types in the workspace. By default includes both active and archived label types; pass `filters: { isArchived: false }` to exclude archived ones. Requires the `labelType:read` permission. */
   labelTypes: LabelTypeConnection;
-  /** The workspace-level Linear app integration, if one has been authorised. */
+  /** The workspace-level Linear app integration, if one has been authorised. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/linear` (never the `<workspaceId>` placeholder), which takes them straight to Linear to approve, then read this again to confirm. */
   linearAppIntegration?: Maybe<WorkspaceLinearIntegration>;
-  /** Fetches a single machine user by ID. Returns null if no machine user with the given ID exists in the workspace. */
+  /** Fetches a single machine user by ID. Returns null if no machine user with the given ID exists in the workspace. Deleting a machine user, and creating, changing or deleting its API keys, are done by the user in the Plain app, so a key's secret never passes through an agent. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/machine-users/<machineUserId>` (never the `<workspaceId>` placeholder), or `…/api-keys/add` and `…/api-keys/<apiKeyId>` under it for keys. */
   machineUser?: Maybe<MachineUser>;
-  /** Returns a paginated list of all machine users in the workspace. Use the optional `filters.type` argument to restrict results to a specific machine user type (e.g. API_USER or AI_AGENT). */
+  /** Returns a paginated list of all machine users in the workspace. Use the optional `filters.type` argument to restrict results to a specific machine user type (e.g. API_USER or AI_AGENT). Deleting a machine user, and creating, changing or deleting its API keys, are done by the user in the Plain app, so a key's secret never passes through an agent. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/machine-users/<machineUserId>` (never the `<workspaceId>` placeholder), or `…/api-keys/add` and `…/api-keys/<apiKeyId>` under it for keys. */
   machineUsers: MachineUserConnection;
-  /** Checks whether giving these people a paid role keeps the workspace within its member seat cap. People who already hold a paid seat on the billing account don't count against it. Requires the `billingSeat:edit` permission. */
-  memberSeatCapCheck: MemberSeatCapCheck;
   /** Returns the current billing rota for the workspace, listing which users are actively on-rota and which are off-rota. The rota is used to track which users currently consume an active eng-rota seat. */
   myBillingRota?: Maybe<BillingRota>;
   /** Returns the current workspace billing subscription, including plan, status, trial info, feature entitlements, and credit balances. Returns null if the workspace has no billing account. */
@@ -11878,7 +12132,7 @@ export type Query = {
   myUser?: Maybe<User>;
   /** Returns the UserAccount for the currently authenticated user, or null if no account has been created yet. Useful during onboarding to check whether account setup is complete. */
   myUserAccount?: Maybe<UserAccount>;
-  /** Returns the Workspace associated with the current API key or session. Useful for confirming which workspace a request is scoped to. Returns null if no workspace is in context. */
+  /** Returns the Workspace associated with the current API key or session. Useful for confirming which workspace a request is scoped to. Returns null if no workspace is in context. Integrations that need the user's approval in the provider (Slack, Microsoft Teams, Discord, Linear, Jira, GitHub, Shortcut, incident.io, Rootly, HubSpot, Salesforce, Attio, Intercom, Zendesk, Freshdesk, Help Scout) can't be connected through the API: give the user the full link `https://app.plain.com/workspace/<this workspace's id>/settings/<integration>`, with the real ID filled in, using the integration's page (`slack`, `microsoft-teams`, `discord`, `linear`, `jira`, `github`, `shortcut`, `incidentio`, `rootly`, `hubspot`, `salesforce`, `attio`, `intercom`, `zendesk`, `freshdesk`, `helpscout`), or `https://app.plain.com/workspace/<workspaceId>/settings/integrations` for all of them. Some setup is also done by the user in the app, so give them the full link in the same way, written out from `https://app.plain.com/workspace/w_…` with the real ID and never shortened to `…/settings/…`: inviting people (`settings/members/add`), changing a member's role (`settings/members/<userId>`), API keys (`settings/machine-users/<machineUserId>/api-keys/add`), a role's permissions and thread access (`settings/roles/<customRoleId>`), webhooks (`settings/webhooks/add`) and email settings, including the support email domain (`settings/email`). */
   myWorkspace?: Maybe<Workspace>;
   /** Returns all pending workspace invites sent to the currently authenticated user's email address. Use this to let a user see and act on workspaces they have been invited to join. */
   myWorkspaceInvites: WorkspaceInviteConnection;
@@ -11894,7 +12148,7 @@ export type Query = {
   publicEventRequestBody?: Maybe<Scalars['String']['output']>;
   /** Find threads that are semantically similar to the given thread, ranked by relevance. Each result includes the thread and a distance score (lower means more similar). Useful for surfacing related support history or finding duplicate issues. Requires the `thread:read` permission. */
   relatedThreads: Array<ThreadWithDistance>;
-  /** Returns all roles available in the workspace, including both built-in roles (Owner, Admin, Support, Viewer, None) and any custom roles. Supports cursor-based pagination. Requires the `roles:read` permission. */
+  /** Returns all roles available in the workspace, including both built-in roles (Owner, Admin, Support, Viewer, None) and any custom roles. Supports cursor-based pagination. Each role carries its full permission list, often hundreds of entries, so ask for about 5 roles at a time. Requires the `roles:read` permission. */
   roles: RoleConnection;
   /** Fetches a single saved threads view by its ID. Returns null if no view with the given ID exists in the workspace. */
   savedThreadsView?: Maybe<SavedThreadsView>;
@@ -11935,7 +12189,7 @@ export type Query = {
   searchKnowledgeSources: Array<KnowledgeSourceSearchResult>;
   /**
    * Perform a semantic (vector) search across Plain's own public help center (help.plain.com).
-   * Available to every workspace's Sidekick so it can answer questions about how Plain itself works.
+   * Available to every workspace's Sidekick Agent so it can answer questions about how Plain itself works.
    * Read-only and hard-restricted to Plain's public product documentation; it never returns the
    * caller's own data or any other workspace's content. Returns up to `pageSize` results
    * (default 10, max 50) ranked by relevance.
@@ -11953,7 +12207,7 @@ export type Query = {
    * @deprecated Use searchAccounts instead
    */
   searchTenants: TenantSearchResultConnection;
-  /** Searches for external entities (e.g. Jira issues) that can be linked to a thread. Filter by `sourceType` to scope the search to a specific issue tracker, and provide a free-text `searchQuery` to match against issue titles or identifiers. Returns candidates that can then be passed to `createThreadLink`. Requires a connected issue tracker integration for the specified source type. */
+  /** Searches issue trackers (GitHub issues, Shortcut stories, incident.io and Rootly incidents) for issues that can be linked to a thread. Filter by `sourceType` to scope the search to a specific issue tracker, and provide a free-text `searchQuery` to match against issue titles or identifiers. Returns candidates that can then be passed to `createThreadLink`. Requires a connected issue tracker integration for the specified source type. */
   searchThreadLinkCandidates: ThreadLinkCandidateConnection;
   /**
    * Searches for slack users in a thread based on a search term.
@@ -11966,16 +12220,16 @@ export type Query = {
   serviceAuthorization?: Maybe<ServiceAuthorization>;
   /**
    * List all completed service authorizations for the workspace. Only authorizations with status CONNECTED or REINSTALL_REQUIRED are returned; pending authorizations are excluded.
-   * Optionally filter by serviceIntegrationKey. Supports cursor-based pagination. Requires the `serviceAuthorization:read` permission.
+   * Optionally filter by serviceIntegrationKey. Supports cursor-based pagination. Requires the `serviceAuthorization:read` permission. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/integrations` (never the `<workspaceId>` placeholder), then read this again to confirm.
    */
   serviceAuthorizations: ServiceAuthorizationConnection;
-  /** Returns the SLA policies in the workspace, sorted by name. Pass `filters` to narrow by name or by the target types a policy holds. Supports cursor-based pagination. Requires the `serviceLevelAgreement:read` permission. */
+  /** Returns the SLA policies in the workspace, sorted by name. Pass `filters` to narrow by name or by the target types a policy holds. Supports cursor-based pagination. Requires the `serviceLevelAgreement:read` permission. Deleting a policy is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slas/<policy id>` (never the `<workspaceId>` placeholder). */
   serviceLevelAgreementPolicies: ServiceLevelAgreementPolicyConnection;
-  /** Returns a single SLA policy by its Plain ID. Returns null if no policy with that ID exists. Requires the `serviceLevelAgreement:read` permission. */
+  /** Returns a single SLA policy by its Plain ID. Returns null if no policy with that ID exists. Requires the `serviceLevelAgreement:read` permission. Deleting a policy is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slas/<policy id>` (never the `<workspaceId>` placeholder). */
   serviceLevelAgreementPolicy?: Maybe<ServiceLevelAgreementPolicy>;
   /** Fetch the effective value of a named setting at the given scope. Returns null when the setting has no stored value at that scope and no default applies. Use this to read notification preferences, workflow flags, chat-app configuration, and similar per-scope options. The `code` identifies which setting to read (e.g. `workflow/unassign_thread_after_mark_thread_as_done`) and `scope` pins the context (workspace, user, chat app, Slack channel, etc.). */
   setting?: Maybe<Setting>;
-  /** List the Sidekick tools available to this workspace: Plain tools always, external tools only for connected integrations. */
+  /** List the Sidekick Agent tools available to this workspace: Plain tools always, external tools only for connected integrations. */
   sidekickAvailableTools: Array<SidekickAvailableTool>;
   /** The workspace's current Sidekick (Plain) credit balance: the monthly allowance grant/used/remaining and when it resets, plus any purchased top-up remaining. Use it to answer how many credits are left. Requires the `billing:read` permission. */
   sidekickCreditBalance: SidekickCreditBalance;
@@ -11983,22 +12237,22 @@ export type Query = {
   sidekickCreditUsageByDay: SidekickCreditUsageByDay;
   /** A single workspace custom skill, including its instructions, for editing. */
   sidekickCustomSkill?: Maybe<SidekickCustomSkill>;
-  /** Returns every GitHub repository the Sidekick integration (identified by serviceAuthorizationId) can currently see via its OAuth token. Use this list to let users pick which repos Sidekick should focus on before calling updateSidekickGithubConfig. */
+  /** Returns every GitHub repository the Sidekick Agent integration (identified by serviceAuthorizationId) can currently see via its OAuth token. Use this list to let users pick which repos Sidekick Agent should focus on before calling updateSidekickGithubConfig. */
   sidekickGithubAccessibleRepos: Array<SidekickGithubRepo>;
-  /** Returns the Sidekick GitHub configuration for a workspace: which repositories are selected for Sidekick to use and any workspace-level or per-repo operating instructions. Returns null when no configuration has been saved yet. */
+  /** Returns the Sidekick Agent GitHub configuration for a workspace: which repositories are selected for Sidekick Agent to use and any workspace-level or per-repo operating instructions. Returns null when no configuration has been saved yet. */
   sidekickGithubServiceConfig?: Maybe<SidekickGithubServiceConfig>;
   /** A single custom MCP server by id, or null if it does not exist in this workspace. */
   sidekickMcpServer?: Maybe<SidekickMcpServer>;
-  /** The custom (customer-owned) MCP servers registered for Sidekick in this workspace. */
+  /** The custom (customer-owned) MCP servers registered for Sidekick Agent in this workspace. */
   sidekickMcpServers: Array<SidekickMcpServer>;
-  /** Returns the Sidekick PostHog configuration for a workspace, including any operating instructions and the default project the agent queries. Returns null when no configuration has been saved yet. */
+  /** Returns the Sidekick Agent PostHog configuration for a workspace, including any operating instructions and the default project the agent queries. Returns null when no configuration has been saved yet. */
   sidekickPosthogServiceConfig?: Maybe<SidekickPosthogServiceConfig>;
-  /** Returns the Sidekick configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog have their own configuration shapes — use sidekickGithubServiceConfig / sidekickPosthogServiceConfig instead. */
+  /** Returns the Sidekick Agent configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick Agent uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog have their own configuration shapes — use sidekickGithubServiceConfig / sidekickPosthogServiceConfig instead. */
   sidekickServiceConfig?: Maybe<SidekickServiceConfig>;
-  /** Returns workspace-level Sidekick settings, including the custom prompt that is appended to every Sidekick session's system prompt and the tools selected during onboarding. Always returns an object. customPrompt is null when not configured. preferredIntegrations is empty when none are selected. */
+  /** Returns workspace-level Sidekick Agent settings, including the custom prompt that is appended to every Sidekick Agent session's system prompt and the tools selected during onboarding. Always returns an object. customPrompt is null when not configured. preferredIntegrations is empty when none are selected. */
   sidekickSettings: SidekickSettings;
   /**
-   * Every skill available to Sidekick in this workspace: Plain's system skills
+   * Every skill available to Sidekick Agent in this workspace: Plain's system skills
    * plus the workspace's custom skills, each with its effective enabled state.
    */
   sidekickSkills: Array<SidekickSkill>;
@@ -12076,6 +12330,19 @@ export type Query = {
   thread?: Maybe<Thread>;
   /** Fetch a thread by the external ID you assigned it, scoped to a specific customer. Because `externalId` is only unique per-customer, both `customerId` and `externalId` are required. Returns null if no match. Requires the `thread:read` permission. */
   threadByExternalId?: Maybe<Thread>;
+  /**
+   * Resolves a Microsoft Teams message to the Plain thread its conversation is on. If the message's
+   * thread was closed and the conversation continued in a successor thread, returns the open
+   * successor; if there is no open successor, returns the closed thread, which has `lockedAt`
+   * set. Returns null if Plain has not ingested the message. For a channel post, pass the root
+   * post's ID.
+   *
+   * After `createThreadFromMSTeamsMessage` returns no thread, poll this query until it returns a
+   * thread whose `lockedAt` is null. While the first thread is being created it returns null;
+   * while a successor to a closed thread is being created it returns the closed thread. Requires
+   * the `thread:read` permission.
+   */
+  threadByMSTeamsMessage?: Maybe<Thread>;
   /** Fetch a thread by its human-readable ref (e.g. `T-1234`). Useful when the ref is more convenient to store than the internal ID. Returns null if no match. Requires the `thread:read` permission. */
   threadByRef?: Maybe<Thread>;
   /**
@@ -12110,7 +12377,7 @@ export type Query = {
   threadDiscussion?: Maybe<ThreadDiscussion>;
   /** Fetches a single thread field schema by its ID. Returns null if no schema with the given ID exists. Selecting the `createdBy`/`updatedBy` actor down to its `user` additionally requires the `user:read` permission. */
   threadFieldSchema?: Maybe<ThreadFieldSchema>;
-  /** Returns all thread field schemas defined in the workspace, paginated. Use this to discover which custom fields exist and their configuration before reading or writing thread field values. Selecting the `createdBy`/`updatedBy` actor down to its `user` additionally requires the `user:read` permission; a token without it can query an empty workspace but starts failing once a schema exists and that selection is present. */
+  /** Returns all thread field schemas defined in the workspace, paginated. Use this to discover which custom fields exist and their configuration before reading or writing thread field values. Selecting the `createdBy`/`updatedBy` actor down to its `user` additionally requires the `user:read` permission; a token without it can query an empty workspace but starts failing once a schema exists and that selection is present. Deleting a schema, which removes its value from every thread, is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/thread-fields` (never the `<workspaceId>` placeholder). */
   threadFieldSchemas: ThreadFieldSchemaConnection;
   /**
    * Fetch a heatmap metric for threads with filter support, distributing thread activity across a
@@ -12147,9 +12414,9 @@ export type Query = {
   threads: ThreadConnection;
   /** Fetch all threads that share the given external ID, returned as a paginated connection. Unlike `threadByExternalId`, this is not scoped to a customer: because `externalId` is only unique per-customer, the same external ID can appear on threads belonging to different customers, and this query returns all of them. Returns an empty connection if there are no matches. Requires the `thread:read` permission. */
   threadsByExternalId: ThreadsByExternalIdConnection;
-  /** Returns a single tier by its Plain ID. Returns null if no tier with that ID exists. Requires the `tier:read` permission. */
+  /** Returns a single tier by its Plain ID. Returns null if no tier with that ID exists. Requires the `tier:read` permission. Deleting a tier is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/tiers/<tierId>` (never the `<workspaceId>` placeholder). */
   tier?: Maybe<Tier>;
-  /** Returns all tiers in the workspace, sorted by creation date. Supports cursor-based pagination. Requires the `tier:read` permission. */
+  /** Returns all tiers in the workspace, sorted by creation date. Supports cursor-based pagination. Requires the `tier:read` permission. Deleting a tier is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/tiers/<tierId>` (never the `<workspaceId>` placeholder). */
   tiers: TierConnection;
   /**
    * Fetch a named time-series metric for the workspace, returning data points bucketed over a time range.
@@ -12170,7 +12437,7 @@ export type Query = {
   timelineEntries: TimelineEntryConnection;
   /** Fetches a single timeline entry by its ID within a customer's timeline. Returns null if the entry does not exist. */
   timelineEntry?: Maybe<TimelineEntry>;
-  /** Fetch a single workspace member by their ID. Returns null if no user with that ID exists. Requires the `user:read` permission. */
+  /** Fetch a single workspace member by their ID. Returns null if no user with that ID exists. Requires the `user:read` permission. Changing a member's role is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/members/<userId>` (never the `<workspaceId>` placeholder). */
   user?: Maybe<User>;
   /**
    * Returns the Discord OAuth URL for a user to personally authenticate with Discord.
@@ -12196,13 +12463,13 @@ export type Query = {
   userByEmail?: Maybe<User>;
   /** Returns the Slack channels the current user belongs to within the given Slack workspace. Useful for populating channel pickers in UI integrations. */
   userSlackChannelMemberships: Array<SlackChannelMembership>;
-  /** List all human members of the workspace, with optional filters to narrow results by role assignability. Supports cursor-based pagination. Requires the `user:read` permission. */
+  /** List all human members of the workspace, with optional filters to narrow results by role assignability. Supports cursor-based pagination. Requires the `user:read` permission. Inviting people and changing their roles are done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/members/add` (never the `<workspaceId>` placeholder), or `…/settings/members/<userId>` to change a member's role. */
   users: UserConnection;
   /** List delivery attempts for a webhook target, newest first. Each attempt records the event that was delivered, when it was attempted, how long it took, and whether it succeeded or failed. Use the optional `filters` argument to narrow results by event type or result status — useful for surfacing recent failures in your own observability tooling. Requires the `webhookTarget:read` permission. */
   webhookDeliveryAttempts: WebhookDeliveryAttemptConnection;
-  /** Fetch a single webhook target by its ID. Returns null if no target with that ID exists in the workspace. Requires the `webhookTarget:read` permission. */
+  /** Fetch a single webhook target by its ID. Returns null if no target with that ID exists in the workspace. Requires the `webhookTarget:read` permission. Creating, changing and deleting webhook targets are done by the user in the Plain app, because a webhook sends workspace events to an outside URL. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/webhooks/<webhookTargetId>` (never the `<workspaceId>` placeholder), or `…/settings/webhooks/add` for a new one. */
   webhookTarget?: Maybe<WebhookTarget>;
-  /** List all webhook targets registered in the workspace, paginated. Returns every endpoint Plain is configured to deliver events to. Requires the `webhookTarget:read` permission. */
+  /** List all webhook targets registered in the workspace, paginated. Returns every endpoint Plain is configured to deliver events to. Requires the `webhookTarget:read` permission. Creating, changing and deleting webhook targets are done by the user in the Plain app, because a webhook sends workspace events to an outside URL. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/webhooks/add` (never the `<workspaceId>` placeholder), or `…/settings/webhooks/<webhookTargetId>` for an existing one. */
   webhookTargets: WebhookTargetConnection;
   /** List all available webhook schema versions. Use this to discover which versions you can pin a webhook target to, and to check whether a version you are already using has been deprecated. Requires the `webhookTarget:read` permission. */
   webhookVersions: WebhookVersionConnection;
@@ -12218,11 +12485,13 @@ export type Query = {
    * Workflows are the step-based automation model that supports conditions, actions, and wait steps connected in a graph.
    */
   workflow?: Maybe<Workflow>;
+  /** How to build or edit a workflow with these tools, as markdown: the trigger events, every condition and action payload with its fields, how steps connect, and how to publish and link to the result. Read it before creating or changing a workflow. Requires the `workflowRule:read` permission. */
+  workflowBuilderGuide: Scalars['String']['output'];
   /**
    * Returns which blocks (condition/action/wait steps) are available for a workflow of the given
    * trigger type. The builder UI sources its palette from this so the allow-list lives in the
    * backend, not hardcoded in the UI. E.g. SCHEDULE workflows have no thread, so they allow no
-   * conditions/waits and only a restricted set of action types.
+   * conditions/waits and only a restricted set of action types. Read `workflowBuilderGuide` first for the trigger events and every step payload.
    */
   workflowCapabilities: WorkflowCapabilities;
   /**
@@ -12286,47 +12555,51 @@ export type Query = {
    * Redirect the user to the returned URL to begin the OAuth flow; after authorization Discord will redirect back to the provided `redirectUrl` with an `authCode` you can pass to `createWorkspaceDiscordChannelIntegration`.
    */
   workspaceDiscordChannelInstallationInfo: WorkspaceDiscordChannelInstallationInfo;
-  /** Fetches a single workspace Discord channel integration by its ID. Returns null if no integration with that ID exists. */
+  /** Fetches a single workspace Discord channel integration by its ID. Returns null if no integration with that ID exists. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/discord` (never the `<workspaceId>` placeholder), which takes them straight to Discord to approve, then read this again to confirm. */
   workspaceDiscordChannelIntegration?: Maybe<WorkspaceDiscordChannelIntegration>;
-  /** Returns a paginated list of all Discord server (guild) channel integrations connected to this workspace. */
+  /** Returns a paginated list of all Discord server (guild) channel integrations connected to this workspace. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/discord` (never the `<workspaceId>` placeholder), which takes them straight to Discord to approve, then read this again to confirm. */
   workspaceDiscordChannelIntegrations: WorkspaceDiscordChannelIntegrationConnection;
   /** Fetches a single webhook-based workspace Discord integration by its ID. Returns null if not found. */
   workspaceDiscordIntegration?: Maybe<WorkspaceDiscordIntegration>;
   /** Returns a paginated list of all webhook-based Discord integrations configured for this workspace. */
   workspaceDiscordIntegrations: WorkspaceDiscordIntegrationConnection;
-  /** Returns the workspace's email settings, including whether email is enabled, any custom domain configuration, and BCC addresses. */
+  /** Returns the workspace's email settings, including whether email is enabled, any custom domain configuration, and BCC addresses. Changing these settings, including the support email domain, its forwarding and alternate addresses, is done by the user in the Plain app, because they decide where mail is sent from and to. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/email` (never the `<workspaceId>` placeholder). */
   workspaceEmailSettings: WorkspaceEmailSettings;
   /** Returns the workspace's HMAC configuration, including the secret used to sign outbound webhook and HTTP-request payloads. Returns null if no secret has been generated yet. Requires the `workspaceHmac:read` permission. */
   workspaceHmac?: Maybe<WorkspaceHmac>;
-  /** Returns all pending invites for the current workspace. Use this to view outstanding invitations and their status from an admin perspective. */
+  /** Returns all pending invites for the current workspace. Use this to view outstanding invitations and their status from an admin perspective. Inviting someone is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/members/add` (never the `<workspaceId>` placeholder). */
   workspaceInvites: WorkspaceInviteConnection;
   /** Builds the Linear OAuth installation URL for the app actor flow (actor=app). */
   workspaceLinearInstallationInfo: WorkspaceLinearInstallationInfo;
   /** Returns the Microsoft Teams admin-consent URL that a workspace administrator must visit to authorize Plain's bot for the workspace's Azure AD tenant. Pass the URL the user should be redirected to after consent as `redirectUrl`. If the workspace already has an integration, the URL is scoped to that tenant to prevent accidentally consenting in the wrong one. */
   workspaceMSTeamsInstallationInfo: WorkspaceMsTeamsInstallationInfo;
-  /** Returns the workspace-level Microsoft Teams integration, or null if none has been created yet. */
+  /** Returns the workspace-level Microsoft Teams integration, or null if none has been created yet. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/ms-teams` (never the `<workspaceId>` placeholder), which takes them straight to Microsoft Teams to approve, then read this again to confirm. */
   workspaceMSTeamsIntegration?: Maybe<WorkspaceMsTeamsIntegration>;
   /**
    * Returns how far this workspace has progressed through setup: channels, teammates, label
-   * types, tiers, automation and Sidekick tools. Backs both the Onboarding checklist and the
-   * Sidekick onboarding skill, so the two can never disagree.
+   * types, tiers, automation and Sidekick Agent tools. These are the same steps as the Onboarding
+   * checklist the user sees in the Plain app. Connecting the email channel
+   * and inviting teammates are done by the user in the Plain app. Get this workspace's ID and give
+   * the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/email`
+   * or `https://app.plain.com/workspace/w_…/settings/members/add` (never the `<workspaceId>`
+   * placeholder).
    */
   workspaceSetup: WorkspaceSetup;
   /** Returns a Slack OAuth installation URL for connecting a workspace Slack channel integration. Pass this URL to Slack's OAuth flow and exchange the resulting code with createWorkspaceSlackChannelIntegration. */
   workspaceSlackChannelInstallationInfo: WorkspaceSlackChannelInstallationInfo;
-  /** Returns a single workspace Slack channel integration by ID, or null if not found. */
+  /** Returns a single workspace Slack channel integration by ID, or null if not found. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/slack` (never the `<workspaceId>` placeholder), which takes them straight to Slack to approve, then read this again to confirm. */
   workspaceSlackChannelIntegration?: Maybe<WorkspaceSlackChannelIntegration>;
-  /** Returns a paginated list of all workspace Slack channel integrations for this workspace. */
+  /** Returns a paginated list of all workspace Slack channel integrations for this workspace. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/slack` (never the `<workspaceId>` placeholder), which takes them straight to Slack to approve, then read this again to confirm. */
   workspaceSlackChannelIntegrations: WorkspaceSlackChannelIntegrationConnection;
   /** Returns a Slack OAuth installation URL for connecting a workspace-level Slack notifications integration. Pass this URL to Slack's OAuth flow and exchange the resulting code with createWorkspaceSlackIntegration. */
   workspaceSlackInstallationInfo: WorkspaceSlackInstallationInfo;
-  /** Returns a single workspace-level Slack notifications integration by ID, or null if not found. */
+  /** Returns a single workspace-level Slack notifications integration by ID, or null if not found. A Slack channel integration's ID (from `workspaceSlackChannelIntegrations`) returns null here; to connect notifications through one, use `createWorkspaceSlackIntegrationFromAuth`. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slack` (never the `<workspaceId>` placeholder), then read this again to confirm. */
   workspaceSlackIntegration?: Maybe<WorkspaceSlackIntegration>;
-  /** Returns a paginated list of all workspace-level Slack notifications integrations for this workspace. */
+  /** Returns a paginated list of all workspace-level Slack notifications integrations for this workspace. For the Slack teams connected for support channels, use `workspaceSlackChannelIntegrations`. To connect notifications through a Slack channel integration the workspace already has, use `createWorkspaceSlackIntegrationFromAuth`. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slack` (never the `<workspaceId>` placeholder), then read this again to confirm. */
   workspaceSlackIntegrations: WorkspaceSlackIntegrationConnection;
-  /** Returns the OAuth installation URL to begin installing Plain's Sidekick AI agent into your Slack workspace. Pass the returned URL to your users to redirect them through Slack's OAuth flow; on completion, pass the resulting auth code to createWorkspaceSlackSidekickIntegration. */
+  /** Returns the OAuth installation URL to begin installing Plain's Sidekick Agent into your Slack workspace. Pass the returned URL to your users to redirect them through Slack's OAuth flow; on completion, pass the resulting auth code to createWorkspaceSlackSidekickIntegration. */
   workspaceSlackSidekickInstallationInfo: WorkspaceSlackSidekickInstallationInfo;
-  /** Returns the current workspace's Slack Sidekick integration, or null if Sidekick has not been installed. Requires the workspaceSlackSidekickIntegration:read permission. */
+  /** Returns the current workspace's Slack Sidekick Agent integration, or null if Sidekick Agent has not been installed. Requires the workspaceSlackSidekickIntegration:read permission. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slack` (never the `<workspaceId>` placeholder), then read this again to confirm. */
   workspaceSlackSidekickIntegration?: Maybe<WorkspaceSlackSidekickIntegration>;
 };
 
@@ -12664,6 +12937,11 @@ export type QueryGeneratedRepliesArgs = {
 };
 
 
+export type QueryGeneratedReplyStateArgs = {
+  threadId: Scalars['ID']['input'];
+};
+
+
 export type QueryGetMsTeamsMembersForChannelArgs = {
   msTeamsChannelId: Scalars['ID']['input'];
   msTeamsTeamId: Scalars['ID']['input'];
@@ -12844,11 +13122,6 @@ export type QueryMachineUsersArgs = {
   filters?: InputMaybe<MachineUsersFilter>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QueryMemberSeatCapCheckArgs = {
-  input: MemberSeatCapCheckInput;
 };
 
 
@@ -13226,6 +13499,11 @@ export type QueryThreadArgs = {
 export type QueryThreadByExternalIdArgs = {
   customerId: Scalars['ID']['input'];
   externalId: Scalars['ID']['input'];
+};
+
+
+export type QueryThreadByMsTeamsMessageArgs = {
+  msTeamsMessageId: Scalars['ID']['input'];
 };
 
 
@@ -13630,7 +13908,7 @@ export type QueryWorkspaceSlackSidekickInstallationInfoArgs = {
 };
 
 /**
- * A user message that has been submitted to a Sidekick AGENT_SESSION
+ * A user message that has been submitted to a Sidekick Agent AGENT_SESSION
  * discussion while the agent was mid-turn. Lives in the queue until the
  * agent picks it up. Once picked up, it's promoted to a regular
  * ThreadDiscussionMessage and removed from the queue.
@@ -13903,6 +14181,34 @@ export type ReplyToThreadOutput = {
   error?: Maybe<MutationError>;
 };
 
+export type RequestDiscussionQuestionInput = {
+  discussionId: Scalars['ID']['input'];
+  /** 1-4 questions. A card holds at most 8 across every ask. */
+  questions: Array<RequestDiscussionQuestionItemInput>;
+};
+
+export type RequestDiscussionQuestionItemInput = {
+  /** True when several options can be picked; false when the person picks one option or types an answer. */
+  isMultiSelect: Scalars['Boolean']['input'];
+  /** 2-4 options. Put the one you recommend first. */
+  options: Array<RequestDiscussionQuestionOptionInput>;
+  /** 1-500 characters. */
+  question: Scalars['String']['input'];
+};
+
+export type RequestDiscussionQuestionOptionInput = {
+  /** 1-240 characters. */
+  description: Scalars['String']['input'];
+  /** 1-80 characters, unique within the question. Do not add an Other option; the card has one. */
+  label: Scalars['String']['input'];
+};
+
+export type RequestDiscussionQuestionOutput = {
+  error?: Maybe<MutationError>;
+  /** The pending card, with every question on it. Its questionRequestId is what discussion.question_resolved carries. */
+  question?: Maybe<ThreadDiscussionQuestionEntryPayload>;
+};
+
 export type RequestDiscussionToolCallApprovalInput = {
   discussionId: Scalars['ID']['input'];
   /** Why the agent needs the call approved, in its own words. Shown on the card the reviewer sees. */
@@ -13913,6 +14219,15 @@ export type RequestDiscussionToolCallApprovalInput = {
 
 export type RequestDiscussionToolCallApprovalOutput = {
   approval?: Maybe<ThreadDiscussionToolCallApprovalEntryPayload>;
+  error?: Maybe<MutationError>;
+};
+
+export type RequestGeneratedReplyInput = {
+  threadId: Scalars['ID']['input'];
+  timelineEntryId: Scalars['ID']['input'];
+};
+
+export type RequestGeneratedReplyOutput = {
   error?: Maybe<MutationError>;
 };
 
@@ -13988,6 +14303,8 @@ export type Role = {
   name: Scalars['String']['output'];
   /** The list of permission strings granted to users who hold this role. */
   permissions: Array<Scalars['String']['output']>;
+  /** Decides which role wins when a user is given more than one through SSO or directory sync. Higher wins. Built-in roles are fixed at 5000 (owner), 4000 (admin), 3000 (support), 2000 (viewer) and 1000 (none). */
+  priority: Scalars['Int']['output'];
   /** @deprecated Don't use. Will be removed soon. */
   requiresBillableSeat: Scalars['Boolean']['output'];
 };
@@ -14041,6 +14358,12 @@ export type RoleKey =
   | 'OWNER'
   | 'SUPPORT'
   | 'VIEWER';
+
+/** One role in a role priority order. Set exactly one of `key` or `customRoleId`. */
+export type RolePriorityOrderEntryInput = {
+  customRoleId?: InputMaybe<Scalars['ID']['input']>;
+  key?: InputMaybe<RoleKey>;
+};
 
 export type RoleScope = {
   /** Whether users see all threads, only threads matching specific values, or all threads except those matching specific values. */
@@ -14378,12 +14701,12 @@ export type SendDiscordMessageOutput = {
 export type SendDiscussionMessageInput = {
   /**
    * Customer-scoped attachments. Used by EMAIL / SLACK / CURSOR discussions.
-   * Sidekick AGENT_SESSION discussions use workspaceFileIds instead.
+   * Sidekick Agent AGENT_SESSION discussions use workspaceFileIds instead.
    */
   attachmentIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   discussionId: Scalars['ID']['input'];
   markdownContent: Scalars['String']['input'];
-  /** Workspace-scoped files. Used by Sidekick AGENT_SESSION discussions. */
+  /** Workspace-scoped files. Used by Sidekick Agent AGENT_SESSION discussions. */
   workspaceFileIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
@@ -14610,7 +14933,7 @@ export type ServiceLevelAgreementInput = {
   /** Set this to configure a total-resolution-time SLA. The clock starts when the thread arrives and continues across reopenings until the thread is marked Done. */
   totalResolutionTimeMinutes?: InputMaybe<Scalars['Int']['input']>;
   /**
-   * If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
+   * If true, the SLA is linked to your workspace's business hours schedule and only tracked during it. Only works when the workspace has exactly one schedule. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
    * @deprecated Use businessHoursScheduleIds to specify which business hours are linked to this SLA.
    */
   useBusinessHoursOnly?: InputMaybe<Scalars['Boolean']['input']>;
@@ -14684,7 +15007,7 @@ export type ServiceLevelAgreementPolicyTarget = {
 };
 
 export type ServiceLevelAgreementPolicyTargetInput = {
-  /** The business hours schedules to track this target against. Leave it out or pass an empty array for the target to be tracked 24/7; leave it out when updating and the target keeps the schedules it already has. */
+  /** The business hours schedules to track this target against. Every target in the policy that uses business hours must reference the same schedules. Leave it out or pass an empty array for the target to be tracked 24/7; leave it out when updating and the target keeps the schedules it already has. */
   businessHoursScheduleIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** This target will breach if the SLA is not met within this many minutes. */
   minutes: Scalars['Int']['input'];
@@ -14953,7 +15276,7 @@ export type ShareThreadToUserInSlackOutput = {
   error?: Maybe<MutationError>;
 };
 
-/** A tool available to Sidekick in this workspace. */
+/** A tool available to Sidekick Agent in this workspace. */
 export type SidekickAvailableTool = {
   /** The workspace's effective approval mode (override merged over factory default): `not_required`, `approval_required`, or `disabled`. Disabled tools are rejected at runtime even if granted; `approval_required` tools granted to a workflow step run without a human approval. */
   approvalMode: Scalars['String']['output'];
@@ -14965,7 +15288,7 @@ export type SidekickAvailableTool = {
   displayName: Scalars['String']['output'];
   /** The operation identifier, e.g. `thread.addLabels` or `chat.postMessage`. */
   op: Scalars['String']['output'];
-  /** Whether the op observes or mutates: `read`, `write`, or `destructive`. Reads are granted automatically to a restricted Sidekick session for any service it has at least one granted tool on, so pickers should offer writes as the selectable actions. */
+  /** Whether the op observes or mutates: `read`, `write`, or `destructive`. Reads are granted automatically to a restricted Sidekick Agent session for any service it has at least one granted tool on, so pickers should offer writes as the selectable actions. */
   risk: Scalars['String']['output'];
   /** The service the tool belongs to, e.g. `plain`, `slack`. */
   service: Scalars['String']['output'];
@@ -14979,7 +15302,7 @@ export type SidekickConnectRequestTool = {
   /** True once the workspace has authorized this integration. */
   isConnected: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
-  /** Sidekick integration slug, e.g. `linear`. Matches the settings deep-link segment. */
+  /** Sidekick Agent integration slug, e.g. `linear`. Matches the settings deep-link segment. */
   slug: Scalars['String']['output'];
 };
 
@@ -15045,20 +15368,20 @@ export type SidekickCreditUsageDay = {
   sessionCount: Scalars['Int']['output'];
 };
 
-/** A workspace-authored Sidekick skill, including its instructions body. */
+/** A workspace-authored Sidekick Agent skill, including its instructions body. */
 export type SidekickCustomSkill = {
   description: Scalars['String']['output'];
   /** Human-readable display name set by the workspace. */
   displayName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  /** The SKILL.md body Sidekick follows when the skill runs. */
+  /** The SKILL.md body Sidekick Agent follows when the skill runs. */
   instructions: Scalars['String']['output'];
   isEnabled: Scalars['Boolean']['output'];
   /** URL-safe slug; the skill's /-invocation name and sandbox directory name. */
   name: Scalars['String']['output'];
 };
 
-/** A GitHub repository the workspace's Sidekick GitHub integration has access to. */
+/** A GitHub repository the workspace's Sidekick Agent GitHub integration has access to. */
 export type SidekickGithubRepo = {
   name: Scalars['String']['output'];
   owner: Scalars['String']['output'];
@@ -15067,7 +15390,7 @@ export type SidekickGithubRepo = {
 };
 
 /**
- * A repository to select for the workspace's Sidekick GitHub integration,
+ * A repository to select for the workspace's Sidekick Agent GitHub integration,
  * with optional per-repo operating instructions.
  */
 export type SidekickGithubRepoInput = {
@@ -15079,7 +15402,7 @@ export type SidekickGithubRepoInput = {
   repoId: Scalars['ID']['input'];
 };
 
-/** A repository selected for the workspace's Sidekick GitHub integration. */
+/** A repository selected for the workspace's Sidekick Agent GitHub integration. */
 export type SidekickGithubSelectedRepo = {
   name: Scalars['String']['output'];
   /** Free-text guidance for the agent that is specific to this repository. */
@@ -15089,13 +15412,13 @@ export type SidekickGithubSelectedRepo = {
 };
 
 /**
- * The Sidekick GitHub configuration for a workspace: selected repositories
+ * The Sidekick Agent GitHub configuration for a workspace: selected repositories
  * and operating instructions.
  */
 export type SidekickGithubServiceConfig = {
   /** Free-text guidance for the agent that applies across the workspace. */
   operatingInstructions?: Maybe<Scalars['String']['output']>;
-  /** The repositories Sidekick is configured to read from, each with optional per-repo operating instructions. */
+  /** The repositories Sidekick Agent is configured to read from, each with optional per-repo operating instructions. */
   selectedRepos: Array<SidekickGithubSelectedRepo>;
 };
 
@@ -15130,7 +15453,7 @@ export type SidekickMcpIcon = {
   src: Scalars['String']['output'];
 };
 
-/** A customer-owned MCP server registered for Sidekick. Sidekick reaches it only via the trusted proxy (the customer credential never enters the sandbox). */
+/** A customer-owned MCP server registered for Sidekick Agent. Sidekick Agent reaches it only via the trusted proxy (the customer credential never enters the sandbox). */
 export type SidekickMcpServer = {
   /** For API-key servers, the auth attachments (name + placement) the key(s) are sent in, e.g. Authorization as a header. Empty for OAuth servers. The secret values are never exposed. */
   authParams: Array<SidekickMcpAuthParam>;
@@ -15138,7 +15461,7 @@ export type SidekickMcpServer = {
   /** The server's own icons, captured from its serverInfo at discovery. Empty if it declares none. */
   icons: Array<SidekickMcpIcon>;
   id: Scalars['ID']['output'];
-  /** False until completeSidekickMcpServerConnection succeeds. Sidekick ignores a server that is not connected. */
+  /** False until completeSidekickMcpServerConnection succeeds. Sidekick Agent ignores a server that is not connected. */
   isConnected: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   operatingInstructions?: Maybe<Scalars['String']['output']>;
@@ -15162,7 +15485,7 @@ export type SidekickMcpTool = {
 };
 
 /**
- * The Sidekick PostHog configuration for a workspace: operating
+ * The Sidekick Agent PostHog configuration for a workspace: operating
  * instructions plus the default project the agent queries.
  */
 export type SidekickPosthogServiceConfig = {
@@ -15207,7 +15530,7 @@ export type SidekickQuestionStatus =
   | 'PENDING';
 
 /**
- * The Sidekick configuration for a connected service whose only
+ * The Sidekick Agent configuration for a connected service whose only
  * user-editable setting is its operating instructions. Covers Datadog,
  * Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira,
  * Granola and LaunchDarkly. The access scope of each service is enforced
@@ -15224,30 +15547,30 @@ export type SidekickServiceConfig = {
   serviceAuthorizationId: Scalars['ID']['output'];
 };
 
-/** A change to one of the current user's Sidekick sessions; the subscription that delivers it says what changed. */
+/** A change to one of the current user's Sidekick Agent sessions; the subscription that delivers it says what changed. */
 export type SidekickSessionsChange = {
   discussionId: Scalars['ID']['output'];
 };
 
 /**
- * Workspace-level settings for Sidekick. Wrapper type so additional settings
+ * Workspace-level settings for Sidekick Agent. Wrapper type so additional settings
  * can be added without breaking existing clients.
  */
 export type SidekickSettings = {
-  /** Free-text instructions appended to Sidekick's system prompt for every session in this workspace, allowing teams to tailor its behavior (tone, escalation rules, domain knowledge, etc.). Null when no custom prompt has been configured. */
+  /** Free-text instructions appended to Sidekick Agent's system prompt for every session in this workspace, allowing teams to tailor its behavior (tone, escalation rules, domain knowledge, etc.). Null when no custom prompt has been configured. */
   customPrompt?: Maybe<Scalars['String']['output']>;
   /** Catalog slugs for the tools this workspace said they use during onboarding. Empty when none are selected. */
   preferredIntegrations: Array<Scalars['String']['output']>;
 };
 
 /**
- * A skill available to Sidekick in this workspace, with its effective enabled
+ * A skill available to Sidekick Agent in this workspace, with its effective enabled
  * state. The concrete type (SystemSidekickSkill or CustomSidekickSkill)
  * indicates how the skill is provided. Use the sidekickCustomSkill query to
  * load a custom skill's instructions.
  */
 export type SidekickSkill = {
-  /** What the skill does and when Sidekick should use it. */
+  /** What the skill does and when Sidekick Agent should use it. */
   description: Scalars['String']['output'];
   /** Human-readable display name. */
   displayName: Scalars['String']['output'];
@@ -15709,7 +16032,7 @@ export type StringSetting = {
 };
 
 export type Subscription = {
-  /** Streams incremental text tokens from a running Sidekick agent session. Subscribe with the agentSessionId returned when starting a session; each event carries a text chunk of the in-progress assistant message, to be placed by its `sequence`. The stream ends when the session status transitions to IDLE or an error occurs. */
+  /** Streams incremental text tokens from a running Sidekick Agent session. Subscribe with the agentSessionId returned when starting a session; each event carries a text chunk of the in-progress assistant message, to be placed by its `sequence`. The stream ends when the session status transitions to IDLE or an error occurs. */
   agentSessionDelta: AgentSessionDelta;
   /**
    * Subscribes to customer card instance changes for a given customer.
@@ -15732,9 +16055,9 @@ export type Subscription = {
    * Requires the `user:read` permission.
    */
   internalNotificationChanges: InternalNotificationChange;
-  /** Fires for the current user whenever a Sidekick session they created, run by Plain's Sidekick or a custom agent, changes status: its agent starts working, waits on a tool call approval or settles, or the session is resolved or reopened. Delivered only to the session's creator, and it covers sessions started outside the app, such as one a workflow the user ran started on their behalf, so a session list can show them while they work. Use the returned discussionId to refetch; unlike sidekickSessionsChanged it does not mean the session is unread. */
+  /** Fires for the current user whenever a Sidekick Agent session they created, run by Plain's Sidekick Agent or a custom agent, changes status: its agent starts working, waits on a tool call approval or settles, or the session is resolved or reopened. Delivered only to the session's creator, and it covers sessions started outside the app, such as one a workflow the user ran started on their behalf, so a session list can show them while they work. Use the returned discussionId to refetch; unlike sidekickSessionsChanged it does not mean the session is unread. */
   sidekickSessionStatusChanged: SidekickSessionsChange;
-  /** Fires for the current user whenever one of their Sidekick sessions receives a new agent response and becomes unread (i.e. the session settles into IDLE). Use the returned discussionId to refetch or highlight the relevant session. The session becomes read again when it is opened or explicitly marked read. */
+  /** Fires for the current user whenever one of their Sidekick Agent sessions receives a new agent response and becomes unread (i.e. the session settles into IDLE). Use the returned discussionId to refetch or highlight the relevant session. The session becomes read again when it is opened or explicitly marked read. */
   sidekickSessionsChanged: SidekickSessionsChange;
   /** Real-time subscription that fires whenever a thread is created or updated. Accepts optional filters to limit events by thread status or the time the status last changed. Each event includes the full current thread and a `changeType` indicating whether the thread was created or updated. */
   threadChanges: ThreadChange;
@@ -16145,6 +16468,7 @@ export type TenantFieldFilter = {
 };
 
 export type TenantFieldIdentifier = {
+  /** The tenant field's key, such as `contract_value` (a tenant field schema's `externalFieldId`). */
   externalFieldId: Scalars['ID']['input'];
   /** Plain's internal identifier for the tenant. Provide exactly one of `tenantId` or `tenantIdentifier`. */
   tenantId?: InputMaybe<Scalars['ID']['input']>;
@@ -16246,7 +16570,9 @@ export type TenantFieldUserReferenceValue = {
 export type TenantFieldValue = TenantFieldBooleanValue | TenantFieldDateTimeValue | TenantFieldNumberValue | TenantFieldStringArrayValue | TenantFieldStringValue | TenantFieldTenantReferenceValue | TenantFieldUserReferenceValue;
 
 export type TenantIdentifierInput = {
+  /** Your own ID for the tenant, set when it was created. Not its name: find a tenant by name with `searchTenants`. */
   externalId?: InputMaybe<Scalars['String']['input']>;
+  /** Plain's ID for the tenant, such as `te_01…`. Not the tenant's name. */
   tenantId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -16694,11 +17020,11 @@ export type ThreadConnection = {
 };
 
 export type ThreadDiscussion = {
-  /** The agent that was asked. Null means Plain's Sidekick. */
+  /** The agent that was asked. Null means Plain's Sidekick Agent. */
   agent?: Maybe<MachineUser>;
   /**
-   * The Sidekick agent session backing this discussion, when it has one. Set for
-   * AGENT_SESSION discussions and for SLACK discussions started by a Sidekick
+   * The Sidekick Agent session backing this discussion, when it has one. Set for
+   * AGENT_SESSION discussions and for SLACK discussions started by a Sidekick Agent
    * mention, whose session is linked to the discussion rather than carried in
    * channelDetails. Null for discussions with no agent session.
    */
@@ -16716,7 +17042,7 @@ export type ThreadDiscussion = {
   emailRecipients: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /**
-   * True when the discussion has an unread agent response (set when a Sidekick agent
+   * True when the discussion has an unread agent response (set when a Sidekick Agent
    * session settles into IDLE, cleared when the session is opened / marked read).
    */
   isUnread: Scalars['Boolean']['output'];
@@ -16765,9 +17091,9 @@ export type ThreadDiscussion = {
    * What the agent is doing is reported separately by agentStatus.
    */
   status: ThreadDiscussionStatus;
-  /** The support thread when threadId is set. Null when the discussion has no thread (e.g. some global Sidekick sessions). */
+  /** The support thread when threadId is set. Null when the discussion has no thread (e.g. some global Sidekick Agent sessions). */
   thread?: Maybe<Thread>;
-  /** The ID of the Plain thread this discussion is attached to. Null for global Sidekick agent sessions that were not started from a thread. */
+  /** The ID of the Plain thread this discussion is attached to. Null for global Sidekick Agent sessions that were not started from a thread. */
   threadId?: Maybe<Scalars['ID']['output']>;
   title: Scalars['String']['output'];
   /** @deprecated Use channelDetails instead */
@@ -16802,7 +17128,7 @@ export type ThreadDiscussionAgentStatus =
   | 'IDLE'
   /** The agent is working. */
   | 'IN_PROGRESS'
-  /** The agent has stopped and is waiting on a human to decide one or more tool call approvals. */
+  /** The agent has stopped and is waiting on a human to decide one or more tool call approvals, or to answer a question card. */
   | 'TOOL_CALL_APPROVAL_PENDING'
   /**
    * No agent turn has been observed on this discussion. Usually means no agent is involved at all;
@@ -16815,7 +17141,7 @@ export type ThreadDiscussionApprovalRequestEntryPayload = {
   /** JSON-encoded array of { service, op, maxInvocations, usedCount, args }. */
   calls: Scalars['String']['output'];
   justification: Scalars['String']['output'];
-  /** The Sidekick sandbox lease the approval grants. */
+  /** The Sidekick Agent sandbox lease the approval grants. */
   leaseId: Scalars['ID']['output'];
   resolvedAt?: Maybe<DateTime>;
   resolvedBy?: Maybe<InternalActor>;
@@ -16826,12 +17152,12 @@ export type ThreadDiscussionApprovalRequestEntryPayload = {
 export type ThreadDiscussionChannelDetails = ThreadDiscussionAgentSessionChannelDetails | ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails | ThreadDiscussionEmailChannelDetails | ThreadDiscussionSlackChannelDetails;
 
 /**
- * Sidekick asked the workspace to connect one or more of its tools. Rendered as a
- * card in the Sidekick transcript. Only produced for in-app sessions.
+ * Sidekick Agent asked the workspace to connect one or more of its tools. Rendered as a
+ * card in the Sidekick Agent transcript. Only produced for in-app sessions.
  */
 export type ThreadDiscussionConnectRequestEntryPayload = {
   connectRequestId: Scalars['ID']['output'];
-  /** Why Sidekick needs these tools, in its own words. */
+  /** Why Sidekick Agent needs these tools, in its own words. */
   justification: Scalars['String']['output'];
   /** When every requested tool became connected. Null while the request is pending. */
   resolvedAt?: Maybe<DateTime>;
@@ -16903,7 +17229,7 @@ export type ThreadDiscussionMessage = {
   type: ThreadDiscussionMessageType;
   updatedAt: DateTime;
   updatedBy: Actor;
-  /** Workspace-scoped files. Populated for Sidekick AGENT_SESSION messages. */
+  /** Workspace-scoped files. Populated for Sidekick Agent AGENT_SESSION messages. */
   workspaceFiles: Array<WorkspaceFile>;
 };
 
@@ -16961,9 +17287,9 @@ export type ThreadDiscussionMessageType =
   | 'OUTBOUND';
 
 /**
- * Sidekick asked the person to choose among a few options. Rendered as a card in the
- * Sidekick transcript. Only produced for in-app sessions. The card always offers an
- * Other free-text choice that is not one of `options`.
+ * An agent asked the person to choose among a few options: Sidekick Agent, or a connected agent
+ * through requestDiscussionQuestion. Rendered as a card in the transcript. Only produced for in-app
+ * discussions. The card always offers an Other free-text choice that is not one of `options`.
  */
 export type ThreadDiscussionQuestionEntryPayload = {
   questionRequestId: Scalars['ID']['output'];
@@ -17001,7 +17327,7 @@ export type ThreadDiscussionStatus =
   /** The discussion has been marked as resolved. */
   | 'RESOLVED';
 
-/** A custom agent's approval on one tool call it has already reported. Sidekick's approvals are ThreadDiscussionApprovalRequestEntryPayload. */
+/** A custom agent's approval on one tool call it has already reported. Sidekick Agent's approvals are ThreadDiscussionApprovalRequestEntryPayload. */
 export type ThreadDiscussionToolCallApprovalEntryPayload = {
   approvalId: Scalars['ID']['output'];
   justification: Scalars['String']['output'];
@@ -17020,7 +17346,7 @@ export type ThreadDiscussionToolCallEntryPayload = {
   error?: Maybe<Scalars['String']['output']>;
   op?: Maybe<Scalars['String']['output']>;
   /**
-   * The JSON-encoded response of a successful Sidekick write. Null on reads, failed calls,
+   * The JSON-encoded response of a successful Sidekick Agent write. Null on reads, failed calls,
    * oversized responses and calls an agent reported.
    */
   response?: Maybe<Scalars['String']['output']>;
@@ -17030,13 +17356,13 @@ export type ThreadDiscussionToolCallEntryPayload = {
   status: DiscussionToolCallStatus;
   /**
    * The id the agent reported this call under, and what an approval names to gate it. Null on a
-   * Sidekick call, which Plain reports itself and does not key by an agent-supplied id.
+   * Sidekick Agent call, which Plain reports itself and does not key by an agent-supplied id.
    */
   toolCallId?: Maybe<Scalars['ID']['output']>;
 };
 
 /**
- * A person stopped Sidekick mid-turn. Rendered as a plain line in the transcript so a
+ * A person stopped Sidekick Agent mid-turn. Rendered as a plain line in the transcript so a
  * reader can see why the agent stopped talking. Who stopped it and when are the
  * message's own createdBy and createdAt.
  */
@@ -17238,7 +17564,7 @@ export type ThreadHeatmapMetricInput = {
   mode: ThreadMetricMode;
   /** The clicked cell to drill into. Required when mode is threadIds; rejected otherwise. */
   threadIdsArgs?: InputMaybe<ThreadHeatmapThreadIdsArgs>;
-  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). */
+  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Must not be more than 5 minutes in the future. */
   to: Scalars['String']['input'];
 };
 
@@ -17298,6 +17624,7 @@ export type ThreadLinkCandidateEdge = {
 };
 
 export type ThreadLinkCandidateFilter = {
+  /** One of `github_issue`, `shortcut_issue`, `incidentio_incident` or `rootly_incident`. */
   sourceType: Scalars['String']['input'];
 };
 
@@ -17646,13 +17973,14 @@ export type ThreadSingleValueMetricInput = {
   filters?: InputMaybe<ThreadMetricFilters>;
   /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Required for all metrics except all-time counts (e.g. threads_all_time_count_done), which reject a date range. */
   from?: InputMaybe<Scalars['String']['input']>;
+  /** Required for `agent_*` metrics in METRIC mode: pass `[{ dimension: ASSIGNEE }]`, or another dimension together with `filters.userIds`. */
   groupBy?: InputMaybe<Array<ThreadMetricGroupByInput>>;
   metricName: SingleValueMetricName;
   /** The return mode. Either METRIC - the values of the metric. Or THREAD_IDS - the distinct thread ids behind the values. Use filters and to/from to narrow search if looking for threadsIds for a specific subset */
   mode: ThreadMetricMode;
   /** Percentile (integer 1-99, e.g. 90 for P90) for the configurable-percentile duration metrics (threads_first_response_time, threads_resolution_time, threads_time_customer_waiting, threads_time_between_follow_up_responses, and their agent_ variants). Defaults to 50 (median). Rejected for any other metric. */
   percentile?: InputMaybe<Scalars['Int']['input']>;
-  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Required for all metrics except all-time counts (e.g. threads_all_time_count_done), which reject a date range. */
+  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Must not be more than 5 minutes in the future. Required for all metrics except all-time counts (e.g. threads_all_time_count_done), which reject a date range. */
   to?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -17780,6 +18108,7 @@ export type ThreadTimeSeriesMetricInput = {
   filters?: InputMaybe<ThreadMetricFilters>;
   /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). */
   from: Scalars['String']['input'];
+  /** Required for `agent_*` metrics in METRIC mode: pass `[{ dimension: ASSIGNEE }]`, or another dimension together with `filters.userIds`. */
   groupBy?: InputMaybe<Array<ThreadMetricGroupByInput>>;
   interval: ThreadMetricInterval;
   metricName: TimeSeriesMetricName;
@@ -17787,7 +18116,7 @@ export type ThreadTimeSeriesMetricInput = {
   mode: ThreadMetricMode;
   /** Percentile (integer 1-99, e.g. 90 for P90) for the configurable-percentile duration metrics (threads_first_response_time, threads_resolution_time, threads_time_customer_waiting, threads_time_between_follow_up_responses, threads_time_between_all_responses, and their agent_ variants). Defaults to 50 (median). Rejected for any other metric. */
   percentile?: InputMaybe<Scalars['Int']['input']>;
-  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). */
+  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Must not be more than 5 minutes in the future. */
   to: Scalars['String']['input'];
 };
 
@@ -18012,7 +18341,9 @@ export type TierEdge = {
 };
 
 export type TierIdentifierInput = {
+  /** Your own ID for the tier, set when it was created. Not its name: find a tier by name with `tiers`. */
   externalId?: InputMaybe<Scalars['String']['input']>;
+  /** Plain's ID for the tier, such as `tier_01…`. Not the tier's name. */
   tierId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -18499,13 +18830,13 @@ export type UpdateBroadcastOutput = {
 
 export type UpdateBusinessHoursOverrideInput = {
   businessHoursOverrideId: Scalars['ID']['input'];
-  /** Move the last date (inclusive), in YYYY-MM-DD format. Can't be before today. Dates added are closed; slots on dates removed are dropped. */
+  /** Move the last date (inclusive), in YYYY-MM-DD format. Dates added are closed; slots on dates removed are dropped. */
   endsOn?: InputMaybe<Scalars['String']['input']>;
   /** Rename the override. Omit to leave the name unchanged. */
   name?: InputMaybe<StringInput>;
-  /** Replace the override's slots in full. Slots on dates before today must be sent back unchanged. A date in the range without slots is closed. Omit to leave the hours unchanged. */
+  /** Replace the override's slots in full. A date in the range without slots is closed. Omit to leave the hours unchanged. */
   slots?: InputMaybe<Array<BusinessHoursOverrideSlotInput>>;
-  /** Move the first date, in YYYY-MM-DD format. Can't be before today, and can't change once it is before today. */
+  /** Move the first date, in YYYY-MM-DD format. Can't be moved to before today. Slots on dates removed are dropped. */
   startsOn?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -18530,6 +18861,8 @@ export type UpdateBusinessHoursScheduleOutput = {
 };
 
 export type UpdateChatAppInput = {
+  /** Omit to leave the linked business hours schedules untouched. An empty list unlinks all of them. */
+  businessHoursScheduleIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   chatAppId: Scalars['ID']['input'];
   logo?: InputMaybe<WorkspaceFileInput>;
   name?: InputMaybe<StringInput>;
@@ -18634,6 +18967,7 @@ export type UpdateCustomerGroupOutput = {
 };
 
 export type UpdateCustomerSurveyInput = {
+  /** Which done threads get the survey: by tier, support email, label, priority or message source. */
   conditions?: InputMaybe<Array<CustomerSurveyConditionInput>>;
   conditionsOperator?: InputMaybe<CustomerSurveyConditionsOperator>;
   customerIntervalDays?: InputMaybe<IntInput>;
@@ -18641,6 +18975,7 @@ export type UpdateCustomerSurveyInput = {
   isEnabled?: InputMaybe<BooleanInput>;
   name?: InputMaybe<StringInput>;
   order?: InputMaybe<Scalars['Int']['input']>;
+  /** How many minutes after a thread is marked done the survey is sent. */
   responseDelayMinutes?: InputMaybe<IntInput>;
   template?: InputMaybe<CustomerSurveyTemplateInput>;
 };
@@ -18653,8 +18988,9 @@ export type UpdateCustomerSurveyOutput = {
 export type UpdateDiscussionAgentStatusInput = {
   /**
    * IN_PROGRESS while the agent works, IDLE when it has finished, which also marks the discussion
-   * unread. UNKNOWN and TOOL_CALL_APPROVAL_PENDING are rejected; ask with
-   * requestDiscussionToolCallApproval, which sets the latter itself.
+   * unread. UNKNOWN and TOOL_CALL_APPROVAL_PENDING are rejected, and so is any status while an
+   * approval or question card is open; ask with requestDiscussionToolCallApproval or
+   * requestDiscussionQuestion, which set the latter themselves.
    */
   agentStatus: ThreadDiscussionAgentStatus;
   discussionId: Scalars['ID']['input'];
@@ -18701,7 +19037,9 @@ export type UpdateHelpCenterArticleCopyOptionsInput = {
 };
 
 export type UpdateHelpCenterArticleGroupInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
   helpCenterArticleGroupId: Scalars['ID']['input'];
+  icon?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -18740,12 +19078,30 @@ export type UpdateHelpCenterInput = {
   color?: InputMaybe<StringInput>;
   description?: InputMaybe<Scalars['String']['input']>;
   favicon?: InputMaybe<HelpCenterThemedImageInput>;
+  /** Replaces the ordered featured homepage list and syncs each article item with that article's featured flag. Omit to leave it unchanged. */
+  featuredHomepageItems?: InputMaybe<Array<HelpCenterFeaturedHomepageItemInput>>;
   headCustomJs?: InputMaybe<StringInput>;
   helpCenterId: Scalars['ID']['input'];
+  /** Omit to leave unchanged. */
+  heroAlignment?: InputMaybe<HelpCenterHeroAlignment>;
+  /** Omit to leave unchanged. Null or blank keeps the public default (How can we help?). */
+  heroHeading?: InputMaybe<Scalars['String']['input']>;
+  /** Omit to leave unchanged. Null or blank keeps the public default, Search help center. */
+  heroSearchPlaceholder?: InputMaybe<Scalars['String']['input']>;
+  /** Omit to leave unchanged. Null or blank keeps the public default, Search the help center, or browse by topic. */
+  heroSubheading?: InputMaybe<Scalars['String']['input']>;
   internalName?: InputMaybe<Scalars['String']['input']>;
   isChatEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   isCustomerFacingAiEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  isLinkCardsEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  isPopularTopicsEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  linkCards?: InputMaybe<Array<HelpCenterLinkCardInput>>;
+  linkCardsHeading?: InputMaybe<Scalars['String']['input']>;
   logo?: InputMaybe<HelpCenterThemedImageInput>;
+  /** Replaces the stored popular topic article order by filling column one (up to 5) and then column two. Omit to leave it unchanged. At most 10 published articles from this help center. Ignored when popularTopicColumns is also set. */
+  popularTopicArticleIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Replaces both popular topic columns. Omit to leave them unchanged. Each column has at most 5 published articles. Empty slots are not stored. */
+  popularTopicColumns?: InputMaybe<HelpCenterPopularTopicColumnsInput>;
   portalSettings?: InputMaybe<HelpCenterPortalSettingsInput>;
   publicName?: InputMaybe<Scalars['String']['input']>;
   socialPreviewImage?: InputMaybe<WorkspaceFileInput>;
@@ -18835,6 +19191,8 @@ export type UpdateNoteOutput = {
 };
 
 export type UpdateOAuthAppInput = {
+  /** Replaces the whole list of allowed origins. At least one is required for an app that uses PKCE. Pass an empty list to remove every origin from an app that doesn't. */
+  allowedOrigins?: InputMaybe<StringArrayInput>;
   description?: InputMaybe<OptionalStringInput>;
   name?: InputMaybe<StringInput>;
   oauthAppId: Scalars['ID']['input'];
@@ -18845,6 +19203,17 @@ export type UpdateOAuthAppInput = {
 export type UpdateOAuthAppOutput = {
   error?: Maybe<MutationError>;
   oauthApp?: Maybe<OAuthApp>;
+};
+
+export type UpdateRolePriorityOrderInput = {
+  /** Every role in the workspace, highest priority first. Built-in roles keep their fixed order, starting with `OWNER` and ending with `NONE`. Each custom role must appear exactly once. */
+  roles: Array<RolePriorityOrderEntryInput>;
+};
+
+export type UpdateRolePriorityOrderOutput = {
+  error?: Maybe<MutationError>;
+  /** Every role in the workspace, highest priority first. Empty when the update failed. */
+  roles: Array<Role>;
 };
 
 export type UpdateSavedThreadsViewInput = {
@@ -18874,7 +19243,7 @@ export type UpdateServiceLevelAgreementInput = {
   nextResponseTimeMinutes?: InputMaybe<IntInput>;
   /** The thread status details that pause the resolution-time clock. May only be provided if the service level agreement is a first- or total-resolution-time SLA. Pass an empty array to keep the clock running. */
   pauseOnStatusDetailTypes?: InputMaybe<ServiceLevelAgreementPauseStatusDetailTypeArrayInput>;
-  /** The ID of the SLA to update. */
+  /** The ID of the SLA itself, not of the SLA policy it belongs to. The ID is enough: there is no need to look the SLA up first. */
   serviceLevelAgreementId: Scalars['ID']['input'];
   /** This SLA can only be applied to a thread if it has one or all of these label types. If not provided, the filter is not applied. */
   threadLabelTypeIdFilter?: InputMaybe<ServiceLevelAgreementThreadLabelTypeIdFilterInput>;
@@ -18883,7 +19252,7 @@ export type UpdateServiceLevelAgreementInput = {
   /** This SLA will breach if the thread is not marked Done within this many minutes of creation, including after it is reopened. May only be provided if the service level agreement is a total-resolution-time SLA. */
   totalResolutionTimeMinutes?: InputMaybe<IntInput>;
   /**
-   * If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
+   * If true, the SLA is linked to your workspace's business hours schedule and only tracked during it. Only works when the workspace has exactly one schedule. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
    * @deprecated Use businessHoursScheduleIds to specify which business hours are linked to this SLA.
    */
   useBusinessHoursOnly?: InputMaybe<OptionalBooleanInput>;
@@ -19000,9 +19369,9 @@ export type UpdateSidekickServiceConfigOutput = {
 };
 
 export type UpdateSidekickSettingsInput = {
-  /** Custom prompt to append to the Sidekick system prompt. Pass null or an empty string to clear. Omit to leave the current value unchanged. */
+  /** Custom prompt to append to the Sidekick Agent system prompt. Pass null or an empty string to clear. Omit to leave the current value unchanged. */
   customPrompt?: InputMaybe<Scalars['String']['input']>;
-  /** Tools selected during onboarding, as Sidekick integration catalog slugs. Pass an empty list to record that nothing was selected. Omit or pass null to leave the current value unchanged. Unknown slugs are rejected. */
+  /** Tools selected during onboarding, as Sidekick Agent integration catalog slugs. Pass an empty list to record that nothing was selected. Omit or pass null to leave the current value unchanged. Unknown slugs are rejected. */
   preferredIntegrations?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
@@ -19262,7 +19631,7 @@ export type UpdateWorkflowInput = {
   order?: InputMaybe<IntInput>;
   /** The ID of the first step to execute. Cannot be cleared to null on a published workflow; unpublish (`isPublished: false`) before restructuring steps, then republish. */
   startStepId?: InputMaybe<StringInput>;
-  /** JSON-encoded trigger configuration. See `Workflow.trigger` for the valid `type` values and their required fields. */
+  /** JSON-encoded trigger configuration. `type` is lowercase: `{"type":"manual"}`, `{"type":"events","events":["thread.thread_created"]}` or `{"type":"schedule","cron":"0 9 * * 1"}`. See `Workflow.trigger` for every event. */
   trigger?: InputMaybe<StringInput>;
   workflowId: Scalars['ID']['input'];
 };
@@ -19418,8 +19787,11 @@ export type UpsertCustomerGroupOutput = {
 };
 
 export type UpsertCustomerIdentifierInput = {
+  /** Plain's ID for the customer, such as `c_01…`. */
   customerId?: InputMaybe<Scalars['ID']['input']>;
+  /** The customer's email address. */
   emailAddress?: InputMaybe<Scalars['String']['input']>;
+  /** Your own ID for the customer. */
   externalId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -19477,6 +19849,8 @@ export type UpsertHelpCenterArticleInput = {
   helpCenterArticleId?: InputMaybe<Scalars['ID']['input']>;
   helpCenterId: Scalars['ID']['input'];
   icon?: InputMaybe<Scalars['String']['input']>;
+  isFeatured?: InputMaybe<Scalars['Boolean']['input']>;
+  isPopularTopic?: InputMaybe<Scalars['Boolean']['input']>;
   labelTypeIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   slug?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<HelpCenterArticleStatus>;
@@ -19578,7 +19952,9 @@ export type UpsertTenantOutput = {
 };
 
 export type UpsertThreadFieldIdentifier = {
+  /** The thread field schema's key, not its label. */
   key: Scalars['String']['input'];
+  /** Plain's ID for the thread. */
   threadId: Scalars['ID']['input'];
 };
 
@@ -19724,8 +20100,11 @@ export type UserEmailActor = {
 
 /** Identifies a Plain user or machine user. Exactly one field must be set. */
 export type UserIdentifierInput = {
+  /** The user's email address. */
   emailAddress?: InputMaybe<Scalars['String']['input']>;
+  /** Plain's ID for the machine user. */
   machineUserId?: InputMaybe<Scalars['ID']['input']>;
+  /** Plain's ID for the user, such as `u_01…`. */
   userId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -20095,7 +20474,7 @@ export type WorkflowCapabilities = {
   hasAiTriageActionSupport: Scalars['Boolean']['output'];
   /** Whether condition steps are allowed. */
   hasConditionSupport: Scalars['Boolean']['output'];
-  /** Whether the `ask_sidekick` (Sidekick action) block is available. */
+  /** Whether the `ask_sidekick` (Sidekick Agent action) block is available. */
   hasSidekickActionSupport: Scalars['Boolean']['output'];
   /** Whether wait steps are allowed. */
   hasWaitSupport: Scalars['Boolean']['output'];
@@ -20196,12 +20575,16 @@ export type WorkflowExecutionsFilter = {
 };
 
 export type WorkflowReferences = {
+  /** Escalation paths applied by a `set_escalation_path` action. */
+  escalationPathIds: Array<Scalars['ID']['output']>;
   /** SLA policies applied by a `set_service_level_agreement_policy` action. */
   serviceLevelAgreementPolicyIds: Array<Scalars['ID']['output']>;
 };
 
 /** Entities a workflow step can reference. Fields combine with AND; an empty list is not a filter. At most 100 ids per field. */
 export type WorkflowReferencesFilter = {
+  /** Workflows with a `set_escalation_path` action applying one of these escalation paths. */
+  escalationPathIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Workflows with a `set_service_level_agreement_policy` action applying one of these policies. A step that clears the policy matches nothing. */
   serviceLevelAgreementPolicyIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
@@ -20245,7 +20628,13 @@ export type WorkflowShareLinkStep = {
   id: Scalars['ID']['output'];
   /** Optional name for the step. */
   name?: Maybe<Scalars['String']['output']>;
-  /** JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs. */
+  /**
+   * JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+   * - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
+   * - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
+   * - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
+   * Example, labelling invoice threads: a CONDITION `{"version":1,"type":"any_message_contains","keywords":["invoice"]}` whose true branch goes to an ACTION `{"version":1,"type":"apply_labels","labelTypeIds":["lt_…"]}`. See `WorkflowStep.payload` for every type.
+   */
   payload: Scalars['String']['output'];
   /** X position of this step on the canvas. */
   positionX: Scalars['Float']['output'];
@@ -20279,14 +20668,14 @@ export type WorkflowStep = {
   positionY: Scalars['Float']['output'];
   /** Array of next step IDs. For ACTION: 1 element (next step). For CONDITION: 2 elements (true branch, false branch). Null means terminal/no branch. */
   transitions: Array<Maybe<Scalars['ID']['output']>>;
-  /** The type of step: CONDITION or ACTION. */
+  /** The type of step: ACTION, CONDITION, WAIT or NOTE. */
   type: WorkflowStepType;
   updatedAt: DateTime;
   updatedBy: InternalActor;
   workflowId: Scalars['ID']['output'];
 };
 
-/** An entity an action step produced or affected (e.g. a Sidekick discussion it started), so the run can link to it. */
+/** An entity an action step produced or affected (e.g. a Sidekick Agent discussion it started), so the run can link to it. */
 export type WorkflowStepEntityRef = {
   entityId: Scalars['ID']['output'];
   entityType: WorkflowStepEntityType;
@@ -20391,7 +20780,13 @@ export type WorkflowTemplateGalleryItem = {
 export type WorkflowTemplateStep = {
   id: Scalars['ID']['output'];
   name?: Maybe<Scalars['String']['output']>;
-  /** JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs. */
+  /**
+   * JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+   * - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
+   * - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
+   * - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
+   * Example, labelling invoice threads: a CONDITION `{"version":1,"type":"any_message_contains","keywords":["invoice"]}` whose true branch goes to an ACTION `{"version":1,"type":"apply_labels","labelTypeIds":["lt_…"]}`. See `WorkflowStep.payload` for every type.
+   */
   payload: Scalars['String']['output'];
   positionX: Scalars['Float']['output'];
   positionY: Scalars['Float']['output'];
@@ -20825,19 +21220,19 @@ export type WorkspaceSlackSidekickInstallationInfo = {
 };
 
 export type WorkspaceSlackSidekickIntegration = {
-  /** The Slack channel ID of the channel that Sidekick monitors for user questions. */
+  /** The Slack channel ID of the channel that Sidekick Agent monitors for user questions. */
   askSidekickSlackChannelId: Scalars['ID']['output'];
-  /** The name of the Slack channel that Sidekick monitors for user questions. */
+  /** The name of the Slack channel that Sidekick Agent monitors for user questions. */
   askSidekickSlackChannelName: Scalars['String']['output'];
   createdAt: DateTime;
   createdBy: InternalActor;
-  /** Unique identifier for this Sidekick integration record. */
+  /** Unique identifier for this Sidekick Agent integration record. */
   integrationId: Scalars['ID']['output'];
   /** True if the Slack app must be reinstalled to restore missing OAuth scopes or permissions; when true, direct the user through the installation flow again. */
   isReinstallRequired: Scalars['Boolean']['output'];
-  /** Optional custom instructions that guide Sidekick's behavior and tone. Null means no custom instructions are set. Update via updateSidekickSlackConfig. */
+  /** Optional custom instructions that guide Sidekick Agent's behavior and tone. Null means no custom instructions are set. Update via updateSidekickSlackConfig. */
   operatingInstructions?: Maybe<Scalars['String']['output']>;
-  /** The Slack workspace (team) ID where Sidekick is installed. */
+  /** The Slack workspace (team) ID where Sidekick Agent is installed. */
   slackTeamId: Scalars['ID']['output'];
   slackTeamName: Scalars['String']['output'];
   updatedAt: DateTime;
@@ -20925,6 +21320,7 @@ export type AiAgentFeedbackDetailsFieldsFragment = { reason: string, comment?: s
 export type AiFeatureFeedbackOutputFieldsFragment = { id: string, feature: string, details:
     | { __typename: 'AiAgentFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, threadId: string, timelineEntryId: string }
     | { __typename: 'KnowledgeGapFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, knowledgeGapId: string }
+    | { __typename: 'McpFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, toolName?: string | null }
     | { __typename: 'ThreadCatchupFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, threadId: string }
     | { __typename: 'ThreadClustersFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, clusterId: string }
     | { __typename: 'ToneRuleFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, toneRuleId: string, toneRuleInput: string, toneRuleDescription: string }
@@ -20933,6 +21329,7 @@ export type AiFeatureFeedbackOutputFieldsFragment = { id: string, feature: strin
 export type AiFeedbackFieldsFragment = { id: string, feature: AiFeedbackFeature, details:
     | { __typename: 'AiAgentFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, threadId: string, timelineEntryId: string }
     | { __typename: 'KnowledgeGapFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, knowledgeGapId: string }
+    | { __typename: 'McpFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, toolName?: string | null }
     | { __typename: 'ThreadCatchupFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, threadId: string }
     | { __typename: 'ThreadClustersFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, clusterId: string }
     | { __typename: 'ToneRuleFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, toneRuleId: string, toneRuleInput: string, toneRuleDescription: string }
@@ -21772,7 +22169,7 @@ export type CustomerSurveySupportEmailsConditionFieldsFragment = { supportEmailA
 
 export type CustomerSurveyTiersConditionFieldsFragment = { tierIds: Array<string>, operator: CustomerSurveyConditionOperator };
 
-export type CustomRoleFieldsFragment = { id: string, name: string, description?: string | null, permissionsPreset: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CustomRoleFieldsFragment = { id: string, name: string, description?: string | null, permissionsPreset: string, priority: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -21943,7 +22340,7 @@ export type GithubUserAuthIntegrationFieldsFragment = { id: string, githubUserna
 
 export type HeatmapMetricFieldsFragment = { days: Array<Array<{ percentage: number, total: number, threadIds: Array<string>, messageCount: number }>> };
 
-export type HelpCenterFieldsFragment = { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type HelpCenterFieldsFragment = { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, linkCardsHeading?: string | null, isLinkCardsEnabled: boolean, isPopularTopicsEnabled: boolean, popularTopicArticleIds: Array<string>, heroHeading?: string | null, heroSubheading?: string | null, heroSearchPlaceholder?: string | null, heroAlignment: HelpCenterHeroAlignment, isHomepageRedesignEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, linkCards: Array<{ title: string, description?: string | null, url: string, icon?: string | null }>, popularTopicColumns: { columnOneArticleIds: Array<string>, columnTwoArticleIds: Array<string> }, featuredHomepageItems: Array<{ type: HelpCenterFeaturedHomepageItemType, articleId?: string | null, title?: string | null, url?: string | null, description?: string | null }>, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
     | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
     | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
   , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -21968,7 +22365,7 @@ export type HelpCenterAiConversationFieldsFragment = { id: string, title?: strin
 
 export type HelpCenterAiConversationMessageEntryFieldsFragment = { helpCenterId: string, helpCenterAiConversationId: string, messageId: string, markdown: string };
 
-export type HelpCenterArticleFieldsFragment = { id: string, title: string, description?: string | null, icon?: string | null, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
+export type HelpCenterArticleFieldsFragment = { id: string, title: string, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -21984,7 +22381,7 @@ export type HelpCenterArticleFieldsFragment = { id: string, title: string, descr
 
 export type HelpCenterArticleDocumentFieldsFragment = { id: string, article: { id: string } };
 
-export type HelpCenterArticleGroupFieldsFragment = { id: string, name: string, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type HelpCenterArticleGroupFieldsFragment = { id: string, name: string, description?: string | null, icon?: string | null, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22000,7 +22397,7 @@ export type HelpCenterAuthMechanismWorkosAuthkitFieldsFragment = { type: HelpCen
 
 export type HelpCenterAuthMechanismWorkosConnectFieldsFragment = { type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string };
 
-export type HelpCenterIndexFieldsFragment = { helpCenterId: string, hash: string, navIndex: Array<{ type: HelpCenterIndexItemType, id: string, title: string, slug: string, parentId?: string | null, status?: HelpCenterArticleStatus | null, description?: string | null, icon?: string | null }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type HelpCenterIndexFieldsFragment = { helpCenterId: string, hash: string, navIndex: Array<{ type: HelpCenterIndexItemType, id: string, title: string, slug: string, parentId?: string | null, status?: HelpCenterArticleStatus | null, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22289,7 +22686,7 @@ export type ImportThreadMessageResultFieldsFragment = { result?: UpsertResult | 
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
                | null }
             | { __typename: 'System', id: string }
-            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                   | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                   | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22329,7 +22726,7 @@ export type ImportThreadMessageResultFieldsFragment = { result?: UpsertResult | 
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
                | null }
             | { __typename: 'System', id: string }
-            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                   | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                   | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22370,7 +22767,7 @@ export type ImportThreadMessageResultFieldsFragment = { result?: UpsertResult | 
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
                | null }
             | { __typename: 'System', id: string }
-            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                   | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                   | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22410,7 +22807,7 @@ export type ImportThreadMessageResultFieldsFragment = { result?: UpsertResult | 
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
                | null }
             | { __typename: 'System', id: string }
-            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                   | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                   | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22901,6 +23298,7 @@ export type InternalNotificationFieldsFragment = { id: string, userId: string, t
     | { __typename: 'DiscussionResolvedNotificationDetail', threadId: string, threadDiscussionId: string }
     | { __typename: 'EmailBounceNotificationDetail', threadId: string }
     | { __typename: 'IntegrationReauthRequiredNotificationDetail', serviceIntegrationKey: string, serviceAuthorizationId: string }
+    | { __typename: 'KnowledgeGapNotificationDetail', knowledgeGapId: string }
     | { __typename: 'NoteMentionNotificationDetail', threadId: string, timelineEntryId: string, mentionedBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -22958,6 +23356,8 @@ export type KnowledgeGapFieldsFragment = { id: string, title: string, descriptio
   , task?: { id: string } | null };
 
 export type KnowledgeGapFeedbackDetailsFieldsFragment = { reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, knowledgeGapId: string };
+
+export type KnowledgeGapNotificationDetailFieldsFragment = { knowledgeGapId: string };
 
 export type KnowledgeSourceCitationFieldsFragment = { threadId: string, timelineEntryId: string, sourceType: KnowledgeSourceCitationType, title: string, url?: string | null, document?:
     | { __typename: 'HelpCenterArticleDocument', id: string, article: { id: string } }
@@ -23074,6 +23474,8 @@ export type MachineUserFieldsFragment = { id: string, fullName: string, publicNa
 
 export type MachineUserActorFieldsFragment = { machineUserId: string, machineUser: { id: string } };
 
+export type McpFeedbackDetailsFieldsFragment = { reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, toolName?: string | null };
+
 export type MergedThreadMessageEntryFieldsFragment = { threadLinkId: string, childThreadDetails: { id: string, ref: string, title?: string | null }, childTimelineEntry?: { id: string } | null };
 
 export type MeteredFeatureEntitlementFieldsFragment = { feature: FeatureKey, isEntitled: boolean, current: number, limit: number };
@@ -23148,7 +23550,7 @@ export type NoteMentionNotificationDetailFieldsFragment = { threadId: string, ti
 
 export type NumberSettingFieldsFragment = { code: string, numberValue: number, scope: { id?: string | null, scopeType: SettingScopeType } };
 
-export type OAuthAppFieldsFragment = { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type OAuthAppFieldsFragment = { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, usesPkce: boolean, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -23196,7 +23598,7 @@ export type QueuedAgentSessionMessageFieldsFragment = { id: string, text: string
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type RoleFieldsFragment = { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null };
+export type RoleFieldsFragment = { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null };
 
 export type RoleChangeCostFieldsFragment = { quantity: number, intervalUnit: BillingIntervalUnit, intervalCount: number, addingSeatType: BillingSeatType, removingSeatType?: BillingSeatType | null, totalPrice: { amount: number, currency: CurrencyCode }, fullPrice: { amount: number, currency: CurrencyCode }, adjustedPrice: { amount: number, currency: CurrencyCode }, dueNowPrice: { amount: number, currency: CurrencyCode } };
 
@@ -23401,7 +23803,7 @@ export type TaskFieldsFragment = { id: string, ref: string, title: string, descr
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        | null }
     | { __typename: 'System', id: string }
-    | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+    | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -23567,7 +23969,7 @@ export type ThreadFieldsFragment = { id: string, ref: string, title: string, des
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        | null }
     | { __typename: 'System', id: string }
-    | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+    | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -23607,7 +24009,7 @@ export type ThreadFieldsFragment = { id: string, ref: string, title: string, des
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        | null }
     | { __typename: 'System', id: string }
-    | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+    | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -24441,7 +24843,7 @@ export type TimelineEntryFieldsFragment = { id: string, customerId: string, thre
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -24481,7 +24883,7 @@ export type TimelineEntryFieldsFragment = { id: string, customerId: string, thre
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -24522,7 +24924,7 @@ export type TimelineEntryFieldsFragment = { id: string, customerId: string, thre
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -24562,7 +24964,7 @@ export type TimelineEntryFieldsFragment = { id: string, customerId: string, thre
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -25014,7 +25416,7 @@ export type TotalResolutionTimeServiceLevelAgreementFieldsFragment = { id: strin
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type UserFieldsFragment = { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UserFieldsFragment = { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -25130,7 +25532,7 @@ export type WebhookTargetFieldsFragment = { id: string, url: string, description
 
 export type WebhookTargetNotificationDetailFieldsFragment = { webhookTargetId: string };
 
-export type WorkflowFieldsFragment = { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type WorkflowFieldsFragment = { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string>, escalationPathIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -25238,7 +25640,7 @@ export type WorkspaceInviteFieldsFragment = { id: string, email: string, isAccep
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
-  , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, customRole?: { id: string } | null };
+  , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, customRole?: { id: string } | null };
 
 export type WorkspaceLinearIntegrationFieldsFragment = { integrationId: string, linearOrganisationName: string, linearOrganisationId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
@@ -25300,7 +25702,7 @@ export type MyUserAccountQuery = { myUserAccount?: { id: string, fullName: strin
 export type MyUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyUserQuery = { myUser?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type MyUserQuery = { myUser?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -25395,7 +25797,7 @@ export type MyWorkspaceInvitesQuery = { myWorkspaceInvites: { edges: Array<{ cur
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
-        , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+        , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type MySlackIntegrationQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -25556,13 +25958,6 @@ export type MyBillingSubscriptionQuery = { myBillingSubscription?: { status: Bil
       | { __typename: 'BillingTopupCreditBalance', type: BillingCreditBalanceType, lifetimeGranted?: number | null, lifetimeUsed?: number | null, remaining: number }
     >, nextPlan?: { planKey: BillingPlanKey, name: string, memberSeatLimit?: number | null } | null } | null };
 
-export type MemberSeatCapCheckQueryVariables = Exact<{
-  input: MemberSeatCapCheckInput;
-}>;
-
-
-export type MemberSeatCapCheckQuery = { memberSeatCapCheck: { isValid: boolean } };
-
 export type MyBillingRotaQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -25684,7 +26079,7 @@ export type RolesQueryVariables = Exact<{
 }>;
 
 
-export type RolesQuery = { roles: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+export type RolesQuery = { roles: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type CustomRolesQueryVariables = Exact<{
   first?: number | null | undefined;
@@ -25694,7 +26089,7 @@ export type CustomRolesQueryVariables = Exact<{
 }>;
 
 
-export type CustomRolesQuery = { customRoles: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, permissionsPreset: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CustomRolesQuery = { customRoles: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, permissionsPreset: string, priority: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -25709,7 +26104,7 @@ export type CustomRoleQueryVariables = Exact<{
 }>;
 
 
-export type CustomRoleQuery = { customRole?: { id: string, name: string, description?: string | null, permissionsPreset: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CustomRoleQuery = { customRole?: { id: string, name: string, description?: string | null, permissionsPreset: string, priority: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -25971,7 +26366,7 @@ export type TimelineEntriesQuery = { timelineEntries: { edges: Array<{ cursor: s
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
                  | null }
               | { __typename: 'System', id: string }
-              | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26011,7 +26406,7 @@ export type TimelineEntriesQuery = { timelineEntries: { edges: Array<{ cursor: s
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
                  | null }
               | { __typename: 'System', id: string }
-              | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26052,7 +26447,7 @@ export type TimelineEntriesQuery = { timelineEntries: { edges: Array<{ cursor: s
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
                  | null }
               | { __typename: 'System', id: string }
-              | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26092,7 +26487,7 @@ export type TimelineEntriesQuery = { timelineEntries: { edges: Array<{ cursor: s
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
                  | null }
               | { __typename: 'System', id: string }
-              | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26769,7 +27164,7 @@ export type TimelineEntryQuery = { timelineEntry?: { id: string, customerId: str
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26809,7 +27204,7 @@ export type TimelineEntryQuery = { timelineEntry?: { id: string, customerId: str
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26850,7 +27245,7 @@ export type TimelineEntryQuery = { timelineEntry?: { id: string, customerId: str
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -26890,7 +27285,7 @@ export type TimelineEntryQuery = { timelineEntry?: { id: string, customerId: str
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -27567,7 +27962,7 @@ export type ThreadTimelineEntryQuery = { threadTimelineEntry?: { id: string, cus
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -27607,7 +28002,7 @@ export type ThreadTimelineEntryQuery = { threadTimelineEntry?: { id: string, cus
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -27648,7 +28043,7 @@ export type ThreadTimelineEntryQuery = { threadTimelineEntry?: { id: string, cus
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -27688,7 +28083,7 @@ export type ThreadTimelineEntryQuery = { threadTimelineEntry?: { id: string, cus
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28136,7 +28531,7 @@ export type UserQueryVariables = Exact<{
 }>;
 
 
-export type UserQuery = { user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UserQuery = { user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28165,7 +28560,7 @@ export type UserByEmailQueryVariables = Exact<{
 }>;
 
 
-export type UserByEmailQuery = { userByEmail?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UserByEmailQuery = { userByEmail?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28198,7 +28593,7 @@ export type UsersQueryVariables = Exact<{
 }>;
 
 
-export type UsersQuery = { users: { edges: Array<{ cursor: string, node: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UsersQuery = { users: { edges: Array<{ cursor: string, node: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28238,7 +28633,7 @@ export type WorkspaceInvitesQuery = { workspaceInvites: { edges: Array<{ cursor:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
-        , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+        , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type CustomerQueryVariables = Exact<{
   customerId: string;
@@ -28835,7 +29230,7 @@ export type OauthAppQueryVariables = Exact<{
 }>;
 
 
-export type OauthAppQuery = { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type OauthAppQuery = { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, usesPkce: boolean, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28853,7 +29248,7 @@ export type OauthAppsQueryVariables = Exact<{
 }>;
 
 
-export type OauthAppsQuery = { oauthApps: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type OauthAppsQuery = { oauthApps: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, usesPkce: boolean, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28933,6 +29328,151 @@ export type GetMsTeamsMembersForChannelQueryVariables = Exact<{
 
 
 export type GetMsTeamsMembersForChannelQuery = { getMSTeamsMembersForChannel: { members: Array<{ id: string, roles: Array<MsTeamsChannelMemberRole>, displayName: string, visibleHistoryStartDateTime: string, userId: string, email: string, tenantId: string }> } };
+
+export type ThreadByMsTeamsMessageQueryVariables = Exact<{
+  msTeamsMessageId: string;
+}>;
+
+
+export type ThreadByMsTeamsMessageQuery = { threadByMSTeamsMessage?: { id: string, ref: string, title: string, description?: string | null, previewText?: string | null, priority: number, externalId?: string | null, isTestThread: boolean, status: ThreadStatus, agentStatus?: AgentStatus | null, aiAgentMode?: AgentMode | null, supportEmailAddresses: Array<string>, isFromPlainManagedDomain: boolean, channel: ThreadChannel, customer: { id: string }, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
+      | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+      | { __typename: 'DeletedCustomerActor', customerId: string }
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+    , statusDetail?:
+      | { __typename: 'ThreadStatusDetailCreated', statusChangedAt: { unixTimestamp: string, iso8601: string }, createdAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailDoneAutomaticallySet', afterSeconds?: number | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailDoneManuallySet', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailIgnored', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailInProgress', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailLinearUpdated' }
+      | { __typename: 'ThreadStatusDetailNewReply', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailReplied' }
+      | { __typename: 'ThreadStatusDetailSnoozed' }
+      | { __typename: 'ThreadStatusDetailThreadDiscussionResolved', threadDiscussionId?: string | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailThreadLinkUpdated', linearIssueId?: string | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailUnsnoozed' }
+      | { __typename: 'ThreadStatusDetailWaitingForCustomer', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailWaitingForDuration', statusChangedAt: { unixTimestamp: string, iso8601: string }, waitingUntil: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'ThreadStatusDetailWaitingIndefinitely', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+     | null, agentStatusDetail?:
+      | { __typename: 'AgentStatusDetailHandedOff', type: string, reason?: string | null }
+      | { __typename: 'AgentStatusDetailHandled', type: string }
+      | { __typename: 'AgentStatusDetailInProgress', type: string }
+     | null, agentStatusUpdatedAt?: { unixTimestamp: string, iso8601: string } | null, agentStatusUpdatedBy?:
+      | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+      | { __typename: 'DeletedCustomerActor', customerId: string }
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+     | null, assignedTo?:
+      | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , updatedAt: { unixTimestamp: string, iso8601: string }, deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+          | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+          | { __typename: 'DeletedCustomerActor', customerId: string }
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+         | null }
+      | { __typename: 'System', id: string }
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+           } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+          | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+          | { __typename: 'DeletedCustomerActor', customerId: string }
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+         | null }
+     | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, additionalAssignees: Array<
+      | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , updatedAt: { unixTimestamp: string, iso8601: string }, deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+          | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+          | { __typename: 'DeletedCustomerActor', customerId: string }
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+         | null }
+      | { __typename: 'System', id: string }
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+           } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+          | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+          | { __typename: 'DeletedCustomerActor', customerId: string }
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+         | null }
+    >, firstInboundMessageInfo?: { messageSource: MessageSource, timestamp: { unixTimestamp: string, iso8601: string } } | null, firstOutboundMessageInfo?: { messageSource: MessageSource, timestamp: { unixTimestamp: string, iso8601: string } } | null, lastInboundMessageInfo?: { messageSource: MessageSource, timestamp: { unixTimestamp: string, iso8601: string } } | null, lastOutboundMessageInfo?: { messageSource: MessageSource, timestamp: { unixTimestamp: string, iso8601: string } } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+      | { __typename: 'DeletedCustomerActor', customerId: string }
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+    , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+      | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+      | { __typename: 'DeletedCustomerActor', customerId: string }
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+    , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+      | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
+      | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
+      | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
+      | { __typename: 'MSTeamsThreadChannelDetails', msTeamsTeamId: string, msTeamsTeamName: string, msTeamsChannelId: string, msTeamsChannelName: string, msTeamsMessageType: MsTeamsMessageType }
+      | { __typename: 'SlackThreadChannelDetails', slackChannelId: string, slackChannelName: string, slackTeamId: string, slackTeamName: string }
+     | null, surveyResponse?: { id: string, sentiment?: SentimentType | null, rating?: number | null, surveyId?: string | null, comment?: string | null, respondedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, catchupDetail?: { summary?: string | null, completedActions: Array<{ userId: string, content: string } | null>, customerEvents: Array<{ customerId: string, content: string } | null>, suggestedSidekickPrompts: Array<{ label: string, prompt: string, category: string }>, generatedAt?: { unixTimestamp: string, iso8601: string } | null } | null, lockedAt?: { unixTimestamp: string, iso8601: string } | null, lockedBy?:
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+     | null, importedAt?: { unixTimestamp: string, iso8601: string } | null, importedBy?:
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+     | null, broadcast?: { id: string } | null } | null };
 
 export type WorkspaceSlackInstallationInfoQueryVariables = Exact<{
   redirectUrl: string;
@@ -29305,7 +29845,7 @@ export type ThreadBySlackPermalinkQuery = { threadBySlackPermalink?: { id: strin
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29345,7 +29885,7 @@ export type ThreadBySlackPermalinkQuery = { threadBySlackPermalink?: { id: strin
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29451,7 +29991,7 @@ export type ThreadBySlackMessageQuery = { threadBySlackMessage?: { id: string, r
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29491,7 +30031,7 @@ export type ThreadBySlackMessageQuery = { threadBySlackMessage?: { id: string, r
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29796,7 +30336,7 @@ export type WorkflowQueryVariables = Exact<{
 }>;
 
 
-export type WorkflowQuery = { workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type WorkflowQuery = { workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string>, escalationPathIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29816,7 +30356,7 @@ export type WorkflowsQueryVariables = Exact<{
 }>;
 
 
-export type WorkflowsQuery = { workflows: { edges: Array<{ cursor: string, node: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type WorkflowsQuery = { workflows: { edges: Array<{ cursor: string, node: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string>, escalationPathIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -29832,6 +30372,11 @@ export type WorkflowCapabilitiesQueryVariables = Exact<{
 
 
 export type WorkflowCapabilitiesQuery = { workflowCapabilities: { hasConditionSupport: boolean, hasWaitSupport: boolean, allowedActionTypes: Array<string>, hasSidekickActionSupport: boolean, hasAiTriageActionSupport: boolean } };
+
+export type WorkflowBuilderGuideQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WorkflowBuilderGuideQuery = { workflowBuilderGuide: string };
 
 export type WorkflowExecutionQueryVariables = Exact<{
   workflowExecutionId: string;
@@ -30010,7 +30555,7 @@ export type ThreadQuery = { thread?: { id: string, ref: string, title: string, d
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30050,7 +30595,7 @@ export type ThreadQuery = { thread?: { id: string, ref: string, title: string, d
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30155,7 +30700,7 @@ export type ThreadByRefQuery = { threadByRef?: { id: string, ref: string, title:
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30195,7 +30740,7 @@ export type ThreadByRefQuery = { threadByRef?: { id: string, ref: string, title:
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30301,7 +30846,7 @@ export type ThreadByExternalIdQuery = { threadByExternalId?: { id: string, ref: 
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30341,7 +30886,7 @@ export type ThreadByExternalIdQuery = { threadByExternalId?: { id: string, ref: 
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30450,7 +30995,7 @@ export type ThreadsByExternalIdQuery = { threadsByExternalId: { edges: Array<{ c
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30490,7 +31035,7 @@ export type ThreadsByExternalIdQuery = { threadsByExternalId: { edges: Array<{ c
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30600,7 +31145,7 @@ export type ThreadsQuery = { threads: { totalCount: number, edges: Array<{ curso
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30640,7 +31185,7 @@ export type ThreadsQuery = { threads: { totalCount: number, edges: Array<{ curso
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30743,7 +31288,7 @@ export type TestThreadsQuery = { testThreads: Array<{ id: string, ref: string, t
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30783,7 +31328,7 @@ export type TestThreadsQuery = { testThreads: Array<{ id: string, ref: string, t
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30893,7 +31438,7 @@ export type SearchThreadsQuery = { searchThreads: { edges: Array<{ cursor: strin
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
                | null }
             | { __typename: 'System', id: string }
-            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                   | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                   | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -30933,7 +31478,7 @@ export type SearchThreadsQuery = { searchThreads: { edges: Array<{ cursor: strin
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
                | null }
             | { __typename: 'System', id: string }
-            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                   | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                   | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -31314,7 +31859,7 @@ export type TaskQuery = { task?: { id: string, ref: string, title: string, descr
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -31373,7 +31918,7 @@ export type TaskByRefQuery = { taskByRef?: { id: string, ref: string, title: str
           | { __typename: 'UserActor', userId: string, user: { id: string } }
          | null }
       | { __typename: 'System', id: string }
-      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -31437,7 +31982,7 @@ export type TasksQuery = { tasks: { totalCount: number, edges: Array<{ cursor: s
               | { __typename: 'UserActor', userId: string, user: { id: string } }
              | null }
           | { __typename: 'System', id: string }
-          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                 | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                 | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32259,6 +32804,13 @@ export type GeneratedRepliesQuery = { generatedReplies?: Array<{ id: string, mar
       | { __typename: 'UserActor', userId: string, user: { id: string } }
      }> | null };
 
+export type GeneratedReplyStateQueryVariables = Exact<{
+  threadId: string;
+}>;
+
+
+export type GeneratedReplyStateQuery = { generatedReplyState?: { timelineEntryId: string, status: GeneratedReplyStatus } | null };
+
 export type IndexedDocumentsQueryVariables = Exact<{
   first?: number | null | undefined;
   after?: string | null | undefined;
@@ -32478,7 +33030,7 @@ export type HelpCentersQueryVariables = Exact<{
 }>;
 
 
-export type HelpCentersQuery = { helpCenters: { edges: Array<{ cursor: string, node: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type HelpCentersQuery = { helpCenters: { edges: Array<{ cursor: string, node: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, linkCardsHeading?: string | null, isLinkCardsEnabled: boolean, isPopularTopicsEnabled: boolean, popularTopicArticleIds: Array<string>, heroHeading?: string | null, heroSubheading?: string | null, heroSearchPlaceholder?: string | null, heroAlignment: HelpCenterHeroAlignment, isHomepageRedesignEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, linkCards: Array<{ title: string, description?: string | null, url: string, icon?: string | null }>, popularTopicColumns: { columnOneArticleIds: Array<string>, columnTwoArticleIds: Array<string> }, featuredHomepageItems: Array<{ type: HelpCenterFeaturedHomepageItemType, articleId?: string | null, title?: string | null, url?: string | null, description?: string | null }>, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
           | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
           | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
         , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -32504,7 +33056,7 @@ export type HelpCenterQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterQuery = { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type HelpCenterQuery = { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, linkCardsHeading?: string | null, isLinkCardsEnabled: boolean, isPopularTopicsEnabled: boolean, popularTopicArticleIds: Array<string>, heroHeading?: string | null, heroSubheading?: string | null, heroSearchPlaceholder?: string | null, heroAlignment: HelpCenterHeroAlignment, isHomepageRedesignEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, linkCards: Array<{ title: string, description?: string | null, url: string, icon?: string | null }>, popularTopicColumns: { columnOneArticleIds: Array<string>, columnTwoArticleIds: Array<string> }, featuredHomepageItems: Array<{ type: HelpCenterFeaturedHomepageItemType, articleId?: string | null, title?: string | null, url?: string | null, description?: string | null }>, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
       | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
       | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
     , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -32549,7 +33101,7 @@ export type HelpCenterArticleQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterArticleQuery = { helpCenterArticle?: { id: string, title: string, description?: string | null, icon?: string | null, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
+export type HelpCenterArticleQuery = { helpCenterArticle?: { id: string, title: string, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32568,7 +33120,7 @@ export type HelpCenterArticleGroupQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterArticleGroupQuery = { helpCenterArticleGroup?: { id: string, name: string, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type HelpCenterArticleGroupQuery = { helpCenterArticleGroup?: { id: string, name: string, description?: string | null, icon?: string | null, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32583,7 +33135,7 @@ export type HelpCenterIndexQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterIndexQuery = { helpCenterIndex?: { helpCenterId: string, hash: string, navIndex: Array<{ type: HelpCenterIndexItemType, id: string, title: string, slug: string, parentId?: string | null, status?: HelpCenterArticleStatus | null, description?: string | null, icon?: string | null }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type HelpCenterIndexQuery = { helpCenterIndex?: { helpCenterId: string, hash: string, navIndex: Array<{ type: HelpCenterIndexItemType, id: string, title: string, slug: string, parentId?: string | null, status?: HelpCenterArticleStatus | null, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32599,7 +33151,7 @@ export type HelpCenterArticleBySlugQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterArticleBySlugQuery = { helpCenterArticleBySlug?: { id: string, title: string, description?: string | null, icon?: string | null, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
+export type HelpCenterArticleBySlugQuery = { helpCenterArticleBySlug?: { id: string, title: string, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32619,7 +33171,7 @@ export type HelpCenterArticleGroupBySlugQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterArticleGroupBySlugQuery = { helpCenterArticleGroupBySlug?: { id: string, name: string, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type HelpCenterArticleGroupBySlugQuery = { helpCenterArticleGroupBySlug?: { id: string, name: string, description?: string | null, icon?: string | null, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32734,6 +33286,7 @@ export type MyInternalNotificationsQuery = { myInternalNotifications: { totalCou
           | { __typename: 'DiscussionResolvedNotificationDetail', threadId: string, threadDiscussionId: string }
           | { __typename: 'EmailBounceNotificationDetail', threadId: string }
           | { __typename: 'IntegrationReauthRequiredNotificationDetail', serviceIntegrationKey: string, serviceAuthorizationId: string }
+          | { __typename: 'KnowledgeGapNotificationDetail', knowledgeGapId: string }
           | { __typename: 'NoteMentionNotificationDetail', threadId: string, timelineEntryId: string, mentionedBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -32815,6 +33368,7 @@ export type AiFeedbackQueryVariables = Exact<{
 export type AiFeedbackQuery = { aiFeedback: { totalCount: number, edges: Array<{ cursor: string, node: { id: string, feature: AiFeedbackFeature, details:
           | { __typename: 'AiAgentFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, threadId: string, timelineEntryId: string }
           | { __typename: 'KnowledgeGapFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, knowledgeGapId: string }
+          | { __typename: 'McpFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, toolName?: string | null }
           | { __typename: 'ThreadCatchupFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, threadId: string }
           | { __typename: 'ThreadClustersFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, clusterId: string }
           | { __typename: 'ToneRuleFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, toneRuleId: string, toneRuleInput: string, toneRuleDescription: string }
@@ -32840,7 +33394,7 @@ export type ChangeUserStatusMutationVariables = Exact<{
 }>;
 
 
-export type ChangeUserStatusMutation = { changeUserStatus: { user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type ChangeUserStatusMutation = { changeUserStatus: { user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32869,7 +33423,7 @@ export type UpdateMyUserMutationVariables = Exact<{
 }>;
 
 
-export type UpdateMyUserMutation = { updateMyUser: { user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateMyUserMutation = { updateMyUser: { user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32898,7 +33452,7 @@ export type UpdateUserDefaultSavedThreadsViewMutationVariables = Exact<{
 }>;
 
 
-export type UpdateUserDefaultSavedThreadsViewMutation = { updateUserDefaultSavedThreadsView: { user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateUserDefaultSavedThreadsViewMutation = { updateUserDefaultSavedThreadsView: { user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32965,7 +33519,7 @@ export type InviteUserToWorkspaceMutation = { inviteUserToWorkspace: { invite?: 
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+      , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type AcceptWorkspaceInviteMutationVariables = Exact<{
   input: AcceptWorkspaceInviteInput;
@@ -32980,7 +33534,7 @@ export type AcceptWorkspaceInviteMutation = { acceptWorkspaceInvite: { invite?: 
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+      , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type DeleteWorkspaceInviteMutationVariables = Exact<{
   input: DeleteWorkspaceInviteInput;
@@ -32995,7 +33549,7 @@ export type DeleteWorkspaceInviteMutation = { deleteWorkspaceInvite: { invite?: 
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+      , updatedAt: { unixTimestamp: string, iso8601: string }, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, customRole?: { id: string } | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type DeleteUserMutationVariables = Exact<{
   input: DeleteUserInput;
@@ -33016,7 +33570,7 @@ export type CreateCustomRoleMutationVariables = Exact<{
 }>;
 
 
-export type CreateCustomRoleMutation = { createCustomRole: { role?: { id: string, name: string, description?: string | null, permissionsPreset: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateCustomRoleMutation = { createCustomRole: { role?: { id: string, name: string, description?: string | null, permissionsPreset: string, priority: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33031,7 +33585,7 @@ export type UpdateCustomRoleMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCustomRoleMutation = { updateCustomRole: { role?: { id: string, name: string, description?: string | null, permissionsPreset: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateCustomRoleMutation = { updateCustomRole: { role?: { id: string, name: string, description?: string | null, permissionsPreset: string, priority: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33040,6 +33594,13 @@ export type UpdateCustomRoleMutation = { updateCustomRole: { role?: { id: string
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type UpdateRolePriorityOrderMutationVariables = Exact<{
+  input: UpdateRolePriorityOrderInput;
+}>;
+
+
+export type UpdateRolePriorityOrderMutation = { updateRolePriorityOrder: { roles: Array<{ id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null }>, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type DeleteCustomRoleMutationVariables = Exact<{
   input: DeleteCustomRoleInput;
@@ -33053,7 +33614,7 @@ export type UpsertRoleScopesMutationVariables = Exact<{
 }>;
 
 
-export type UpsertRoleScopesMutation = { upsertRoleScopes: { role?: { id: string, name: string, description?: string | null, permissionsPreset: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpsertRoleScopesMutation = { upsertRoleScopes: { role?: { id: string, name: string, description?: string | null, permissionsPreset: string, priority: number, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33258,7 +33819,7 @@ export type AddLabelsMutation = { addLabels: { labels: Array<{ id: string, label
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33298,7 +33859,7 @@ export type AddLabelsMutation = { addLabels: { labels: Array<{ id: string, label
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33366,7 +33927,7 @@ export type AddLabelsToUserMutation = { addLabelsToUser: { labels: Array<{ id: s
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-       }>, user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+       }>, user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33444,7 +34005,7 @@ export type RemoveLabelsMutation = { removeLabels: { thread?: { id: string, ref:
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33484,7 +34045,7 @@ export type RemoveLabelsMutation = { removeLabels: { thread?: { id: string, ref:
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33552,7 +34113,7 @@ export type RemoveLabelsFromUserMutation = { removeLabelsFromUser: { labels: Arr
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
-       }>, user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+       }>, user?: { id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -34151,7 +34712,7 @@ export type CreateTaskMutation = { createTask: { task?: { id: string, ref: strin
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -34210,7 +34771,7 @@ export type UpdateTaskMutation = { updateTask: { task?: { id: string, ref: strin
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -34269,7 +34830,7 @@ export type DeleteTaskMutation = { deleteTask: { task?: { id: string, ref: strin
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -34699,7 +35260,7 @@ export type CreateWorkflowMutationVariables = Exact<{
 }>;
 
 
-export type CreateWorkflowMutation = { createWorkflow: { workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateWorkflowMutation = { createWorkflow: { workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string>, escalationPathIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -34714,7 +35275,7 @@ export type UpdateWorkflowMutationVariables = Exact<{
 }>;
 
 
-export type UpdateWorkflowMutation = { updateWorkflow: { workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateWorkflowMutation = { updateWorkflow: { workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string>, escalationPathIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -34729,7 +35290,7 @@ export type MoveWorkflowMutationVariables = Exact<{
 }>;
 
 
-export type MoveWorkflowMutation = { moveWorkflow: { workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type MoveWorkflowMutation = { moveWorkflow: { workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string>, escalationPathIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -34821,7 +35382,7 @@ export type BulkUpsertWorkflowStepsMutation = { bulkUpsertWorkflowSteps: { delet
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
-         } }>, workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+         } }>, workflow?: { id: string, name: string, trigger: string, startStepId?: string | null, position: string, order: number, sourceTemplateId?: string | null, publishedAt?: { unixTimestamp: string, iso8601: string } | null, lastTriggeredAt?: { unixTimestamp: string, iso8601: string } | null, references: { serviceLevelAgreementPolicyIds: Array<string>, escalationPathIds: Array<string> }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -34947,6 +35508,151 @@ export type SendMsTeamsMessageMutation = { sendMSTeamsMessage: { msTeamsMessage?
         | { __typename: 'UserActor', userId: string, user: { id: string } }
       , lastEditedOnMsTeamsAt?: { unixTimestamp: string, iso8601: string } | null, deletedOnMsTeamsAt?: { unixTimestamp: string, iso8601: string } | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
+export type CreateThreadFromMsTeamsMessageMutationVariables = Exact<{
+  input: CreateThreadFromMsTeamsMessageInput;
+}>;
+
+
+export type CreateThreadFromMsTeamsMessageMutation = { createThreadFromMSTeamsMessage: { thread?: { id: string, ref: string, title: string, description?: string | null, previewText?: string | null, priority: number, externalId?: string | null, isTestThread: boolean, status: ThreadStatus, agentStatus?: AgentStatus | null, aiAgentMode?: AgentMode | null, supportEmailAddresses: Array<string>, isFromPlainManagedDomain: boolean, channel: ThreadChannel, customer: { id: string }, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
+        | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+        | { __typename: 'DeletedCustomerActor', customerId: string }
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , statusDetail?:
+        | { __typename: 'ThreadStatusDetailCreated', statusChangedAt: { unixTimestamp: string, iso8601: string }, createdAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailDoneAutomaticallySet', afterSeconds?: number | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailDoneManuallySet', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailIgnored', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailInProgress', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailLinearUpdated' }
+        | { __typename: 'ThreadStatusDetailNewReply', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailReplied' }
+        | { __typename: 'ThreadStatusDetailSnoozed' }
+        | { __typename: 'ThreadStatusDetailThreadDiscussionResolved', threadDiscussionId?: string | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailThreadLinkUpdated', linearIssueId?: string | null, statusChangedAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailUnsnoozed' }
+        | { __typename: 'ThreadStatusDetailWaitingForCustomer', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailWaitingForDuration', statusChangedAt: { unixTimestamp: string, iso8601: string }, waitingUntil: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'ThreadStatusDetailWaitingIndefinitely', statusChangedAt: { unixTimestamp: string, iso8601: string } }
+       | null, agentStatusDetail?:
+        | { __typename: 'AgentStatusDetailHandedOff', type: string, reason?: string | null }
+        | { __typename: 'AgentStatusDetailHandled', type: string }
+        | { __typename: 'AgentStatusDetailInProgress', type: string }
+       | null, agentStatusUpdatedAt?: { unixTimestamp: string, iso8601: string } | null, agentStatusUpdatedBy?:
+        | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+        | { __typename: 'DeletedCustomerActor', customerId: string }
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, assignedTo?:
+        | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , updatedAt: { unixTimestamp: string, iso8601: string }, deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+            | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+            | { __typename: 'DeletedCustomerActor', customerId: string }
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+           | null }
+        | { __typename: 'System', id: string }
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+            | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+            | { __typename: 'DeletedCustomerActor', customerId: string }
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+           | null }
+       | null, assignedAt?: { unixTimestamp: string, iso8601: string } | null, additionalAssignees: Array<
+        | { __typename: 'MachineUser', id: string, fullName: string, publicName: string, description?: string | null, type: MachineUserType, isCustomAgent: boolean, isAssignableToThreads: boolean, isDeleted: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , createdAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , updatedAt: { unixTimestamp: string, iso8601: string }, deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+            | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+            | { __typename: 'DeletedCustomerActor', customerId: string }
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+           | null }
+        | { __typename: 'System', id: string }
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+            , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+              | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+              | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+              | { __typename: 'UserActor', userId: string, user: { id: string } }
+             } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+          , deletedAt?: { unixTimestamp: string, iso8601: string } | null, deletedBy?:
+            | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+            | { __typename: 'DeletedCustomerActor', customerId: string }
+            | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+            | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+            | { __typename: 'UserActor', userId: string, user: { id: string } }
+           | null }
+      >, firstInboundMessageInfo?: { messageSource: MessageSource, timestamp: { unixTimestamp: string, iso8601: string } } | null, firstOutboundMessageInfo?: { messageSource: MessageSource, timestamp: { unixTimestamp: string, iso8601: string } } | null, lastInboundMessageInfo?: { messageSource: MessageSource, timestamp: { unixTimestamp: string, iso8601: string } } | null, lastOutboundMessageInfo?: { messageSource: MessageSource, timestamp: { unixTimestamp: string, iso8601: string } } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+        | { __typename: 'DeletedCustomerActor', customerId: string }
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'CustomerActor', customerId: string, customer: { id: string } }
+        | { __typename: 'DeletedCustomerActor', customerId: string }
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , account?: { id: string } | null, tier?: { id: string } | null, serviceLevelAgreementPolicy?: { id: string } | null, channelDetails?:
+        | { __typename: 'ChatThreadChannelDetails', customerReadAt: { unixTimestamp: string, iso8601: string } }
+        | { __typename: 'DiscordThreadChannelDetails', discordGuildId: string, discordChannelId: string, discordChannelName?: string | null }
+        | { __typename: 'ImportThreadChannelDetails', importSourceUrl?: string | null, importIntegrationKey: string }
+        | { __typename: 'MSTeamsThreadChannelDetails', msTeamsTeamId: string, msTeamsTeamName: string, msTeamsChannelId: string, msTeamsChannelName: string, msTeamsMessageType: MsTeamsMessageType }
+        | { __typename: 'SlackThreadChannelDetails', slackChannelId: string, slackChannelName: string, slackTeamId: string, slackTeamName: string }
+       | null, surveyResponse?: { id: string, sentiment?: SentimentType | null, rating?: number | null, surveyId?: string | null, comment?: string | null, respondedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, catchupDetail?: { summary?: string | null, completedActions: Array<{ userId: string, content: string } | null>, customerEvents: Array<{ customerId: string, content: string } | null>, suggestedSidekickPrompts: Array<{ label: string, prompt: string, category: string }>, generatedAt?: { unixTimestamp: string, iso8601: string } | null } | null, lockedAt?: { unixTimestamp: string, iso8601: string } | null, lockedBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, importedAt?: { unixTimestamp: string, iso8601: string } | null, importedBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, broadcast?: { id: string } | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
 export type SendSlackMessageMutationVariables = Exact<{
   input: SendSlackMessageInput;
 }>;
@@ -35041,7 +35747,7 @@ export type ForkThreadMutation = { forkThread: { thread?: { id: string, ref: str
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35081,7 +35787,7 @@ export type ForkThreadMutation = { forkThread: { thread?: { id: string, ref: str
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35215,7 +35921,7 @@ export type CreateThreadFromSlackMessageMutation = { createThreadFromSlackMessag
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35255,7 +35961,7 @@ export type CreateThreadFromSlackMessageMutation = { createThreadFromSlackMessag
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35738,7 +36444,7 @@ export type CreateOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type CreateOAuthAppMutation = { createOAuthApp: { clientSecret?: string | null, oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type CreateOAuthAppMutation = { createOAuthApp: { clientSecret?: string | null, oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, usesPkce: boolean, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35753,7 +36459,7 @@ export type UpdateOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type UpdateOAuthAppMutation = { updateOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type UpdateOAuthAppMutation = { updateOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, usesPkce: boolean, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35768,7 +36474,7 @@ export type EnableOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type EnableOAuthAppMutation = { enableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type EnableOAuthAppMutation = { enableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, usesPkce: boolean, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35783,7 +36489,7 @@ export type DisableOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type DisableOAuthAppMutation = { disableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type DisableOAuthAppMutation = { disableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, usesPkce: boolean, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35798,7 +36504,7 @@ export type DeleteOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type DeleteOAuthAppMutation = { deleteOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type DeleteOAuthAppMutation = { deleteOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, usesPkce: boolean, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -36537,7 +37243,7 @@ export type CreateThreadMutation = { createThread: { thread?: { id: string, ref:
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -36577,7 +37283,7 @@ export type CreateThreadMutation = { createThread: { thread?: { id: string, ref:
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -36682,7 +37388,7 @@ export type ImportThreadMutation = { importThread: { result?: UpsertResult | nul
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -36722,7 +37428,7 @@ export type ImportThreadMutation = { importThread: { result?: UpsertResult | nul
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37039,7 +37745,7 @@ export type ImportThreadMessagesMutation = { importThreadMessages: { results: Ar
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
                    | null }
                 | { __typename: 'System', id: string }
-                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37079,7 +37785,7 @@ export type ImportThreadMessagesMutation = { importThreadMessages: { results: Ar
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
                    | null }
                 | { __typename: 'System', id: string }
-                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37120,7 +37826,7 @@ export type ImportThreadMessagesMutation = { importThreadMessages: { results: Ar
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
                    | null }
                 | { __typename: 'System', id: string }
-                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37160,7 +37866,7 @@ export type ImportThreadMessagesMutation = { importThreadMessages: { results: Ar
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
                    | null }
                 | { __typename: 'System', id: string }
-                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37643,7 +38349,7 @@ export type AssignThreadMutation = { assignThread: { thread?: { id: string, ref:
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37683,7 +38389,7 @@ export type AssignThreadMutation = { assignThread: { thread?: { id: string, ref:
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37788,7 +38494,7 @@ export type UnassignThreadMutation = { unassignThread: { thread?: { id: string, 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37828,7 +38534,7 @@ export type UnassignThreadMutation = { unassignThread: { thread?: { id: string, 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37933,7 +38639,7 @@ export type AddAdditionalAssigneesMutation = { addAdditionalAssignees: { thread?
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -37973,7 +38679,7 @@ export type AddAdditionalAssigneesMutation = { addAdditionalAssignees: { thread?
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38078,7 +38784,7 @@ export type RemoveAdditionalAssigneesMutation = { removeAdditionalAssignees: { t
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38118,7 +38824,7 @@ export type RemoveAdditionalAssigneesMutation = { removeAdditionalAssignees: { t
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38223,7 +38929,7 @@ export type SnoozeThreadMutation = { snoozeThread: { thread?: { id: string, ref:
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38263,7 +38969,7 @@ export type SnoozeThreadMutation = { snoozeThread: { thread?: { id: string, ref:
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38368,7 +39074,7 @@ export type MarkThreadAsDoneMutation = { markThreadAsDone: { thread?: { id: stri
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38408,7 +39114,7 @@ export type MarkThreadAsDoneMutation = { markThreadAsDone: { thread?: { id: stri
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38513,7 +39219,7 @@ export type MarkThreadAsTodoMutation = { markThreadAsTodo: { thread?: { id: stri
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38553,7 +39259,7 @@ export type MarkThreadAsTodoMutation = { markThreadAsTodo: { thread?: { id: stri
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38658,7 +39364,7 @@ export type ChangeThreadCustomerMutation = { changeThreadCustomer: { thread?: { 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38698,7 +39404,7 @@ export type ChangeThreadCustomerMutation = { changeThreadCustomer: { thread?: { 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38803,7 +39509,7 @@ export type ChangeThreadPriorityMutation = { changeThreadPriority: { thread?: { 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38843,7 +39549,7 @@ export type ChangeThreadPriorityMutation = { changeThreadPriority: { thread?: { 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38948,7 +39654,7 @@ export type UpdateThreadTitleMutation = { updateThreadTitle: { thread?: { id: st
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -38988,7 +39694,7 @@ export type UpdateThreadTitleMutation = { updateThreadTitle: { thread?: { id: st
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39093,7 +39799,7 @@ export type UpdateThreadExternalIdMutation = { updateThreadExternalId: { thread?
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39133,7 +39839,7 @@ export type UpdateThreadExternalIdMutation = { updateThreadExternalId: { thread?
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39238,7 +39944,7 @@ export type UpdateThreadTenantMutation = { updateThreadTenant: { thread?: { id: 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39278,7 +39984,7 @@ export type UpdateThreadTenantMutation = { updateThreadTenant: { thread?: { id: 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39383,7 +40089,7 @@ export type UpdateThreadAccountMutation = { updateThreadAccount: { thread?: { id
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39423,7 +40129,7 @@ export type UpdateThreadAccountMutation = { updateThreadAccount: { thread?: { id
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39528,7 +40234,7 @@ export type UpdateThreadTierMutation = { updateThreadTier: { thread?: { id: stri
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39568,7 +40274,7 @@ export type UpdateThreadTierMutation = { updateThreadTier: { thread?: { id: stri
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39673,7 +40379,7 @@ export type UpdateThreadServiceLevelAgreementPolicyMutation = { updateThreadServ
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39713,7 +40419,7 @@ export type UpdateThreadServiceLevelAgreementPolicyMutation = { updateThreadServ
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39818,7 +40524,7 @@ export type UpdateThreadEscalationPathMutation = { updateThreadEscalationPath: {
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39858,7 +40564,7 @@ export type UpdateThreadEscalationPathMutation = { updateThreadEscalationPath: {
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -39963,7 +40669,7 @@ export type LockThreadMutation = { lockThread: { thread?: { id: string, ref: str
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40003,7 +40709,7 @@ export type LockThreadMutation = { lockThread: { thread?: { id: string, ref: str
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40108,7 +40814,7 @@ export type UpdateThreadAgentStatusMutation = { updateThreadAgentStatus: { threa
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40148,7 +40854,7 @@ export type UpdateThreadAgentStatusMutation = { updateThreadAgentStatus: { threa
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40253,7 +40959,7 @@ export type UpdateThreadSuggestedActionStatusMutation = { updateThreadSuggestedA
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40293,7 +40999,7 @@ export type UpdateThreadSuggestedActionStatusMutation = { updateThreadSuggestedA
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40405,7 +41111,7 @@ export type CreateTestThreadMutation = { createTestThread: { thread?: { id: stri
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40445,7 +41151,7 @@ export type CreateTestThreadMutation = { createTestThread: { thread?: { id: stri
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40548,7 +41254,7 @@ export type CreateAllTestThreadsMutation = { createAllTestThreads: { threads: Ar
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40588,7 +41294,7 @@ export type CreateAllTestThreadsMutation = { createAllTestThreads: { threads: Ar
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -40846,6 +41552,13 @@ export type RequestDiscussionToolCallApprovalMutation = { requestDiscussionToolC
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type RequestDiscussionQuestionMutationVariables = Exact<{
+  input: RequestDiscussionQuestionInput;
+}>;
+
+
+export type RequestDiscussionQuestionMutation = { requestDiscussionQuestion: { question?: { questionRequestId: string, status: SidekickQuestionStatus, selections: Array<{ questionId: string, optionIds: Array<string>, otherText?: string | null }>, resolvedAt?: { unixTimestamp: string, iso8601: string } | null } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type ResolveDiscussionApprovalMutationVariables = Exact<{
   input: ResolveDiscussionApprovalInput;
@@ -42954,7 +43667,7 @@ export type CreateHelpCenterMutationVariables = Exact<{
 }>;
 
 
-export type CreateHelpCenterMutation = { createHelpCenter: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type CreateHelpCenterMutation = { createHelpCenter: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, linkCardsHeading?: string | null, isLinkCardsEnabled: boolean, isPopularTopicsEnabled: boolean, popularTopicArticleIds: Array<string>, heroHeading?: string | null, heroSubheading?: string | null, heroSearchPlaceholder?: string | null, heroAlignment: HelpCenterHeroAlignment, isHomepageRedesignEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, linkCards: Array<{ title: string, description?: string | null, url: string, icon?: string | null }>, popularTopicColumns: { columnOneArticleIds: Array<string>, columnTwoArticleIds: Array<string> }, featuredHomepageItems: Array<{ type: HelpCenterFeaturedHomepageItemType, articleId?: string | null, title?: string | null, url?: string | null, description?: string | null }>, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
         | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
         | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
       , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -42980,7 +43693,7 @@ export type UpdateHelpCenterMutationVariables = Exact<{
 }>;
 
 
-export type UpdateHelpCenterMutation = { updateHelpCenter: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type UpdateHelpCenterMutation = { updateHelpCenter: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, linkCardsHeading?: string | null, isLinkCardsEnabled: boolean, isPopularTopicsEnabled: boolean, popularTopicArticleIds: Array<string>, heroHeading?: string | null, heroSubheading?: string | null, heroSearchPlaceholder?: string | null, heroAlignment: HelpCenterHeroAlignment, isHomepageRedesignEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, linkCards: Array<{ title: string, description?: string | null, url: string, icon?: string | null }>, popularTopicColumns: { columnOneArticleIds: Array<string>, columnTwoArticleIds: Array<string> }, featuredHomepageItems: Array<{ type: HelpCenterFeaturedHomepageItemType, articleId?: string | null, title?: string | null, url?: string | null, description?: string | null }>, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
         | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
         | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
       , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -43013,7 +43726,7 @@ export type UpdateHelpCenterCustomDomainNameMutationVariables = Exact<{
 }>;
 
 
-export type UpdateHelpCenterCustomDomainNameMutation = { updateHelpCenterCustomDomainName: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type UpdateHelpCenterCustomDomainNameMutation = { updateHelpCenterCustomDomainName: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, linkCardsHeading?: string | null, isLinkCardsEnabled: boolean, isPopularTopicsEnabled: boolean, popularTopicArticleIds: Array<string>, heroHeading?: string | null, heroSubheading?: string | null, heroSearchPlaceholder?: string | null, heroAlignment: HelpCenterHeroAlignment, isHomepageRedesignEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, linkCards: Array<{ title: string, description?: string | null, url: string, icon?: string | null }>, popularTopicColumns: { columnOneArticleIds: Array<string>, columnTwoArticleIds: Array<string> }, featuredHomepageItems: Array<{ type: HelpCenterFeaturedHomepageItemType, articleId?: string | null, title?: string | null, url?: string | null, description?: string | null }>, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
         | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
         | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
       , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -43039,7 +43752,7 @@ export type VerifyHelpCenterCustomDomainNameMutationVariables = Exact<{
 }>;
 
 
-export type VerifyHelpCenterCustomDomainNameMutation = { verifyHelpCenterCustomDomainName: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
+export type VerifyHelpCenterCustomDomainNameMutation = { verifyHelpCenterCustomDomainName: { helpCenter?: { id: string, type: HelpCenterType, publicName: string, internalName: string, description?: string | null, headCustomJs?: string | null, bodyCustomJs?: string | null, isChatEnabled: boolean, isCustomerFacingAiEnabled: boolean, linkCardsHeading?: string | null, isLinkCardsEnabled: boolean, isPopularTopicsEnabled: boolean, popularTopicArticleIds: Array<string>, heroHeading?: string | null, heroSubheading?: string | null, heroSearchPlaceholder?: string | null, heroAlignment: HelpCenterHeroAlignment, isHomepageRedesignEnabled: boolean, color?: string | null, isDeleted: boolean, domainSettings: { domainName: string, customDomainName?: string | null, customDomainNameVerificationTxtRecord?: { name: string, value: string } | null, customDomainNameVerifiedAt?: { unixTimestamp: string, iso8601: string } | null }, portalSettings: { isEnabled: boolean, isAdditionalRecipientsEnabled: boolean }, articleCopyOptions: { isEnabled: boolean, options: { isPlaintextEnabled: boolean, isMarkdownEnabled: boolean, isChatgptEnabled: boolean, isClaudeEnabled: boolean, isCursorEnabled: boolean } }, linkCards: Array<{ title: string, description?: string | null, url: string, icon?: string | null }>, popularTopicColumns: { columnOneArticleIds: Array<string>, columnTwoArticleIds: Array<string> }, featuredHomepageItems: Array<{ type: HelpCenterFeaturedHomepageItemType, articleId?: string | null, title?: string | null, url?: string | null, description?: string | null }>, socialPreviewImage?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, access?: { tierIds: Array<string>, accountIds: Array<string>, customerIds: Array<string> } | null, authMechanism:
         | { __typename: 'HelpCenterAuthMechanismWorkosAuthkit', type: HelpCenterAuthMechanismType }
         | { __typename: 'HelpCenterAuthMechanismWorkosConnect', type: HelpCenterAuthMechanismType, appClientId: string, appSecretMasked: string, apiHost: string }
       , publishedAt?: { unixTimestamp: string, iso8601: string } | null, publishedBy?:
@@ -43065,7 +43778,7 @@ export type UpdateHelpCenterIndexMutationVariables = Exact<{
 }>;
 
 
-export type UpdateHelpCenterIndexMutation = { updateHelpCenterIndex: { helpCenterIndex?: { helpCenterId: string, hash: string, navIndex: Array<{ type: HelpCenterIndexItemType, id: string, title: string, slug: string, parentId?: string | null, status?: HelpCenterArticleStatus | null, description?: string | null, icon?: string | null }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateHelpCenterIndexMutation = { updateHelpCenterIndex: { helpCenterIndex?: { helpCenterId: string, hash: string, navIndex: Array<{ type: HelpCenterIndexItemType, id: string, title: string, slug: string, parentId?: string | null, status?: HelpCenterArticleStatus | null, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43080,7 +43793,7 @@ export type UpsertHelpCenterArticleMutationVariables = Exact<{
 }>;
 
 
-export type UpsertHelpCenterArticleMutation = { upsertHelpCenterArticle: { helpCenterArticle?: { id: string, title: string, description?: string | null, icon?: string | null, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
+export type UpsertHelpCenterArticleMutation = { upsertHelpCenterArticle: { helpCenterArticle?: { id: string, title: string, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43106,7 +43819,7 @@ export type GenerateHelpCenterArticleMutationVariables = Exact<{
 }>;
 
 
-export type GenerateHelpCenterArticleMutation = { generateHelpCenterArticle: { helpCenterArticles: Array<{ id: string, title: string, description?: string | null, icon?: string | null, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
+export type GenerateHelpCenterArticleMutation = { generateHelpCenterArticle: { helpCenterArticles: Array<{ id: string, title: string, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43125,7 +43838,7 @@ export type CreateHelpCenterArticleGroupMutationVariables = Exact<{
 }>;
 
 
-export type CreateHelpCenterArticleGroupMutation = { createHelpCenterArticleGroup: { helpCenterArticleGroup?: { id: string, name: string, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateHelpCenterArticleGroupMutation = { createHelpCenterArticleGroup: { helpCenterArticleGroup?: { id: string, name: string, description?: string | null, icon?: string | null, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43140,7 +43853,7 @@ export type UpdateHelpCenterArticleGroupMutationVariables = Exact<{
 }>;
 
 
-export type UpdateHelpCenterArticleGroupMutation = { updateHelpCenterArticleGroup: { helpCenterArticleGroup?: { id: string, name: string, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateHelpCenterArticleGroupMutation = { updateHelpCenterArticleGroup: { helpCenterArticleGroup?: { id: string, name: string, description?: string | null, icon?: string | null, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43249,6 +43962,13 @@ export type AddGeneratedReplyMutation = { addGeneratedReply: { generatedReply?: 
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
+export type RequestGeneratedReplyMutationVariables = Exact<{
+  input: RequestGeneratedReplyInput;
+}>;
+
+
+export type RequestGeneratedReplyMutation = { requestGeneratedReply: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
 export type EscalateThreadMutationVariables = Exact<{
   input: EscalateThreadInput;
 }>;
@@ -43303,7 +44023,7 @@ export type EscalateThreadMutation = { escalateThread: { thread?: { id: string, 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43343,7 +44063,7 @@ export type EscalateThreadMutation = { escalateThread: { thread?: { id: string, 
             | { __typename: 'UserActor', userId: string, user: { id: string } }
            | null }
         | { __typename: 'System', id: string }
-        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
               | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
               | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
               | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43402,6 +44122,7 @@ export type CreateAiFeatureFeedbackMutationVariables = Exact<{
 export type CreateAiFeatureFeedbackMutation = { createAiFeatureFeedback: { aiFeatureFeedback?: { id: string, feature: string, details:
         | { __typename: 'AiAgentFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, threadId: string, timelineEntryId: string }
         | { __typename: 'KnowledgeGapFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, knowledgeGapId: string }
+        | { __typename: 'McpFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, toolName?: string | null }
         | { __typename: 'ThreadCatchupFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, threadId: string }
         | { __typename: 'ThreadClustersFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, clusterId: string }
         | { __typename: 'ToneRuleFeedbackDetails', reason: string, comment?: string | null, sentiment?: AiFeedbackSentiment | null, toneRuleId: string, toneRuleInput: string, toneRuleDescription: string }
@@ -43413,6 +44134,13 @@ export type CreateAiFeedbackMutationVariables = Exact<{
 
 
 export type CreateAiFeedbackMutation = { createAiFeedback: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type CreateMcpFeedbackMutationVariables = Exact<{
+  input: CreateMcpFeedbackInput;
+}>;
+
+
+export type CreateMcpFeedbackMutation = { createMcpFeedback: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type GenerateAiToneRulesFromDescriptionMutationVariables = Exact<{
   input: GenerateAiToneRulesFromDescriptionInput;
@@ -43475,6 +44203,7 @@ export type UpdateInternalNotificationsMutation = { updateInternalNotifications:
         | { __typename: 'DiscussionResolvedNotificationDetail', threadId: string, threadDiscussionId: string }
         | { __typename: 'EmailBounceNotificationDetail', threadId: string }
         | { __typename: 'IntegrationReauthRequiredNotificationDetail', serviceIntegrationKey: string, serviceAuthorizationId: string }
+        | { __typename: 'KnowledgeGapNotificationDetail', knowledgeGapId: string }
         | { __typename: 'NoteMentionNotificationDetail', threadId: string, timelineEntryId: string, mentionedBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
@@ -43646,7 +44375,7 @@ export type BroadcastThreadsQuery = { broadcast?: { threads: { totalCount: numbe
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
                | null }
             | { __typename: 'System', id: string }
-            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                   | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                   | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43686,7 +44415,7 @@ export type BroadcastThreadsQuery = { broadcast?: { threads: { totalCount: numbe
                 | { __typename: 'UserActor', userId: string, user: { id: string } }
                | null }
             | { __typename: 'System', id: string }
-            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+            | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                   | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                   | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                   | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44047,7 +44776,7 @@ export type ThreadTimelineEntriesQuery = { thread?: { timelineEntries: { edges: 
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
                    | null }
                 | { __typename: 'System', id: string }
-                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44087,7 +44816,7 @@ export type ThreadTimelineEntriesQuery = { thread?: { timelineEntries: { edges: 
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
                    | null }
                 | { __typename: 'System', id: string }
-                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44128,7 +44857,7 @@ export type ThreadTimelineEntriesQuery = { thread?: { timelineEntries: { edges: 
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
                    | null }
                 | { __typename: 'System', id: string }
-                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44168,7 +44897,7 @@ export type ThreadTimelineEntriesQuery = { thread?: { timelineEntries: { edges: 
                     | { __typename: 'UserActor', userId: string, user: { id: string } }
                    | null }
                 | { __typename: 'System', id: string }
-                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+                | { __typename: 'User', id: string, fullName: string, publicName: string, avatarUrl?: string | null, email: string, status: UserStatus, isDeleted: boolean, isManagedByDirectory: boolean, avatar?: { id: string, fileName: string, fileExtension?: string | null, fileMimeType: string, visibility: WorkspaceFileVisibility, fileSize: { bytes: number, kiloBytes: number, megaBytes: number }, createdAt: { unixTimestamp: string, iso8601: string }, updatedAt: { unixTimestamp: string, iso8601: string } } | null, role?: { id: string, name: string, description?: string | null, permissions: Array<string>, isAssignableToThread: boolean, isAssignableToTask: boolean, key?: RoleKey | null, customRoleId?: string | null, priority: number, customRole?: { id: string } | null } | null, slackIdentities: Array<{ slackTeamId: string, slackUserId: string }>, defaultSavedThreadsView?: { id: string } | null, statusChangedAt: { unixTimestamp: string, iso8601: string }, workingHours?: { id: string, userId: string, isEnabled: boolean, nextStatusTransitionTo?: UserStatus | null, timezone: { name: string }, nextStatusTransitionAt?: { unixTimestamp: string, iso8601: string } | null, slots: Array<{ id: string, weekday: WeekDay, startsAt: string, endsAt: string }>, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
                       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
                       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
                       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44786,7 +45515,7 @@ export type HelpCenterArticleGroupsQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterArticleGroupsQuery = { helpCenter?: { articleGroups: { edges: Array<{ cursor: string, node: { id: string, name: string, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type HelpCenterArticleGroupsQuery = { helpCenter?: { articleGroups: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, icon?: string | null, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44805,7 +45534,7 @@ export type HelpCenterArticlesQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterArticlesQuery = { helpCenter?: { articles: { edges: Array<{ cursor: string, node: { id: string, title: string, description?: string | null, icon?: string | null, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
+export type HelpCenterArticlesQuery = { helpCenter?: { articles: { edges: Array<{ cursor: string, node: { id: string, title: string, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44828,7 +45557,7 @@ export type HelpCenterArticleGroupChildArticleGroupsQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterArticleGroupChildArticleGroupsQuery = { helpCenterArticleGroup?: { childArticleGroups: { edges: Array<{ cursor: string, node: { id: string, name: string, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type HelpCenterArticleGroupChildArticleGroupsQuery = { helpCenterArticleGroup?: { childArticleGroups: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, icon?: string | null, slug: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44847,7 +45576,7 @@ export type HelpCenterArticleGroupArticlesQueryVariables = Exact<{
 }>;
 
 
-export type HelpCenterArticleGroupArticlesQuery = { helpCenterArticleGroup?: { articles: { edges: Array<{ cursor: string, node: { id: string, title: string, description?: string | null, icon?: string | null, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
+export type HelpCenterArticleGroupArticlesQuery = { helpCenterArticleGroup?: { articles: { edges: Array<{ cursor: string, node: { id: string, title: string, description?: string | null, icon?: string | null, isFeatured: boolean, isPopularTopic: boolean, contentHtml: string, slug: string, status: HelpCenterArticleStatus, statusChangedAt: { unixTimestamp: string, iso8601: string }, statusChangedBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44887,8 +45616,8 @@ export const AgentStatusDetailHandedOffFieldsFragmentDoc = /*#__PURE__*/ gql("fr
 export const AgentStatusDetailHandledFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AgentStatusDetailHandledFields on AgentStatusDetailHandled{type}") as unknown as DocumentNode<AgentStatusDetailHandledFieldsFragment, unknown>;
 export const AgentStatusDetailInProgressFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AgentStatusDetailInProgressFields on AgentStatusDetailInProgress{type}") as unknown as DocumentNode<AgentStatusDetailInProgressFieldsFragment, unknown>;
 export const AiAgentFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AiAgentFeedbackDetailsFields on AiAgentFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId timelineEntryId}") as unknown as DocumentNode<AiAgentFeedbackDetailsFieldsFragment, unknown>;
-export const AiFeatureFeedbackOutputFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AiFeatureFeedbackOutputFields on AiFeatureFeedbackOutput{id feature details{__typename ...on AiAgentFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId timelineEntryId}...on ThreadCatchupFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId}...on ThreadClustersFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)clusterId}...on ToneRuleFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toneRuleId toneRuleInput toneRuleDescription}...on KnowledgeGapFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)knowledgeGapId}}}") as unknown as DocumentNode<AiFeatureFeedbackOutputFieldsFragment, unknown>;
-export const AiFeedbackFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AiFeedbackFields on AiFeedback{id feature details{__typename ...on AiAgentFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId timelineEntryId}...on ThreadCatchupFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId}...on ThreadClustersFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)clusterId}...on ToneRuleFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toneRuleId toneRuleInput toneRuleDescription}...on KnowledgeGapFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)knowledgeGapId}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AiFeedbackFieldsFragment, unknown>;
+export const AiFeatureFeedbackOutputFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AiFeatureFeedbackOutputFields on AiFeatureFeedbackOutput{id feature details{__typename ...on AiAgentFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId timelineEntryId}...on ThreadCatchupFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId}...on ThreadClustersFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)clusterId}...on ToneRuleFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toneRuleId toneRuleInput toneRuleDescription}...on KnowledgeGapFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)knowledgeGapId}...on McpFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toolName@include(if:true)}}}") as unknown as DocumentNode<AiFeatureFeedbackOutputFieldsFragment, unknown>;
+export const AiFeedbackFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AiFeedbackFields on AiFeedback{id feature details{__typename ...on AiAgentFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId timelineEntryId}...on ThreadCatchupFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId}...on ThreadClustersFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)clusterId}...on ToneRuleFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toneRuleId toneRuleInput toneRuleDescription}...on KnowledgeGapFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)knowledgeGapId}...on McpFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toolName@include(if:true)}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AiFeedbackFieldsFragment, unknown>;
 export const AiToneRuleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AiToneRuleFields on AiToneRule{id category description isEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AiToneRuleFieldsFragment, unknown>;
 export const ApiKeyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ApiKeyFields on ApiKey{id description@include(if:true)permissions impersonationAllowList{userIds roleIds customRoleIds}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ApiKeyFieldsFragment, unknown>;
 export const AttachmentDownloadUrlFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AttachmentDownloadUrlFields on AttachmentDownloadUrl{attachment{id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType type createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}downloadUrl expiresAt{unixTimestamp iso8601}}") as unknown as DocumentNode<AttachmentDownloadUrlFieldsFragment, unknown>;
@@ -44971,7 +45700,7 @@ export const CustomerSurveyPrioritiesConditionFieldsFragmentDoc = /*#__PURE__*/ 
 export const CustomerSurveyRequestedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomerSurveyRequestedEntryFields on CustomerSurveyRequestedEntry{customerId threadId customerSurveyId surveyResponseId surveyResponsePublicId}") as unknown as DocumentNode<CustomerSurveyRequestedEntryFieldsFragment, unknown>;
 export const CustomerSurveySupportEmailsConditionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomerSurveySupportEmailsConditionFields on CustomerSurveySupportEmailsCondition{supportEmailAddresses operator}") as unknown as DocumentNode<CustomerSurveySupportEmailsConditionFieldsFragment, unknown>;
 export const CustomerSurveyTiersConditionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomerSurveyTiersConditionFields on CustomerSurveyTiersCondition{tierIds operator}") as unknown as DocumentNode<CustomerSurveyTiersConditionFieldsFragment, unknown>;
-export const CustomRoleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomRoleFields on CustomRole{id name description@include(if:true)permissionsPreset createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<CustomRoleFieldsFragment, unknown>;
+export const CustomRoleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomRoleFields on CustomRole{id name description@include(if:true)permissionsPreset createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}priority}") as unknown as DocumentNode<CustomRoleFieldsFragment, unknown>;
 export const CustomSidekickSkillFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomSidekickSkillFields on CustomSidekickSkill{name displayName description isEnabled customSkillId}") as unknown as DocumentNode<CustomSidekickSkillFieldsFragment, unknown>;
 export const DefaultServiceIntegrationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment DefaultServiceIntegrationFields on DefaultServiceIntegration{name key}") as unknown as DocumentNode<DefaultServiceIntegrationFieldsFragment, unknown>;
 export const DeletedCustomerActorFieldsFragmentDoc = /*#__PURE__*/ gql("fragment DeletedCustomerActorFields on DeletedCustomerActor{customerId}") as unknown as DocumentNode<DeletedCustomerActorFieldsFragment, unknown>;
@@ -44999,22 +45728,22 @@ export const GeneratedReplyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment Gener
 export const GenericThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment GenericThreadLinkFields on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<GenericThreadLinkFieldsFragment, unknown>;
 export const GithubUserAuthIntegrationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment GithubUserAuthIntegrationFields on GithubUserAuthIntegration{id githubUsername createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<GithubUserAuthIntegrationFieldsFragment, unknown>;
 export const HeatmapMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HeatmapMetricFields on HeatmapMetric{days{percentage total threadIds messageCount}}") as unknown as DocumentNode<HeatmapMetricFieldsFragment, unknown>;
-export const HelpCenterFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterFields on HelpCenter{id type publicName internalName description@include(if:true)domainSettings{domainName customDomainName@include(if:true)customDomainNameVerificationTxtRecord@include(if:true){name value}customDomainNameVerifiedAt@include(if:true){unixTimestamp iso8601}}portalSettings{isEnabled isAdditionalRecipientsEnabled}headCustomJs@include(if:true)bodyCustomJs@include(if:true)isChatEnabled articleCopyOptions{isEnabled options{isPlaintextEnabled isMarkdownEnabled isChatgptEnabled isClaudeEnabled isCursorEnabled}}isCustomerFacingAiEnabled color@include(if:true)socialPreviewImage@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}access@include(if:true){tierIds accountIds customerIds}authMechanism{__typename ...on HelpCenterAuthMechanismWorkosAuthkit{type}...on HelpCenterAuthMechanismWorkosConnect{type appClientId appSecretMasked apiHost}}publishedAt@include(if:true){unixTimestamp iso8601}publishedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<HelpCenterFieldsFragment, unknown>;
+export const HelpCenterFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterFields on HelpCenter{id type publicName internalName description@include(if:true)domainSettings{domainName customDomainName@include(if:true)customDomainNameVerificationTxtRecord@include(if:true){name value}customDomainNameVerifiedAt@include(if:true){unixTimestamp iso8601}}portalSettings{isEnabled isAdditionalRecipientsEnabled}headCustomJs@include(if:true)bodyCustomJs@include(if:true)isChatEnabled articleCopyOptions{isEnabled options{isPlaintextEnabled isMarkdownEnabled isChatgptEnabled isClaudeEnabled isCursorEnabled}}isCustomerFacingAiEnabled linkCardsHeading@include(if:true)linkCards{title description@include(if:true)url icon@include(if:true)}isLinkCardsEnabled isPopularTopicsEnabled popularTopicArticleIds popularTopicColumns{columnOneArticleIds columnTwoArticleIds}featuredHomepageItems{type articleId@include(if:true)title@include(if:true)url@include(if:true)description@include(if:true)}heroHeading@include(if:true)heroSubheading@include(if:true)heroSearchPlaceholder@include(if:true)heroAlignment isHomepageRedesignEnabled color@include(if:true)socialPreviewImage@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}access@include(if:true){tierIds accountIds customerIds}authMechanism{__typename ...on HelpCenterAuthMechanismWorkosAuthkit{type}...on HelpCenterAuthMechanismWorkosConnect{type appClientId appSecretMasked apiHost}}publishedAt@include(if:true){unixTimestamp iso8601}publishedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<HelpCenterFieldsFragment, unknown>;
 export const HelpCenterAiConversationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAiConversationFields on HelpCenterAiConversation{id title@include(if:true)helpCenter{id}customer@include(if:true){id}thread@include(if:true){id}createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}lastMessageAt{unixTimestamp iso8601}messageCount}") as unknown as DocumentNode<HelpCenterAiConversationFieldsFragment, unknown>;
 export const HelpCenterAiConversationMessageEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAiConversationMessageEntryFields on HelpCenterAiConversationMessageEntry{helpCenterId helpCenterAiConversationId messageId markdown}") as unknown as DocumentNode<HelpCenterAiConversationMessageEntryFieldsFragment, unknown>;
-export const HelpCenterArticleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterArticleFields on HelpCenterArticle{id title description@include(if:true)icon@include(if:true)contentHtml slug status statusChangedAt{unixTimestamp iso8601}statusChangedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}helpCenter{id}articleGroup@include(if:true){id}}") as unknown as DocumentNode<HelpCenterArticleFieldsFragment, unknown>;
+export const HelpCenterArticleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterArticleFields on HelpCenterArticle{id title description@include(if:true)icon@include(if:true)isFeatured isPopularTopic contentHtml slug status statusChangedAt{unixTimestamp iso8601}statusChangedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}helpCenter{id}articleGroup@include(if:true){id}}") as unknown as DocumentNode<HelpCenterArticleFieldsFragment, unknown>;
 export const HelpCenterArticleDocumentFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterArticleDocumentFields on HelpCenterArticleDocument{id article{id}}") as unknown as DocumentNode<HelpCenterArticleDocumentFieldsFragment, unknown>;
-export const HelpCenterArticleGroupFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterArticleGroupFields on HelpCenterArticleGroup{id name createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}helpCenter{id}parentArticleGroup@include(if:true){id}slug}") as unknown as DocumentNode<HelpCenterArticleGroupFieldsFragment, unknown>;
+export const HelpCenterArticleGroupFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterArticleGroupFields on HelpCenterArticleGroup{id name description@include(if:true)icon@include(if:true)createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}helpCenter{id}parentArticleGroup@include(if:true){id}slug}") as unknown as DocumentNode<HelpCenterArticleGroupFieldsFragment, unknown>;
 export const HelpCenterArticleSearchResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterArticleSearchResultFields on HelpCenterArticleSearchResult{content helpCenterArticle{id}helpCenter{id}}") as unknown as DocumentNode<HelpCenterArticleSearchResultFieldsFragment, unknown>;
 export const HelpCenterAuthMechanismWorkosAuthkitFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAuthMechanismWorkosAuthkitFields on HelpCenterAuthMechanismWorkosAuthkit{type}") as unknown as DocumentNode<HelpCenterAuthMechanismWorkosAuthkitFieldsFragment, unknown>;
 export const HelpCenterAuthMechanismWorkosConnectFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterAuthMechanismWorkosConnectFields on HelpCenterAuthMechanismWorkosConnect{type appClientId appSecretMasked apiHost}") as unknown as DocumentNode<HelpCenterAuthMechanismWorkosConnectFieldsFragment, unknown>;
-export const HelpCenterIndexFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterIndexFields on HelpCenterIndex{helpCenterId hash navIndex{type id title slug parentId@include(if:true)status@include(if:true)description@include(if:true)icon@include(if:true)}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<HelpCenterIndexFieldsFragment, unknown>;
+export const HelpCenterIndexFieldsFragmentDoc = /*#__PURE__*/ gql("fragment HelpCenterIndexFields on HelpCenterIndex{helpCenterId hash navIndex{type id title slug parentId@include(if:true)status@include(if:true)description@include(if:true)icon@include(if:true)isFeatured isPopularTopic}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<HelpCenterIndexFieldsFragment, unknown>;
 export const ImportBroadcastAudienceChannelsResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportBroadcastAudienceChannelsResultFields on ImportBroadcastAudienceChannelsResult{isDryRun broadcastAudience{id}addedCount alreadyInAudienceCount notFoundCount ambiguousCount invalidCount}") as unknown as DocumentNode<ImportBroadcastAudienceChannelsResultFieldsFragment, unknown>;
 export const ImportBroadcastRecipientUnsubscribesResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportBroadcastRecipientUnsubscribesResultFields on ImportBroadcastRecipientUnsubscribesResult{isDryRun createdCount alreadyUnsubscribedCount notFoundCount ambiguousCount invalidCount}") as unknown as DocumentNode<ImportBroadcastRecipientUnsubscribesResultFieldsFragment, unknown>;
 export const ImportJobFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportJobFields on ImportJob{id status startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}}") as unknown as DocumentNode<ImportJobFieldsFragment, unknown>;
 export const ImportJobDefinitionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportJobDefinitionFields on ImportJobDefinition{id mode entityTypes metadata@include(if:true){lists{id name@include(if:true)}}enabledAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ImportJobDefinitionFieldsFragment, unknown>;
 export const ImportThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportThreadChannelDetailsFields on ImportThreadChannelDetails{importSourceUrl@include(if:true)importIntegrationKey}") as unknown as DocumentNode<ImportThreadChannelDetailsFieldsFragment, unknown>;
-export const RoleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment RoleFields on Role{id name description@include(if:true)permissions isAssignableToThread isAssignableToTask key@include(if:true)customRoleId@include(if:true)customRole@include(if:true){id}}") as unknown as DocumentNode<RoleFieldsFragment, unknown>;
+export const RoleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment RoleFields on Role{id name description@include(if:true)permissions isAssignableToThread isAssignableToTask key@include(if:true)customRoleId@include(if:true)customRole@include(if:true){id}priority}") as unknown as DocumentNode<RoleFieldsFragment, unknown>;
 export const UserWorkingHoursFieldsFragmentDoc = /*#__PURE__*/ gql("fragment UserWorkingHoursFields on UserWorkingHours{id userId timezone{name}isEnabled nextStatusTransitionAt@include(if:true){unixTimestamp iso8601}nextStatusTransitionTo@include(if:true)slots{id weekday startsAt endsAt}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<UserWorkingHoursFieldsFragment, unknown>;
 export const ImportThreadMessageResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportThreadMessageResultFields on ImportThreadMessageResult{threadMessage@include(if:true){__typename ...on TimelineEntry{id customerId threadId timestamp{unixTimestamp iso8601}entry{__typename ...on NoteEntry{noteId noteEntryText:text noteEntryMarkdown:markdown@include(if:true)isEdited editedAt@include(if:true){unixTimestamp iso8601}editedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ChatEntry{chatId chatEntryText:text@include(if:true)customerReadAt@include(if:true){unixTimestamp iso8601}}...on EmailEntry{emailId to{name@include(if:true)email}from{name@include(if:true)email}subject@include(if:true)textContent@include(if:true)hasMoreTextContent fullTextContent@include(if:true)markdownContent@include(if:true)hasMoreMarkdownContent fullMarkdownContent@include(if:true)authenticity sentAt@include(if:true){unixTimestamp iso8601}sendStatus@include(if:true)receivedAt@include(if:true){unixTimestamp iso8601}isStartOfThread category}...on CustomEntry{externalId@include(if:true)title customEntryType:type@include(if:true)customEntryComponents:components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on LinearIssueThreadLinkStateTransitionedEntry{linearIssueId previousLinearStateId nextLinearStateId}...on ThreadAssignmentTransitionedEntry{previousAssignee@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}nextAssignee@include(if:true){__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}}...on ThreadAdditionalAssigneesTransitionedEntry{previousAssignees{__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}nextAssignees{__typename ...on User{id fullName publicName avatarUrl@include(if:true)avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}email role@include(if:true){...RoleFields}slackIdentities{slackTeamId slackUserId}defaultSavedThreadsView@include(if:true){id}status statusChangedAt{unixTimestamp iso8601}workingHours@include(if:true){...UserWorkingHoursFields}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isManagedByDirectory}...on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on System{id}}}...on ThreadStatusTransitionedEntry{threadStatusTransitionedEntryPreviousStatus:previousStatus previousStatusDetail@include(if:true){__typename ...on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}...on ThreadStatusDetailNewReply{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailInProgress{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForCustomer{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailThreadLinkUpdated{statusChangedAt{unixTimestamp iso8601}linearIssueId@include(if:true)}...on ThreadStatusDetailIgnored{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}...on ThreadStatusDetailThreadDiscussionResolved{statusChangedAt{unixTimestamp iso8601}threadDiscussionId@include(if:true)}}threadStatusTransitionedEntryNextStatus:nextStatus nextStatusDetail@include(if:true){__typename ...on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}...on ThreadStatusDetailNewReply{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailInProgress{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForCustomer{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailThreadLinkUpdated{statusChangedAt{unixTimestamp iso8601}linearIssueId@include(if:true)}...on ThreadStatusDetailIgnored{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}...on ThreadStatusDetailThreadDiscussionResolved{statusChangedAt{unixTimestamp iso8601}threadDiscussionId@include(if:true)}}}...on ThreadPriorityChangedEntry{previousPriority nextPriority}...on ThreadServiceLevelAgreementPolicyChangedEntry{previousServiceLevelAgreementPolicy@include(if:true){id name}nextServiceLevelAgreementPolicy@include(if:true){id name}}...on ThreadEventEntry{timelineEventId title threadEventEntryComponents:components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}customerId externalId@include(if:true)isCollapsed}...on CustomerEventEntry{timelineEventId title customerEventEntryComponents:components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize}...on ComponentDivider{dividerSpacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}customerId externalId@include(if:true)isCollapsed}...on SlackMessageEntry{slackMessageLink@include(if:true)slackWebMessageLink slackMessageEntryText:text customerId relatedThread@include(if:true){threadId}lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}...on SlackReplyEntry{slackMessageLink@include(if:true)slackWebMessageLink customerId slackReplyEntryText:text lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}...on ThreadLabelsChangedEntry{__typename}...on ThreadDiscussionEntry{customerId threadDiscussionId discussionType emailRecipients slackChannelName@include(if:true)slackMessageLink@include(if:true)}...on ThreadDiscussionMessageEntry{customerId threadDiscussionId threadDiscussionMessageId discussionType threadDiscussionMessageEntryText:text resolvedText threadDiscussionMessageEntryType:type slackMessageLink@include(if:true)slackMessageTimestamp@include(if:true)hasUnprocessedAttachments lastEditedOnSlackAt@include(if:true){unixTimestamp iso8601}deletedOnSlackAt@include(if:true){unixTimestamp iso8601}}...on ThreadDiscussionResolvedEntry{customerId threadDiscussionId discussionType emailRecipients slackChannelName@include(if:true)slackMessageLink@include(if:true)resolvedAt{unixTimestamp iso8601}}...on ServiceLevelAgreementStatusTransitionedEntry{serviceLevelAgreementStatusTransitionedEntryPreviousStatus:previousStatus serviceLevelAgreementStatusTransitionedEntryNextStatus:nextStatus serviceLevelAgreement@include(if:true){__typename ...on FirstResponseTimeServiceLevelAgreement{id firstResponseTimeMinutes threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on NextResponseTimeServiceLevelAgreement{id nextResponseTimeMinutes threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on FirstResolutionTimeServiceLevelAgreement{id firstResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on TotalResolutionTimeServiceLevelAgreement{id totalResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}...on MSTeamsMessageEntry{mSTeamsMessageEntryText:text customerId markdownContent@include(if:true)msTeamsMessageId msTeamsMessageLink hasUnprocessedAttachments lastEditedOnMsTeamsAt@include(if:true){unixTimestamp iso8601}deletedOnMsTeamsAt@include(if:true){unixTimestamp iso8601}}...on DiscordMessageEntry{customerId discordMessageId markdownContent@include(if:true)lastEditedOnDiscordAt@include(if:true){unixTimestamp iso8601}deletedOnDiscordAt@include(if:true){unixTimestamp iso8601}discordMessageLink}...on ThreadLinkCreatedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}...on ThreadLinkUpdatedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}previousThreadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}...on ThreadLinkDeletedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}...on ThreadLinkTargetCreatedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}sourceThread{id ref title@include(if:true)}}...on ThreadLinkTargetDeletedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}sourceThread{id ref title@include(if:true)}}...on HelpCenterAiConversationMessageEntry{helpCenterId helpCenterAiConversationId messageId helpCenterAiConversationMessageEntryMarkdown:markdown}...on CustomerSurveyRequestedEntry{customerId threadId customerSurveyId surveyResponseId surveyResponsePublicId}...on MergedThreadMessageEntry{threadLinkId childThreadDetails{id ref title@include(if:true)}childTimelineEntry@include(if:true){id}}}actor{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}timelineEntryCreatedBy:createdBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}llmText@include(if:true)}...on Note{id text markdown@include(if:true)customer{id}externalId@include(if:true)isEdited editedAt@include(if:true){unixTimestamp iso8601}editedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isDeleted createdAt{unixTimestamp iso8601}noteCreatedBy:createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}result@include(if:true)error@include(if:true){message type code fields{field message type}}}", RoleFieldsFragmentDoc, UserWorkingHoursFieldsFragmentDoc) as unknown as DocumentNode<ImportThreadMessageResultFieldsFragment, unknown>;
 export const IndexedDocumentFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexedDocumentFields on IndexedDocument{id url knowledgeSourceId status{__typename ...on IndexedDocumentStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexedDocumentStatusPending{startedAt{unixTimestamp iso8601}}...on IndexedDocumentStatusFailed{reason failedAt{unixTimestamp iso8601}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<IndexedDocumentFieldsFragment, unknown>;
@@ -45026,13 +45755,14 @@ export const IndexingStatusFailedFieldsFragmentDoc = /*#__PURE__*/ gql("fragment
 export const IndexingStatusIndexedFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexingStatusIndexedFields on IndexingStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<IndexingStatusIndexedFieldsFragment, unknown>;
 export const IndexingStatusPendingFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IndexingStatusPendingFields on IndexingStatusPending{startedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<IndexingStatusPendingFieldsFragment, unknown>;
 export const IntegrationReauthRequiredNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IntegrationReauthRequiredNotificationDetailFields on IntegrationReauthRequiredNotificationDetail{serviceIntegrationKey serviceAuthorizationId}") as unknown as DocumentNode<IntegrationReauthRequiredNotificationDetailFieldsFragment, unknown>;
-export const InternalNotificationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment InternalNotificationFields on InternalNotification{id userId type title description@include(if:true)details@include(if:true){__typename ...on NoteMentionNotificationDetail{threadId timelineEntryId mentionedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ThreadAssignmentNotificationDetail{threadId assignedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on EmailBounceNotificationDetail{threadId}...on DiscussionResolvedNotificationDetail{threadId threadDiscussionId}...on IntegrationReauthRequiredNotificationDetail{serviceIntegrationKey serviceAuthorizationId}...on WebhookTargetNotificationDetail{webhookTargetId}...on ThreadNotificationDetail{threadId}}readAt@include(if:true){unixTimestamp iso8601}archivedAt@include(if:true){unixTimestamp iso8601}archivedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<InternalNotificationFieldsFragment, unknown>;
+export const InternalNotificationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment InternalNotificationFields on InternalNotification{id userId type title description@include(if:true)details@include(if:true){__typename ...on NoteMentionNotificationDetail{threadId timelineEntryId mentionedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on ThreadAssignmentNotificationDetail{threadId assignedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on EmailBounceNotificationDetail{threadId}...on DiscussionResolvedNotificationDetail{threadId threadDiscussionId}...on IntegrationReauthRequiredNotificationDetail{serviceIntegrationKey serviceAuthorizationId}...on WebhookTargetNotificationDetail{webhookTargetId}...on ThreadNotificationDetail{threadId}...on KnowledgeGapNotificationDetail{knowledgeGapId}}readAt@include(if:true){unixTimestamp iso8601}archivedAt@include(if:true){unixTimestamp iso8601}archivedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<InternalNotificationFieldsFragment, unknown>;
 export const IssueTrackerFieldFieldsFragmentDoc = /*#__PURE__*/ gql("fragment IssueTrackerFieldFields on IssueTrackerField{name key type parentFieldKey@include(if:true)options{name value icon@include(if:true)color@include(if:true)}selectedValue@include(if:true)isRequired}") as unknown as DocumentNode<IssueTrackerFieldFieldsFragment, unknown>;
 export const JiraIntegrationTokenFieldsFragmentDoc = /*#__PURE__*/ gql("fragment JiraIntegrationTokenFields on JiraIntegrationToken{token createdAt{unixTimestamp iso8601}}") as unknown as DocumentNode<JiraIntegrationTokenFieldsFragment, unknown>;
 export const JiraIssueThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment JiraIssueThreadLinkFields on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}") as unknown as DocumentNode<JiraIssueThreadLinkFieldsFragment, unknown>;
 export const JiraSiteIntegrationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment JiraSiteIntegrationFields on JiraSiteIntegration{name key site{id name url avatarUrl@include(if:true)}}") as unknown as DocumentNode<JiraSiteIntegrationFieldsFragment, unknown>;
 export const KnowledgeGapFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeGapFields on KnowledgeGap{id title description lastSeenAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}task@include(if:true){id}}") as unknown as DocumentNode<KnowledgeGapFieldsFragment, unknown>;
 export const KnowledgeGapFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeGapFeedbackDetailsFields on KnowledgeGapFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)knowledgeGapId}") as unknown as DocumentNode<KnowledgeGapFeedbackDetailsFieldsFragment, unknown>;
+export const KnowledgeGapNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeGapNotificationDetailFields on KnowledgeGapNotificationDetail{knowledgeGapId}") as unknown as DocumentNode<KnowledgeGapNotificationDetailFieldsFragment, unknown>;
 export const KnowledgeSourceCitationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeSourceCitationFields on KnowledgeSourceCitation{threadId timelineEntryId sourceType title url@include(if:true)document@include(if:true){__typename ...on IndexedDocument{id url knowledgeSourceId status{__typename ...on IndexedDocumentStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexedDocumentStatusPending{startedAt{unixTimestamp iso8601}}...on IndexedDocumentStatusFailed{reason failedAt{unixTimestamp iso8601}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on HelpCenterArticleDocument{id article{id}}}}") as unknown as DocumentNode<KnowledgeSourceCitationFieldsFragment, unknown>;
 export const KnowledgeSourceSitemapFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeSourceSitemapFields on KnowledgeSourceSitemap{id type url status{__typename ...on IndexingStatusPending{startedAt{unixTimestamp iso8601}}...on IndexingStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexingStatusFailed{reason failedAt{unixTimestamp iso8601}}}indexedDocumentCounts{total pending indexed failed}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<KnowledgeSourceSitemapFieldsFragment, unknown>;
 export const KnowledgeSourceUrlFieldsFragmentDoc = /*#__PURE__*/ gql("fragment KnowledgeSourceUrlFields on KnowledgeSourceUrl{id type url status{__typename ...on IndexingStatusPending{startedAt{unixTimestamp iso8601}}...on IndexingStatusIndexed{indexedAt{unixTimestamp iso8601}indexedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on IndexingStatusFailed{reason failedAt{unixTimestamp iso8601}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<KnowledgeSourceUrlFieldsFragment, unknown>;
@@ -45042,6 +45772,7 @@ export const LinearIssueThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragmen
 export const LinearIssueThreadLinkStateTransitionedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment LinearIssueThreadLinkStateTransitionedEntryFields on LinearIssueThreadLinkStateTransitionedEntry{linearIssueId previousLinearStateId nextLinearStateId}") as unknown as DocumentNode<LinearIssueThreadLinkStateTransitionedEntryFieldsFragment, unknown>;
 export const MachineUserFieldsFragmentDoc = /*#__PURE__*/ gql("fragment MachineUserFields on MachineUser{id fullName publicName description@include(if:true)type isCustomAgent isAssignableToThreads avatar@include(if:true){id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType visibility createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<MachineUserFieldsFragment, unknown>;
 export const MachineUserActorFieldsFragmentDoc = /*#__PURE__*/ gql("fragment MachineUserActorFields on MachineUserActor{machineUserId machineUser{id}}") as unknown as DocumentNode<MachineUserActorFieldsFragment, unknown>;
+export const McpFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment McpFeedbackDetailsFields on McpFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toolName@include(if:true)}") as unknown as DocumentNode<McpFeedbackDetailsFieldsFragment, unknown>;
 export const MergedThreadMessageEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment MergedThreadMessageEntryFields on MergedThreadMessageEntry{threadLinkId childThreadDetails{id ref title@include(if:true)}childTimelineEntry@include(if:true){id}}") as unknown as DocumentNode<MergedThreadMessageEntryFieldsFragment, unknown>;
 export const MeteredFeatureEntitlementFieldsFragmentDoc = /*#__PURE__*/ gql("fragment MeteredFeatureEntitlementFields on MeteredFeatureEntitlement{feature isEntitled current limit}") as unknown as DocumentNode<MeteredFeatureEntitlementFieldsFragment, unknown>;
 export const MsTeamsChannelMembersFieldsFragmentDoc = /*#__PURE__*/ gql("fragment MSTeamsChannelMembersFields on MSTeamsChannelMembers{members{id roles displayName visibleHistoryStartDateTime userId email tenantId}}") as unknown as DocumentNode<MsTeamsChannelMembersFieldsFragment, unknown>;
@@ -45053,7 +45784,7 @@ export const NoteFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteFields on N
 export const NoteEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteEntryFields on NoteEntry{noteId text markdown@include(if:true)isEdited editedAt@include(if:true){unixTimestamp iso8601}editedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<NoteEntryFieldsFragment, unknown>;
 export const NoteMentionNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteMentionNotificationDetailFields on NoteMentionNotificationDetail{threadId timelineEntryId mentionedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<NoteMentionNotificationDetailFieldsFragment, unknown>;
 export const NumberSettingFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NumberSettingFields on NumberSetting{code numberValue scope{id@include(if:true)scopeType}}") as unknown as DocumentNode<NumberSettingFieldsFragment, unknown>;
-export const OAuthAppFieldsFragmentDoc = /*#__PURE__*/ gql("fragment OAuthAppFields on OAuthApp{id name description@include(if:true)clientId redirectUrls isEnabled clientSecret@include(if:true){id secretHint lastUsedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<OAuthAppFieldsFragment, unknown>;
+export const OAuthAppFieldsFragmentDoc = /*#__PURE__*/ gql("fragment OAuthAppFields on OAuthApp{id name description@include(if:true)clientId redirectUrls allowedOrigins usesPkce isEnabled clientSecret@include(if:true){id secretHint lastUsedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<OAuthAppFieldsFragment, unknown>;
 export const PendingSenderDomainDnsRecordsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PendingSenderDomainDnsRecordsFields on PendingSenderDomainDnsRecords{domainName dkimDnsRecord{type name value isVerified verifiedAt@include(if:true){unixTimestamp iso8601}lastCheckedAt@include(if:true){unixTimestamp iso8601}}returnPathDnsRecord{type name value isVerified verifiedAt@include(if:true){unixTimestamp iso8601}lastCheckedAt@include(if:true){unixTimestamp iso8601}}}") as unknown as DocumentNode<PendingSenderDomainDnsRecordsFieldsFragment, unknown>;
 export const PerSeatRecurringPriceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PerSeatRecurringPriceFields on PerSeatRecurringPrice{billingIntervalUnit billingIntervalCount currency perSeatAmount}") as unknown as DocumentNode<PerSeatRecurringPriceFieldsFragment, unknown>;
 export const PlainTaskThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PlainTaskThreadLinkFields on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}") as unknown as DocumentNode<PlainTaskThreadLinkFieldsFragment, unknown>;
@@ -45163,7 +45894,7 @@ export const WebhookDeliveryAttemptSchemaValidationFailedResultFieldsFragmentDoc
 export const WebhookDeliveryAttemptSuccessfulResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WebhookDeliveryAttemptSuccessfulResultFields on WebhookDeliveryAttemptSuccessfulResult{status httpStatusCode}") as unknown as DocumentNode<WebhookDeliveryAttemptSuccessfulResultFieldsFragment, unknown>;
 export const WebhookTargetFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WebhookTargetFields on WebhookTarget{id url description eventSubscriptions{eventType}version isEnabled headers{name}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WebhookTargetFieldsFragment, unknown>;
 export const WebhookTargetNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WebhookTargetNotificationDetailFields on WebhookTargetNotificationDetail{webhookTargetId}") as unknown as DocumentNode<WebhookTargetNotificationDetailFieldsFragment, unknown>;
-export const WorkflowFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowFields on Workflow{id name trigger startStepId@include(if:true)publishedAt@include(if:true){unixTimestamp iso8601}position order lastTriggeredAt@include(if:true){unixTimestamp iso8601}sourceTemplateId@include(if:true)references{serviceLevelAgreementPolicyIds}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WorkflowFieldsFragment, unknown>;
+export const WorkflowFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowFields on Workflow{id name trigger startStepId@include(if:true)publishedAt@include(if:true){unixTimestamp iso8601}position order lastTriggeredAt@include(if:true){unixTimestamp iso8601}sourceTemplateId@include(if:true)references{serviceLevelAgreementPolicyIds escalationPathIds}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WorkflowFieldsFragment, unknown>;
 export const WorkflowExecutionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowExecutionFields on WorkflowExecution{id workflowId workflow@include(if:true){id}triggeredBy executionStatus errorMessage@include(if:true)startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}executionDurationMs@include(if:true)entityType@include(if:true)entityId@include(if:true)manuallyTriggeredBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}credits@include(if:true)}") as unknown as DocumentNode<WorkflowExecutionFieldsFragment, unknown>;
 export const WorkflowRuleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowRuleFields on WorkflowRule{id name payload publishedAt@include(if:true){unixTimestamp iso8601}order createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WorkflowRuleFieldsFragment, unknown>;
 export const WorkflowShareLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowShareLinkFields on WorkflowShareLink{name trigger startStepId@include(if:true)steps{id type name@include(if:true)payload transitions positionX positionY}}") as unknown as DocumentNode<WorkflowShareLinkFieldsFragment, unknown>;
@@ -45207,7 +45938,6 @@ export const MyEmailSignatureDocument = /*#__PURE__*/ gql("query MyEmailSignatur
 export const MyFavoritePagesDocument = /*#__PURE__*/ gql("query MyFavoritePages($first:Int$after:String$last:Int$before:String){myFavoritePages(first:$first after:$after last:$last before:$before){edges{node{...FavoritePageFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", FavoritePageFieldsFragmentDoc) as unknown as DocumentNode<MyFavoritePagesQuery, MyFavoritePagesQueryVariables>;
 export const BillingPlansDocument = /*#__PURE__*/ gql("query BillingPlans($first:Int$after:String$last:Int$before:String){billingPlans(first:$first after:$after last:$last before:$before){edges{node{...BillingPlanFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", BillingPlanFieldsFragmentDoc) as unknown as DocumentNode<BillingPlansQuery, BillingPlansQueryVariables>;
 export const MyBillingSubscriptionDocument = /*#__PURE__*/ gql("query MyBillingSubscription{myBillingSubscription@include(if:true){...BillingSubscriptionFields}}", BillingSubscriptionFieldsFragmentDoc) as unknown as DocumentNode<MyBillingSubscriptionQuery, MyBillingSubscriptionQueryVariables>;
-export const MemberSeatCapCheckDocument = /*#__PURE__*/ gql("query MemberSeatCapCheck($input:MemberSeatCapCheckInput!){memberSeatCapCheck(input:$input){isValid}}") as unknown as DocumentNode<MemberSeatCapCheckQuery, MemberSeatCapCheckQueryVariables>;
 export const MyBillingRotaDocument = /*#__PURE__*/ gql("query MyBillingRota{myBillingRota@include(if:true){onRotaUserIds offRotaUserIds}}") as unknown as DocumentNode<MyBillingRotaQuery, MyBillingRotaQueryVariables>;
 export const SidekickCreditUsageByDayDocument = /*#__PURE__*/ gql("query SidekickCreditUsageByDay($input:SidekickCreditUsageByDayInput!){sidekickCreditUsageByDay(input:$input){days{day{unixTimestamp iso8601}credits freeCredits sessionCount}}}") as unknown as DocumentNode<SidekickCreditUsageByDayQuery, SidekickCreditUsageByDayQueryVariables>;
 export const SidekickCreditBalanceDocument = /*#__PURE__*/ gql("query SidekickCreditBalance{sidekickCreditBalance{...SidekickCreditBalanceFields}}", SidekickCreditBalanceFieldsFragmentDoc) as unknown as DocumentNode<SidekickCreditBalanceQuery, SidekickCreditBalanceQueryVariables>;
@@ -45262,6 +45992,7 @@ export const MyMsTeamsInstallationInfoDocument = /*#__PURE__*/ gql("query MyMSTe
 export const MyMsTeamsIntegrationDocument = /*#__PURE__*/ gql("query MyMSTeamsIntegration{myMSTeamsIntegration@include(if:true){...UserMSTeamsIntegrationFields}}", UserMsTeamsIntegrationFieldsFragmentDoc) as unknown as DocumentNode<MyMsTeamsIntegrationQuery, MyMsTeamsIntegrationQueryVariables>;
 export const ConnectedMsTeamsChannelsDocument = /*#__PURE__*/ gql("query ConnectedMSTeamsChannels($first:Int$after:String$last:Int$before:String){connectedMSTeamsChannels(first:$first after:$after last:$last before:$before){edges{node{...ConnectedMSTeamsChannelFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}totalCount}}", ConnectedMsTeamsChannelFieldsFragmentDoc) as unknown as DocumentNode<ConnectedMsTeamsChannelsQuery, ConnectedMsTeamsChannelsQueryVariables>;
 export const GetMsTeamsMembersForChannelDocument = /*#__PURE__*/ gql("query GetMSTeamsMembersForChannel($msTeamsChannelId:ID!$msTeamsTeamId:ID!){getMSTeamsMembersForChannel(msTeamsChannelId:$msTeamsChannelId msTeamsTeamId:$msTeamsTeamId){...MSTeamsChannelMembersFields}}", MsTeamsChannelMembersFieldsFragmentDoc) as unknown as DocumentNode<GetMsTeamsMembersForChannelQuery, GetMsTeamsMembersForChannelQueryVariables>;
+export const ThreadByMsTeamsMessageDocument = /*#__PURE__*/ gql("query ThreadByMSTeamsMessage($msTeamsMessageId:ID!){threadByMSTeamsMessage(msTeamsMessageId:$msTeamsMessageId)@include(if:true){...ThreadFields}}", ThreadFieldsFragmentDoc) as unknown as DocumentNode<ThreadByMsTeamsMessageQuery, ThreadByMsTeamsMessageQueryVariables>;
 export const WorkspaceSlackInstallationInfoDocument = /*#__PURE__*/ gql("query WorkspaceSlackInstallationInfo($redirectUrl:String!){workspaceSlackInstallationInfo(redirectUrl:$redirectUrl){installationUrl}}") as unknown as DocumentNode<WorkspaceSlackInstallationInfoQuery, WorkspaceSlackInstallationInfoQueryVariables>;
 export const WorkspaceSlackIntegrationsDocument = /*#__PURE__*/ gql("query WorkspaceSlackIntegrations($first:Int$after:String$last:Int$before:String){workspaceSlackIntegrations(first:$first after:$after last:$last before:$before){edges{node{...WorkspaceSlackIntegrationFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkspaceSlackIntegrationFieldsFragmentDoc) as unknown as DocumentNode<WorkspaceSlackIntegrationsQuery, WorkspaceSlackIntegrationsQueryVariables>;
 export const WorkspaceSlackIntegrationDocument = /*#__PURE__*/ gql("query WorkspaceSlackIntegration($integrationId:ID!){workspaceSlackIntegration(integrationId:$integrationId)@include(if:true){...WorkspaceSlackIntegrationFields}}", WorkspaceSlackIntegrationFieldsFragmentDoc) as unknown as DocumentNode<WorkspaceSlackIntegrationQuery, WorkspaceSlackIntegrationQueryVariables>;
@@ -45309,6 +46040,7 @@ export const WorkflowRulesDocument = /*#__PURE__*/ gql("query WorkflowRules($fir
 export const WorkflowDocument = /*#__PURE__*/ gql("query Workflow($workflowId:ID!){workflow(workflowId:$workflowId)@include(if:true){...WorkflowFields}}", WorkflowFieldsFragmentDoc) as unknown as DocumentNode<WorkflowQuery, WorkflowQueryVariables>;
 export const WorkflowsDocument = /*#__PURE__*/ gql("query Workflows($first:Int$after:String$last:Int$before:String$filters:WorkflowsFilter$sortBy:WorkflowsSort){workflows(first:$first after:$after last:$last before:$before filters:$filters sortBy:$sortBy){edges{node{...WorkflowFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkflowFieldsFragmentDoc) as unknown as DocumentNode<WorkflowsQuery, WorkflowsQueryVariables>;
 export const WorkflowCapabilitiesDocument = /*#__PURE__*/ gql("query WorkflowCapabilities($triggerType:WorkflowTriggerType!){workflowCapabilities(triggerType:$triggerType){hasConditionSupport hasWaitSupport allowedActionTypes hasSidekickActionSupport hasAiTriageActionSupport}}") as unknown as DocumentNode<WorkflowCapabilitiesQuery, WorkflowCapabilitiesQueryVariables>;
+export const WorkflowBuilderGuideDocument = /*#__PURE__*/ gql("query WorkflowBuilderGuide{workflowBuilderGuide}") as unknown as DocumentNode<WorkflowBuilderGuideQuery, WorkflowBuilderGuideQueryVariables>;
 export const WorkflowExecutionDocument = /*#__PURE__*/ gql("query WorkflowExecution($workflowExecutionId:ID!){workflowExecution(workflowExecutionId:$workflowExecutionId)@include(if:true){...WorkflowExecutionFields}}", WorkflowExecutionFieldsFragmentDoc) as unknown as DocumentNode<WorkflowExecutionQuery, WorkflowExecutionQueryVariables>;
 export const WorkflowExecutionsDocument = /*#__PURE__*/ gql("query WorkflowExecutions($workflowId:ID!$first:Int$after:String$last:Int$before:String){workflowExecutions(workflowId:$workflowId first:$first after:$after last:$last before:$before){edges{node{...WorkflowExecutionFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkflowExecutionFieldsFragmentDoc) as unknown as DocumentNode<WorkflowExecutionsQuery, WorkflowExecutionsQueryVariables>;
 export const WorkflowExecutionsForWorkspaceDocument = /*#__PURE__*/ gql("query WorkflowExecutionsForWorkspace($filters:WorkflowExecutionsFilter$first:Int$after:String$last:Int$before:String){workflowExecutionsForWorkspace(filters:$filters first:$first after:$after last:$last before:$before){edges{node{...WorkflowExecutionFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkflowExecutionFieldsFragmentDoc) as unknown as DocumentNode<WorkflowExecutionsForWorkspaceQuery, WorkflowExecutionsForWorkspaceQueryVariables>;
@@ -45390,6 +46122,7 @@ export const ThreadClusterDocument = /*#__PURE__*/ gql("query ThreadCluster($id:
 export const ActiveThreadClusterDocument = /*#__PURE__*/ gql("query ActiveThreadCluster($threadId:ID!){activeThreadCluster(threadId:$threadId)@include(if:true){...ThreadClusterFields}}", ThreadClusterFieldsFragmentDoc) as unknown as DocumentNode<ActiveThreadClusterQuery, ActiveThreadClusterQueryVariables>;
 export const ThreadClustersPaginatedDocument = /*#__PURE__*/ gql("query ThreadClustersPaginated($first:Int$after:String$last:Int$before:String$filters:ThreadClustersFilter){threadClustersPaginated(first:$first after:$after last:$last before:$before filters:$filters){edges{node{...ThreadClusterFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", ThreadClusterFieldsFragmentDoc) as unknown as DocumentNode<ThreadClustersPaginatedQuery, ThreadClustersPaginatedQueryVariables>;
 export const GeneratedRepliesDocument = /*#__PURE__*/ gql("query GeneratedReplies($threadId:ID!$options:[GenerateReplyOption!]){generatedReplies(threadId:$threadId options:$options)@include(if:true){...GeneratedReplyFields}}", GeneratedReplyFieldsFragmentDoc) as unknown as DocumentNode<GeneratedRepliesQuery, GeneratedRepliesQueryVariables>;
+export const GeneratedReplyStateDocument = /*#__PURE__*/ gql("query GeneratedReplyState($threadId:ID!){generatedReplyState(threadId:$threadId)@include(if:true){timelineEntryId status}}") as unknown as DocumentNode<GeneratedReplyStateQuery, GeneratedReplyStateQueryVariables>;
 export const IndexedDocumentsDocument = /*#__PURE__*/ gql("query IndexedDocuments($first:Int$after:String$last:Int$before:String$filters:IndexedDocumentsFilter){indexedDocuments(first:$first after:$after last:$last before:$before filters:$filters){edges{node{...IndexedDocumentFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", IndexedDocumentFieldsFragmentDoc) as unknown as DocumentNode<IndexedDocumentsQuery, IndexedDocumentsQueryVariables>;
 export const KnowledgeSourceDocument = /*#__PURE__*/ gql("query KnowledgeSource($knowledgeSourceId:ID!){knowledgeSource(knowledgeSourceId:$knowledgeSourceId)@include(if:true){__typename ...on KnowledgeSourceSitemap{...KnowledgeSourceSitemapFields}...on KnowledgeSourceUrl{...KnowledgeSourceUrlFields}}}", KnowledgeSourceSitemapFieldsFragmentDoc, KnowledgeSourceUrlFieldsFragmentDoc) as unknown as DocumentNode<KnowledgeSourceQuery, KnowledgeSourceQueryVariables>;
 export const KnowledgeSourcesDocument = /*#__PURE__*/ gql("query KnowledgeSources($first:Int$after:String$last:Int$before:String$filters:KnowledgeSourcesFilter){knowledgeSources(first:$first after:$after last:$last before:$before filters:$filters){edges{node{__typename ...on KnowledgeSourceSitemap{...KnowledgeSourceSitemapFields}...on KnowledgeSourceUrl{...KnowledgeSourceUrlFields}}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", KnowledgeSourceSitemapFieldsFragmentDoc, KnowledgeSourceUrlFieldsFragmentDoc) as unknown as DocumentNode<KnowledgeSourcesQuery, KnowledgeSourcesQueryVariables>;
@@ -45430,6 +46163,7 @@ export const DeleteUserDocument = /*#__PURE__*/ gql("mutation DeleteUser($input:
 export const AssignRolesToUserDocument = /*#__PURE__*/ gql("mutation AssignRolesToUser($input:AssignRolesToUserInput!){assignRolesToUser(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<AssignRolesToUserMutation, AssignRolesToUserMutationVariables>;
 export const CreateCustomRoleDocument = /*#__PURE__*/ gql("mutation CreateCustomRole($input:CreateCustomRoleInput!){createCustomRole(input:$input){role@include(if:true){...CustomRoleFields}error@include(if:true){message type code fields{field message type}}}}", CustomRoleFieldsFragmentDoc) as unknown as DocumentNode<CreateCustomRoleMutation, CreateCustomRoleMutationVariables>;
 export const UpdateCustomRoleDocument = /*#__PURE__*/ gql("mutation UpdateCustomRole($input:UpdateCustomRoleInput!){updateCustomRole(input:$input){role@include(if:true){...CustomRoleFields}error@include(if:true){message type code fields{field message type}}}}", CustomRoleFieldsFragmentDoc) as unknown as DocumentNode<UpdateCustomRoleMutation, UpdateCustomRoleMutationVariables>;
+export const UpdateRolePriorityOrderDocument = /*#__PURE__*/ gql("mutation UpdateRolePriorityOrder($input:UpdateRolePriorityOrderInput!){updateRolePriorityOrder(input:$input){roles{...RoleFields}error@include(if:true){message type code fields{field message type}}}}", RoleFieldsFragmentDoc) as unknown as DocumentNode<UpdateRolePriorityOrderMutation, UpdateRolePriorityOrderMutationVariables>;
 export const DeleteCustomRoleDocument = /*#__PURE__*/ gql("mutation DeleteCustomRole($input:DeleteCustomRoleInput!){deleteCustomRole(input:$input){deletedCustomRoleId@include(if:true)error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteCustomRoleMutation, DeleteCustomRoleMutationVariables>;
 export const UpsertRoleScopesDocument = /*#__PURE__*/ gql("mutation UpsertRoleScopes($input:UpsertRoleScopesInput!){upsertRoleScopes(input:$input){role@include(if:true){...CustomRoleFields}error@include(if:true){message type code fields{field message type}}}}", CustomRoleFieldsFragmentDoc) as unknown as DocumentNode<UpsertRoleScopesMutation, UpsertRoleScopesMutationVariables>;
 export const CreateLabelTypeDocument = /*#__PURE__*/ gql("mutation CreateLabelType($input:CreateLabelTypeInput!){createLabelType(input:$input){labelType@include(if:true){...LabelTypeFields}error@include(if:true){message type code fields{field message type}}}}", LabelTypeFieldsFragmentDoc) as unknown as DocumentNode<CreateLabelTypeMutation, CreateLabelTypeMutationVariables>;
@@ -45520,6 +46254,7 @@ export const DeleteChatAppDocument = /*#__PURE__*/ gql("mutation DeleteChatApp($
 export const CreateChatAppSecretDocument = /*#__PURE__*/ gql("mutation CreateChatAppSecret($input:CreateChatAppSecretInput!){createChatAppSecret(input:$input){chatAppSecret@include(if:true){...ChatAppSecretFields}error@include(if:true){message type code fields{field message type}}}}", ChatAppSecretFieldsFragmentDoc) as unknown as DocumentNode<CreateChatAppSecretMutation, CreateChatAppSecretMutationVariables>;
 export const DeleteChatAppSecretDocument = /*#__PURE__*/ gql("mutation DeleteChatAppSecret($input:DeleteChatAppSecretInput!){deleteChatAppSecret(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteChatAppSecretMutation, DeleteChatAppSecretMutationVariables>;
 export const SendMsTeamsMessageDocument = /*#__PURE__*/ gql("mutation SendMSTeamsMessage($input:SendMSTeamsMessageInput!){sendMSTeamsMessage(input:$input){msTeamsMessage@include(if:true){...MSTeamsMessageFields}error@include(if:true){message type code fields{field message type}}}}", MsTeamsMessageFieldsFragmentDoc) as unknown as DocumentNode<SendMsTeamsMessageMutation, SendMsTeamsMessageMutationVariables>;
+export const CreateThreadFromMsTeamsMessageDocument = /*#__PURE__*/ gql("mutation CreateThreadFromMSTeamsMessage($input:CreateThreadFromMSTeamsMessageInput!){createThreadFromMSTeamsMessage(input:$input){thread@include(if:true){...ThreadFields}error@include(if:true){message type code fields{field message type}}}}", ThreadFieldsFragmentDoc) as unknown as DocumentNode<CreateThreadFromMsTeamsMessageMutation, CreateThreadFromMsTeamsMessageMutationVariables>;
 export const SendSlackMessageDocument = /*#__PURE__*/ gql("mutation SendSlackMessage($input:SendSlackMessageInput!){sendSlackMessage(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<SendSlackMessageMutation, SendSlackMessageMutationVariables>;
 export const ShareThreadToUserInSlackDocument = /*#__PURE__*/ gql("mutation ShareThreadToUserInSlack($input:ShareThreadToUserInSlackInput!){shareThreadToUserInSlack(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ShareThreadToUserInSlackMutation, ShareThreadToUserInSlackMutationVariables>;
 export const SendDiscordMessageDocument = /*#__PURE__*/ gql("mutation SendDiscordMessage($input:SendDiscordMessageInput!){sendDiscordMessage(input:$input){discordMessage@include(if:true){...DiscordMessageFields}error@include(if:true){message type code fields{field message type}}}}", DiscordMessageFieldsFragmentDoc) as unknown as DocumentNode<SendDiscordMessageMutation, SendDiscordMessageMutationVariables>;
@@ -45637,6 +46372,7 @@ export const SendDiscussionMessageDocument = /*#__PURE__*/ gql("mutation SendDis
 export const UpdateDiscussionAgentStatusDocument = /*#__PURE__*/ gql("mutation UpdateDiscussionAgentStatus($input:UpdateDiscussionAgentStatusInput!){updateDiscussionAgentStatus(input:$input){discussion@include(if:true){...ThreadDiscussionFields}error@include(if:true){message type code fields{field message type}}}}", ThreadDiscussionFieldsFragmentDoc) as unknown as DocumentNode<UpdateDiscussionAgentStatusMutation, UpdateDiscussionAgentStatusMutationVariables>;
 export const UpsertDiscussionToolCallDocument = /*#__PURE__*/ gql("mutation UpsertDiscussionToolCall($input:UpsertDiscussionToolCallInput!){upsertDiscussionToolCall(input:$input){toolCall@include(if:true){toolCallId@include(if:true)service@include(if:true)op@include(if:true)description args@include(if:true)status error@include(if:true)durationMs response@include(if:true)}result@include(if:true)error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<UpsertDiscussionToolCallMutation, UpsertDiscussionToolCallMutationVariables>;
 export const RequestDiscussionToolCallApprovalDocument = /*#__PURE__*/ gql("mutation RequestDiscussionToolCallApproval($input:RequestDiscussionToolCallApprovalInput!){requestDiscussionToolCallApproval(input:$input){approval@include(if:true){...ThreadDiscussionToolCallApprovalEntryPayloadFields}error@include(if:true){message type code fields{field message type}}}}", ThreadDiscussionToolCallApprovalEntryPayloadFieldsFragmentDoc) as unknown as DocumentNode<RequestDiscussionToolCallApprovalMutation, RequestDiscussionToolCallApprovalMutationVariables>;
+export const RequestDiscussionQuestionDocument = /*#__PURE__*/ gql("mutation RequestDiscussionQuestion($input:RequestDiscussionQuestionInput!){requestDiscussionQuestion(input:$input){question@include(if:true){...ThreadDiscussionQuestionEntryPayloadFields}error@include(if:true){message type code fields{field message type}}}}", ThreadDiscussionQuestionEntryPayloadFieldsFragmentDoc) as unknown as DocumentNode<RequestDiscussionQuestionMutation, RequestDiscussionQuestionMutationVariables>;
 export const ResolveDiscussionApprovalDocument = /*#__PURE__*/ gql("mutation ResolveDiscussionApproval($input:ResolveDiscussionApprovalInput!){resolveDiscussionApproval(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ResolveDiscussionApprovalMutation, ResolveDiscussionApprovalMutationVariables>;
 export const StopDiscussionTurnDocument = /*#__PURE__*/ gql("mutation StopDiscussionTurn($input:StopDiscussionTurnInput!){stopDiscussionTurn(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<StopDiscussionTurnMutation, StopDiscussionTurnMutationVariables>;
 export const ChangeThreadDiscussionStatusDocument = /*#__PURE__*/ gql("mutation ChangeThreadDiscussionStatus($input:ChangeThreadDiscussionStatusInput!){changeThreadDiscussionStatus(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ChangeThreadDiscussionStatusMutation, ChangeThreadDiscussionStatusMutationVariables>;
@@ -45770,9 +46506,11 @@ export const UpdateCustomerSurveyDocument = /*#__PURE__*/ gql("mutation UpdateCu
 export const DeleteCustomerSurveyDocument = /*#__PURE__*/ gql("mutation DeleteCustomerSurvey($input:DeleteCustomerSurveyInput!){deleteCustomerSurvey(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteCustomerSurveyMutation, DeleteCustomerSurveyMutationVariables>;
 export const ReorderCustomerSurveysDocument = /*#__PURE__*/ gql("mutation ReorderCustomerSurveys($input:ReorderCustomerSurveysInput!){reorderCustomerSurveys(input:$input){customerSurveys@include(if:true){...CustomerSurveyFields}error@include(if:true){message type code fields{field message type}}}}", CustomerSurveyFieldsFragmentDoc) as unknown as DocumentNode<ReorderCustomerSurveysMutation, ReorderCustomerSurveysMutationVariables>;
 export const AddGeneratedReplyDocument = /*#__PURE__*/ gql("mutation AddGeneratedReply($input:AddGeneratedReplyInput!){addGeneratedReply(input:$input){generatedReply@include(if:true){...GeneratedReplyFields}error@include(if:true){message type code fields{field message type}}}}", GeneratedReplyFieldsFragmentDoc) as unknown as DocumentNode<AddGeneratedReplyMutation, AddGeneratedReplyMutationVariables>;
+export const RequestGeneratedReplyDocument = /*#__PURE__*/ gql("mutation RequestGeneratedReply($input:RequestGeneratedReplyInput!){requestGeneratedReply(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<RequestGeneratedReplyMutation, RequestGeneratedReplyMutationVariables>;
 export const EscalateThreadDocument = /*#__PURE__*/ gql("mutation EscalateThread($input:EscalateThreadInput!){escalateThread(input:$input){thread@include(if:true){...ThreadFields}error@include(if:true){message type code fields{field message type}}}}", ThreadFieldsFragmentDoc) as unknown as DocumentNode<EscalateThreadMutation, EscalateThreadMutationVariables>;
 export const CreateAiFeatureFeedbackDocument = /*#__PURE__*/ gql("mutation CreateAiFeatureFeedback($input:CreateAiFeatureFeedbackInput!){createAiFeatureFeedback(input:$input){aiFeatureFeedback@include(if:true){...AiFeatureFeedbackOutputFields}error@include(if:true){message type code fields{field message type}}}}", AiFeatureFeedbackOutputFieldsFragmentDoc) as unknown as DocumentNode<CreateAiFeatureFeedbackMutation, CreateAiFeatureFeedbackMutationVariables>;
 export const CreateAiFeedbackDocument = /*#__PURE__*/ gql("mutation CreateAiFeedback($input:CreateAiFeedbackInput!){createAiFeedback(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<CreateAiFeedbackMutation, CreateAiFeedbackMutationVariables>;
+export const CreateMcpFeedbackDocument = /*#__PURE__*/ gql("mutation CreateMcpFeedback($input:CreateMcpFeedbackInput!){createMcpFeedback(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<CreateMcpFeedbackMutation, CreateMcpFeedbackMutationVariables>;
 export const GenerateAiToneRulesFromDescriptionDocument = /*#__PURE__*/ gql("mutation GenerateAiToneRulesFromDescription($input:GenerateAiToneRulesFromDescriptionInput!){generateAiToneRulesFromDescription(input:$input){aiToneRules{...AiToneRuleFields}error@include(if:true){message type code fields{field message type}}}}", AiToneRuleFieldsFragmentDoc) as unknown as DocumentNode<GenerateAiToneRulesFromDescriptionMutation, GenerateAiToneRulesFromDescriptionMutationVariables>;
 export const CreateAiToneRuleDocument = /*#__PURE__*/ gql("mutation CreateAiToneRule($input:CreateAiToneRuleInput!){createAiToneRule(input:$input){aiToneRule@include(if:true){...AiToneRuleFields}error@include(if:true){message type code fields{field message type}}}}", AiToneRuleFieldsFragmentDoc) as unknown as DocumentNode<CreateAiToneRuleMutation, CreateAiToneRuleMutationVariables>;
 export const UpdateAiToneRulesDocument = /*#__PURE__*/ gql("mutation UpdateAiToneRules($input:UpdateAiToneRulesInput!){updateAiToneRules(input:$input){aiToneRules{...AiToneRuleFields}error@include(if:true){message type code fields{field message type}}}}", AiToneRuleFieldsFragmentDoc) as unknown as DocumentNode<UpdateAiToneRulesMutation, UpdateAiToneRulesMutationVariables>;

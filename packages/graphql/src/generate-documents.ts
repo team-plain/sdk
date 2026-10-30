@@ -869,7 +869,10 @@ if (queryType) {
   for (const [typeName, type] of fragmentTypes) {
     if (!queryableTypes.has(typeName)) continue;
 
-    // Find the root query for this type (e.g., thread(threadId: ID!): Thread)
+    // Find the root query for this type (e.g., thread(threadId: ID!): Thread). Prefer the canonical
+    // camelCase field, as the codegen plugin does, so a lookup like threadByMSTeamsMessage(ID!)
+    // declared earlier doesn't win and leave the generated model reading the wrong root field.
+    const canonicalFieldName = typeName[0].toLowerCase() + typeName.slice(1);
     let rootField: { fieldName: string; idArg: GraphQLArgument } | null = null;
     for (const [fieldName, field] of Object.entries(queryType.getFields())) {
       const rt = unwrapType(field.type);
@@ -879,10 +882,9 @@ if (queryType) {
       const idArg = field.args.find(
         (a) => isNonNullType(a.type) && getNamedType(a.type)?.name === "ID",
       );
-      if (idArg) {
-        rootField = { fieldName, idArg };
-        break;
-      }
+      if (!idArg) continue;
+      if (!rootField || fieldName === canonicalFieldName) rootField = { fieldName, idArg };
+      if (fieldName === canonicalFieldName) break;
     }
     if (!rootField) continue;
 

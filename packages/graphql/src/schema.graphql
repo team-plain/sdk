@@ -1,3 +1,17 @@
+"""
+Declares where a root operation is published. An empty list means it is published nowhere; on a nested field, it publishes just that field to the listed targets, whatever its root declares.
+"""
+directive @publish(targets: [PublishTarget!]!) on FIELD_DEFINITION
+
+"""Where a Query or Mutation root operation is published."""
+enum PublishTarget {
+  """Listed in the public API docs."""
+  DOCS
+
+  """Generated as an MCP tool for connected agents."""
+  MCP
+}
+
 type SlackUserIdentity {
   slackTeamId: String!
   slackUserId: String!
@@ -210,6 +224,11 @@ type Role {
   """If this role is a custom role, this field contains the custom role ID."""
   customRoleId: ID
   customRole: CustomRole
+
+  """
+  Decides which role wins when a user is given more than one through SSO or directory sync. Higher wins. Built-in roles are fixed at 5000 (owner), 4000 (admin), 3000 (support), 2000 (viewer) and 1000 (none).
+  """
+  priority: Int!
 }
 
 type RoleScopeDefinition {
@@ -795,7 +814,7 @@ enum ThreadDiscussionAgentStatus {
   IN_PROGRESS
 
   """
-  The agent has stopped and is waiting on a human to decide one or more tool call approvals.
+  The agent has stopped and is waiting on a human to decide one or more tool call approvals, or to answer a question card.
   """
   TOOL_CALL_APPROVAL_PENDING
 
@@ -809,12 +828,12 @@ type ThreadDiscussion {
   id: ID!
 
   """
-  The ID of the Plain thread this discussion is attached to. Null for global Sidekick agent sessions that were not started from a thread.
+  The ID of the Plain thread this discussion is attached to. Null for global Sidekick Agent sessions that were not started from a thread.
   """
   threadId: ID
 
   """
-  The support thread when threadId is set. Null when the discussion has no thread (e.g. some global Sidekick sessions).
+  The support thread when threadId is set. Null when the discussion has no thread (e.g. some global Sidekick Agent sessions).
   """
   thread: Thread
   title: String!
@@ -832,7 +851,7 @@ type ThreadDiscussion {
   """
   agentStatus: ThreadDiscussionAgentStatus!
 
-  """The agent that was asked. Null means Plain's Sidekick."""
+  """The agent that was asked. Null means Plain's Sidekick Agent."""
   agent: MachineUser
   resolvedAt: DateTime
 
@@ -842,7 +861,7 @@ type ThreadDiscussion {
   lastActivityAt: DateTime
 
   """
-  True when the discussion has an unread agent response (set when a Sidekick agent
+  True when the discussion has an unread agent response (set when a Sidekick Agent
   session settles into IDLE, cleared when the session is opened / marked read).
   """
   isUnread: Boolean!
@@ -857,8 +876,8 @@ type ThreadDiscussion {
   channelDetails: ThreadDiscussionChannelDetails
 
   """
-  The Sidekick agent session backing this discussion, when it has one. Set for
-  AGENT_SESSION discussions and for SLACK discussions started by a Sidekick
+  The Sidekick Agent session backing this discussion, when it has one. Set for
+  AGENT_SESSION discussions and for SLACK discussions started by a Sidekick Agent
   mention, whose session is linked to the discussion rather than carried in
   channelDetails. Null for discussions with no agent session.
   """
@@ -917,7 +936,7 @@ type ThreadDiscussion {
 }
 
 """
-A user message that has been submitted to a Sidekick AGENT_SESSION
+A user message that has been submitted to a Sidekick Agent AGENT_SESSION
 discussion while the agent was mid-turn. Lives in the queue until the
 agent picks it up. Once picked up, it's promoted to a regular
 ThreadDiscussionMessage and removed from the queue.
@@ -978,7 +997,7 @@ input DiscussionsFilter {
   """
   Only return discussions in which one of the provided users has authored a message. Independent of
   who created the discussion: combine it with createdByUserIds via or to get everything a user
-  either started or took part in. A Sidekick reply that is still queued behind the agent's current
+  either started or took part in. A Sidekick Agent reply that is still queued behind the agent's current
   turn already counts, so a session appears the moment the user sends into it.
   """
   participatedByUserIds: [ID!]
@@ -1029,12 +1048,12 @@ input DiscussionsFilter {
   isUnread: Boolean
 
   """
-  When true, only return discussions created by a system actor (e.g. workflow-driven Sidekick sessions). When false, only return discussions created by a non-system actor.
+  When true, only return discussions created by a system actor (e.g. workflow-driven Sidekick Agent sessions). When false, only return discussions created by a non-system actor.
   """
   createdBySystem: Boolean
 
   """
-  When true, only return the bounded Sidekick tasks started by an `ask_sidekick` workflow step. When false, exclude them. These report an outcome to their workflow step rather than being a conversation anyone joins, so human-facing session lists should pass false.
+  When true, only return the bounded Sidekick Agent tasks started by an `ask_sidekick` workflow step. When false, exclude them. These report an outcome to their workflow step rather than being a conversation anyone joins, so human-facing session lists should pass false.
   """
   isWorkflowTask: Boolean
 
@@ -1108,7 +1127,9 @@ type ThreadDiscussionMessage {
   """
   attachments: [Attachment!]!
 
-  """Workspace-scoped files. Populated for Sidekick AGENT_SESSION messages."""
+  """
+  Workspace-scoped files. Populated for Sidekick Agent AGENT_SESSION messages.
+  """
   workspaceFiles: [WorkspaceFile!]!
 
   """
@@ -1165,7 +1186,7 @@ enum DiscussionToolCallStatus {
 type ThreadDiscussionToolCallEntryPayload {
   """
   The id the agent reported this call under, and what an approval names to gate it. Null on a
-  Sidekick call, which Plain reports itself and does not key by an agent-supplied id.
+  Sidekick Agent call, which Plain reports itself and does not key by an agent-supplied id.
   """
   toolCallId: ID
 
@@ -1181,7 +1202,7 @@ type ThreadDiscussionToolCallEntryPayload {
   durationMs: Int!
 
   """
-  The JSON-encoded response of a successful Sidekick write. Null on reads, failed calls,
+  The JSON-encoded response of a successful Sidekick Agent write. Null on reads, failed calls,
   oversized responses and calls an agent reported.
   """
   response: String
@@ -1204,7 +1225,7 @@ enum AgentApprovalDecision {
 type ThreadDiscussionApprovalRequestEntryPayload {
   approvalId: ID!
 
-  """The Sidekick sandbox lease the approval grants."""
+  """The Sidekick Agent sandbox lease the approval grants."""
   leaseId: ID!
   justification: String!
   status: AgentApprovalStatus!
@@ -1219,7 +1240,7 @@ type ThreadDiscussionApprovalRequestEntryPayload {
 }
 
 """
-A custom agent's approval on one tool call it has already reported. Sidekick's approvals are ThreadDiscussionApprovalRequestEntryPayload.
+A custom agent's approval on one tool call it has already reported. Sidekick Agent's approvals are ThreadDiscussionApprovalRequestEntryPayload.
 """
 type ThreadDiscussionToolCallApprovalEntryPayload {
   approvalId: ID!
@@ -1242,7 +1263,7 @@ enum SidekickConnectRequestStatus {
 
 type SidekickConnectRequestTool {
   """
-  Sidekick integration slug, e.g. `linear`. Matches the settings deep-link segment.
+  Sidekick Agent integration slug, e.g. `linear`. Matches the settings deep-link segment.
   """
   slug: String!
   name: String!
@@ -1252,13 +1273,13 @@ type SidekickConnectRequestTool {
 }
 
 """
-Sidekick asked the workspace to connect one or more of its tools. Rendered as a
-card in the Sidekick transcript. Only produced for in-app sessions.
+Sidekick Agent asked the workspace to connect one or more of its tools. Rendered as a
+card in the Sidekick Agent transcript. Only produced for in-app sessions.
 """
 type ThreadDiscussionConnectRequestEntryPayload {
   connectRequestId: ID!
 
-  """Why Sidekick needs these tools, in its own words."""
+  """Why Sidekick Agent needs these tools, in its own words."""
   justification: String!
   tools: [SidekickConnectRequestTool!]!
   status: SidekickConnectRequestStatus!
@@ -1303,9 +1324,9 @@ type SidekickQuestionSelection {
 }
 
 """
-Sidekick asked the person to choose among a few options. Rendered as a card in the
-Sidekick transcript. Only produced for in-app sessions. The card always offers an
-Other free-text choice that is not one of `options`.
+An agent asked the person to choose among a few options: Sidekick Agent, or a connected agent
+through requestDiscussionQuestion. Rendered as a card in the transcript. Only produced for in-app
+discussions. The card always offers an Other free-text choice that is not one of `options`.
 """
 type ThreadDiscussionQuestionEntryPayload {
   questionRequestId: ID!
@@ -1318,7 +1339,7 @@ type ThreadDiscussionQuestionEntryPayload {
 }
 
 """
-A person stopped Sidekick mid-turn. Rendered as a plain line in the transcript so a
+A person stopped Sidekick Agent mid-turn. Rendered as a plain line in the transcript so a
 reader can see why the agent stopped talking. Who stopped it and when are the
 message's own createdBy and createdAt.
 """
@@ -1426,6 +1447,9 @@ type Workflow {
 type WorkflowReferences {
   """SLA policies applied by a `set_service_level_agreement_policy` action."""
   serviceLevelAgreementPolicyIds: [ID!]!
+
+  """Escalation paths applied by a `set_escalation_path` action."""
+  escalationPathIds: [ID!]!
 }
 
 type WorkflowEdge {
@@ -1471,7 +1495,7 @@ type WorkflowCapabilities {
   """
   allowedActionTypes: [String!]!
 
-  """Whether the `ask_sidekick` (Sidekick action) block is available."""
+  """Whether the `ask_sidekick` (Sidekick Agent action) block is available."""
   hasSidekickActionSupport: Boolean!
 
   """
@@ -1512,6 +1536,11 @@ input WorkflowReferencesFilter {
   Workflows with a `set_service_level_agreement_policy` action applying one of these policies. A step that clears the policy matches nothing.
   """
   serviceLevelAgreementPolicyIds: [ID!]
+
+  """
+  Workflows with a `set_escalation_path` action applying one of these escalation paths.
+  """
+  escalationPathIds: [ID!]
 }
 
 """How to order the `workflows` connection."""
@@ -1576,7 +1605,7 @@ type WorkflowStep {
   id: ID!
   workflowId: ID!
 
-  """The type of step: CONDITION or ACTION."""
+  """The type of step: ACTION, CONDITION, WAIT or NOTE."""
   type: WorkflowStepType!
 
   """Optional name for the step."""
@@ -1702,7 +1731,7 @@ enum WorkflowStepEntityType {
 }
 
 """
-An entity an action step produced or affected (e.g. a Sidekick discussion it started), so the run can link to it.
+An entity an action step produced or affected (e.g. a Sidekick Agent discussion it started), so the run can link to it.
 """
 type WorkflowStepEntityRef {
   entityType: WorkflowStepEntityType!
@@ -1801,6 +1830,11 @@ type ChatApp {
 
   """An optional image used to represent this chat app in the Plain UI."""
   logo: WorkspaceFile
+
+  """
+  The business hours schedules linked to this chat app. Empty if none are selected.
+  """
+  businessHoursSchedules: [BusinessHoursSchedule!]!
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -3057,7 +3091,13 @@ type ThreadNotificationDetail {
   threadId: ID!
 }
 
-union InternalNotificationDetail = NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | EmailBounceNotificationDetail | DiscussionResolvedNotificationDetail | IntegrationReauthRequiredNotificationDetail | WebhookTargetNotificationDetail | ThreadNotificationDetail
+"""A new knowledge gap was detected."""
+type KnowledgeGapNotificationDetail {
+  """The ID of the knowledge gap this notification refers to."""
+  knowledgeGapId: ID!
+}
+
+union InternalNotificationDetail = NoteMentionNotificationDetail | ThreadAssignmentNotificationDetail | EmailBounceNotificationDetail | DiscussionResolvedNotificationDetail | IntegrationReauthRequiredNotificationDetail | WebhookTargetNotificationDetail | ThreadNotificationDetail | KnowledgeGapNotificationDetail
 
 """
 An internal notification displayed to workspace members in the Plain app.
@@ -3071,7 +3111,7 @@ type InternalNotification {
   userId: ID!
 
   """
-  The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', 'discussion_resolved', 'integration_reauth_required', 'webhook_target', and 'thread_notification'. Use `details` for type-specific data.
+  The notification type discriminator. Known values include 'thread_assignment', 'note_mention', 'email_bounce', 'discussion_resolved', 'integration_reauth_required', 'webhook_target', 'thread_notification', and 'knowledge_gap'. Use `details` for type-specific data.
   """
   type: String!
 
@@ -3130,6 +3170,7 @@ type PageInfo {
 }
 
 type DateTime {
+  """The same instant as `iso8601`, in milliseconds since the Unix epoch."""
   unixTimestamp: String!
   iso8601: String!
 }
@@ -3216,6 +3257,11 @@ type CustomRole {
   createdBy: InternalActor!
   updatedAt: DateTime!
   updatedBy: InternalActor!
+
+  """
+  Decides which role wins when a user is given more than one through SSO or directory sync. Higher wins. See `Role.priority` for the built-in values.
+  """
+  priority: Int!
 }
 
 type CustomRoleEdge {
@@ -4457,7 +4503,7 @@ type MachineUser {
   isCustomAgent: Boolean!
 
   """
-  False when custom-agent pricing is on for the workspace and this machine user is neither a custom agent nor Ari. Such a machine user cannot be assigned to a thread. True means the agent rule does not refuse this machine user; other gates, such as credits, can still refuse an assignment.
+  False when custom-agent pricing is on for the workspace and this machine user is neither a custom agent nor the Customer Agent. Such a machine user cannot be assigned to a thread. True means the agent rule does not refuse this machine user; other gates, such as credits, can still refuse an assignment.
   """
   isAssignableToThreads: Boolean!
   avatar: WorkspaceFile
@@ -4551,12 +4597,22 @@ type OAuthApp {
   redirectUrls: [String!]!
 
   """
+  The browser origins allowed to exchange an authorization code for a token, such as https://app.example.com. Each one is a scheme and host with an optional port, using https, or http on localhost. An app that uses PKCE has at least one. An app that doesn't may have none.
+  """
+  allowedOrigins: [String!]!
+
+  """
+  True when the app authenticates with PKCE instead of a client secret, for an app running in a browser or on someone's device. Such an app has no client secret. This is set when the app is created and can't be changed.
+  """
+  usesPkce: Boolean!
+
+  """
   When false, the Plain API rejects every token issued to the app, including ones it already holds.
   """
   isEnabled: Boolean!
 
   """
-  The app's client secret. Only a hint of the secret is returned; the full secret is only returned once, when the app is created. An app's secret can't be replaced, so an app whose secret is lost has to be replaced with a new app.
+  The app's client secret. Only a hint of the secret is returned; the full secret is only returned once, when the app is created. An app's secret can't be replaced, so an app whose secret is lost has to be replaced with a new app. Always null for an app that uses PKCE.
   """
   clientSecret: OAuthAppClientSecret
   createdBy: InternalActor!
@@ -4788,20 +4844,20 @@ type WorkspaceSlackChannelIntegration {
 }
 
 type WorkspaceSlackSidekickIntegration {
-  """Unique identifier for this Sidekick integration record."""
+  """Unique identifier for this Sidekick Agent integration record."""
   integrationId: ID!
 
-  """The Slack workspace (team) ID where Sidekick is installed."""
+  """The Slack workspace (team) ID where Sidekick Agent is installed."""
   slackTeamId: ID!
   slackTeamName: String!
 
   """
-  The Slack channel ID of the channel that Sidekick monitors for user questions.
+  The Slack channel ID of the channel that Sidekick Agent monitors for user questions.
   """
   askSidekickSlackChannelId: ID!
 
   """
-  The name of the Slack channel that Sidekick monitors for user questions.
+  The name of the Slack channel that Sidekick Agent monitors for user questions.
   """
   askSidekickSlackChannelName: String!
 
@@ -4811,7 +4867,7 @@ type WorkspaceSlackSidekickIntegration {
   isReinstallRequired: Boolean!
 
   """
-  Optional custom instructions that guide Sidekick's behavior and tone. Null means no custom instructions are set. Update via updateSidekickSlackConfig.
+  Optional custom instructions that guide Sidekick Agent's behavior and tone. Null means no custom instructions are set. Update via updateSidekickSlackConfig.
   """
   operatingInstructions: String
   createdAt: DateTime!
@@ -5413,7 +5469,7 @@ type Query {
   myMachineUser: MachineUser
 
   """
-  Returns the Workspace associated with the current API key or session. Useful for confirming which workspace a request is scoped to. Returns null if no workspace is in context.
+  Returns the Workspace associated with the current API key or session. Useful for confirming which workspace a request is scoped to. Returns null if no workspace is in context. Integrations that need the user's approval in the provider (Slack, Microsoft Teams, Discord, Linear, Jira, GitHub, Shortcut, incident.io, Rootly, HubSpot, Salesforce, Attio, Intercom, Zendesk, Freshdesk, Help Scout) can't be connected through the API: give the user the full link `https://app.plain.com/workspace/<this workspace's id>/settings/<integration>`, with the real ID filled in, using the integration's page (`slack`, `microsoft-teams`, `discord`, `linear`, `jira`, `github`, `shortcut`, `incidentio`, `rootly`, `hubspot`, `salesforce`, `attio`, `intercom`, `zendesk`, `freshdesk`, `helpscout`), or `https://app.plain.com/workspace/<workspaceId>/settings/integrations` for all of them. Some setup is also done by the user in the app, so give them the full link in the same way, written out from `https://app.plain.com/workspace/w_…` with the real ID and never shortened to `…/settings/…`: inviting people (`settings/members/add`), changing a member's role (`settings/members/<userId>`), API keys (`settings/machine-users/<machineUserId>/api-keys/add`), a role's permissions and thread access (`settings/roles/<customRoleId>`), webhooks (`settings/webhooks/add`) and email settings, including the support email domain (`settings/email`).
   """
   myWorkspace: Workspace
 
@@ -5462,7 +5518,7 @@ type Query {
   myLinearIntegrationToken: LinearIntegrationToken
 
   """
-  The workspace-level Linear app integration, if one has been authorised.
+  The workspace-level Linear app integration, if one has been authorised. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/linear` (never the `<workspaceId>` placeholder), which takes them straight to Linear to approve, then read this again to confirm.
   """
   linearAppIntegration: WorkspaceLinearIntegration
 
@@ -5512,11 +5568,6 @@ type Query {
   myBillingSubscription: BillingSubscription
 
   """
-  Checks whether giving these people a paid role keeps the workspace within its member seat cap. People who already hold a paid seat on the billing account don't count against it. Requires the `billingSeat:edit` permission.
-  """
-  memberSeatCapCheck(input: MemberSeatCapCheckInput!): MemberSeatCapCheck!
-
-  """
   Returns the current billing rota for the workspace, listing which users are actively on-rota and which are off-rota. The rota is used to track which users currently consume an active eng-rota seat.
   """
   myBillingRota: BillingRota
@@ -5550,7 +5601,7 @@ type Query {
   labelTypes(filters: LabelTypeFilter, first: Int, after: String, last: Int, before: String): LabelTypeConnection!
 
   """
-  Returns a single label type by its ID. Returns null if no label type with that ID exists. Requires the `labelType:read` permission.
+  Returns a single label type by its ID. Returns null if no label type with that ID exists. Requires the `labelType:read` permission. A team's assignment settings, such as its round-robin capacity, come from `teamSettings`.
   """
   labelType(labelTypeId: ID!): LabelType
 
@@ -5565,17 +5616,17 @@ type Query {
   suggestedLabelTypes: [SuggestedLabelType!]!
 
   """
-  Returns all roles available in the workspace, including both built-in roles (Owner, Admin, Support, Viewer, None) and any custom roles. Supports cursor-based pagination. Requires the `roles:read` permission.
+  Returns all roles available in the workspace, including both built-in roles (Owner, Admin, Support, Viewer, None) and any custom roles. Supports cursor-based pagination. Each role carries its full permission list, often hundreds of entries, so ask for about 5 roles at a time. Requires the `roles:read` permission.
   """
   roles(first: Int, after: String, last: Int, before: String, filters: RoleFilter): RoleConnection!
 
   """
-  Returns all custom roles defined in the workspace. Use this to list the custom roles you have created and inspect their scope definitions. Supports cursor-based pagination. Requires the `roles:read` permission.
+  Returns all custom roles defined in the workspace. Use this to list the custom roles you have created and inspect their scope definitions. Supports cursor-based pagination. Requires the `roles:read` permission. Changing a role's permissions or which threads it can see is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/roles/<customRoleId>` (never the `<workspaceId>` placeholder).
   """
   customRoles(first: Int, after: String, last: Int, before: String): CustomRoleConnection!
 
   """
-  Returns a single custom role by its ID, or null if not found. Requires the `roles:read` permission.
+  Returns a single custom role by its ID, or null if not found. Requires the `roles:read` permission. Changing a role's permissions or which threads it can see is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/roles/<customRoleId>` (never the `<workspaceId>` placeholder).
   """
   customRole(customRoleId: ID!): CustomRole
 
@@ -5603,7 +5654,7 @@ type Query {
   workspace(workspaceId: ID!): Workspace
 
   """
-  Fetch a single workspace member by their ID. Returns null if no user with that ID exists. Requires the `user:read` permission.
+  Fetch a single workspace member by their ID. Returns null if no user with that ID exists. Requires the `user:read` permission. Changing a member's role is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/members/<userId>` (never the `<workspaceId>` placeholder).
   """
   user(userId: ID!): User
 
@@ -5615,12 +5666,12 @@ type Query {
   userByEmail(email: String!): User
 
   """
-  List all human members of the workspace, with optional filters to narrow results by role assignability. Supports cursor-based pagination. Requires the `user:read` permission.
+  List all human members of the workspace, with optional filters to narrow results by role assignability. Supports cursor-based pagination. Requires the `user:read` permission. Inviting people and changing their roles are done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/members/add` (never the `<workspaceId>` placeholder), or `…/settings/members/<userId>` to change a member's role.
   """
   users(filters: UsersFilter, first: Int, after: String, last: Int, before: String): UserConnection!
 
   """
-  Returns all pending invites for the current workspace. Use this to view outstanding invitations and their status from an admin perspective.
+  Returns all pending invites for the current workspace. Use this to view outstanding invitations and their status from an admin perspective. Inviting someone is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/members/add` (never the `<workspaceId>` placeholder).
   """
   workspaceInvites(first: Int, after: String, last: Int, before: String): WorkspaceInviteConnection!
 
@@ -5657,7 +5708,7 @@ type Query {
   customerGroups(filters: CustomerGroupsFilter, first: Int, after: String, last: Int, before: String): CustomerGroupConnection!
 
   """
-  Returns all thread field schemas defined in the workspace, paginated. Use this to discover which custom fields exist and their configuration before reading or writing thread field values. Selecting the `createdBy`/`updatedBy` actor down to its `user` additionally requires the `user:read` permission; a token without it can query an empty workspace but starts failing once a schema exists and that selection is present.
+  Returns all thread field schemas defined in the workspace, paginated. Use this to discover which custom fields exist and their configuration before reading or writing thread field values. Selecting the `createdBy`/`updatedBy` actor down to its `user` additionally requires the `user:read` permission; a token without it can query an empty workspace but starts failing once a schema exists and that selection is present. Deleting a schema, which removes its value from every thread, is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/thread-fields` (never the `<workspaceId>` placeholder).
   """
   threadFieldSchemas(first: Int, after: String, last: Int, before: String): ThreadFieldSchemaConnection!
 
@@ -5767,7 +5818,7 @@ type Query {
   broadcastSendTargetRecipients(input: BroadcastSendTargetRecipientsInput!): BroadcastSendTargetRecipients!
 
   """
-  Returns the workspace's email settings, including whether email is enabled, any custom domain configuration, and BCC addresses.
+  Returns the workspace's email settings, including whether email is enabled, any custom domain configuration, and BCC addresses. Changing these settings, including the support email domain, its forwarding and alternate addresses, is done by the user in the Plain app, because they decide where mail is sent from and to. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/email` (never the `<workspaceId>` placeholder).
   """
   workspaceEmailSettings: WorkspaceEmailSettings!
 
@@ -5783,18 +5834,22 @@ type Query {
 
   """
   Returns how far this workspace has progressed through setup: channels, teammates, label
-  types, tiers, automation and Sidekick tools. Backs both the Onboarding checklist and the
-  Sidekick onboarding skill, so the two can never disagree.
+  types, tiers, automation and Sidekick Agent tools. These are the same steps as the Onboarding
+  checklist the user sees in the Plain app. Connecting the email channel
+  and inviting teammates are done by the user in the Plain app. Get this workspace's ID and give
+  the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/email`
+  or `https://app.plain.com/workspace/w_…/settings/members/add` (never the `<workspaceId>`
+  placeholder).
   """
   workspaceSetup: WorkspaceSetup!
 
   """
-  Fetches a single machine user by ID. Returns null if no machine user with the given ID exists in the workspace.
+  Fetches a single machine user by ID. Returns null if no machine user with the given ID exists in the workspace. Deleting a machine user, and creating, changing or deleting its API keys, are done by the user in the Plain app, so a key's secret never passes through an agent. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/machine-users/<machineUserId>` (never the `<workspaceId>` placeholder), or `…/api-keys/add` and `…/api-keys/<apiKeyId>` under it for keys.
   """
   machineUser(machineUserId: ID!): MachineUser
 
   """
-  Returns a paginated list of all machine users in the workspace. Use the optional `filters.type` argument to restrict results to a specific machine user type (e.g. API_USER or AI_AGENT).
+  Returns a paginated list of all machine users in the workspace. Use the optional `filters.type` argument to restrict results to a specific machine user type (e.g. API_USER or AI_AGENT). Deleting a machine user, and creating, changing or deleting its API keys, are done by the user in the Plain app, so a key's secret never passes through an agent. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/machine-users/<machineUserId>` (never the `<workspaceId>` placeholder), or `…/api-keys/add` and `…/api-keys/<apiKeyId>` under it for keys.
   """
   machineUsers(filters: MachineUsersFilter, first: Int, after: String, last: Int, before: String): MachineUserConnection!
 
@@ -5819,7 +5874,7 @@ type Query {
   workspaceMSTeamsInstallationInfo(redirectUrl: String!): WorkspaceMSTeamsInstallationInfo!
 
   """
-  Returns the workspace-level Microsoft Teams integration, or null if none has been created yet.
+  Returns the workspace-level Microsoft Teams integration, or null if none has been created yet. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/ms-teams` (never the `<workspaceId>` placeholder), which takes them straight to Microsoft Teams to approve, then read this again to confirm.
   """
   workspaceMSTeamsIntegration: WorkspaceMSTeamsIntegration
 
@@ -5834,7 +5889,7 @@ type Query {
   myMSTeamsIntegration: UserMSTeamsIntegration
 
   """
-  Returns a paginated list of Microsoft Teams channels that are connected to this workspace. Supports forward and backward cursor pagination.
+  Returns a paginated list of Microsoft Teams channels that are connected to this workspace. Supports forward and backward cursor pagination. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/ms-teams` (never the `<workspaceId>` placeholder), which takes them straight to Microsoft Teams to approve, then read this again to confirm.
   """
   connectedMSTeamsChannels(first: Int, after: String, last: Int, before: String): ConnectedMSTeamsChannelConnection!
 
@@ -5844,17 +5899,34 @@ type Query {
   getMSTeamsMembersForChannel(msTeamsChannelId: ID!, msTeamsTeamId: ID!): MSTeamsChannelMembers!
 
   """
+  Resolves a Microsoft Teams message to the Plain thread its conversation is on. If the message's
+  thread was closed and the conversation continued in a successor thread, returns the open
+  successor; if there is no open successor, returns the closed thread, which has `lockedAt`
+  set. Returns null if Plain has not ingested the message. For a channel post, pass the root
+  post's ID.
+  
+  After `createThreadFromMSTeamsMessage` returns no thread, poll this query until it returns a
+  thread whose `lockedAt` is null. While the first thread is being created it returns null;
+  while a successor to a closed thread is being created it returns the closed thread. Requires
+  the `thread:read` permission.
+  """
+  threadByMSTeamsMessage(
+    """The Teams message ID, as provided by Teams in the activity's `id`."""
+    msTeamsMessageId: ID!
+  ): Thread
+
+  """
   Returns a Slack OAuth installation URL for connecting a workspace-level Slack notifications integration. Pass this URL to Slack's OAuth flow and exchange the resulting code with createWorkspaceSlackIntegration.
   """
   workspaceSlackInstallationInfo(redirectUrl: String!): WorkspaceSlackInstallationInfo!
 
   """
-  Returns a paginated list of all workspace-level Slack notifications integrations for this workspace.
+  Returns a paginated list of all workspace-level Slack notifications integrations for this workspace. For the Slack teams connected for support channels, use `workspaceSlackChannelIntegrations`. To connect notifications through a Slack channel integration the workspace already has, use `createWorkspaceSlackIntegrationFromAuth`. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slack` (never the `<workspaceId>` placeholder), then read this again to confirm.
   """
   workspaceSlackIntegrations(first: Int, after: String, last: Int, before: String): WorkspaceSlackIntegrationConnection!
 
   """
-  Returns a single workspace-level Slack notifications integration by ID, or null if not found.
+  Returns a single workspace-level Slack notifications integration by ID, or null if not found. A Slack channel integration's ID (from `workspaceSlackChannelIntegrations`) returns null here; to connect notifications through one, use `createWorkspaceSlackIntegrationFromAuth`. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slack` (never the `<workspaceId>` placeholder), then read this again to confirm.
   """
   workspaceSlackIntegration(integrationId: ID!): WorkspaceSlackIntegration
 
@@ -5864,22 +5936,22 @@ type Query {
   workspaceSlackChannelInstallationInfo(redirectUrl: String!): WorkspaceSlackChannelInstallationInfo!
 
   """
-  Returns a single workspace Slack channel integration by ID, or null if not found.
+  Returns a single workspace Slack channel integration by ID, or null if not found. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/slack` (never the `<workspaceId>` placeholder), which takes them straight to Slack to approve, then read this again to confirm.
   """
   workspaceSlackChannelIntegration(integrationId: ID!): WorkspaceSlackChannelIntegration
 
   """
-  Returns a paginated list of all workspace Slack channel integrations for this workspace.
+  Returns a paginated list of all workspace Slack channel integrations for this workspace. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/slack` (never the `<workspaceId>` placeholder), which takes them straight to Slack to approve, then read this again to confirm.
   """
   workspaceSlackChannelIntegrations(first: Int, after: String, last: Int, before: String): WorkspaceSlackChannelIntegrationConnection!
 
   """
-  Returns the OAuth installation URL to begin installing Plain's Sidekick AI agent into your Slack workspace. Pass the returned URL to your users to redirect them through Slack's OAuth flow; on completion, pass the resulting auth code to createWorkspaceSlackSidekickIntegration.
+  Returns the OAuth installation URL to begin installing Plain's Sidekick Agent into your Slack workspace. Pass the returned URL to your users to redirect them through Slack's OAuth flow; on completion, pass the resulting auth code to createWorkspaceSlackSidekickIntegration.
   """
   workspaceSlackSidekickInstallationInfo(redirectUrl: String!): WorkspaceSlackSidekickInstallationInfo!
 
   """
-  Returns the current workspace's Slack Sidekick integration, or null if Sidekick has not been installed. Requires the workspaceSlackSidekickIntegration:read permission.
+  Returns the current workspace's Slack Sidekick Agent integration, or null if Sidekick Agent has not been installed. Requires the workspaceSlackSidekickIntegration:read permission. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slack` (never the `<workspaceId>` placeholder), then read this again to confirm.
   """
   workspaceSlackSidekickIntegration: WorkspaceSlackSidekickIntegration
 
@@ -5890,12 +5962,12 @@ type Query {
   workspaceDiscordChannelInstallationInfo(redirectUrl: String!): WorkspaceDiscordChannelInstallationInfo!
 
   """
-  Fetches a single workspace Discord channel integration by its ID. Returns null if no integration with that ID exists.
+  Fetches a single workspace Discord channel integration by its ID. Returns null if no integration with that ID exists. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/discord` (never the `<workspaceId>` placeholder), which takes them straight to Discord to approve, then read this again to confirm.
   """
   workspaceDiscordChannelIntegration(integrationId: ID!): WorkspaceDiscordChannelIntegration
 
   """
-  Returns a paginated list of all Discord server (guild) channel integrations connected to this workspace.
+  Returns a paginated list of all Discord server (guild) channel integrations connected to this workspace. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/discord` (never the `<workspaceId>` placeholder), which takes them straight to Discord to approve, then read this again to confirm.
   """
   workspaceDiscordChannelIntegrations(first: Int, after: String, last: Int, before: String): WorkspaceDiscordChannelIntegrationConnection!
 
@@ -5940,7 +6012,9 @@ type Query {
   suggestedSlackTeammates(slackTeamId: String!): [SuggestedSlackTeammate!]!
 
   """
-  Gets all slack channels for this workspace, which match the specified filters.
+  Gets all slack channels for this workspace, which match the specified filters. To count or list
+  the channels a broadcast would reach, use `broadcastSendTargetRecipients` instead: it leaves out
+  channels that unsubscribed.
   """
   connectedSlackChannels(filters: ConnectedSlackChannelsFilter, first: Int, after: String, last: Int, before: String): ConnectedSlackChannelConnection!
 
@@ -6026,17 +6100,17 @@ type Query {
   workspaceDiscordIntegration(integrationId: ID!): WorkspaceDiscordIntegration
 
   """
-  Returns a paginated list of Discord channels synced from a specific guild. Use `refreshConnectedDiscordChannels` to pull the latest channel list from Discord before querying.
+  Returns a paginated list of Discord channels synced from a specific guild. Use `refreshConnectedDiscordChannels` to pull the latest channel list from Discord before querying. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/discord` (never the `<workspaceId>` placeholder), which takes them straight to Discord to approve, then read this again to confirm.
   """
   connectedDiscordChannels(discordGuildId: String!, first: Int, after: String, last: Int, before: String): ConnectedDiscordChannelConnection!
 
   """
-  Returns all customer card configs for the workspace, ordered by their `order` field.
+  Returns all customer card configs for the workspace, ordered by their `order` field. Deleting a card is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/customer-cards/<customerCardConfigId>` (never the `<workspaceId>` placeholder).
   """
   customerCardConfigs: [CustomerCardConfig!]!
 
   """
-  Returns a single customer card config by ID. Returns null if no config with the given ID exists.
+  Returns a single customer card config by ID. Returns null if no config with the given ID exists. Deleting a card is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/customer-cards/<customerCardConfigId>` (never the `<workspaceId>` placeholder).
   """
   customerCardConfig(customerCardConfigId: ID!): CustomerCardConfig
 
@@ -6051,12 +6125,12 @@ type Query {
   webhookVersions(first: Int, after: String, last: Int, before: String): WebhookVersionConnection!
 
   """
-  Fetch a single webhook target by its ID. Returns null if no target with that ID exists in the workspace. Requires the `webhookTarget:read` permission.
+  Fetch a single webhook target by its ID. Returns null if no target with that ID exists in the workspace. Requires the `webhookTarget:read` permission. Creating, changing and deleting webhook targets are done by the user in the Plain app, because a webhook sends workspace events to an outside URL. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/webhooks/<webhookTargetId>` (never the `<workspaceId>` placeholder), or `…/settings/webhooks/add` for a new one.
   """
   webhookTarget(webhookTargetId: ID!): WebhookTarget
 
   """
-  List all webhook targets registered in the workspace, paginated. Returns every endpoint Plain is configured to deliver events to. Requires the `webhookTarget:read` permission.
+  List all webhook targets registered in the workspace, paginated. Returns every endpoint Plain is configured to deliver events to. Requires the `webhookTarget:read` permission. Creating, changing and deleting webhook targets are done by the user in the Plain app, because a webhook sends workspace events to an outside URL. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/webhooks/add` (never the `<workspaceId>` placeholder), or `…/settings/webhooks/<webhookTargetId>` for an existing one.
   """
   webhookTargets(first: Int, after: String, last: Int, before: String): WebhookTargetConnection!
 
@@ -6076,7 +6150,7 @@ type Query {
   subscriptionEventTypes: [SubscriptionEventType!]!
 
   """
-  List the static variables that can be interpolated with `{{ key }}` in snippets, auto-responses, bulk replies and workflow actions, with a label and group for building a picker. Thread field variables are not included; derive them from `threadFieldSchemas` as `threadField.<key>`. Requires the `workspace:read` permission.
+  List the static variables that can be interpolated with `{{ key }}` in snippets, auto-responses, bulk replies and workflow actions, with a label and group for building a picker. Thread field variables are not included; derive them from the thread field schemas as `threadField.<key>`. Requires the `workspace:read` permission.
   """
   interpolationVariables: [InterpolationVariable!]!
 
@@ -6110,9 +6184,14 @@ type Query {
   Returns which blocks (condition/action/wait steps) are available for a workflow of the given
   trigger type. The builder UI sources its palette from this so the allow-list lives in the
   backend, not hardcoded in the UI. E.g. SCHEDULE workflows have no thread, so they allow no
-  conditions/waits and only a restricted set of action types.
+  conditions/waits and only a restricted set of action types. Read `workflowBuilderGuide` first for the trigger events and every step payload.
   """
   workflowCapabilities(triggerType: WorkflowTriggerType!): WorkflowCapabilities!
+
+  """
+  How to build or edit a workflow with these tools, as markdown: the trigger events, every condition and action payload with its fields, how steps connect, and how to publish and link to the result. Read it before creating or changing a workflow. Requires the `workflowRule:read` permission.
+  """
+  workflowBuilderGuide: String!
 
   """
   Get a single workflow execution by id. Returns null if no execution with the given ID exists.
@@ -6160,13 +6239,13 @@ type Query {
 
   """
   Fetch a single chat app by its ID. Returns null if no chat app with that ID exists in the workspace.
-  Requires the `chatApp:read` permission.
+  Requires the `chatApp:read` permission. Deleting a chat app is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/chat/<chatAppId>` (never the `<workspaceId>` placeholder).
   """
   chatApp(chatAppId: ID!): ChatApp
 
   """
   List all chat apps in the workspace. Supports cursor-based pagination.
-  Requires the `chatApp:read` permission.
+  Requires the `chatApp:read` permission. Deleting a chat app is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/chat/<chatAppId>` (never the `<workspaceId>` placeholder).
   """
   chatApps(first: Int, after: String, last: Int, before: String): ChatAppConnection!
 
@@ -6386,44 +6465,44 @@ type Query {
 
   """
   List all completed service authorizations for the workspace. Only authorizations with status CONNECTED or REINSTALL_REQUIRED are returned; pending authorizations are excluded.
-  Optionally filter by serviceIntegrationKey. Supports cursor-based pagination. Requires the `serviceAuthorization:read` permission.
+  Optionally filter by serviceIntegrationKey. Supports cursor-based pagination. Requires the `serviceAuthorization:read` permission. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/integrations` (never the `<workspaceId>` placeholder), then read this again to confirm.
   """
   serviceAuthorizations(first: Int, after: String, last: Int, before: String, filters: ServiceAuthorizationsFilter): ServiceAuthorizationConnection!
 
   """
-  Returns every GitHub repository the Sidekick integration (identified by serviceAuthorizationId) can currently see via its OAuth token. Use this list to let users pick which repos Sidekick should focus on before calling updateSidekickGithubConfig.
+  Returns every GitHub repository the Sidekick Agent integration (identified by serviceAuthorizationId) can currently see via its OAuth token. Use this list to let users pick which repos Sidekick Agent should focus on before calling updateSidekickGithubConfig.
   """
   sidekickGithubAccessibleRepos(serviceAuthorizationId: ID!): [SidekickGithubRepo!]!
 
   """
-  Returns the Sidekick GitHub configuration for a workspace: which repositories are selected for Sidekick to use and any workspace-level or per-repo operating instructions. Returns null when no configuration has been saved yet.
+  Returns the Sidekick Agent GitHub configuration for a workspace: which repositories are selected for Sidekick Agent to use and any workspace-level or per-repo operating instructions. Returns null when no configuration has been saved yet.
   """
   sidekickGithubServiceConfig(serviceAuthorizationId: ID!): SidekickGithubServiceConfig
 
   """
-  Returns the Sidekick configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog have their own configuration shapes — use sidekickGithubServiceConfig / sidekickPosthogServiceConfig instead.
+  Returns the Sidekick Agent configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick Agent uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog have their own configuration shapes — use sidekickGithubServiceConfig / sidekickPosthogServiceConfig instead.
   """
   sidekickServiceConfig(serviceAuthorizationId: ID!): SidekickServiceConfig
 
   """
-  Returns the Sidekick PostHog configuration for a workspace, including any operating instructions and the default project the agent queries. Returns null when no configuration has been saved yet.
+  Returns the Sidekick Agent PostHog configuration for a workspace, including any operating instructions and the default project the agent queries. Returns null when no configuration has been saved yet.
   """
   sidekickPosthogServiceConfig(serviceAuthorizationId: ID!): SidekickPosthogServiceConfig
 
   """
-  Returns workspace-level Sidekick settings, including the custom prompt that is appended to every Sidekick session's system prompt and the tools selected during onboarding. Always returns an object. customPrompt is null when not configured. preferredIntegrations is empty when none are selected.
+  Returns workspace-level Sidekick Agent settings, including the custom prompt that is appended to every Sidekick Agent session's system prompt and the tools selected during onboarding. Always returns an object. customPrompt is null when not configured. preferredIntegrations is empty when none are selected.
   """
   sidekickSettings: SidekickSettings!
 
   """
-  The Sidekick tool approval policies for the workspace: every catalog tool
+  The Sidekick Agent tool approval policies for the workspace: every catalog tool
   with its effective approval mode (per-workspace override merged over the
   factory default). Optionally filter to a single service (e.g. "plain").
   """
   agentSandboxToolPolicies(service: String): [AgentSandboxToolPolicy!]!
 
   """
-  Every skill available to Sidekick in this workspace: Plain's system skills
+  Every skill available to Sidekick Agent in this workspace: Plain's system skills
   plus the workspace's custom skills, each with its effective enabled state.
   """
   sidekickSkills: [SidekickSkill!]!
@@ -6434,7 +6513,7 @@ type Query {
   sidekickCustomSkill(id: ID!): SidekickCustomSkill
 
   """
-  The custom (customer-owned) MCP servers registered for Sidekick in this workspace.
+  The custom (customer-owned) MCP servers registered for Sidekick Agent in this workspace.
   """
   sidekickMcpServers: [SidekickMcpServer!]!
 
@@ -6464,22 +6543,22 @@ type Query {
   importJobs(filters: ImportJobsFilter, first: Int, after: String, last: Int, before: String): ImportJobConnection!
 
   """
-  Returns all tiers in the workspace, sorted by creation date. Supports cursor-based pagination. Requires the `tier:read` permission.
+  Returns all tiers in the workspace, sorted by creation date. Supports cursor-based pagination. Requires the `tier:read` permission. Deleting a tier is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/tiers/<tierId>` (never the `<workspaceId>` placeholder).
   """
   tiers(first: Int, after: String, last: Int, before: String): TierConnection!
 
   """
-  Returns a single tier by its Plain ID. Returns null if no tier with that ID exists. Requires the `tier:read` permission.
+  Returns a single tier by its Plain ID. Returns null if no tier with that ID exists. Requires the `tier:read` permission. Deleting a tier is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/tiers/<tierId>` (never the `<workspaceId>` placeholder).
   """
   tier(tierId: ID!): Tier
 
   """
-  Returns the SLA policies in the workspace, sorted by name. Pass `filters` to narrow by name or by the target types a policy holds. Supports cursor-based pagination. Requires the `serviceLevelAgreement:read` permission.
+  Returns the SLA policies in the workspace, sorted by name. Pass `filters` to narrow by name or by the target types a policy holds. Supports cursor-based pagination. Requires the `serviceLevelAgreement:read` permission. Deleting a policy is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slas/<policy id>` (never the `<workspaceId>` placeholder).
   """
   serviceLevelAgreementPolicies(filters: ServiceLevelAgreementPoliciesFilter, first: Int, after: String, last: Int, before: String): ServiceLevelAgreementPolicyConnection!
 
   """
-  Returns a single SLA policy by its Plain ID. Returns null if no policy with that ID exists. Requires the `serviceLevelAgreement:read` permission.
+  Returns a single SLA policy by its Plain ID. Returns null if no policy with that ID exists. Requires the `serviceLevelAgreement:read` permission. Deleting a policy is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slas/<policy id>` (never the `<workspaceId>` placeholder).
   """
   serviceLevelAgreementPolicy(serviceLevelAgreementPolicyId: ID!): ServiceLevelAgreementPolicy
 
@@ -6534,7 +6613,7 @@ type Query {
 
   """
   Perform a semantic (vector) search across Plain's own public help center (help.plain.com).
-  Available to every workspace's Sidekick so it can answer questions about how Plain itself works.
+  Available to every workspace's Sidekick Agent so it can answer questions about how Plain itself works.
   Read-only and hard-restricted to Plain's public product documentation; it never returns the
   caller's own data or any other workspace's content. Returns up to `pageSize` results
   (default 10, max 50) ranked by relevance.
@@ -6542,7 +6621,7 @@ type Query {
   searchPlainHelpCenter(searchQuery: String!, pageSize: Int): [PlainHelpCenterArticleSearchResult!]!
 
   """
-  List the Sidekick tools available to this workspace: Plain tools always, external tools only for connected integrations.
+  List the Sidekick Agent tools available to this workspace: Plain tools always, external tools only for connected integrations.
   """
   sidekickAvailableTools: [SidekickAvailableTool!]!
 
@@ -6588,6 +6667,11 @@ type Query {
   generatedReplies(threadId: ID!, options: [GenerateReplyOption!]): [GeneratedReply!]
 
   """
+  The state of the Plain AI suggested reply for the most recent inbound message on a thread. Returns null when suggested responses are disabled or not available for the workspace, or when the thread has no such message. Requires the `generatedReply:read` permission.
+  """
+  generatedReplyState(threadId: ID!): GeneratedReplyState
+
+  """
   List indexed documents across your workspace, newest first. Use the `knowledgeSourceId` filter to retrieve only the documents belonging to a specific knowledge source, and the `statuses` filter to retrieve only documents with a given ingestion status.
   """
   indexedDocuments(first: Int, after: String, last: Int, before: String, filters: IndexedDocumentsFilter): IndexedDocumentConnection!
@@ -6628,12 +6712,23 @@ type Query {
   savedThreadsView(savedThreadsViewId: ID!): SavedThreadsView
 
   """
-  Searches for external entities (e.g. Jira issues) that can be linked to a thread. Filter by `sourceType` to scope the search to a specific issue tracker, and provide a free-text `searchQuery` to match against issue titles or identifiers. Returns candidates that can then be passed to `createThreadLink`. Requires a connected issue tracker integration for the specified source type.
+  Searches issue trackers (GitHub issues, Shortcut stories, incident.io and Rootly incidents) for issues that can be linked to a thread. Filter by `sourceType` to scope the search to a specific issue tracker, and provide a free-text `searchQuery` to match against issue titles or identifiers. Returns candidates that can then be passed to `createThreadLink`. Requires a connected issue tracker integration for the specified source type.
   """
-  searchThreadLinkCandidates(filters: ThreadLinkCandidateFilter!, searchQuery: String!, first: Int, after: String, last: Int, before: String): ThreadLinkCandidateConnection!
+  searchThreadLinkCandidates(
+    filters: ThreadLinkCandidateFilter!
+
+    """
+    Free text matched against titles or identifiers. For `github_issue`, include `repo:owner/repo`.
+    """
+    searchQuery: String!
+    first: Int
+    after: String
+    last: Int
+    before: String
+  ): ThreadLinkCandidateConnection!
 
   """
-  List all help centers in the workspace. Supports cursor-based pagination and optional filtering.
+  List all help centers in the workspace. Supports cursor-based pagination and optional filtering. Custom JavaScript, sign-in, access, the type and the subdomain of an existing help center are set by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/help-center/<helpCenterId>` (never the `<workspaceId>` placeholder), or `…/help-center/create` for a new help center that needs them.
   """
   helpCenters(first: Int, after: String, last: Int, before: String, filters: HelpCentersFilter): HelpCenterConnection!
 
@@ -6654,7 +6749,9 @@ type Query {
   """
   helpCenterAiConversation(id: ID!): HelpCenterAiConversation
 
-  """Fetch a single help center article by ID. Returns null if not found."""
+  """
+  Fetch a single help center article by ID. Returns null if not found. Deleting an article is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/help-center/<helpCenterId>/articles/<articleId>` (never the `<workspaceId>` placeholder).
+  """
   helpCenterArticle(id: ID!): HelpCenterArticle
 
   """Fetch a single article group by ID. Returns null if not found."""
@@ -6681,7 +6778,13 @@ type Query {
   Returns the list of fields the caller must or may provide when calling `createIssueTrackerIssue`.
   Requires the `threadLinkCandidate:search` permission.
   """
-  issueTrackerFields(issueTrackerType: String!, selectedFields: [SelectedIssueTrackerField!]!): [IssueTrackerField!]!
+  issueTrackerFields(
+    """
+    One of `github_issue`, `shortcut_issue`, `incidentio_incident` or `rootly_incident`.
+    """
+    issueTrackerType: String!
+    selectedFields: [SelectedIssueTrackerField!]!
+  ): [IssueTrackerField!]!
 
   """
   Returns a paginated list of all customer surveys configured in the workspace, ordered by their display order. Use this to build management UIs or sync survey configurations.
@@ -6722,7 +6825,7 @@ type Query {
   knowledgeGaps(filters: KnowledgeGapsFilter, sortBy: KnowledgeGapsSort, first: Int, after: String, last: Int, before: String): KnowledgeGapConnection!
 
   """
-  Paginated list of the feedback your team has submitted on Plain's AI features, such as a thumbs up or down on an Ari reply, newest first. Use the optional `filters` argument to narrow results by feature, sentiment or submission time. Requires the `aiFeatureFeedback:read` permission.
+  Paginated list of the feedback your team has submitted on Plain's AI features, such as a thumbs up or down on a Customer Agent reply, newest first. Use the optional `filters` argument to narrow results by feature, sentiment or submission time. Requires the `aiFeatureFeedback:read` permission.
   """
   aiFeedback(filters: AiFeedbackFilter, first: Int, after: String, last: Int, before: String): AiFeedbackConnection!
 }
@@ -6824,6 +6927,9 @@ type IssueTrackerFieldOption {
 }
 
 input ThreadLinkCandidateFilter {
+  """
+  One of `github_issue`, `shortcut_issue`, `incidentio_incident` or `rootly_incident`.
+  """
   sourceType: String!
 }
 
@@ -6902,7 +7008,7 @@ enum SidekickToolArgOptionSource {
   HELP_CENTER_ARTICLE_STATUSES
 }
 
-"""A tool available to Sidekick in this workspace."""
+"""A tool available to Sidekick Agent in this workspace."""
 type SidekickAvailableTool {
   """The service the tool belongs to, e.g. `plain`, `slack`."""
   service: String!
@@ -6924,7 +7030,7 @@ type SidekickAvailableTool {
   approvalMode: String!
 
   """
-  Whether the op observes or mutates: `read`, `write`, or `destructive`. Reads are granted automatically to a restricted Sidekick session for any service it has at least one granted tool on, so pickers should offer writes as the selectable actions.
+  Whether the op observes or mutates: `read`, `write`, or `destructive`. Reads are granted automatically to a restricted Sidekick Agent session for any service it has at least one granted tool on, so pickers should offer writes as the selectable actions.
   """
   risk: String!
 
@@ -7801,9 +7907,15 @@ input ThreadTimeSeriesMetricInput {
   """ISO 8601 format (e.g. 2024-10-28T18:30:00Z)."""
   from: String!
 
-  """ISO 8601 format (e.g. 2024-10-28T18:30:00Z)."""
+  """
+  ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Must not be more than 5 minutes in the future.
+  """
   to: String!
   interval: ThreadMetricInterval!
+
+  """
+  Required for `agent_*` metrics in METRIC mode: pass `[{ dimension: ASSIGNEE }]`, or another dimension together with `filters.userIds`.
+  """
   groupBy: [ThreadMetricGroupByInput!]
   filters: ThreadMetricFilters
 
@@ -7827,9 +7939,13 @@ input ThreadSingleValueMetricInput {
   from: String
 
   """
-  ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Required for all metrics except all-time counts (e.g. threads_all_time_count_done), which reject a date range.
+  ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Must not be more than 5 minutes in the future. Required for all metrics except all-time counts (e.g. threads_all_time_count_done), which reject a date range.
   """
   to: String
+
+  """
+  Required for `agent_*` metrics in METRIC mode: pass `[{ dimension: ASSIGNEE }]`, or another dimension together with `filters.userIds`.
+  """
   groupBy: [ThreadMetricGroupByInput!]
   filters: ThreadMetricFilters
 
@@ -7850,7 +7966,9 @@ input ThreadHeatmapMetricInput {
   """ISO 8601 format (e.g. 2024-10-28T18:30:00Z)."""
   from: String!
 
-  """ISO 8601 format (e.g. 2024-10-28T18:30:00Z)."""
+  """
+  ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Must not be more than 5 minutes in the future.
+  """
   to: String!
   filters: ThreadMetricFilters
 
@@ -7985,7 +8103,12 @@ type ThreadHeatmapHour {
 }
 
 input TierIdentifierInput {
+  """Plain's ID for the tier, such as `tier_01…`. Not the tier's name."""
   tierId: ID
+
+  """
+  Your own ID for the tier, set when it was created. Not its name: find a tier by name with `tiers`.
+  """
   externalId: String
 }
 
@@ -8452,6 +8575,29 @@ type DeleteCustomRoleOutput {
 }
 
 """
+One role in a role priority order. Set exactly one of `key` or `customRoleId`.
+"""
+input RolePriorityOrderEntryInput {
+  key: RoleKey
+  customRoleId: ID
+}
+
+input UpdateRolePriorityOrderInput {
+  """
+  Every role in the workspace, highest priority first. Built-in roles keep their fixed order, starting with `OWNER` and ending with `NONE`. Each custom role must appear exactly once.
+  """
+  roles: [RolePriorityOrderEntryInput!]!
+}
+
+type UpdateRolePriorityOrderOutput {
+  """
+  Every role in the workspace, highest priority first. Empty when the update failed.
+  """
+  roles: [Role!]!
+  error: MutationError
+}
+
+"""
 The type of resource that a role scope applies to. Currently only threads are supported.
 """
 enum RoleScopeResourceType {
@@ -8747,7 +8893,10 @@ type ReorderThreadFieldSchemasOutput {
 }
 
 input UpsertThreadFieldIdentifier {
+  """Plain's ID for the thread."""
   threadId: ID!
+
+  """The thread field schema's key, not its label."""
   key: String!
 }
 
@@ -8790,7 +8939,10 @@ type BulkUpsertThreadFieldsOutput {
 }
 
 input DeleteThreadFieldIdentifier {
+  """Plain's ID for the thread."""
   threadId: ID!
+
+  """The thread field schema's key, not its label."""
   key: String!
 }
 
@@ -8858,7 +9010,7 @@ input CreateWorkflowInput {
   name: String!
 
   """
-  JSON-encoded trigger configuration. See `Workflow.trigger` for the valid `type` values and their required fields.
+  JSON-encoded trigger configuration. `type` is lowercase: `{"type":"manual"}`, `{"type":"events","events":["thread.thread_created"]}` or `{"type":"schedule","cron":"0 9 * * 1"}`. See `Workflow.trigger` for every event.
   """
   trigger: String!
 
@@ -8878,7 +9030,7 @@ input UpdateWorkflowInput {
   name: StringInput
 
   """
-  JSON-encoded trigger configuration. See `Workflow.trigger` for the valid `type` values and their required fields.
+  JSON-encoded trigger configuration. `type` is lowercase: `{"type":"manual"}`, `{"type":"events","events":["thread.thread_created"]}` or `{"type":"schedule","cron":"0 9 * * 1"}`. See `Workflow.trigger` for every event.
   """
   trigger: StringInput
 
@@ -8960,7 +9112,11 @@ type WorkflowShareLinkStep {
   name: String
 
   """
-  JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs.
+  JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+  - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
+  - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
+  - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
+  Example, labelling invoice threads: a CONDITION `{"version":1,"type":"any_message_contains","keywords":["invoice"]}` whose true branch goes to an ACTION `{"version":1,"type":"apply_labels","labelTypeIds":["lt_…"]}`. See `WorkflowStep.payload` for every type.
   """
   payload: String!
 
@@ -9032,7 +9188,11 @@ type WorkflowTemplateStep {
   name: String
 
   """
-  JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs.
+  JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+  - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
+  - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
+  - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
+  Example, labelling invoice threads: a CONDITION `{"version":1,"type":"any_message_contains","keywords":["invoice"]}` whose true branch goes to an ACTION `{"version":1,"type":"apply_labels","labelTypeIds":["lt_…"]}`. See `WorkflowStep.payload` for every type.
   """
   payload: String!
 
@@ -9101,19 +9261,23 @@ type WorkflowTemplateFile {
 input CreateWorkflowStepInput {
   workflowId: ID!
 
-  """The type of step: CONDITION or ACTION."""
+  """The type of step: ACTION, CONDITION, WAIT or NOTE."""
   type: WorkflowStepType!
 
   """Optional name for the step."""
   name: String
 
   """
-  JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs.
+  JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+  - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
+  - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
+  - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
+  Example, labelling invoice threads: a CONDITION `{"version":1,"type":"any_message_contains","keywords":["invoice"]}` whose true branch goes to an ACTION `{"version":1,"type":"apply_labels","labelTypeIds":["lt_…"]}`. See `WorkflowStep.payload` for every type.
   """
   payload: String!
 
   """
-  Array of next step IDs. For ACTION: 1 element. For CONDITION: 2 elements (true, false). Use null for terminal/no branch.
+  Array of next step IDs. For ACTION: 1 element. For CONDITION: 2 elements (true, false). For WAIT: 1 or 2 elements (completed, cancelled). For NOTE: empty. Use null for terminal/no branch.
   """
   transitions: [ID]!
 
@@ -9170,14 +9334,18 @@ input BulkUpsertWorkflowStepInput {
   """
   stepId: ID
 
-  """The type of step: CONDITION or ACTION."""
+  """The type of step: ACTION, CONDITION, WAIT or NOTE."""
   type: WorkflowStepType!
 
   """Optional name for the step."""
   name: String
 
   """
-  JSON-encoded payload containing the action or condition configuration. See `WorkflowStep.payload` for the valid `type` values per step type and the note on non-portable, workspace-specific IDs.
+  JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+  - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
+  - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
+  - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
+  Example, labelling invoice threads: a CONDITION `{"version":1,"type":"any_message_contains","keywords":["invoice"]}` whose true branch goes to an ACTION `{"version":1,"type":"apply_labels","labelTypeIds":["lt_…"]}`. See `WorkflowStep.payload` for every type.
   """
   payload: String!
 
@@ -9253,6 +9421,11 @@ input UpdateChatAppInput {
   chatAppId: ID!
   name: StringInput
   logo: WorkspaceFileInput
+
+  """
+  Omit to leave the linked business hours schedules untouched. An empty list unlinks all of them.
+  """
+  businessHoursScheduleIds: [ID!]
 }
 
 type UpdateChatAppOutput {
@@ -11016,8 +11189,13 @@ input ComponentDateTimeInput {
 Identifies a Plain user or machine user. Exactly one field must be set.
 """
 input UserIdentifierInput {
+  """Plain's ID for the user, such as `u_01…`."""
   userId: ID
+
+  """The user's email address."""
   emailAddress: String
+
+  """Plain's ID for the machine user."""
   machineUserId: ID
 }
 
@@ -11118,8 +11296,13 @@ input EmailAddressInput {
 }
 
 input UpsertCustomerIdentifierInput {
+  """Your own ID for the customer."""
   externalId: ID
+
+  """The customer's email address."""
   emailAddress: String
+
+  """Plain's ID for the customer, such as `c_01…`."""
   customerId: ID
 }
 
@@ -11269,13 +11452,23 @@ input CreateOAuthAppInput {
   Absolute URLs using https, or http on localhost. At least one is required.
   """
   redirectUrls: [String!]!
+
+  """
+  Browser origins allowed to exchange an authorization code for a token, such as https://app.example.com. Each one is a scheme and host with an optional port, using https, or http on localhost. At least one is required for an app that uses PKCE, which is the default. Omit it, or pass an empty list, for an app with `usesPkce` set to false, which only exchanges codes from a server.
+  """
+  allowedOrigins: [String!]
+
+  """
+  Defaults to true: the app runs in a browser or on someone's device, authenticates with PKCE and gets no client secret. Set to false for an app that runs on a server, which gets a client secret. This can't be changed after the app is created.
+  """
+  usesPkce: Boolean
 }
 
 type CreateOAuthAppOutput {
   oauthApp: OAuthApp
 
   """
-  The app's first client secret. This value is only returned once, when it's created, and can't be retrieved later. Store it securely straight away.
+  The app's client secret. This value is only returned once, when it's created, and can't be retrieved later. Store it securely straight away. Null for an app that uses PKCE, which has no client secret.
   """
   clientSecret: String
   error: MutationError
@@ -11288,6 +11481,11 @@ input UpdateOAuthAppInput {
 
   """Replaces the whole list of redirect URLs."""
   redirectUrls: StringArrayInput
+
+  """
+  Replaces the whole list of allowed origins. At least one is required for an app that uses PKCE. Pass an empty list to remove every origin from an app that doesn't.
+  """
+  allowedOrigins: StringArrayInput
 }
 
 type UpdateOAuthAppOutput {
@@ -11749,10 +11947,16 @@ input CustomerSurveyTemplateInput {
 
 input CreateCustomerSurveyInput {
   name: String!
+
+  """
+  Which done threads get the survey: by tier, support email, label, priority or message source. Omit to survey every done thread.
+  """
   conditions: [CustomerSurveyConditionInput!]
   conditionsOperator: CustomerSurveyConditionsOperator
   template: CustomerSurveyTemplateInput!
   isEnabled: Boolean!
+
+  """How many minutes after a thread is marked done the survey is sent."""
   responseDelayMinutes: Int
   customerIntervalDays: Int
   order: Int
@@ -11766,11 +11970,17 @@ type CreateCustomerSurveyOutput {
 input UpdateCustomerSurveyInput {
   customerSurveyId: ID!
   name: StringInput
+
+  """
+  Which done threads get the survey: by tier, support email, label, priority or message source.
+  """
   conditions: [CustomerSurveyConditionInput!]
   conditionsOperator: CustomerSurveyConditionsOperator
   template: CustomerSurveyTemplateInput
   order: Int
   isEnabled: BooleanInput
+
+  """How many minutes after a thread is marked done the survey is sent."""
   responseDelayMinutes: IntInput
   customerIntervalDays: IntInput
 }
@@ -11843,7 +12053,7 @@ type Mutation {
   createUserAccount(input: CreateUserAccountInput!): CreateUserAccountOutput!
 
   """
-  Manually set a workspace member's availability status (ONLINE, OFFLINE, or AWAY). This overrides any automatic status derived from working hours until the next scheduled working-hours transition. Requires the `userStatus:edit` permission.
+  Manually set a workspace member's availability status (ONLINE, OFFLINE, or AWAY). ONLINE and OFFLINE do not pause working-hours automation, so the next scheduled transition still fires while automation is enabled; setting AWAY pauses automation until the member leaves AWAY, which resumes it and recomputes the next transition. Requires the `userStatus:edit` permission.
   """
   changeUserStatus(input: ChangeUserStatusInput!): ChangeUserStatusOutput!
 
@@ -11901,6 +12111,11 @@ type Mutation {
   Updates the name and/or description of an existing custom role. Only the fields provided in the input are changed. Requires the `roles:edit` permission.
   """
   updateCustomRole(input: UpdateCustomRoleInput!): UpdateCustomRoleOutput!
+
+  """
+  Sets the order in which roles win when a user is given more than one through SSO or directory sync. Custom roles can be placed anywhere below the admin role and above the none role. Requires the `roles:edit` permission.
+  """
+  updateRolePriorityOrder(input: UpdateRolePriorityOrderInput!): UpdateRolePriorityOrderOutput!
 
   """
   Permanently deletes a custom role by its ID. Returns the ID of the deleted role on success. Requires the `roles:edit` permission.
@@ -11990,8 +12205,9 @@ type Mutation {
   """
   Creates an internal note visible only to your team. Notes appear in the thread timeline
   alongside customer messages and are useful for sharing context, reminders, or annotations.
-  Provide `threadId` to pin the note to a specific thread; omit it to attach the note to the
-  customer so it appears across all of their threads. Requires the `note:create` permission.
+  `customerId` and `text` are always required. Also provide `threadId` to pin the note to a
+  specific thread; omit it to attach the note to the customer so it appears across all of their
+  threads. Requires the `note:create` permission.
   """
   createNote(input: CreateNoteInput!): CreateNoteOutput!
 
@@ -12249,7 +12465,7 @@ type Mutation {
   reorderThreadFieldSchemas(input: ReorderThreadFieldSchemasInput!): ReorderThreadFieldSchemasOutput!
 
   """
-  Sets (or updates) a single thread field value on a thread, identified by thread ID and field key. Creates the field if it does not exist, or overwrites the existing value if it does. Requires the `threadField:create` and `threadField:update` permissions.
+  Sets (or updates) a single thread field value on a thread, identified by thread ID and field key. Creates the field if it does not exist, or overwrites the existing value if it does. Requires the `threadField:create` and `threadField:update` permissions. To clear a field on one thread, use `deleteThreadField`.
   """
   upsertThreadField(input: UpsertThreadFieldInput!): UpsertThreadFieldOutput!
 
@@ -12310,12 +12526,12 @@ type Mutation {
 
   """
   Create a new workflow. The workflow starts unpublished with no steps; use `bulkUpsertWorkflowSteps` to add steps and `updateWorkflow` to publish it.
-  The `trigger` field must be a valid JSON-encoded trigger configuration.
+  The `trigger` field must be a valid JSON-encoded trigger configuration. Read `workflowBuilderGuide` first for the trigger events and every step payload.
   """
   createWorkflow(input: CreateWorkflowInput!): CreateWorkflowOutput!
 
   """
-  Update a workflow's name, trigger configuration, entry step, or published status. To change where a workflow sits in the list, use `moveWorkflow`.
+  Update a workflow's name, trigger configuration, entry step, or published status. To change where a workflow sits in the list, use `moveWorkflow`. Read `workflowBuilderGuide` first for the trigger events and every step payload.
   """
   updateWorkflow(input: UpdateWorkflowInput!): UpdateWorkflowOutput!
 
@@ -12346,12 +12562,12 @@ type Mutation {
   exportWorkflowTemplate(input: ExportWorkflowTemplateInput!): ExportWorkflowTemplateOutput!
 
   """
-  Add a single step to a workflow. For bulk changes to a workflow's step graph, prefer `bulkUpsertWorkflowSteps`.
+  Add a single step to a workflow. For bulk changes to a workflow's step graph, prefer `bulkUpsertWorkflowSteps`. `workflowBuilderGuide` lists every step payload.
   """
   createWorkflowStep(input: CreateWorkflowStepInput!): CreateWorkflowStepOutput!
 
   """
-  Update a single workflow step's configuration, transitions, or canvas position. Replacing `transitions` is a full replacement of the array.
+  Update a single workflow step's configuration, transitions, or canvas position. Replacing `transitions` is a full replacement of the array. `workflowBuilderGuide` lists every step payload.
   """
   updateWorkflowStep(input: UpdateWorkflowStepInput!): UpdateWorkflowStepOutput!
 
@@ -12362,7 +12578,7 @@ type Mutation {
 
   """
   Atomically replace all steps in a workflow. Steps with a matching `stepId` are updated; steps without an ID (or with a new ID) are created; steps that existed before but are absent from the input are deleted.
-  Optionally updates `startStepId` and the trigger configuration in the same call. Maximum 60 steps per workflow.
+  Optionally updates `startStepId` and the trigger configuration in the same call. Maximum 60 steps per workflow. Read `workflowBuilderGuide` first for the trigger events and every step payload.
   """
   bulkUpsertWorkflowSteps(input: BulkUpsertWorkflowStepsInput!): BulkUpsertWorkflowStepsOutput!
 
@@ -12423,6 +12639,17 @@ type Mutation {
   Sends a Microsoft Teams message on a thread. The thread must be associated with a connected MS Teams channel and the workspace must have an active MS Teams integration.
   """
   sendMSTeamsMessage(input: SendMSTeamsMessageInput!): SendMSTeamsMessageOutput!
+
+  """
+  Creates a thread from a message in a Microsoft Teams channel or chat that the Plain bot is a
+  member of. This is the trigger for the `API_ONLY` value of the `ms_teams/ingestion_mode`
+  workspace setting, and works in `AUTOMATIC` mode too. In a channel, the whole post the message
+  belongs to becomes the thread. In a chat, the thread also includes the messages before and
+  after this one, taken from the chat's 50 most recent messages. Thread creation runs asynchronously,
+  so `thread` is only returned when the message was already on a thread. Requires the
+  `thread:create` permission.
+  """
+  createThreadFromMSTeamsMessage(input: CreateThreadFromMSTeamsMessageInput!): CreateThreadFromMSTeamsMessageOutput!
 
   """
   Sends a Slack message on a thread. The message appears in the thread's associated Slack channel as a reply or new message.
@@ -12602,7 +12829,7 @@ type Mutation {
   createApiKey(input: CreateApiKeyInput!): CreateApiKeyOutput!
 
   """
-  Update the description and/or permissions of an existing API key. Permissions are replaced in full — pass the complete desired set. You cannot assign permissions you do not hold. Requires the `apiKey:edit` permission.
+  Update the description and/or permissions of an existing API key. Permissions are replaced in full — pass the complete desired set. Read the key's current permissions first, from the machine user's `apiKeys`. You cannot assign permissions you do not hold. Requires the `apiKey:edit` permission.
   """
   updateApiKey(input: UpdateApiKeyInput!): UpdateApiKeyOutput!
 
@@ -12612,12 +12839,12 @@ type Mutation {
   deleteApiKey(input: DeleteApiKeyInput!): DeleteApiKeyOutput!
 
   """
-  Creates an OAuth app owned by the workspace, along with its first client secret. The secret is returned only once in `clientSecret` and can't be retrieved again. Requires the `oauthApp:create` permission.
+  Creates an OAuth app owned by the workspace. When `usesPkce` is false, the app also gets a client secret, which is returned only once in `clientSecret` and can't be retrieved again. Requires the `oauthApp:create` permission.
   """
   createOAuthApp(input: CreateOAuthAppInput!): CreateOAuthAppOutput!
 
   """
-  Updates the name, description or redirect URLs of an OAuth app. Requires the `oauthApp:edit` permission.
+  Updates the name, description, redirect URLs or allowed origins of an OAuth app. Requires the `oauthApp:edit` permission.
   """
   updateOAuthApp(input: UpdateOAuthAppInput!): UpdateOAuthAppOutput!
 
@@ -12662,7 +12889,7 @@ type Mutation {
   createWorkspaceSlackIntegration(input: CreateWorkspaceSlackIntegrationInput!): CreateWorkspaceSlackIntegrationOutput!
 
   """
-  Connects a workspace-level Slack notifications integration reusing a Slack connection the workspace already has, with no second OAuth install. The new integration posts through the given workspace Slack channel integration's connection. Choose the notification channel afterwards with the notification/slack/channel_id setting.
+  Connects a workspace-level Slack notifications integration reusing a Slack connection the workspace already has, with no second OAuth install. Pass the ID of an existing workspace Slack channel integration (`wsSlackInt_…`, as listed by `workspaceSlackChannelIntegrations`); the notifications integration doesn't exist until this creates it. Choose the notification channel afterwards with the notification/slack/channel_id setting.
   """
   createWorkspaceSlackIntegrationFromAuth(input: CreateWorkspaceSlackIntegrationFromAuthInput!): CreateWorkspaceSlackIntegrationFromAuthOutput!
 
@@ -12687,22 +12914,22 @@ type Mutation {
   deleteWorkspaceSlackChannelIntegration(input: DeleteWorkspaceSlackChannelIntegrationInput!): DeleteWorkspaceSlackChannelIntegrationOutput!
 
   """
-  Installs Plain's Sidekick AI agent into the workspace's Slack. Exchanges the OAuth authorization code (obtained by sending the user through the URL from workspaceSlackSidekickInstallationInfo) for a bot token, creates the Sidekick Slack channel, and persists the integration. The channel is normally #ask-plain; if that name is already taken in the Slack workspace the next free name is used instead, so read askSidekickSlackChannelName off the returned integration and show the user which channel was created rather than assuming #ask-plain. Fails only if every candidate name is taken. Only one Sidekick integration is allowed per workspace and per Slack team; calling this when one already exists returns an error. Requires the workspaceSlackSidekickIntegration:create permission and the ai_agent billing entitlement.
+  Installs Plain's Sidekick Agent into the workspace's Slack. Exchanges the OAuth authorization code (obtained by sending the user through the URL from workspaceSlackSidekickInstallationInfo) for a bot token, creates the Sidekick Agent Slack channel, and persists the integration. The channel is normally #ask-plain; if that name is already taken in the Slack workspace the next free name is used instead, so read askSidekickSlackChannelName off the returned integration and show the user which channel was created rather than assuming #ask-plain. Fails only if every candidate name is taken. Only one Sidekick Agent integration is allowed per workspace and per Slack team; calling this when one already exists returns an error. Requires the workspaceSlackSidekickIntegration:create permission and the ai_agent billing entitlement.
   """
   createWorkspaceSlackSidekickIntegration(input: CreateWorkspaceSlackSidekickIntegrationInput!): CreateWorkspaceSlackSidekickIntegrationOutput!
 
   """
-  Re-authorizes an existing workspace Slack Sidekick integration with a new OAuth auth code. Use this when isReinstallRequired is true on the integration to restore access. Requires the workspaceSlackSidekickIntegration:update permission.
+  Re-authorizes an existing workspace Slack Sidekick Agent integration with a new OAuth auth code. Use this when isReinstallRequired is true on the integration to restore access. Requires the workspaceSlackSidekickIntegration:update permission.
   """
   refreshWorkspaceSlackSidekickIntegration(input: RefreshWorkspaceSlackSidekickIntegrationInput!): RefreshWorkspaceSlackSidekickIntegrationOutput!
 
   """
-  Removes Plain's Sidekick AI agent from the workspace's Slack. Returns the integration that was deleted. Returns an error if no Sidekick integration exists. Requires the workspaceSlackSidekickIntegration:delete permission.
+  Removes Plain's Sidekick Agent from the workspace's Slack. Returns the integration that was deleted. Returns an error if no Sidekick Agent integration exists. Requires the workspaceSlackSidekickIntegration:delete permission.
   """
   deleteWorkspaceSlackSidekickIntegration: DeleteWorkspaceSlackSidekickIntegrationOutput!
 
   """
-  Updates configuration for the workspace's Slack Sidekick integration. Currently supports setting custom operating instructions that guide Sidekick's behavior. Omitting operatingInstructions is a no-op; passing null or an empty string clears any existing instructions. Requires the workspaceSlackSidekickIntegration:update permission.
+  Updates configuration for the workspace's Slack Sidekick Agent integration. Currently supports setting custom operating instructions that guide Sidekick Agent's behavior. Omitting operatingInstructions is a no-op; passing null or an empty string clears any existing instructions. Requires the workspaceSlackSidekickIntegration:update permission.
   """
   updateSidekickSlackConfig(input: UpdateSidekickSlackConfigInput!): UpdateSidekickSlackConfigOutput!
 
@@ -13035,7 +13262,7 @@ type Mutation {
   importThreadDiscussion(input: ImportThreadDiscussionInput!): ImportThreadDiscussionOutput!
 
   """
-  Create a new discussion. Supersedes createThreadDiscussion and additionally supports Sidekick
+  Create a new discussion. Supersedes createThreadDiscussion and additionally supports Sidekick Agent
   AGENT_SESSION discussions (which can be started without a thread). For Slack, Email, and Cursor
   discussion types, a threadId is required. For AGENT_SESSION discussions, threadId is optional and
   the discussion may be associated with a source entity (company, tenant, etc.) or page instead.
@@ -13052,7 +13279,7 @@ type Mutation {
 
   """
   Send a message in an existing discussion. Supersedes sendThreadDiscussionMessage and additionally
-  supports Sidekick AGENT_SESSION discussions. For Slack and email discussions, use attachmentIds for
+  supports Sidekick Agent AGENT_SESSION discussions. For Slack and email discussions, use attachmentIds for
   customer-scoped file attachments. For AGENT_SESSION discussions, use workspaceFileIds instead.
   The message is delivered to the underlying channel (Slack thread reply, email reply, or agent session).
   """
@@ -13061,7 +13288,7 @@ type Mutation {
   """
   Report what an agent the workspace built is doing on a discussion. Only that agent may call this:
   Plain runs no session for it, so without a report the discussion looks permanently idle. Plain
-  sets agentStatus itself for Sidekick discussions, which this mutation rejects.
+  sets agentStatus itself for Sidekick Agent discussions, which this mutation rejects.
   """
   updateDiscussionAgentStatus(input: UpdateDiscussionAgentStatusInput!): UpdateDiscussionAgentStatusOutput!
 
@@ -13079,8 +13306,17 @@ type Mutation {
   requestDiscussionToolCallApproval(input: RequestDiscussionToolCallApprovalInput!): RequestDiscussionToolCallApprovalOutput!
 
   """
+  Ask the people on an in-app discussion driven by the calling connected agent to choose among a few
+  options, shown as a card above the message box. Asking while a card is pending adds the new
+  questions to it, skipping any with the same text as one already there. Moves the discussion to
+  TOOL_CALL_APPROVAL_PENDING until a person answers or dismisses the card, which emits
+  discussion.question_resolved. Callable by the agent the discussion is bound to.
+  """
+  requestDiscussionQuestion(input: RequestDiscussionQuestionInput!): RequestDiscussionQuestionOutput!
+
+  """
   Decide a custom agent's approval by its approvalId. Denying fails the tool call it gates, with
-  reviewerNote as the error; approving leaves the call PENDING for the agent to run. Sidekick's
+  reviewerNote as the error; approving leaves the call PENDING for the agent to run. Sidekick Agent's
   approvals are decided with resolveAgentApproval instead.
   """
   resolveDiscussionApproval(input: ResolveDiscussionApprovalInput!): ResolveDiscussionApprovalOutput!
@@ -13088,12 +13324,12 @@ type Mutation {
   """
   Stop the in-flight turn of an in-app discussion answered by an agent the workspace built. Plain
   runs nothing for that agent, so it records the stop and emits discussion.turn_stop_requested for
-  the agent to act on. Sidekick turns are stopped with stopAgentSessionTurn instead.
+  the agent to act on. Sidekick Agent turns are stopped with stopAgentSessionTurn instead.
   """
   stopDiscussionTurn(input: StopDiscussionTurnInput!): StopDiscussionTurnOutput!
 
   """
-  Moves a discussion between OPEN and RESOLVED. Callable by a person, by the custom agent a discussion is bound to, or by the machine user that started a Sidekick discussion.
+  Moves a discussion between OPEN and RESOLVED. Callable by a person, by the custom agent a discussion is bound to, or by the machine user that started a Sidekick Agent discussion.
   """
   changeThreadDiscussionStatus(input: ChangeThreadDiscussionStatusInput!): ChangeThreadDiscussionStatusOutput!
 
@@ -13110,31 +13346,32 @@ type Mutation {
   deleteThreadDiscussion(input: DeleteThreadDiscussionInput!): DeleteThreadDiscussionOutput!
 
   """
-  Approves or denies a pending Sidekick tool-use approval request identified by its leaseId. When approved, the agent session automatically resumes and executes the approved tools. When denied, the agent is notified so it can explain the denial to the user. An optional reviewerNote is passed back to the agent in both cases. A machine user may resolve only approvals of a Sidekick session it started.
+  Approves or denies a pending Sidekick Agent tool-use approval request identified by its leaseId. When approved, the agent session automatically resumes and executes the approved tools. When denied, the agent is notified so it can explain the denial to the user. An optional reviewerNote is passed back to the agent in both cases. A machine user may resolve only approvals of a Sidekick Agent session it started.
   """
   resolveAgentApproval(input: ResolveAgentApprovalInput!): ResolveAgentApprovalOutput!
 
   """
-  Records the person's answer to a Sidekick question card and resumes the agent with those
-  selections. Only a human may answer. Answering the same card again with the same selections
-  is a no-op; a different answer is rejected.
+  Records the person's answer to a question card and resumes the agent with those selections:
+  Sidekick Agent directly, a connected agent through discussion.question_resolved. Only a human may
+  answer. Answering the same card again with the same selections is a no-op; a different answer is
+  rejected.
   """
   answerSidekickQuestion(input: AnswerSidekickQuestionInput!): AnswerSidekickQuestionOutput!
 
   """
-  Dismisses a Sidekick question card so the person can reply in the chat instead.
+  Dismisses a question card so the person can reply in the chat instead. A connected agent learns of it through discussion.question_resolved.
   """
   dismissSidekickQuestion(input: DismissSidekickQuestionInput!): DismissSidekickQuestionOutput!
 
   """
-  Removes a user message that is waiting in a Sidekick AGENT_SESSION queue. Rejects with
+  Removes a user message that is waiting in a Sidekick Agent AGENT_SESSION queue. Rejects with
   `queued_agent_session_message_already_dispatched` if the agent has already picked the
   message up — the frontend should reload to reflect the new state.
   """
   deleteQueuedAgentSessionMessage(input: DeleteQueuedAgentSessionMessageInput!): DeleteQueuedAgentSessionMessageOutput!
 
   """
-  Edits the text of a user message that is waiting in a Sidekick AGENT_SESSION queue.
+  Edits the text of a user message that is waiting in a Sidekick Agent AGENT_SESSION queue.
   Attachments are not editable in this flow — delete and re-send to change them. Rejects
   with `queued_agent_session_message_already_dispatched` if the agent has already
   picked the message up.
@@ -13142,7 +13379,7 @@ type Mutation {
   editQueuedAgentSessionMessage(input: EditQueuedAgentSessionMessageInput!): EditQueuedAgentSessionMessageOutput!
 
   """
-  Stops the in-flight turn of an in-app Sidekick session; the session and its queue survive, and the oldest queued message runs next. A machine user may stop only a session it started.
+  Stops the in-flight turn of an in-app Sidekick Agent session; the session and its queue survive, and the oldest queued message runs next. A machine user may stop only a session it started.
   """
   stopAgentSessionTurn(input: StopAgentSessionTurnInput!): StopAgentSessionTurnOutput!
 
@@ -13212,7 +13449,7 @@ type Mutation {
   Creates a new account or updates an existing one identified by `externalId` or `accountId`.
   Use this to keep Plain's account records in sync with the groups or organisations in your own product.
   The `result` field on the output indicates whether a record was created or updated.
-  Requires the `tenant:read` and `tenant:create` permissions.
+  Requires the `tenant:create` and `tenant:edit` permissions.
   """
   upsertAccount(input: UpsertAccountInput!): UpsertAccountOutput!
 
@@ -13282,7 +13519,7 @@ type Mutation {
   upsertTenantFieldSchema(input: UpsertTenantFieldSchemaInput!): UpsertTenantFieldSchemaOutput! @deprecated(reason: "Use upsertAccountFieldSchema instead")
 
   """
-  Creates or updates one or more account field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires `tenantFieldSchema:create` or `tenantFieldSchema:edit` permission.
+  Creates or updates one or more account field schemas in a single call. Each schema is identified by the combination of `source` and `externalFieldId` — if a schema with that pair already exists it is updated, otherwise a new one is created. Requires the `tenantFieldSchema:create`, `tenantFieldSchema:update`, and `tenantFieldSchema:delete` permissions.
   """
   upsertAccountFieldSchema(input: UpsertAccountFieldSchemaInput!): UpsertAccountFieldSchemaOutput!
 
@@ -13297,12 +13534,12 @@ type Mutation {
   deleteAccountFieldSchema(input: DeleteAccountFieldSchemaInput!): DeleteAccountFieldSchemaOutput!
 
   """
-  Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier` (tenant ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `tenantReferenceValues`). Requires `tenant:edit` permission.
+  Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier`: the tenant plus the field's `externalFieldId`, which is the field's key (such as `contract_value`). Pass the field's `type` and the one value argument for it: `STRING_TYPE` uses `stringValue`, `NUMBER_TYPE` `numberValue`, `BOOLEAN_TYPE` `booleanValue`, `STRING_ARRAY` `arrayValue`, `DATETIME_TYPE` `dateValue`, `USER_REFERENCE_TYPE` `userReferenceValues` and `TENANT_REFERENCE_TYPE` `tenantReferenceValues`. When the key and type are known, call this directly; there is no need to look up the field schema first. Requires `tenant:edit` permission.
   """
   upsertTenantField(input: UpsertTenantFieldInput!): UpsertTenantFieldOutput! @deprecated(reason: "Use upsertAccountField instead")
 
   """
-  Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `accountReferenceValues`). Requires `tenant:edit` permission.
+  Sets or updates a field value for a specific account. Identify the target field using `accountFieldIdentifier` (account ID + external field ID) and pass exactly one value argument matching the schema's `type` (e.g. `stringValue`, `numberValue`, `booleanValue`, `arrayValue`, `dateValue`, `userReferenceValues`, or `accountReferenceValues`). Requires the `tenantField:create`, `tenantField:update`, and `tenantFieldSchema:read` permissions. Identifying the account by `externalId` also requires the `tenant:read` permission.
   """
   upsertAccountField(input: UpsertAccountFieldInput!): UpsertAccountFieldOutput!
 
@@ -13367,27 +13604,27 @@ type Mutation {
   deleteMyServiceAuthorization(input: DeleteMyServiceAuthorizationInput!): DeleteMyServiceAuthorizationOutput!
 
   """
-  Updates which GitHub repositories Sidekick has access to and the operating instructions (workspace-level and per-repo) that guide its behavior. Replaces the full repo selection — omitting a repo removes it. Requires the GitHub service authorization to exist first.
+  Updates which GitHub repositories Sidekick Agent has access to and the operating instructions (workspace-level and per-repo) that guide its behavior. Replaces the full repo selection — omitting a repo removes it. Requires the GitHub service authorization to exist first.
   """
   updateSidekickGithubConfig(input: UpdateSidekickGithubConfigInput!): UpdateSidekickGithubConfigOutput!
 
   """
-  Updates the operating instructions that guide how Sidekick uses a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Pass null or an empty string to clear the instructions. GitHub and PostHog have their own configuration shapes — use updateSidekickGithubConfig / updateSidekickPosthogConfig instead.
+  Updates the operating instructions that guide how Sidekick Agent uses a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Pass null or an empty string to clear the instructions. GitHub and PostHog have their own configuration shapes — use updateSidekickGithubConfig / updateSidekickPosthogConfig instead.
   """
   updateSidekickServiceConfig(input: UpdateSidekickServiceConfigInput!): UpdateSidekickServiceConfigOutput!
 
   """
-  Updates the operating instructions and default project that guide how Sidekick uses the PostHog integration. Pass null or an empty string to clear either field.
+  Updates the operating instructions and default project that guide how Sidekick Agent uses the PostHog integration. Pass null or an empty string to clear either field.
   """
   updateSidekickPosthogConfig(input: UpdateSidekickPosthogConfigInput!): UpdateSidekickPosthogConfigOutput!
 
   """
-  Updates workspace-level Sidekick settings, such as the custom prompt appended to every session's system prompt and the tools selected during onboarding. Pass null or an empty string for customPrompt to clear any existing value. Omit a field to leave it unchanged.
+  Updates workspace-level Sidekick Agent settings, such as the custom prompt appended to every session's system prompt and the tools selected during onboarding. Pass null or an empty string for customPrompt to clear any existing value. Omit a field to leave it unchanged.
   """
   updateSidekickSettings(input: UpdateSidekickSettingsInput!): UpdateSidekickSettingsOutput!
 
   """
-  Set the approval mode for a single Sidekick tool in this workspace. Persisted
+  Set the approval mode for a single Sidekick Agent tool in this workspace. Persisted
   as a sparse override; setting a tool to its factory default clears the override.
   """
   updateAgentSandboxToolPolicy(input: UpdateAgentSandboxToolPolicyInput!): UpdateAgentSandboxToolPolicyOutput!
@@ -13404,7 +13641,7 @@ type Mutation {
   deleteSidekickCustomSkill(input: DeleteSidekickCustomSkillInput!): DeleteSidekickCustomSkillOutput!
 
   """
-  Register a custom (customer-owned) MCP server for Sidekick and mint a Nango Connect session for in-browser OAuth consent. The server is created in an unreachable state; call completeSidekickMcpServerConnection after consent to discover its tools and mark it connected.
+  Register a custom (customer-owned) MCP server for Sidekick Agent and mint a Nango Connect session for in-browser OAuth consent. The server is created in an unreachable state; call completeSidekickMcpServerConnection after consent to discover its tools and mark it connected.
   """
   createSidekickMcpServer(input: CreateSidekickMcpServerInput!): CreateSidekickMcpServerOutput!
 
@@ -13469,7 +13706,7 @@ type Mutation {
   createServiceLevelAgreement(input: CreateServiceLevelAgreementInput!): CreateServiceLevelAgreementOutput!
 
   """
-  Update an existing SLA's time target, priority or label filter, business-hours setting, or breach actions. You cannot change an SLA's type after creation. Use the field-level wrapper inputs (e.g. `{ "value": 60 }`) for the fields you want to change and omit the rest. Requires the `serviceLevelAgreement:edit` permission.
+  Update an existing SLA's time target, priority or label filter, business-hours setting, or breach actions. An SLA belongs to a tier or to an SLA policy: read a tier's SLAs with `tier` and a policy's with `serviceLevelAgreementPolicy`, though the SLA's ID alone is enough to update it. You cannot change an SLA's type after creation. Use the field-level wrapper inputs (e.g. `{ "value": 60 }`) for the fields you want to change and omit the rest. Requires the `serviceLevelAgreement:edit` permission.
   """
   updateServiceLevelAgreement(input: UpdateServiceLevelAgreementInput!): UpdateServiceLevelAgreementOutput!
 
@@ -13479,7 +13716,7 @@ type Mutation {
   deleteServiceLevelAgreement(input: DeleteServiceLevelAgreementInput!): DeleteServiceLevelAgreementOutput!
 
   """
-  Create an SLA policy together with its targets. A policy holds at most one target per type, and any combination of types is valid. Business hours are configured on the policy and apply to every target in it. A policy only starts tracking once it is applied to a thread. Requires the `serviceLevelAgreement:create` permission.
+  Create an SLA policy together with its targets. A policy holds at most one target per type, and any combination of types is valid. Business hours schedules are chosen once per policy: every target that uses business hours must reference the same schedules, and a target with none is tracked 24/7. A policy only starts tracking once it is applied to a thread. Requires the `serviceLevelAgreement:create` permission.
   """
   createServiceLevelAgreementPolicy(input: CreateServiceLevelAgreementPolicyInput!): CreateServiceLevelAgreementPolicyOutput!
 
@@ -13554,7 +13791,7 @@ type Mutation {
   createBusinessHoursOverride(input: CreateBusinessHoursOverrideInput!): CreateBusinessHoursOverrideOutput!
 
   """
-  Update an override's name, dates or slots. Omitted fields are left unchanged. Hours on dates before today can't be changed. Requires the `businessHours:edit` permission.
+  Update an override's name, dates or slots. Omitted fields are left unchanged. Requires the `businessHours:edit` permission.
   """
   updateBusinessHoursOverride(input: UpdateBusinessHoursOverrideInput!): UpdateBusinessHoursOverrideOutput!
 
@@ -13629,7 +13866,7 @@ type Mutation {
   regenerateWorkspaceHmac: RegenerateWorkspaceHmacOutput!
 
   """
-  Manually add a single URL as an indexed document within an existing knowledge source. The document is fetched and queued for indexing asynchronously. Requires Plain AI to be enabled on the workspace.
+  Manually add a single URL as an indexed document within an existing knowledge source. The document is fetched and queued for indexing asynchronously. Requires Plain AI to be enabled on the workspace; turn it on with `updateSetting` (code `plain_ai`, WORKSPACE scope, boolean `true`).
   """
   createIndexedDocument(input: CreateIndexedDocumentInput!): CreateIndexedDocumentOutput!
 
@@ -13641,7 +13878,7 @@ type Mutation {
   """
   Create a new knowledge source that Plain AI will index and use when generating replies.
   Use type `SITEMAP` to crawl all URLs listed in a sitemap XML file, or type `URL` to index a
-  single page. Requires Plain AI to be enabled on the workspace.
+  single page. Requires Plain AI to be enabled on the workspace; turn it on with `updateSetting` (code `plain_ai`, WORKSPACE scope, boolean `true`).
   """
   createKnowledgeSource(input: CreateKnowledgeSourceInput!): CreateKnowledgeSourceOutput!
 
@@ -13653,7 +13890,7 @@ type Mutation {
   """
   Trigger an immediate re-index of a knowledge source. Use this when the source content has changed
   and you do not want to wait for the automatic weekly re-index. The knowledge source status is reset
-  to pending and indexing is queued asynchronously. Requires Plain AI to be enabled on the workspace.
+  to pending and indexing is queued asynchronously. Requires Plain AI to be enabled on the workspace; turn it on with `updateSetting` (code `plain_ai`, WORKSPACE scope, boolean `true`).
   """
   reindexKnowledgeSource(input: ReindexKnowledgeSourceInput!): ReindexKnowledgeSourceOutput!
 
@@ -13778,7 +14015,7 @@ type Mutation {
   createIssueTrackerIssue(input: CreateIssueTrackerIssueInput!): CreateIssueTrackerIssueOutput!
 
   """
-  Creates a new customer survey (e.g. a CSAT survey) in the workspace. Requires the `customerSurvey:create` permission and a billing entitlement for customer surveys. You must supply a template (currently only `csatTemplate` is supported) and can optionally specify targeting conditions, an enabled state, a send delay, and a per-customer cooldown interval.
+  Creates a new customer survey (e.g. a CSAT survey) in the workspace. A survey is sent to the customer when a thread they're on is marked done and matches the survey's conditions, after `responseDelayMinutes`. Requires the `customerSurvey:create` permission and a billing entitlement for customer surveys. You must supply a template (currently only `csatTemplate` is supported) and can optionally specify targeting conditions, an enabled state, a send delay, and a per-customer cooldown interval.
   """
   createCustomerSurvey(input: CreateCustomerSurveyInput!): CreateCustomerSurveyOutput!
 
@@ -13803,6 +14040,11 @@ type Mutation {
   addGeneratedReply(input: AddGeneratedReplyInput!): AddGeneratedReplyOutput!
 
   """
+  Request a Plain AI suggested reply for an inbound message on a thread. Generation runs asynchronously, and the reply is delivered via the `generatedReplies` query and thread subscriptions once ready. Requires the `generatedReply:create` permission.
+  """
+  requestGeneratedReply(input: RequestGeneratedReplyInput!): RequestGeneratedReplyOutput!
+
+  """
   Advance a thread to the next step in its escalation path. The thread must already have an escalation path attached (via `updateThreadEscalationPath`) — if not, this call returns an error. Requires the `thread:edit` permission.
   """
   escalateThread(input: EscalateThreadInput!): EscalateThreadOutput!
@@ -13816,6 +14058,11 @@ type Mutation {
   Submit feedback on any Plain AI feature result. Pass a JSON-encoded object in the `feedback` field whose `type` discriminates the feature (`AI_AGENT`, `THREAD_CATCHUP`, `THREAD_CLUSTERS`, `TONE_RULE`, or `KNOWLEDGE_GAP`) and includes the relevant context fields and an optional `sentiment` (`POSITIVE`, `NEGATIVE`, or `NEUTRAL`).
   """
   createAiFeedback(input: CreateAiFeedbackInput!): CreateAiFeedbackOutput!
+
+  """
+  Report a problem or an idea about Plain's MCP tools to the Plain team. Call this when a tool fails unexpectedly, when you cannot do what the user asked with the available tools, or when you have a concrete idea that would make the tools more useful. Describe the problem in `comment` and name the tool in `toolName` if one was involved. Do not include customer data, personal information, or message content in `comment`. Requires the `aiFeatureFeedback:create` permission.
+  """
+  createMcpFeedback(input: CreateMcpFeedbackInput!): CreateMcpFeedbackOutput!
 
   """
   Uses AI to generate a set of tone rules from a free-text description of the desired communication style (up to 5000 characters). The generated rules are saved to the workspace in a disabled state so you can review and selectively enable them. Returns the newly created rules. Requires the `aiToneRule:create` permission.
@@ -13948,7 +14195,15 @@ type KnowledgeGapFeedbackDetails {
   knowledgeGapId: ID!
 }
 
-union AiFeatureFeedbackDetails = AiAgentFeedbackDetails | ThreadCatchupFeedbackDetails | ThreadClustersFeedbackDetails | ToneRuleFeedbackDetails | KnowledgeGapFeedbackDetails
+type McpFeedbackDetails {
+  """Either `BUG_REPORT` or `FEATURE_REQUEST`."""
+  reason: String!
+  comment: String
+  sentiment: AiFeedbackSentiment
+  toolName: String
+}
+
+union AiFeatureFeedbackDetails = AiAgentFeedbackDetails | ThreadCatchupFeedbackDetails | ThreadClustersFeedbackDetails | ToneRuleFeedbackDetails | KnowledgeGapFeedbackDetails | McpFeedbackDetails
 
 type AiFeatureFeedbackOutput {
   id: ID!
@@ -13964,9 +14219,36 @@ type CreateAiFeedbackOutput {
   error: MutationError
 }
 
+"""Why an agent is reporting feedback about Plain's MCP tools."""
+enum McpFeedbackReason {
+  """A tool failed or returned something wrong."""
+  BUG_REPORT
+
+  """The tools cannot do what the user asked, or could be more useful."""
+  FEATURE_REQUEST
+}
+
+input CreateMcpFeedbackInput {
+  reason: McpFeedbackReason!
+
+  """
+  What went wrong or what you would like to be possible, 1 to 5000 characters. Do not include customer data or personal information.
+  """
+  comment: String!
+
+  """
+  The name of the MCP tool the feedback is about, if any: letters, digits, `_`, `.` and `-` only, up to 200 characters.
+  """
+  toolName: String
+}
+
+type CreateMcpFeedbackOutput {
+  error: MutationError
+}
+
 """The Plain AI feature a piece of feedback relates to."""
 enum AiFeedbackFeature {
-  """A reply drafted or sent by Ari, Plain's AI agent."""
+  """A reply drafted or sent by the Customer Agent, Plain's AI agent."""
   AI_AGENT
 
   """An AI-generated summary of what has happened so far on a thread."""
@@ -13982,6 +14264,9 @@ enum AiFeedbackFeature {
   A knowledge gap detected from questions your customers are not finding answers to.
   """
   KNOWLEDGE_GAP
+
+  """Feedback a connected agent reported about Plain's MCP tools."""
+  MCP
 }
 
 """
@@ -14080,6 +14365,9 @@ type GenerateAiToneRulesFromDescriptionOutput {
 }
 
 input CreateAiToneRuleInput {
+  """
+  The aspect of communication style this rule governs. One of `EMPATHY`, `LANGUAGE`, `FORMALITY`, `PERSONALITY`, or `WARMTH`.
+  """
   category: String!
   description: String!
   isEnabled: Boolean
@@ -14222,6 +14510,18 @@ type VerifyHelpCenterCustomDomainNameOutput {
   error: MutationError
 }
 
+enum GeneratedReplyStatus {
+  NONE
+  PENDING
+  READY
+  SUPPRESSED
+}
+
+type GeneratedReplyState {
+  timelineEntryId: ID!
+  status: GeneratedReplyStatus!
+}
+
 enum GeneratedReplyFeedbackType {
   POSITIVE
   NEGATIVE
@@ -14240,6 +14540,15 @@ input AddGeneratedReplyInput {
 
 type AddGeneratedReplyOutput {
   generatedReply: GeneratedReply
+  error: MutationError
+}
+
+input RequestGeneratedReplyInput {
+  threadId: ID!
+  timelineEntryId: ID!
+}
+
+type RequestGeneratedReplyOutput {
   error: MutationError
 }
 
@@ -14628,10 +14937,10 @@ enum DiscussionType {
 
 """
 Which kind of agent is working on a discussion. This is about who runs the agent, not which
-channel the discussion is on: a Sidekick session can run in Plain, in a workflow or in Slack.
+channel the discussion is on: a Sidekick Agent session can run in Plain, in a workflow or in Slack.
 """
 enum DiscussionAgentType {
-  """Plain's own Sidekick, which Plain runs and bills for."""
+  """Plain's own Sidekick Agent, which Plain runs and bills for."""
   PLAIN_SIDEKICK
 
   """
@@ -14702,12 +15011,12 @@ input CreateDiscussionInput {
 
   """
   Customer-scoped attachments. Used by EMAIL / SLACK / CURSOR discussions.
-  Sidekick AGENT_SESSION discussions use workspaceFileIds instead.
+  Sidekick Agent AGENT_SESSION discussions use workspaceFileIds instead.
   """
   attachmentIds: [ID!]
 
   """
-  Workspace-scoped files. Used by Sidekick AGENT_SESSION discussions, which
+  Workspace-scoped files. Used by Sidekick Agent AGENT_SESSION discussions, which
   are not customer-scoped. Other discussion types ignore this field.
   """
   workspaceFileIds: [ID!]
@@ -14728,7 +15037,7 @@ input CreateDiscussionInput {
   sourceEntityType: DiscussionSourceEntityType
 
   """
-  Which agent to ask on an AGENT_SESSION discussion. Omit for Plain's Sidekick. Must reference a
+  Which agent to ask on an AGENT_SESSION discussion. Omit for Plain's Sidekick Agent. Must reference a
   machine user marked as a custom agent; Plain starts nothing for one, so the agent is expected to
   reply over the API.
   """
@@ -14758,7 +15067,7 @@ input CreateDiscussionInput {
   Free-form context from the UI (e.g. active filters on the current page) injected
   into the agent's prompt, so it knows what data the user is currently looking at.
   
-  Ignored when agentMachineUserId is set. Plain builds the prompt only for its own Sidekick;
+  Ignored when agentMachineUserId is set. Plain builds the prompt only for its own Sidekick Agent;
   an agent the workspace built receives the message over the discussion webhook, which does
   not carry this field. Passing it is accepted but has no effect.
   """
@@ -14850,11 +15159,13 @@ input SendDiscussionMessageInput {
 
   """
   Customer-scoped attachments. Used by EMAIL / SLACK / CURSOR discussions.
-  Sidekick AGENT_SESSION discussions use workspaceFileIds instead.
+  Sidekick Agent AGENT_SESSION discussions use workspaceFileIds instead.
   """
   attachmentIds: [ID!]
 
-  """Workspace-scoped files. Used by Sidekick AGENT_SESSION discussions."""
+  """
+  Workspace-scoped files. Used by Sidekick Agent AGENT_SESSION discussions.
+  """
   workspaceFileIds: [ID!]
 }
 
@@ -14868,8 +15179,9 @@ input UpdateDiscussionAgentStatusInput {
 
   """
   IN_PROGRESS while the agent works, IDLE when it has finished, which also marks the discussion
-  unread. UNKNOWN and TOOL_CALL_APPROVAL_PENDING are rejected; ask with
-  requestDiscussionToolCallApproval, which sets the latter itself.
+  unread. UNKNOWN and TOOL_CALL_APPROVAL_PENDING are rejected, and so is any status while an
+  approval or question card is open; ask with requestDiscussionToolCallApproval or
+  requestDiscussionQuestion, which set the latter themselves.
   """
   agentStatus: ThreadDiscussionAgentStatus!
 }
@@ -14917,6 +15229,44 @@ input RequestDiscussionToolCallApprovalInput {
 
 type RequestDiscussionToolCallApprovalOutput {
   approval: ThreadDiscussionToolCallApprovalEntryPayload
+  error: MutationError
+}
+
+input RequestDiscussionQuestionOptionInput {
+  """
+  1-80 characters, unique within the question. Do not add an Other option; the card has one.
+  """
+  label: String!
+
+  """1-240 characters."""
+  description: String!
+}
+
+input RequestDiscussionQuestionItemInput {
+  """1-500 characters."""
+  question: String!
+
+  """
+  True when several options can be picked; false when the person picks one option or types an answer.
+  """
+  isMultiSelect: Boolean!
+
+  """2-4 options. Put the one you recommend first."""
+  options: [RequestDiscussionQuestionOptionInput!]!
+}
+
+input RequestDiscussionQuestionInput {
+  discussionId: ID!
+
+  """1-4 questions. A card holds at most 8 across every ask."""
+  questions: [RequestDiscussionQuestionItemInput!]!
+}
+
+type RequestDiscussionQuestionOutput {
+  """
+  The pending card, with every question on it. Its questionRequestId is what discussion.question_resolved carries.
+  """
+  question: ThreadDiscussionQuestionEntryPayload
   error: MutationError
 }
 
@@ -15135,7 +15485,7 @@ input ServiceLevelAgreementInput {
   threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilterInput
 
   """
-  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
+  If true, the SLA is linked to your workspace's business hours schedule and only tracked during it. Only works when the workspace has exactly one schedule. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
   """
   useBusinessHoursOnly: Boolean @deprecated(reason: "Use businessHoursScheduleIds to specify which business hours are linked to this SLA.")
 
@@ -15211,7 +15561,9 @@ input ServiceLevelAgreementPauseStatusDetailTypeArrayInput {
 }
 
 input UpdateServiceLevelAgreementInput {
-  """The ID of the SLA to update."""
+  """
+  The ID of the SLA itself, not of the SLA policy it belongs to. The ID is enough: there is no need to look the SLA up first.
+  """
   serviceLevelAgreementId: ID!
 
   """
@@ -15250,7 +15602,7 @@ input UpdateServiceLevelAgreementInput {
   threadLabelTypeIdFilter: ServiceLevelAgreementThreadLabelTypeIdFilterInput
 
   """
-  If true, the SLA will only be tracked during your workspace's business hours. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
+  If true, the SLA is linked to your workspace's business hours schedule and only tracked during it. Only works when the workspace has exactly one schedule. If false, the SLA will be tracked 24/7. Deprecated — use businessHoursScheduleIds instead.
   """
   useBusinessHoursOnly: OptionalBooleanInput @deprecated(reason: "Use businessHoursScheduleIds to specify which business hours are linked to this SLA.")
 
@@ -15297,7 +15649,7 @@ input ServiceLevelAgreementPolicyTargetInput {
   warnBefore: ServiceLevelAgreementWarnBeforeInput!
 
   """
-  The business hours schedules to track this target against. Leave it out or pass an empty array for the target to be tracked 24/7; leave it out when updating and the target keeps the schedules it already has.
+  The business hours schedules to track this target against. Every target in the policy that uses business hours must reference the same schedules. Leave it out or pass an empty array for the target to be tracked 24/7; leave it out when updating and the target keeps the schedules it already has.
   """
   businessHoursScheduleIds: [ID!]
 
@@ -15631,6 +15983,10 @@ input TenantFieldIdentifier {
   Identify the tenant by Plain's internal id or your own external id. Provide exactly one of `tenantId` or `tenantIdentifier`.
   """
   tenantIdentifier: TenantIdentifierInput
+
+  """
+  The tenant field's key, such as `contract_value` (a tenant field schema's `externalFieldId`).
+  """
   externalFieldId: ID!
 }
 
@@ -15980,12 +16336,22 @@ type AccountField {
 }
 
 input TenantIdentifierInput {
+  """Plain's ID for the tenant, such as `te_01…`. Not the tenant's name."""
   tenantId: ID
+
+  """
+  Your own ID for the tenant, set when it was created. Not its name: find a tenant by name with `searchTenants`.
+  """
   externalId: String
 }
 
 input AccountIdentifierInput {
+  """Plain's ID for the account, such as `te_01…`. Not the account's name."""
   accountId: ID
+
+  """
+  Your own ID for the account, set when it was created. Not its name: find an account by name with `searchAccounts`.
+  """
   externalId: String
 }
 
@@ -16122,6 +16488,31 @@ input SendMSTeamsMessageInput {
 
 type SendMSTeamsMessageOutput {
   msTeamsMessage: MSTeamsMessage
+  error: MutationError
+}
+
+"""
+Identifies the Microsoft Teams message to create a thread from, using the IDs on the Teams activity.
+"""
+input CreateThreadFromMSTeamsMessageInput {
+  """
+  The Teams conversation ID, as provided by Teams in the activity's `conversation.id`. For a
+  channel post this includes the post (`19:...@thread.tacv2;messageid=...`).
+  """
+  msTeamsConversationId: ID!
+
+  """The Teams message ID, as provided by Teams in the activity's `id`."""
+  msTeamsMessageId: ID!
+}
+
+type CreateThreadFromMSTeamsMessageOutput {
+  """
+  The open thread, when this Teams message's conversation already has one. Null when the request
+  was accepted and the thread is still being created. Poll `threadByMSTeamsMessage` until it
+  returns a thread whose `lockedAt` is null, or use the `thread.thread_created` webhook, to
+  pick it up.
+  """
+  thread: Thread
   error: MutationError
 }
 
@@ -17267,8 +17658,13 @@ type ServiceLevelAgreementStatusSummary {
 
 """Only one of the fields can be set."""
 input CustomerIdentifierInput {
+  """Your own ID for the customer."""
   externalId: ID
+
+  """The customer's email address."""
   emailAddress: String
+
+  """Plain's ID for the customer, such as `c_01…`."""
   customerId: ID
 }
 
@@ -18922,7 +19318,7 @@ type InternalNotificationChange {
 }
 
 """
-A change to one of the current user's Sidekick sessions; the subscription that delivers it says what changed.
+A change to one of the current user's Sidekick Agent sessions; the subscription that delivers it says what changed.
 """
 type SidekickSessionsChange {
   discussionId: ID!
@@ -19013,17 +19409,17 @@ type Subscription {
   internalNotificationChanges: InternalNotificationChange!
 
   """
-  Streams incremental text tokens from a running Sidekick agent session. Subscribe with the agentSessionId returned when starting a session; each event carries a text chunk of the in-progress assistant message, to be placed by its `sequence`. The stream ends when the session status transitions to IDLE or an error occurs.
+  Streams incremental text tokens from a running Sidekick Agent session. Subscribe with the agentSessionId returned when starting a session; each event carries a text chunk of the in-progress assistant message, to be placed by its `sequence`. The stream ends when the session status transitions to IDLE or an error occurs.
   """
   agentSessionDelta(agentSessionId: ID!): AgentSessionDelta!
 
   """
-  Fires for the current user whenever one of their Sidekick sessions receives a new agent response and becomes unread (i.e. the session settles into IDLE). Use the returned discussionId to refetch or highlight the relevant session. The session becomes read again when it is opened or explicitly marked read.
+  Fires for the current user whenever one of their Sidekick Agent sessions receives a new agent response and becomes unread (i.e. the session settles into IDLE). Use the returned discussionId to refetch or highlight the relevant session. The session becomes read again when it is opened or explicitly marked read.
   """
   sidekickSessionsChanged: SidekickSessionsChange!
 
   """
-  Fires for the current user whenever a Sidekick session they created, run by Plain's Sidekick or a custom agent, changes status: its agent starts working, waits on a tool call approval or settles, or the session is resolved or reopened. Delivered only to the session's creator, and it covers sessions started outside the app, such as one a workflow the user ran started on their behalf, so a session list can show them while they work. Use the returned discussionId to refetch; unlike sidekickSessionsChanged it does not mean the session is unread.
+  Fires for the current user whenever a Sidekick Agent session they created, run by Plain's Sidekick Agent or a custom agent, changes status: its agent starts working, waits on a tool call approval or settles, or the session is resolved or reopened. Delivered only to the session's creator, and it covers sessions started outside the app, such as one a workflow the user ran started on their behalf, so a session list can show them while they work. Use the returned discussionId to refetch; unlike sidekickSessionsChanged it does not mean the session is unread.
   """
   sidekickSessionStatusChanged: SidekickSessionsChange!
 }
@@ -19079,8 +19475,13 @@ type DeleteCustomerGroupOutput {
 Identifies a customer group by exactly one of: its Plain-assigned ID, its unique key, or the external ID from your system. Provide exactly one field.
 """
 input CustomerGroupIdentifier {
+  """Plain's ID for the customer group. Not the group's name."""
   customerGroupId: ID
+
+  """The customer group's key."""
   customerGroupKey: String
+
+  """Your own ID for the customer group."""
   externalId: String
 }
 
@@ -19362,7 +19763,7 @@ type ServiceAuthorizationConnection {
 }
 
 """
-A GitHub repository the workspace's Sidekick GitHub integration has access to.
+A GitHub repository the workspace's Sidekick Agent GitHub integration has access to.
 """
 type SidekickGithubRepo {
   """
@@ -19373,7 +19774,9 @@ type SidekickGithubRepo {
   name: String!
 }
 
-"""A repository selected for the workspace's Sidekick GitHub integration."""
+"""
+A repository selected for the workspace's Sidekick Agent GitHub integration.
+"""
 type SidekickGithubSelectedRepo {
   repoId: ID!
   owner: String!
@@ -19384,12 +19787,12 @@ type SidekickGithubSelectedRepo {
 }
 
 """
-The Sidekick GitHub configuration for a workspace: selected repositories
+The Sidekick Agent GitHub configuration for a workspace: selected repositories
 and operating instructions.
 """
 type SidekickGithubServiceConfig {
   """
-  The repositories Sidekick is configured to read from, each with optional per-repo operating instructions.
+  The repositories Sidekick Agent is configured to read from, each with optional per-repo operating instructions.
   """
   selectedRepos: [SidekickGithubSelectedRepo!]!
 
@@ -19398,7 +19801,7 @@ type SidekickGithubServiceConfig {
 }
 
 """
-A repository to select for the workspace's Sidekick GitHub integration,
+A repository to select for the workspace's Sidekick Agent GitHub integration,
 with optional per-repo operating instructions.
 """
 input SidekickGithubRepoInput {
@@ -19425,7 +19828,7 @@ type UpdateSidekickGithubConfigOutput {
 }
 
 """
-The Sidekick configuration for a connected service whose only
+The Sidekick Agent configuration for a connected service whose only
 user-editable setting is its operating instructions. Covers Datadog,
 Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira,
 Granola and LaunchDarkly. The access scope of each service is enforced
@@ -19459,7 +19862,7 @@ type UpdateSidekickServiceConfigOutput {
 }
 
 """
-The Sidekick PostHog configuration for a workspace: operating
+The Sidekick Agent PostHog configuration for a workspace: operating
 instructions plus the default project the agent queries.
 """
 type SidekickPosthogServiceConfig {
@@ -19500,12 +19903,12 @@ type UpdateSidekickPosthogConfigOutput {
 }
 
 """
-Workspace-level settings for Sidekick. Wrapper type so additional settings
+Workspace-level settings for Sidekick Agent. Wrapper type so additional settings
 can be added without breaking existing clients.
 """
 type SidekickSettings {
   """
-  Free-text instructions appended to Sidekick's system prompt for every session in this workspace, allowing teams to tailor its behavior (tone, escalation rules, domain knowledge, etc.). Null when no custom prompt has been configured.
+  Free-text instructions appended to Sidekick Agent's system prompt for every session in this workspace, allowing teams to tailor its behavior (tone, escalation rules, domain knowledge, etc.). Null when no custom prompt has been configured.
   """
   customPrompt: String
 
@@ -19517,12 +19920,12 @@ type SidekickSettings {
 
 input UpdateSidekickSettingsInput {
   """
-  Custom prompt to append to the Sidekick system prompt. Pass null or an empty string to clear. Omit to leave the current value unchanged.
+  Custom prompt to append to the Sidekick Agent system prompt. Pass null or an empty string to clear. Omit to leave the current value unchanged.
   """
   customPrompt: String
 
   """
-  Tools selected during onboarding, as Sidekick integration catalog slugs. Pass an empty list to record that nothing was selected. Omit or pass null to leave the current value unchanged. Unknown slugs are rejected.
+  Tools selected during onboarding, as Sidekick Agent integration catalog slugs. Pass an empty list to record that nothing was selected. Omit or pass null to leave the current value unchanged. Unknown slugs are rejected.
   """
   preferredIntegrations: [String!]
 }
@@ -19533,10 +19936,10 @@ type UpdateSidekickSettingsOutput {
 }
 
 """
-When Sidekick is allowed to use a tool:
-- NOT_REQUIRED: Sidekick runs the tool directly.
-- APPROVAL_REQUIRED: Sidekick must request human approval before running it.
-- DISABLED: the tool is listed to Sidekick but every call is rejected.
+When Sidekick Agent is allowed to use a tool:
+- NOT_REQUIRED: Sidekick Agent runs the tool directly.
+- APPROVAL_REQUIRED: Sidekick Agent must request human approval before running it.
+- DISABLED: the tool is listed to Sidekick Agent but every call is rejected.
 """
 enum AgentSandboxToolMode {
   NOT_REQUIRED
@@ -19545,7 +19948,7 @@ enum AgentSandboxToolMode {
 }
 
 """
-The resolved approval policy for one Sidekick tool: its effective mode plus the
+The resolved approval policy for one Sidekick Agent tool: its effective mode plus the
 factory default it derives from.
 """
 type AgentSandboxToolPolicy {
@@ -19587,7 +19990,7 @@ type UpdateAgentSandboxToolPolicyOutput {
 }
 
 """
-A skill available to Sidekick in this workspace, with its effective enabled
+A skill available to Sidekick Agent in this workspace, with its effective enabled
 state. The concrete type (SystemSidekickSkill or CustomSidekickSkill)
 indicates how the skill is provided. Use the sidekickCustomSkill query to
 load a custom skill's instructions.
@@ -19601,7 +20004,7 @@ interface SidekickSkill {
   """Human-readable display name."""
   displayName: String!
 
-  """What the skill does and when Sidekick should use it."""
+  """What the skill does and when Sidekick Agent should use it."""
   description: String!
 
   """
@@ -19631,7 +20034,9 @@ type CustomSidekickSkill implements SidekickSkill {
   customSkillId: ID!
 }
 
-"""A workspace-authored Sidekick skill, including its instructions body."""
+"""
+A workspace-authored Sidekick Agent skill, including its instructions body.
+"""
 type SidekickCustomSkill {
   id: ID!
 
@@ -19644,7 +20049,7 @@ type SidekickCustomSkill {
   displayName: String!
   description: String!
 
-  """The SKILL.md body Sidekick follows when the skill runs."""
+  """The SKILL.md body Sidekick Agent follows when the skill runs."""
   instructions: String!
   isEnabled: Boolean!
 }
@@ -19736,7 +20141,7 @@ type SidekickMcpAuthParam {
 }
 
 """
-A customer-owned MCP server registered for Sidekick. Sidekick reaches it only via the trusted proxy (the customer credential never enters the sandbox).
+A customer-owned MCP server registered for Sidekick Agent. Sidekick Agent reaches it only via the trusted proxy (the customer credential never enters the sandbox).
 """
 type SidekickMcpServer {
   id: ID!
@@ -19756,7 +20161,7 @@ type SidekickMcpServer {
   operatingInstructions: String
 
   """
-  False until completeSidekickMcpServerConnection succeeds. Sidekick ignores a server that is not connected.
+  False until completeSidekickMcpServerConnection succeeds. Sidekick Agent ignores a server that is not connected.
   """
   isConnected: Boolean!
 
@@ -20181,17 +20586,17 @@ input UpdateBusinessHoursOverrideInput {
   name: StringInput
 
   """
-  Move the first date, in YYYY-MM-DD format. Can't be before today, and can't change once it is before today.
+  Move the first date, in YYYY-MM-DD format. Can't be moved to before today. Slots on dates removed are dropped.
   """
   startsOn: String
 
   """
-  Move the last date (inclusive), in YYYY-MM-DD format. Can't be before today. Dates added are closed; slots on dates removed are dropped.
+  Move the last date (inclusive), in YYYY-MM-DD format. Dates added are closed; slots on dates removed are dropped.
   """
   endsOn: String
 
   """
-  Replace the override's slots in full. Slots on dates before today must be sent back unchanged. A date in the range without slots is closed. Omit to leave the hours unchanged.
+  Replace the override's slots in full. A date in the range without slots is closed. Omit to leave the hours unchanged.
   """
   slots: [BusinessHoursOverrideSlotInput!]
 }
@@ -21042,7 +21447,7 @@ enum CreditSpendKind {
   CUSTOM_AGENT_THREAD_ASSIGNMENT
 
   """
-  An Ari outcome: a thread Ari handled that stayed closed for 7 days without a teammate taking over.
+  A Customer Agent outcome: a thread the Customer Agent handled that stayed closed for 7 days without a teammate taking over.
   """
   ARI_OUTCOME_RESOLUTION
 }
@@ -21191,21 +21596,6 @@ enum HyperlineCheckoutSessionStatus {
   COMPLETED
   CANCELLED
   ERRORED
-}
-
-input MemberSeatCapCheckInput {
-  """Emails of the people being invited with a paid role."""
-  emails: [String!]
-
-  """The member whose role is changing to a paid one."""
-  userId: ID
-}
-
-type MemberSeatCapCheck {
-  """
-  False when giving these people a paid role would exceed the member seat cap.
-  """
-  isValid: Boolean!
 }
 
 input CalculateRoleChangeCostInput {
@@ -21804,6 +22194,14 @@ type HelpCenterAuthMechanismWorkosConnect {
 
 union HelpCenterAuthMechanism = HelpCenterAuthMechanismWorkosAuthkit | HelpCenterAuthMechanismWorkosConnect
 
+enum HelpCenterHeroAlignment {
+  """Align the homepage hero to the left."""
+  LEFT
+
+  """Center the homepage hero."""
+  CENTER
+}
+
 type HelpCenter {
   id: ID!
 
@@ -21849,6 +22247,58 @@ type HelpCenter {
   Whether the AI-powered answer widget is enabled for customers browsing this help center.
   """
   isCustomerFacingAiEnabled: Boolean!
+
+  """
+  Heading shown above the homepage link cards. Blank or null renders the cards with no heading.
+  """
+  linkCardsHeading: String
+
+  """Ordered homepage link cards. At most 6."""
+  linkCards: [HelpCenterLinkCard!]!
+
+  """When false, the public homepage hides the link-card heading and cards."""
+  isLinkCardsEnabled: Boolean!
+
+  """When false, the public homepage hides the popular topics section."""
+  isPopularTopicsEnabled: Boolean!
+
+  """
+  Ordered article ids shown as popular topics. Column one, then column two. The stored order comes first. Published articles flagged as popular topics that are missing from both columns are appended, filling column one up to 5 and then column two. At most 10. Drafts are omitted.
+  """
+  popularTopicArticleIds: [ID!]!
+
+  """
+  Popular topics split into two ordered columns of at most 5 published articles. Empty slots are not stored. Flagged articles missing from both columns are appended, filling column one first.
+  """
+  popularTopicColumns: HelpCenterPopularTopicColumns!
+
+  """
+  Ordered featured homepage cards, including article items and embeds. Draft articles stay in this list.
+  """
+  featuredHomepageItems: [HelpCenterFeaturedHomepageItem!]!
+
+  """
+  Homepage hero heading. Null or blank keeps the public default (How can we help?).
+  """
+  heroHeading: String
+
+  """
+  Homepage hero subheading. Null or blank keeps the public default, Search the help center, or browse by topic.
+  """
+  heroSubheading: String
+
+  """
+  Homepage hero search placeholder. Null or blank keeps the public default, Search help center.
+  """
+  heroSearchPlaceholder: String
+
+  """Alignment of the homepage hero."""
+  heroAlignment: HelpCenterHeroAlignment!
+
+  """
+  Whether the homepage redesign is enabled for this help center's workspace. False when the flag is off or cannot be evaluated.
+  """
+  isHomepageRedesignEnabled: Boolean!
   favicon: HelpCenterThemedImage!
 
   """
@@ -21939,21 +22389,39 @@ type HelpCenterIndexItem {
   """
   parentId: ID
 
-  """Publication status of the article. Null for ARTICLE_GROUP items."""
+  """Publication status of the article. Null for groups and headings."""
   status: HelpCenterArticleStatus
 
   """
-  Short summary. Null for ARTICLE_GROUP items and for articles that have no description set.
+  Short summary for an article or group. Null for headings and when unset.
   """
   description: String
 
-  """Opaque icon key for ARTICLE items; null for groups or when unset."""
+  """
+  Opaque icon key for an article or group. Null for headings and when unset. Unknown keys render nothing on the public site.
+  """
   icon: String
+
+  """
+  Whether a published article is in the homepage Featured carousel. False for groups and headings. Drafts are omitted from the public index.
+  """
+  isFeatured: Boolean!
+
+  """
+  Whether a published article is listed under Popular Topics. False for groups and headings. Drafts are omitted from the public index.
+  """
+  isPopularTopic: Boolean!
 }
 
 type HelpCenterArticleGroup {
   id: ID!
   name: String!
+
+  """Short summary shown on topic cards and the group page."""
+  description: String
+
+  """Opaque icon key. Unknown keys render nothing on the public site."""
+  icon: String
   createdAt: DateTime!
   createdBy: InternalActor!
   updatedAt: DateTime!
@@ -21990,6 +22458,16 @@ type HelpCenterArticle {
   Opaque icon key that identifies the decorative icon displayed alongside the article title.
   """
   icon: String
+
+  """
+  Whether this article is in the homepage Featured carousel. Only published articles appear there.
+  """
+  isFeatured: Boolean!
+
+  """
+  Whether this article is listed under Popular Topics. Only published articles appear there.
+  """
+  isPopularTopic: Boolean!
 
   """
   Full article body as HTML. This is rendered directly in the help center.
@@ -22267,6 +22745,43 @@ input UpdateHelpCenterInput {
   isChatEnabled: Boolean
   articleCopyOptions: UpdateHelpCenterArticleCopyOptionsInput
   isCustomerFacingAiEnabled: Boolean
+  linkCardsHeading: String
+  linkCards: [HelpCenterLinkCardInput!]
+  isLinkCardsEnabled: Boolean
+  isPopularTopicsEnabled: Boolean
+
+  """
+  Replaces the stored popular topic article order by filling column one (up to 5) and then column two. Omit to leave it unchanged. At most 10 published articles from this help center. Ignored when popularTopicColumns is also set.
+  """
+  popularTopicArticleIds: [ID!]
+
+  """
+  Replaces both popular topic columns. Omit to leave them unchanged. Each column has at most 5 published articles. Empty slots are not stored.
+  """
+  popularTopicColumns: HelpCenterPopularTopicColumnsInput
+
+  """
+  Replaces the ordered featured homepage list and syncs each article item with that article's featured flag. Omit to leave it unchanged.
+  """
+  featuredHomepageItems: [HelpCenterFeaturedHomepageItemInput!]
+
+  """
+  Omit to leave unchanged. Null or blank keeps the public default (How can we help?).
+  """
+  heroHeading: String
+
+  """
+  Omit to leave unchanged. Null or blank keeps the public default, Search the help center, or browse by topic.
+  """
+  heroSubheading: String
+
+  """
+  Omit to leave unchanged. Null or blank keeps the public default, Search help center.
+  """
+  heroSearchPlaceholder: String
+
+  """Omit to leave unchanged."""
+  heroAlignment: HelpCenterHeroAlignment
   favicon: HelpCenterThemedImageInput
   logo: HelpCenterThemedImageInput
   color: StringInput
@@ -22304,6 +22819,81 @@ input UpsertHelpCenterArticleInput {
   slug: String
   status: HelpCenterArticleStatus
   labelTypeIds: [ID!]
+  isFeatured: Boolean
+  isPopularTopic: Boolean
+}
+
+type HelpCenterLinkCard {
+  title: String!
+  description: String
+  url: String!
+  icon: String
+}
+
+input HelpCenterLinkCardInput {
+  title: String!
+  description: String
+  url: String!
+  icon: String
+}
+
+type HelpCenterPopularTopicColumns {
+  """
+  Article ids in the first column, in order. At most 5. Empty slots are not stored.
+  """
+  columnOneArticleIds: [ID!]!
+
+  """
+  Article ids in the second column, in order. At most 5. Empty slots are not stored.
+  """
+  columnTwoArticleIds: [ID!]!
+}
+
+input HelpCenterPopularTopicColumnsInput {
+  columnOneArticleIds: [ID!]!
+  columnTwoArticleIds: [ID!]!
+}
+
+enum HelpCenterFeaturedHomepageItemType {
+  """A help center article."""
+  ARTICLE
+
+  """An external card with its own title and URL."""
+  EMBED
+}
+
+type HelpCenterFeaturedHomepageItem {
+  type: HelpCenterFeaturedHomepageItemType!
+
+  """Set for ARTICLE items. Null for embeds."""
+  articleId: ID
+
+  """Set for EMBED items. Null for articles."""
+  title: String
+
+  """Set for EMBED items. An http or https URL. Null for articles."""
+  url: String
+
+  """
+  Optional embed description. Null for articles and when an embed has no description.
+  """
+  description: String
+}
+
+input HelpCenterFeaturedHomepageItemInput {
+  type: HelpCenterFeaturedHomepageItemType!
+
+  """Required when type is ARTICLE."""
+  articleId: ID
+
+  """Required when type is EMBED."""
+  title: String
+
+  """Required when type is EMBED. Must be an http or https URL."""
+  url: String
+
+  """Optional embed description."""
+  description: String
 }
 
 input CreateHelpCenterArticleGroupInput {
@@ -22318,6 +22908,8 @@ input CreateHelpCenterArticleGroupInput {
 input UpdateHelpCenterArticleGroupInput {
   helpCenterArticleGroupId: ID!
   name: String
+  description: String
+  icon: String
 }
 
 type CreateHelpCenterOutput {
