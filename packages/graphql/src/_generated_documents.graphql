@@ -2025,6 +2025,14 @@ fragment BusinessHoursScheduleFields on BusinessHoursSchedule {
   timezone {
     name
   }
+  slots {
+    timezone {
+      name
+    }
+    weekday
+    opensAt
+    closesAt
+  }
   createdAt {
     unixTimestamp
     iso8601
@@ -5044,6 +5052,14 @@ fragment CustomRoleFields on CustomRole {
   name
   description
   permissionsPreset
+  scopeDefinitions {
+    resource
+    scopes {
+      primitiveType
+      accessMode
+      values
+    }
+  }
   createdAt {
     unixTimestamp
     iso8601
@@ -6577,6 +6593,19 @@ fragment ImportBroadcastAudienceChannelsResultFields on ImportBroadcastAudienceC
   broadcastAudience {
     id
   }
+  rows {
+    rowNumber
+    status
+    recipient
+    slackTeamId
+    slackChannelId
+    message
+    matches {
+      slackTeamId
+      slackChannelId
+      name
+    }
+  }
   addedCount
   alreadyInAudienceCount
   notFoundCount
@@ -6603,6 +6632,22 @@ fragment ImportJobFields on ImportJob {
   completedAt {
     unixTimestamp
     iso8601
+  }
+  importRuns {
+    id
+    importJobId
+    entityType
+    status
+    downloadedRecords
+    savedRecords
+    startedAt {
+      unixTimestamp
+      iso8601
+    }
+    completedAt {
+      unixTimestamp
+      iso8601
+    }
   }
 }
 
@@ -17696,6 +17741,16 @@ fragment ThreadDiscussionMessageEntryPayloadFields on ThreadDiscussionMessageEnt
 
 fragment ThreadDiscussionQuestionEntryPayloadFields on ThreadDiscussionQuestionEntryPayload {
   questionRequestId
+  questions {
+    id
+    question
+    isMultiSelect
+    options {
+      id
+      label
+      description
+    }
+  }
   status
   selections {
     questionId
@@ -19460,6 +19515,14 @@ fragment ThreadServiceLevelAgreementPolicyChangedEntryFields on ThreadServiceLev
 }
 
 fragment ThreadSingleValueMetricFields on ThreadSingleValueMetric {
+  values {
+    value
+    group {
+      dimension
+      value
+      label
+    }
+  }
   threadIds
 }
 
@@ -19720,6 +19783,14 @@ fragment ThreadTimeSeriesMetricFields on ThreadTimeSeriesMetric {
   timestamps {
     unixTimestamp
     iso8601
+  }
+  series {
+    values
+    group {
+      dimension
+      value
+      label
+    }
   }
   threadIds
 }
@@ -25470,6 +25541,15 @@ fragment TimeSeriesMetricFields on TimeSeriesMetric {
     unixTimestamp
     iso8601
   }
+  series {
+    values
+    userId
+    dimension {
+      type
+      value
+    }
+    threadIds
+  }
 }
 
 fragment ToggleFeatureEntitlementFields on ToggleFeatureEntitlement {
@@ -26389,6 +26469,27 @@ fragment WorkflowExecutionFields on WorkflowExecution {
       }
     }
   }
+  stepExecutions {
+    id
+    workflowStepId
+    workflowStepVersion
+    status
+    startedAt {
+      unixTimestamp
+      iso8601
+    }
+    completedAt {
+      unixTimestamp
+      iso8601
+    }
+    output
+    entities {
+      entityType
+      entityId
+    }
+    summary
+    credits
+  }
   credits
 }
 
@@ -26551,6 +26652,20 @@ fragment WorkflowTemplateFields on WorkflowTemplate {
   dependencies {
     integrations
     features
+  }
+  workflows {
+    name
+    trigger
+    startStepId
+    steps {
+      id
+      type
+      name
+      payload
+      transitions
+      positionX
+      positionY
+    }
   }
 }
 

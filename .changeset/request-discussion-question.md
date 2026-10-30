@@ -24,6 +24,17 @@ Regenerate against the current API schema.
 - `WorkflowReferences.escalationPathIds`, with a matching `escalationPathIds` filter
 - Help center homepage: link cards, popular topics, featured items and hero settings on `HelpCenter` and `updateHelpCenter`; `isFeatured` and `isPopularTopic` on articles; `description` and `icon` on article groups
 
+**Lists the bundled documents used to skip**
+
+Lists of plain objects that have no query of their own are now selected, so these come back where they used to be missing:
+
+- `ThreadDiscussionQuestionEntryPayload.questions`, with each option's `id`, so `requestDiscussionQuestion` returns the pending card
+- `BusinessHoursSchedule.slots`
+- `CustomRole.scopeDefinitions`
+- `ThreadSingleValueMetric.values`, `ThreadTimeSeriesMetric.series` and `TimeSeriesMetric.series`
+- `WorkflowExecution.stepExecutions` and `WorkflowTemplate.workflows`
+- `ImportJob.importRuns` and `ImportBroadcastAudienceChannelsResult.rows`
+
 **New values in returned unions and enums**
 
 - `MCP` in `AiFeedbackFeature`, with `McpFeedbackDetails` in the `AiFeatureFeedbackDetails` union
