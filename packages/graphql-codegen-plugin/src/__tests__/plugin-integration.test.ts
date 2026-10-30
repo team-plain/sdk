@@ -1,7 +1,6 @@
 import { buildSchema } from "graphql";
 import { describe, expect, it } from "vitest";
-import { plugin } from "../index.js";
-import { compileTypeScript, createDocuments, formatDiagnostics } from "./helpers.js";
+import { compileTypeScript, createDocuments, formatDiagnostics, generate } from "./helpers.js";
 
 const DATETIME_SCHEMA = `
   type DateTime {
@@ -46,8 +45,7 @@ describe("plugin integration", () => {
       query Product($productId: ID!) { product(productId: $productId) { ...ProductFields } }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type CustomerFieldsFragment = { id: string; name: string; email: string | null; createdAt: { iso8601: string } };
@@ -108,8 +106,7 @@ describe("plugin integration", () => {
       mutation DeleteUser($userId: ID!) { deleteUser(userId: $userId) { success error } }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type UserFieldsFragment = { id: string; name: string; createdAt: { iso8601: string } };
@@ -152,8 +149,7 @@ describe("plugin integration", () => {
       query Item($itemId: ID!) { item(itemId: $itemId) { ...ItemFields } }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type ItemFieldsFragment = { id: string; name: string; createdAt: { iso8601: string } };
@@ -194,8 +190,7 @@ describe("plugin integration", () => {
       query Workspace($workspaceId: ID!) { workspace(workspaceId: $workspaceId) { ...WorkspaceFields } }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type WorkspaceFieldsFragment = { id: string; name: string; createdAt: { iso8601: string } };

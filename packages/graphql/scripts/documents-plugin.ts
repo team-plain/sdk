@@ -27,6 +27,8 @@ import {
   stripIgnoredCharacters,
 } from "graphql";
 
+const documentNodeImport = "@graphql-typed-document-node/core#TypedDocumentNode";
+
 class LazyDocumentsVisitor extends ClientSideBaseVisitor {
   constructor(
     schema: GraphQLSchema,
@@ -41,7 +43,7 @@ class LazyDocumentsVisitor extends ClientSideBaseVisitor {
         ...config,
         documentMode: DocumentMode.graphQLTag,
         gqlImport: "./lazy-document.js#gql",
-        documentNodeImport: "@graphql-typed-document-node/core#TypedDocumentNode",
+        documentNodeImport,
         pureMagicComment: true,
         useTypeImports: true,
       },
@@ -49,9 +51,12 @@ class LazyDocumentsVisitor extends ClientSideBaseVisitor {
       documents,
     );
     // graphQLTag mode imports the gql function but not the type the documents are cast to.
-    this._imports.add(
-      this._generateImport(this._parseImport(this.config.documentNodeImport), "DocumentNode", true),
+    const typeImport = this._generateImport(
+      this._parseImport(documentNodeImport),
+      "DocumentNode",
+      true,
     );
+    if (typeImport) this._imports.add(typeImport);
   }
 
   // gql gathers nested fragments through these, sending each one once.

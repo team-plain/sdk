@@ -75,6 +75,9 @@ importers:
       '@team-plain/graphql-codegen-plugin':
         specifier: workspace:*
         version: link:../graphql-codegen-plugin
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.19.2
       tsdown:
         specifier: ^0.23.1
         version: 0.23.1(@arethetypeswrong/core@0.18.5)(publint@0.3.25)(tsx@4.23.15)(typescript@7.0.2)
@@ -91,6 +94,9 @@ importers:
         specifier: ^17.0.2
         version: 17.0.2
     devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.19.2
       typescript:
         specifier: ^7.0.2
         version: 7.0.2

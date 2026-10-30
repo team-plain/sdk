@@ -51,6 +51,7 @@ describe("union field aliasing", () => {
     const client = new PlainClient({ apiKey: "test-key" });
 
     const timelineEntry = await client.query.timelineEntry({
+      customerId: "c_123",
       timelineEntryId: "te_123",
     });
 
@@ -69,7 +70,7 @@ describe("union field aliasing", () => {
     fetchMock.mockResolvedValueOnce(graphqlResponse(timelineEntryData));
     const client = new PlainClient({ apiKey: "test-key" });
 
-    await client.query.timelineEntry({ timelineEntryId: "te_123" });
+    await client.query.timelineEntry({ customerId: "c_123", timelineEntryId: "te_123" });
 
     const body = getRequestBody(fetchMock);
     const query = sentQuery(body);

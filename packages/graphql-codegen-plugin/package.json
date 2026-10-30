@@ -21,6 +21,7 @@
     "graphql": "^17.0.2"
   },
   "devDependencies": {
+    "@types/node": "^24.19.2",
     "typescript": "^7.0.2",
     "typescript6": "npm:@typescript/typescript6@^6.0.2"
   }

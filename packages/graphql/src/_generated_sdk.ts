@@ -1683,6 +1683,7 @@ import type {
   ThreadClustersPaginatedQueryVariables,
   ThreadClustersQuery,
   ThreadClustersQueryVariables,
+  ThreadDiscussionAgentSessionChannelDetailsFieldsFragment,
   ThreadDiscussionApprovalRequestEntryPayloadFieldsFragment,
   ThreadDiscussionConnectRequestEntryPayloadFieldsFragment,
   ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsFieldsFragment,
@@ -1734,9 +1735,13 @@ import type {
   ThreadStatusDetailDoneManuallySetFieldsFragment,
   ThreadStatusDetailIgnoredFieldsFragment,
   ThreadStatusDetailInProgressFieldsFragment,
+  ThreadStatusDetailLinearUpdatedFieldsFragment,
   ThreadStatusDetailNewReplyFieldsFragment,
+  ThreadStatusDetailRepliedFieldsFragment,
+  ThreadStatusDetailSnoozedFieldsFragment,
   ThreadStatusDetailThreadDiscussionResolvedFieldsFragment,
   ThreadStatusDetailThreadLinkUpdatedFieldsFragment,
+  ThreadStatusDetailUnsnoozedFieldsFragment,
   ThreadStatusDetailWaitingForCustomerFieldsFragment,
   ThreadStatusDetailWaitingForDurationFieldsFragment,
   ThreadStatusDetailWaitingIndefinitelyFieldsFragment,
@@ -2873,7 +2878,11 @@ export class BillingPlanModel {
   public readonly highlightedLabel: BillingPlanFieldsFragment["highlightedLabel"];
   public readonly isSelfCheckoutEligible: BillingPlanFieldsFragment["isSelfCheckoutEligible"];
   public readonly key: BillingPlanFieldsFragment["key"];
+  /** @deprecated Use prices instead */
+  public readonly monthlyPrice: BillingPlanFieldsFragment["monthlyPrice"];
   public readonly name: BillingPlanFieldsFragment["name"];
+  /** @deprecated Use prices instead */
+  public readonly yearlyPrice: BillingPlanFieldsFragment["yearlyPrice"];
   public readonly prices: (PerSeatRecurringPriceModel | TieredRecurringPriceModel)[];
 
   constructor(client: PlainGraphQLClient, data: BillingPlanFieldsFragment) {
@@ -2884,7 +2893,9 @@ export class BillingPlanModel {
     this.highlightedLabel = data.highlightedLabel;
     this.isSelfCheckoutEligible = data.isSelfCheckoutEligible;
     this.key = data.key;
+    this.monthlyPrice = data.monthlyPrice;
     this.name = data.name;
+    this.yearlyPrice = data.yearlyPrice;
     this.prices = ((data.prices as any[]) ?? []).map((item: any) => (() => {
     switch ((item as any).__typename) {
       case "PerSeatRecurringPrice": return new PerSeatRecurringPriceModel(client, item as any);
@@ -3852,11 +3863,14 @@ export class ComponentDividerModel {
   public readonly __typename = "ComponentDivider" as const;
 
   public readonly dividerSpacingSize: ComponentDividerFieldsFragment["dividerSpacingSize"];
+  /** @deprecated use dividerSpacingSize instead */
+  public readonly spacingSize: ComponentDividerFieldsFragment["spacingSize"];
 
   constructor(client: PlainGraphQLClient, data: ComponentDividerFieldsFragment) {
     this._client = client;
     this._data = data;
     this.dividerSpacingSize = data.dividerSpacingSize;
+    this.spacingSize = data.spacingSize;
   }
 }
 
@@ -3865,14 +3879,20 @@ export class ComponentLinkButtonModel {
   protected _data: ComponentLinkButtonFieldsFragment;
   public readonly __typename = "ComponentLinkButton" as const;
 
+  /** @deprecated use linkButtonLabel instead */
+  public readonly label: ComponentLinkButtonFieldsFragment["label"];
   public readonly linkButtonLabel: ComponentLinkButtonFieldsFragment["linkButtonLabel"];
   public readonly linkButtonUrl: ComponentLinkButtonFieldsFragment["linkButtonUrl"];
+  /** @deprecated use linkButtonUrl instead */
+  public readonly url: ComponentLinkButtonFieldsFragment["url"];
 
   constructor(client: PlainGraphQLClient, data: ComponentLinkButtonFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.label = data.label;
     this.linkButtonLabel = data.linkButtonLabel;
     this.linkButtonUrl = data.linkButtonUrl;
+    this.url = data.url;
   }
 }
 
@@ -3899,11 +3919,14 @@ export class ComponentSpacerModel {
   protected _data: ComponentSpacerFieldsFragment;
   public readonly __typename = "ComponentSpacer" as const;
 
+  /** @deprecated Use spacerSize instead, which has the same type */
+  public readonly size: ComponentSpacerFieldsFragment["size"];
   public readonly spacerSize: ComponentSpacerFieldsFragment["spacerSize"];
 
   constructor(client: PlainGraphQLClient, data: ComponentSpacerFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.size = data.size;
     this.spacerSize = data.spacerSize;
   }
 }
@@ -3913,6 +3936,10 @@ export class ComponentTextModel {
   protected _data: ComponentTextFieldsFragment;
   public readonly __typename = "ComponentText" as const;
 
+  /** @deprecated Use textColor instead, which has the same type */
+  public readonly color: ComponentTextFieldsFragment["color"];
+  /** @deprecated Use textSize instead, which has the same type */
+  public readonly size: ComponentTextFieldsFragment["size"];
   public readonly text: ComponentTextFieldsFragment["text"];
   public readonly textColor: ComponentTextFieldsFragment["textColor"];
   public readonly textSize: ComponentTextFieldsFragment["textSize"];
@@ -3920,6 +3947,8 @@ export class ComponentTextModel {
   constructor(client: PlainGraphQLClient, data: ComponentTextFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.color = data.color;
+    this.size = data.size;
     this.text = data.text;
     this.textColor = data.textColor;
     this.textSize = data.textSize;
@@ -4169,8 +4198,8 @@ export class CustomEntryModel {
       case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
       case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
       case "ComponentRow": return item as any;
-      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
-      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentSpacer": return new ComponentSpacerModel(client, { ...item as any, size: (item as any).componentSpacerSize } as any);
+      case "ComponentText": return new ComponentTextModel(client, { ...item as any, size: (item as any).componentTextSize } as any);
       case "ComponentUser": return item as any;
       case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
       default: return item as any;
@@ -4193,8 +4222,14 @@ export class CustomerModel {
   public readonly id: CustomerFieldsFragment["id"];
   public readonly isAnonymous: CustomerFieldsFragment["isAnonymous"];
   public readonly isTestCustomer: CustomerFieldsFragment["isTestCustomer"];
+  /** @deprecated Use Thread.statusChangedAt instead */
+  public readonly lastIdleAt: CustomerFieldsFragment["lastIdleAt"];
   public readonly markedAsSpamAt: CustomerFieldsFragment["markedAsSpamAt"];
   public readonly shortName: CustomerFieldsFragment["shortName"];
+  /** @deprecated Use Thread.status instead */
+  public readonly status: CustomerFieldsFragment["status"];
+  /** @deprecated Use Thread.statusChangedAt instead */
+  public readonly statusChangedAt: CustomerFieldsFragment["statusChangedAt"];
   public readonly updatedAt: CustomerFieldsFragment["updatedAt"];
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly identities: (DiscordCustomerIdentityModel | EmailCustomerIdentityModel | SlackCustomerIdentityModel)[];
@@ -4213,8 +4248,11 @@ export class CustomerModel {
     this.id = data.id;
     this.isAnonymous = data.isAnonymous;
     this.isTestCustomer = data.isTestCustomer;
+    this.lastIdleAt = data.lastIdleAt;
     this.markedAsSpamAt = data.markedAsSpamAt;
     this.shortName = data.shortName;
+    this.status = data.status;
+    this.statusChangedAt = data.statusChangedAt;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
@@ -4252,6 +4290,16 @@ export class CustomerModel {
       default: return data.updatedBy as any;
     }
   })();
+  }
+
+  /** @deprecated Use accountMemberships instead */
+  public get company(): Promise<CompanyModel | undefined> {
+    const id = this._data.company?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CompanyQuery, CompanyQueryVariables>(
+      CompanyDocument,
+      { companyId: id } as CompanyQueryVariables
+    ).then(r => r.company ? new CompanyModel(this._client, r.company) : undefined);
   }
 
   async customerGroupMemberships(variables?: Omit<CustomerCustomerGroupMembershipsQueryVariables, "customerId">): Promise<PlainConnection<CustomerGroupMembershipModel>> {
@@ -4465,8 +4513,8 @@ export class CustomerCardInstanceLoadedModel {
       case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
       case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
       case "ComponentRow": return item as any;
-      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
-      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentSpacer": return new ComponentSpacerModel(client, { ...item as any, size: (item as any).componentSpacerSize } as any);
+      case "ComponentText": return new ComponentTextModel(client, { ...item as any, size: (item as any).componentTextSize } as any);
       case "ComponentUser": return item as any;
       case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
       default: return item as any;
@@ -4595,11 +4643,14 @@ export class CustomerCardInstanceResponseBodyErrorDetailModel {
   public readonly __typename = "CustomerCardInstanceResponseBodyErrorDetail" as const;
 
   public readonly message: CustomerCardInstanceResponseBodyErrorDetailFieldsFragment["message"];
+  /** @deprecated No longer supported, returns dummy data */
+  public readonly responseBody: CustomerCardInstanceResponseBodyErrorDetailFieldsFragment["responseBody"];
 
   constructor(client: PlainGraphQLClient, data: CustomerCardInstanceResponseBodyErrorDetailFieldsFragment) {
     this._client = client;
     this._data = data;
     this.message = data.message;
+    this.responseBody = data.responseBody;
   }
 }
 
@@ -4609,12 +4660,15 @@ export class CustomerCardInstanceStatusCodeErrorDetailModel {
   public readonly __typename = "CustomerCardInstanceStatusCodeErrorDetail" as const;
 
   public readonly message: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment["message"];
+  /** @deprecated No longer supported, returns dummy data */
+  public readonly responseBody: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment["responseBody"];
   public readonly statusCode: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment["statusCode"];
 
   constructor(client: PlainGraphQLClient, data: CustomerCardInstanceStatusCodeErrorDetailFieldsFragment) {
     this._client = client;
     this._data = data;
     this.message = data.message;
+    this.responseBody = data.responseBody;
     this.statusCode = data.statusCode;
   }
 }
@@ -4683,8 +4737,8 @@ export class CustomerEventModel {
       case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
       case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
       case "ComponentRow": return item as any;
-      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
-      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentSpacer": return new ComponentSpacerModel(client, { ...item as any, size: (item as any).componentSpacerSize } as any);
+      case "ComponentText": return new ComponentTextModel(client, { ...item as any, size: (item as any).componentTextSize } as any);
       case "ComponentUser": return item as any;
       case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
       default: return item as any;
@@ -4743,8 +4797,8 @@ export class CustomerEventEntryModel {
       case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
       case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
       case "ComponentRow": return item as any;
-      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
-      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentSpacer": return new ComponentSpacerModel(client, { ...item as any, size: (item as any).componentSpacerSize } as any);
+      case "ComponentText": return new ComponentTextModel(client, { ...item as any, size: (item as any).componentTextSize } as any);
       case "ComponentUser": return item as any;
       case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
       default: return item as any;
@@ -5666,6 +5720,8 @@ export class FirstResponseTimeServiceLevelAgreementModel {
   public readonly threadLabelTypeIdFilter: FirstResponseTimeServiceLevelAgreementFieldsFragment["threadLabelTypeIdFilter"];
   public readonly threadPriorityFilter: FirstResponseTimeServiceLevelAgreementFieldsFragment["threadPriorityFilter"];
   public readonly updatedAt: FirstResponseTimeServiceLevelAgreementFieldsFragment["updatedAt"];
+  /** @deprecated Use businessHoursSchedules to see which business hours are linked to this SLA. */
+  public readonly useBusinessHoursOnly: FirstResponseTimeServiceLevelAgreementFieldsFragment["useBusinessHoursOnly"];
   public readonly breachActions: (BeforeBreachActionModel)[];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -5679,6 +5735,7 @@ export class FirstResponseTimeServiceLevelAgreementModel {
     this.threadLabelTypeIdFilter = data.threadLabelTypeIdFilter;
     this.threadPriorityFilter = data.threadPriorityFilter;
     this.updatedAt = data.updatedAt;
+    this.useBusinessHoursOnly = data.useBusinessHoursOnly;
     this.breachActions = ((data.breachActions as any[]) ?? []).map((item: any) => (() => {
     switch ((item as any).__typename) {
       case "BeforeBreachAction": return new BeforeBreachActionModel(client, item as any);
@@ -5712,6 +5769,8 @@ export class GeneratedReplyModel {
   public readonly createdAt: GeneratedReplyFieldsFragment["createdAt"];
   public readonly id: GeneratedReplyFieldsFragment["id"];
   public readonly markdown: GeneratedReplyFieldsFragment["markdown"];
+  /** @deprecated Use markdown instead. */
+  public readonly text: GeneratedReplyFieldsFragment["text"];
   public readonly timelineEntryId: GeneratedReplyFieldsFragment["timelineEntryId"];
   public readonly updatedAt: GeneratedReplyFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -5723,6 +5782,7 @@ export class GeneratedReplyModel {
     this.createdAt = data.createdAt;
     this.id = data.id;
     this.markdown = data.markdown;
+    this.text = data.text;
     this.timelineEntryId = data.timelineEntryId;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
@@ -7206,6 +7266,8 @@ export class LinearIssueThreadLinkModel {
   public readonly linearIssueIdentifier: LinearIssueThreadLinkFieldsFragment["linearIssueIdentifier"];
   public readonly linearIssueState: LinearIssueThreadLinkFieldsFragment["linearIssueState"];
   public readonly linearIssueUpdatedAt: LinearIssueThreadLinkFieldsFragment["linearIssueUpdatedAt"];
+  /** @deprecated Use url instead. */
+  public readonly linearIssueUrl: LinearIssueThreadLinkFieldsFragment["linearIssueUrl"];
   public readonly linkType: LinearIssueThreadLinkFieldsFragment["linkType"];
   public readonly sourceId: LinearIssueThreadLinkFieldsFragment["sourceId"];
   public readonly sourceType: LinearIssueThreadLinkFieldsFragment["sourceType"];
@@ -7228,6 +7290,7 @@ export class LinearIssueThreadLinkModel {
     this.linearIssueIdentifier = data.linearIssueIdentifier;
     this.linearIssueState = data.linearIssueState;
     this.linearIssueUpdatedAt = data.linearIssueUpdatedAt;
+    this.linearIssueUrl = data.linearIssueUrl;
     this.linkType = data.linkType;
     this.sourceId = data.sourceId;
     this.sourceType = data.sourceType;
@@ -7558,6 +7621,8 @@ export class NextResponseTimeServiceLevelAgreementModel {
   public readonly threadLabelTypeIdFilter: NextResponseTimeServiceLevelAgreementFieldsFragment["threadLabelTypeIdFilter"];
   public readonly threadPriorityFilter: NextResponseTimeServiceLevelAgreementFieldsFragment["threadPriorityFilter"];
   public readonly updatedAt: NextResponseTimeServiceLevelAgreementFieldsFragment["updatedAt"];
+  /** @deprecated Use businessHoursSchedules to see which business hours are linked to this SLA. */
+  public readonly useBusinessHoursOnly: NextResponseTimeServiceLevelAgreementFieldsFragment["useBusinessHoursOnly"];
   public readonly breachActions: (BeforeBreachActionModel)[];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -7571,6 +7636,7 @@ export class NextResponseTimeServiceLevelAgreementModel {
     this.threadLabelTypeIdFilter = data.threadLabelTypeIdFilter;
     this.threadPriorityFilter = data.threadPriorityFilter;
     this.updatedAt = data.updatedAt;
+    this.useBusinessHoursOnly = data.useBusinessHoursOnly;
     this.breachActions = ((data.breachActions as any[]) ?? []).map((item: any) => (() => {
     switch ((item as any).__typename) {
       case "BeforeBreachAction": return new BeforeBreachActionModel(client, item as any);
@@ -7984,26 +8050,35 @@ export class RoleModel {
   protected _data: RoleFieldsFragment;
   public readonly __typename = "Role" as const;
 
+  /** @deprecated Don't use. Will be removed soon. */
+  public readonly assignableBillingSeats: RoleFieldsFragment["assignableBillingSeats"];
   public readonly customRoleId: RoleFieldsFragment["customRoleId"];
   public readonly description: RoleFieldsFragment["description"];
   public readonly id: RoleFieldsFragment["id"];
+  /** @deprecated Use isAssignableToThread instead */
+  public readonly isAssignableToCustomer: RoleFieldsFragment["isAssignableToCustomer"];
   public readonly isAssignableToTask: RoleFieldsFragment["isAssignableToTask"];
   public readonly isAssignableToThread: RoleFieldsFragment["isAssignableToThread"];
   public readonly key: RoleFieldsFragment["key"];
   public readonly name: RoleFieldsFragment["name"];
   public readonly permissions: RoleFieldsFragment["permissions"];
+  /** @deprecated Don't use. Will be removed soon. */
+  public readonly requiresBillableSeat: RoleFieldsFragment["requiresBillableSeat"];
 
   constructor(client: PlainGraphQLClient, data: RoleFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.assignableBillingSeats = data.assignableBillingSeats;
     this.customRoleId = data.customRoleId;
     this.description = data.description;
     this.id = data.id;
+    this.isAssignableToCustomer = data.isAssignableToCustomer;
     this.isAssignableToTask = data.isAssignableToTask;
     this.isAssignableToThread = data.isAssignableToThread;
     this.key = data.key;
     this.name = data.name;
     this.permissions = data.permissions;
+    this.requiresBillableSeat = data.requiresBillableSeat;
   }
 
   public get customRole(): Promise<CustomRoleModel | undefined> {
@@ -8441,9 +8516,15 @@ export class SlackThreadChannelAssociationModel {
 
   public readonly accountId: SlackThreadChannelAssociationFieldsFragment["accountId"];
   public readonly accountMembershipPolicy: SlackThreadChannelAssociationFieldsFragment["accountMembershipPolicy"];
+  /** @deprecated Use accountId instead */
+  public readonly companyId: SlackThreadChannelAssociationFieldsFragment["companyId"];
   public readonly connectedSlackChannelId: SlackThreadChannelAssociationFieldsFragment["connectedSlackChannelId"];
   public readonly createdAt: SlackThreadChannelAssociationFieldsFragment["createdAt"];
   public readonly id: SlackThreadChannelAssociationFieldsFragment["id"];
+  /** @deprecated Use accountId instead */
+  public readonly tenantId: SlackThreadChannelAssociationFieldsFragment["tenantId"];
+  /** @deprecated Use accountMembershipPolicy instead */
+  public readonly tenantMembershipPolicy: SlackThreadChannelAssociationFieldsFragment["tenantMembershipPolicy"];
   public readonly updatedAt: SlackThreadChannelAssociationFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -8453,9 +8534,12 @@ export class SlackThreadChannelAssociationModel {
     this._data = data;
     this.accountId = data.accountId;
     this.accountMembershipPolicy = data.accountMembershipPolicy;
+    this.companyId = data.companyId;
     this.connectedSlackChannelId = data.connectedSlackChannelId;
     this.createdAt = data.createdAt;
     this.id = data.id;
+    this.tenantId = data.tenantId;
+    this.tenantMembershipPolicy = data.tenantMembershipPolicy;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
@@ -8815,6 +8899,26 @@ export class TaskModel {
       AccountDocument,
       { accountId: id } as AccountQueryVariables
     ).then(r => r.account ? new AccountModel(this._client, r.account) : undefined);
+  }
+
+  /** @deprecated Use account instead */
+  public get company(): Promise<CompanyModel | undefined> {
+    const id = this._data.company?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<CompanyQuery, CompanyQueryVariables>(
+      CompanyDocument,
+      { companyId: id } as CompanyQueryVariables
+    ).then(r => r.company ? new CompanyModel(this._client, r.company) : undefined);
+  }
+
+  /** @deprecated Use account instead */
+  public get tenant(): Promise<TenantModel | undefined> {
+    const id = this._data.tenant?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<TenantQuery, TenantQueryVariables>(
+      TenantDocument,
+      { tenantId: id } as TenantQueryVariables
+    ).then(r => r.tenant ? new TenantModel(this._client, r.tenant) : undefined);
   }
 }
 
@@ -9206,7 +9310,7 @@ export class ThreadModel {
   public readonly importedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
   public readonly lockedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
   public readonly statusChangedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly statusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
+  public readonly statusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailLinearUpdatedModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailRepliedModel | ThreadStatusDetailSnoozedModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailUnsnoozedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: ThreadFieldsFragment) {
@@ -9320,9 +9424,13 @@ export class ThreadModel {
       case "ThreadStatusDetailDoneManuallySet": return new ThreadStatusDetailDoneManuallySetModel(client, data.statusDetail as any);
       case "ThreadStatusDetailIgnored": return new ThreadStatusDetailIgnoredModel(client, data.statusDetail as any);
       case "ThreadStatusDetailInProgress": return new ThreadStatusDetailInProgressModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailLinearUpdated": return new ThreadStatusDetailLinearUpdatedModel(client, { ...data.statusDetail as any, linearIssueId: (data.statusDetail as any).threadStatusDetailLinearUpdatedLinearIssueId } as any);
       case "ThreadStatusDetailNewReply": return new ThreadStatusDetailNewReplyModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailReplied": return new ThreadStatusDetailRepliedModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailSnoozed": return new ThreadStatusDetailSnoozedModel(client, data.statusDetail as any);
       case "ThreadStatusDetailThreadDiscussionResolved": return new ThreadStatusDetailThreadDiscussionResolvedModel(client, data.statusDetail as any);
       case "ThreadStatusDetailThreadLinkUpdated": return new ThreadStatusDetailThreadLinkUpdatedModel(client, data.statusDetail as any);
+      case "ThreadStatusDetailUnsnoozed": return new ThreadStatusDetailUnsnoozedModel(client, data.statusDetail as any);
       case "ThreadStatusDetailWaitingForCustomer": return new ThreadStatusDetailWaitingForCustomerModel(client, data.statusDetail as any);
       case "ThreadStatusDetailWaitingForDuration": return new ThreadStatusDetailWaitingForDurationModel(client, data.statusDetail as any);
       case "ThreadStatusDetailWaitingIndefinitely": return new ThreadStatusDetailWaitingIndefinitelyModel(client, data.statusDetail as any);
@@ -9375,6 +9483,16 @@ export class ThreadModel {
       ServiceLevelAgreementPolicyDocument,
       { serviceLevelAgreementPolicyId: id } as ServiceLevelAgreementPolicyQueryVariables
     ).then(r => r.serviceLevelAgreementPolicy ? new ServiceLevelAgreementPolicyModel(this._client, r.serviceLevelAgreementPolicy) : undefined);
+  }
+
+  /** @deprecated Use account instead */
+  public get tenant(): Promise<TenantModel | undefined> {
+    const id = this._data.tenant?.id;
+    if (!id) return Promise.resolve(undefined);
+    return this._client.request<TenantQuery, TenantQueryVariables>(
+      TenantDocument,
+      { tenantId: id } as TenantQueryVariables
+    ).then(r => r.tenant ? new TenantModel(this._client, r.tenant) : undefined);
   }
 
   public get tier(): Promise<TierModel | undefined> {
@@ -9527,10 +9645,20 @@ export class ThreadDiscussionModel {
   public readonly agentSessionId: ThreadDiscussionFieldsFragment["agentSessionId"];
   public readonly agentStatus: ThreadDiscussionFieldsFragment["agentStatus"];
   public readonly createdAt: ThreadDiscussionFieldsFragment["createdAt"];
+  /** @deprecated Use channelDetails.emailRecipients instead */
+  public readonly emailRecipients: ThreadDiscussionFieldsFragment["emailRecipients"];
   public readonly id: ThreadDiscussionFieldsFragment["id"];
   public readonly isUnread: ThreadDiscussionFieldsFragment["isUnread"];
   public readonly lastActivityAt: ThreadDiscussionFieldsFragment["lastActivityAt"];
   public readonly resolvedAt: ThreadDiscussionFieldsFragment["resolvedAt"];
+  /** @deprecated Use channelDetails.slackChannelId instead */
+  public readonly slackChannelId: ThreadDiscussionFieldsFragment["slackChannelId"];
+  /** @deprecated Use channelDetails.slackChannelName instead */
+  public readonly slackChannelName: ThreadDiscussionFieldsFragment["slackChannelName"];
+  /** @deprecated Use channelDetails.slackMessageLink instead */
+  public readonly slackMessageLink: ThreadDiscussionFieldsFragment["slackMessageLink"];
+  /** @deprecated Use channelDetails.slackTeamId instead */
+  public readonly slackTeamId: ThreadDiscussionFieldsFragment["slackTeamId"];
   public readonly sourceEntityId: ThreadDiscussionFieldsFragment["sourceEntityId"];
   public readonly sourceEntityType: ThreadDiscussionFieldsFragment["sourceEntityType"];
   public readonly sourcePageAnchor: ThreadDiscussionFieldsFragment["sourcePageAnchor"];
@@ -9539,9 +9667,11 @@ export class ThreadDiscussionModel {
   public readonly status: ThreadDiscussionFieldsFragment["status"];
   public readonly threadId: ThreadDiscussionFieldsFragment["threadId"];
   public readonly title: ThreadDiscussionFieldsFragment["title"];
+  /** @deprecated Use channelDetails instead */
+  public readonly type: ThreadDiscussionFieldsFragment["type"];
   public readonly updatedAt: ThreadDiscussionFieldsFragment["updatedAt"];
   public readonly visibility: ThreadDiscussionFieldsFragment["visibility"];
-  public readonly channelDetails: (ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel | ThreadDiscussionEmailChannelDetailsModel | ThreadDiscussionSlackChannelDetailsModel) | null;
+  public readonly channelDetails: (ThreadDiscussionAgentSessionChannelDetailsModel | ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel | ThreadDiscussionEmailChannelDetailsModel | ThreadDiscussionSlackChannelDetailsModel) | null;
   public readonly createdBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: CustomerActorModel | DeletedCustomerActorModel | MachineUserActorModel | SystemActorModel | UserActorModel;
 
@@ -9551,10 +9681,15 @@ export class ThreadDiscussionModel {
     this.agentSessionId = data.agentSessionId;
     this.agentStatus = data.agentStatus;
     this.createdAt = data.createdAt;
+    this.emailRecipients = data.emailRecipients;
     this.id = data.id;
     this.isUnread = data.isUnread;
     this.lastActivityAt = data.lastActivityAt;
     this.resolvedAt = data.resolvedAt;
+    this.slackChannelId = data.slackChannelId;
+    this.slackChannelName = data.slackChannelName;
+    this.slackMessageLink = data.slackMessageLink;
+    this.slackTeamId = data.slackTeamId;
     this.sourceEntityId = data.sourceEntityId;
     this.sourceEntityType = data.sourceEntityType;
     this.sourcePageAnchor = data.sourcePageAnchor;
@@ -9563,10 +9698,12 @@ export class ThreadDiscussionModel {
     this.status = data.status;
     this.threadId = data.threadId;
     this.title = data.title;
+    this.type = data.type;
     this.updatedAt = data.updatedAt;
     this.visibility = data.visibility;
     this.channelDetails = data.channelDetails ? (() => {
     switch ((data.channelDetails as any).__typename) {
+      case "ThreadDiscussionAgentSessionChannelDetails": return new ThreadDiscussionAgentSessionChannelDetailsModel(client, data.channelDetails as any);
       case "ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetails": return new ThreadDiscussionCursorWorkspaceBackgroundAgentChannelDetailsModel(client, data.channelDetails as any);
       case "ThreadDiscussionEmailChannelDetails": return new ThreadDiscussionEmailChannelDetailsModel(client, data.channelDetails as any);
       case "ThreadDiscussionSlackChannelDetails": return new ThreadDiscussionSlackChannelDetailsModel(client, data.channelDetails as any);
@@ -9626,6 +9763,21 @@ export class ThreadDiscussionModel {
       pageInfo: conn.pageInfo,
       fetch: (cursor) => this.messages({ ...variables, ...cursor }),
     });
+  }
+}
+
+export class ThreadDiscussionAgentSessionChannelDetailsModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadDiscussionAgentSessionChannelDetailsFieldsFragment;
+  public readonly __typename = "ThreadDiscussionAgentSessionChannelDetails" as const;
+
+  /** @deprecated Use ThreadDiscussion.agentSessionId instead. A discussion's session does not depend on its channel, so reading it here forces a narrow by channel type. This field still resolves. */
+  public readonly agentSessionId: ThreadDiscussionAgentSessionChannelDetailsFieldsFragment["agentSessionId"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadDiscussionAgentSessionChannelDetailsFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.agentSessionId = data.agentSessionId;
   }
 }
 
@@ -10030,8 +10182,8 @@ export class ThreadEventModel {
       case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
       case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
       case "ComponentRow": return item as any;
-      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
-      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentSpacer": return new ComponentSpacerModel(client, { ...item as any, size: (item as any).componentSpacerSize } as any);
+      case "ComponentText": return new ComponentTextModel(client, { ...item as any, size: (item as any).componentTextSize } as any);
       case "ComponentUser": return item as any;
       case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
       default: return item as any;
@@ -10090,8 +10242,8 @@ export class ThreadEventEntryModel {
       case "ComponentLinkButton": return new ComponentLinkButtonModel(client, item as any);
       case "ComponentPlainText": return new ComponentPlainTextModel(client, item as any);
       case "ComponentRow": return item as any;
-      case "ComponentSpacer": return new ComponentSpacerModel(client, item as any);
-      case "ComponentText": return new ComponentTextModel(client, item as any);
+      case "ComponentSpacer": return new ComponentSpacerModel(client, { ...item as any, size: (item as any).componentSpacerSize } as any);
+      case "ComponentText": return new ComponentTextModel(client, { ...item as any, size: (item as any).componentTextSize } as any);
       case "ComponentUser": return item as any;
       case "ComponentWorkflowButton": return new ComponentWorkflowButtonModel(client, item as any);
       default: return item as any;
@@ -10468,16 +10620,79 @@ export class ThreadStatusDetailInProgressModel {
   }
 }
 
+export class ThreadStatusDetailLinearUpdatedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailLinearUpdatedFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailLinearUpdated" as const;
+
+  /** @deprecated ThreadStatusDetailLinearUpdated is no longer supported, query ThreadStatusDetailThreadLinkUpdated instead. */
+  public readonly linearIssueId: ThreadStatusDetailLinearUpdatedFieldsFragment["linearIssueId"];
+  /** @deprecated ThreadStatusDetailLinearUpdated is no longer supported, query ThreadStatusDetailThreadLinkUpdated instead. */
+  public readonly statusChangedAt: ThreadStatusDetailLinearUpdatedFieldsFragment["statusChangedAt"];
+  /** @deprecated ThreadStatusDetailLinearUpdated is no longer supported, query ThreadStatusDetailThreadLinkUpdated instead. */
+  public readonly updatedAt: ThreadStatusDetailLinearUpdatedFieldsFragment["updatedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailLinearUpdatedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.linearIssueId = data.linearIssueId;
+    this.statusChangedAt = data.statusChangedAt;
+    this.updatedAt = data.updatedAt;
+  }
+}
+
 export class ThreadStatusDetailNewReplyModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadStatusDetailNewReplyFieldsFragment;
   public readonly __typename = "ThreadStatusDetailNewReply" as const;
 
+  /** @deprecated newReplyAt is no longer supported, query Thread.lastInboundMessageInfo.timestamp instead. */
+  public readonly newReplyAt: ThreadStatusDetailNewReplyFieldsFragment["newReplyAt"];
   public readonly statusChangedAt: ThreadStatusDetailNewReplyFieldsFragment["statusChangedAt"];
 
   constructor(client: PlainGraphQLClient, data: ThreadStatusDetailNewReplyFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.newReplyAt = data.newReplyAt;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailRepliedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailRepliedFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailReplied" as const;
+
+  /** @deprecated ThreadStatusDetailReplied is no longer supported. */
+  public readonly repliedAt: ThreadStatusDetailRepliedFieldsFragment["repliedAt"];
+  /** @deprecated ThreadStatusDetailReplied is no longer supported. */
+  public readonly statusChangedAt: ThreadStatusDetailRepliedFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailRepliedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.repliedAt = data.repliedAt;
+    this.statusChangedAt = data.statusChangedAt;
+  }
+}
+
+export class ThreadStatusDetailSnoozedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailSnoozedFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailSnoozed" as const;
+
+  /** @deprecated ThreadStatusDetailSnoozed is no longer supported. */
+  public readonly snoozedAt: ThreadStatusDetailSnoozedFieldsFragment["snoozedAt"];
+  /** @deprecated ThreadStatusDetailSnoozed is no longer supported. */
+  public readonly snoozedUntil: ThreadStatusDetailSnoozedFieldsFragment["snoozedUntil"];
+  /** @deprecated ThreadStatusDetailSnoozed is no longer supported. */
+  public readonly statusChangedAt: ThreadStatusDetailSnoozedFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailSnoozedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.snoozedAt = data.snoozedAt;
+    this.snoozedUntil = data.snoozedUntil;
     this.statusChangedAt = data.statusChangedAt;
   }
 }
@@ -10505,11 +10720,32 @@ export class ThreadStatusDetailThreadLinkUpdatedModel {
 
   public readonly linearIssueId: ThreadStatusDetailThreadLinkUpdatedFieldsFragment["linearIssueId"];
   public readonly statusChangedAt: ThreadStatusDetailThreadLinkUpdatedFieldsFragment["statusChangedAt"];
+  /** @deprecated Use statusChangedAt instead */
+  public readonly updatedAt: ThreadStatusDetailThreadLinkUpdatedFieldsFragment["updatedAt"];
 
   constructor(client: PlainGraphQLClient, data: ThreadStatusDetailThreadLinkUpdatedFieldsFragment) {
     this._client = client;
     this._data = data;
     this.linearIssueId = data.linearIssueId;
+    this.statusChangedAt = data.statusChangedAt;
+    this.updatedAt = data.updatedAt;
+  }
+}
+
+export class ThreadStatusDetailUnsnoozedModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadStatusDetailUnsnoozedFieldsFragment;
+  public readonly __typename = "ThreadStatusDetailUnsnoozed" as const;
+
+  /** @deprecated ThreadStatusDetailUnsnoozed is no longer supported. */
+  public readonly snoozedAt: ThreadStatusDetailUnsnoozedFieldsFragment["snoozedAt"];
+  /** @deprecated ThreadStatusDetailUnsnoozed is no longer supported. */
+  public readonly statusChangedAt: ThreadStatusDetailUnsnoozedFieldsFragment["statusChangedAt"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadStatusDetailUnsnoozedFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.snoozedAt = data.snoozedAt;
     this.statusChangedAt = data.statusChangedAt;
   }
 }
@@ -10565,8 +10801,8 @@ export class ThreadStatusTransitionedEntryModel {
 
   public readonly nextStatus: ThreadStatusTransitionedEntryFieldsFragment["nextStatus"];
   public readonly previousStatus: ThreadStatusTransitionedEntryFieldsFragment["previousStatus"];
-  public readonly nextStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
-  public readonly previousStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
+  public readonly nextStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailLinearUpdatedModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailRepliedModel | ThreadStatusDetailSnoozedModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailUnsnoozedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
+  public readonly previousStatusDetail: (ThreadStatusDetailCreatedModel | ThreadStatusDetailDoneAutomaticallySetModel | ThreadStatusDetailDoneManuallySetModel | ThreadStatusDetailIgnoredModel | ThreadStatusDetailInProgressModel | ThreadStatusDetailLinearUpdatedModel | ThreadStatusDetailNewReplyModel | ThreadStatusDetailRepliedModel | ThreadStatusDetailSnoozedModel | ThreadStatusDetailThreadDiscussionResolvedModel | ThreadStatusDetailThreadLinkUpdatedModel | ThreadStatusDetailUnsnoozedModel | ThreadStatusDetailWaitingForCustomerModel | ThreadStatusDetailWaitingForDurationModel | ThreadStatusDetailWaitingIndefinitelyModel) | null;
 
   constructor(client: PlainGraphQLClient, data: ThreadStatusTransitionedEntryFieldsFragment) {
     this._client = client;
@@ -10580,9 +10816,13 @@ export class ThreadStatusTransitionedEntryModel {
       case "ThreadStatusDetailDoneManuallySet": return new ThreadStatusDetailDoneManuallySetModel(client, data.nextStatusDetail as any);
       case "ThreadStatusDetailIgnored": return new ThreadStatusDetailIgnoredModel(client, data.nextStatusDetail as any);
       case "ThreadStatusDetailInProgress": return new ThreadStatusDetailInProgressModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailLinearUpdated": return new ThreadStatusDetailLinearUpdatedModel(client, { ...data.nextStatusDetail as any, linearIssueId: (data.nextStatusDetail as any).threadStatusDetailLinearUpdatedLinearIssueId } as any);
       case "ThreadStatusDetailNewReply": return new ThreadStatusDetailNewReplyModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailReplied": return new ThreadStatusDetailRepliedModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailSnoozed": return new ThreadStatusDetailSnoozedModel(client, data.nextStatusDetail as any);
       case "ThreadStatusDetailThreadDiscussionResolved": return new ThreadStatusDetailThreadDiscussionResolvedModel(client, data.nextStatusDetail as any);
       case "ThreadStatusDetailThreadLinkUpdated": return new ThreadStatusDetailThreadLinkUpdatedModel(client, data.nextStatusDetail as any);
+      case "ThreadStatusDetailUnsnoozed": return new ThreadStatusDetailUnsnoozedModel(client, data.nextStatusDetail as any);
       case "ThreadStatusDetailWaitingForCustomer": return new ThreadStatusDetailWaitingForCustomerModel(client, data.nextStatusDetail as any);
       case "ThreadStatusDetailWaitingForDuration": return new ThreadStatusDetailWaitingForDurationModel(client, data.nextStatusDetail as any);
       case "ThreadStatusDetailWaitingIndefinitely": return new ThreadStatusDetailWaitingIndefinitelyModel(client, data.nextStatusDetail as any);
@@ -10596,9 +10836,13 @@ export class ThreadStatusTransitionedEntryModel {
       case "ThreadStatusDetailDoneManuallySet": return new ThreadStatusDetailDoneManuallySetModel(client, data.previousStatusDetail as any);
       case "ThreadStatusDetailIgnored": return new ThreadStatusDetailIgnoredModel(client, data.previousStatusDetail as any);
       case "ThreadStatusDetailInProgress": return new ThreadStatusDetailInProgressModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailLinearUpdated": return new ThreadStatusDetailLinearUpdatedModel(client, { ...data.previousStatusDetail as any, linearIssueId: (data.previousStatusDetail as any).threadStatusDetailLinearUpdatedLinearIssueId } as any);
       case "ThreadStatusDetailNewReply": return new ThreadStatusDetailNewReplyModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailReplied": return new ThreadStatusDetailRepliedModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailSnoozed": return new ThreadStatusDetailSnoozedModel(client, data.previousStatusDetail as any);
       case "ThreadStatusDetailThreadDiscussionResolved": return new ThreadStatusDetailThreadDiscussionResolvedModel(client, data.previousStatusDetail as any);
       case "ThreadStatusDetailThreadLinkUpdated": return new ThreadStatusDetailThreadLinkUpdatedModel(client, data.previousStatusDetail as any);
+      case "ThreadStatusDetailUnsnoozed": return new ThreadStatusDetailUnsnoozedModel(client, data.previousStatusDetail as any);
       case "ThreadStatusDetailWaitingForCustomer": return new ThreadStatusDetailWaitingForCustomerModel(client, data.previousStatusDetail as any);
       case "ThreadStatusDetailWaitingForDuration": return new ThreadStatusDetailWaitingForDurationModel(client, data.previousStatusDetail as any);
       case "ThreadStatusDetailWaitingIndefinitely": return new ThreadStatusDetailWaitingIndefinitelyModel(client, data.previousStatusDetail as any);
@@ -10654,6 +10898,8 @@ export class TierModel {
 
   public readonly color: TierFieldsFragment["color"];
   public readonly createdAt: TierFieldsFragment["createdAt"];
+  /** @deprecated Use defaultThreadPriority instead. */
+  public readonly defaultPriority: TierFieldsFragment["defaultPriority"];
   public readonly defaultThreadPriority: TierFieldsFragment["defaultThreadPriority"];
   public readonly externalId: TierFieldsFragment["externalId"];
   public readonly id: TierFieldsFragment["id"];
@@ -10670,6 +10916,7 @@ export class TierModel {
     this._data = data;
     this.color = data.color;
     this.createdAt = data.createdAt;
+    this.defaultPriority = data.defaultPriority;
     this.defaultThreadPriority = data.defaultThreadPriority;
     this.externalId = data.externalId;
     this.id = data.id;
@@ -11733,6 +11980,8 @@ export class WorkspaceModel {
   public readonly __typename = "Workspace" as const;
 
   public readonly createdAt: WorkspaceFieldsFragment["createdAt"];
+  /** @deprecated Use domainNames instead */
+  public readonly domainName: WorkspaceFieldsFragment["domainName"];
   public readonly domainNames: WorkspaceFieldsFragment["domainNames"];
   public readonly id: WorkspaceFieldsFragment["id"];
   public readonly isDemoWorkspace: WorkspaceFieldsFragment["isDemoWorkspace"];
@@ -11752,6 +12001,7 @@ export class WorkspaceModel {
     this._client = client;
     this._data = data;
     this.createdAt = data.createdAt;
+    this.domainName = data.domainName;
     this.domainNames = data.domainNames;
     this.id = data.id;
     this.isDemoWorkspace = data.isDemoWorkspace;

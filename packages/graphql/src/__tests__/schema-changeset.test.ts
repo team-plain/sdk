@@ -77,16 +77,74 @@ describe("schemaChangeset", () => {
     expect(result?.summary).toContain("**Breaking**");
   });
 
-  it("is a major when an object field is deprecated, since it leaves the result types", async () => {
+  it("is a patch when an object field is deprecated, since it stays in the result types", async () => {
     const result = await schemaChangeset(base, deprecate(base, "title: String"));
-    expect(result?.releases[0].type).toBe("major");
+    expect(result?.releases).toEqual([{ name: "@team-plain/graphql", type: "patch" }]);
+    expect(result?.summary).toContain("**Deprecated fields, still available**");
     expect(result?.summary).toContain("'Thread.title' is deprecated");
+    expect(result?.summary).not.toContain("**No longer in the generated result types**");
   });
 
-  it("is a minor when an object field is undeprecated, since it rejoins the result types", async () => {
+  it("is a major when a deprecated object field is removed", async () => {
+    const old = deprecate(base, "title: String");
+    const result = await schemaChangeset(
+      old,
+      old.replace(/title: String @deprecated\(reason: "Gone."\) /, ""),
+    );
+    expect(result?.releases[0].type).toBe("major");
+    expect(result?.summary).toContain("**Breaking**");
+  });
+
+  describe("union field clashes", () => {
+    const entries = `${base} type A { text: String! } type B { text: String } union Entry = A | B`;
+
+    it("is a major when a deprecation renames the other side of a clash", async () => {
+      const result = await schemaChangeset(entries, deprecate(entries, "type B { text: String"));
+      expect(result?.releases[0].type).toBe("major");
+      expect(result?.summary).toContain("**Renamed in the generated result types**");
+      expect(result?.summary).toContain(
+        "Field 'A.text' in 'Entry' is now returned as 'text' instead of 'aText'",
+      );
+      expect(result?.summary).not.toContain("'B.text' in 'Entry'");
+    });
+
+    it("is a major when an undeprecation renames the other side of a clash", async () => {
+      const result = await schemaChangeset(deprecate(entries, "type B { text: String"), entries);
+      expect(result?.releases[0].type).toBe("major");
+      expect(result?.summary).toContain("is now returned as 'aText' instead of 'text'");
+    });
+
+    it("is a major when a new member renames the fields it clashes with", async () => {
+      const old = `${base} type A { text: String! } type B { text: String! } union Entry = A | B`;
+      const next = `${old.replace("A | B", "A | B | C")} type C { text: Int }`;
+      const result = await schemaChangeset(old, next);
+      expect(result?.releases[0].type).toBe("major");
+      expect(result?.summary).toContain("'A.text' in 'Entry' is now returned as 'aText'");
+      expect(result?.summary).not.toContain("'C.text'");
+    });
+
+    it("ignores lists of objects and connections, which the generator skips", async () => {
+      const old = `${base} type Item { id: ID! thread: Thread } type ItemConnection { edges: [Item!]! pageInfo: Item! }
+        type A { items: [Item!]! page: ItemConnection! } type B { items: [Item] page: ItemConnection }
+        union Entry = A | B`;
+      const next = deprecate(deprecate(old, "type B { items: [Item]"), "page: ItemConnection ");
+      const result = await schemaChangeset(old, next);
+      expect(result?.releases[0].type).toBe("patch");
+      expect(result?.summary).not.toContain("**Renamed in the generated result types**");
+    });
+
+    it("ignores fields the generator skips for a required argument", async () => {
+      const old = entries.replace("type B { text: String", "type B { text(n: Int!): String");
+      const result = await schemaChangeset(old, deprecate(old, "type A { text: String!"));
+      expect(result?.releases[0].type).toBe("patch");
+      expect(result?.summary).not.toContain("**Renamed in the generated result types**");
+    });
+  });
+
+  it("is a patch when an object field is undeprecated", async () => {
     const result = await schemaChangeset(deprecate(base, "title: String"), base);
-    expect(result?.releases[0].type).toBe("minor");
-    expect(result?.summary).toContain("**Back in the generated result types**");
+    expect(result?.releases[0].type).toBe("patch");
+    expect(result?.summary).not.toContain("**Back in the generated result types**");
   });
 
   it("is a major when an object field gains a defaulted non-null argument", async () => {
@@ -111,10 +169,10 @@ describe("schemaChangeset", () => {
     expect((await schemaChangeset(base, next))?.releases[0].type).toBe("minor");
   });
 
-  it("is a minor when an already deprecated object field gains a required argument", async () => {
+  it("is a major when a deprecated object field gains a required argument", async () => {
     const old = deprecate(base, "title: String");
     const next = old.replace("title: String", "title(n: Int! = 1): String");
-    expect((await schemaChangeset(old, next))?.releases[0].type).toBe("minor");
+    expect((await schemaChangeset(old, next))?.releases[0].type).toBe("major");
   });
 
   it("is a minor when a new field arrives already deprecated", async () => {

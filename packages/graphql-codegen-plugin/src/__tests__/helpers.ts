@@ -1,7 +1,18 @@
 import type { Types } from "@graphql-codegen/plugin-helpers";
-import { parse } from "graphql";
+import { type GraphQLSchema, parse } from "graphql";
 // TypeScript 7 ships no JS compiler API, so type-checking generated code needs the 6.x line.
 import ts from "typescript6";
+import { plugin } from "../index.js";
+
+/**
+ * Run the plugin. It returns its output synchronously, as a string, but its `PluginFunction` type
+ * also allows a promise or an object.
+ */
+export function generate(schema: GraphQLSchema, documents: Types.DocumentFile[]): string {
+  const output = plugin(schema, documents, {});
+  if (typeof output !== "string") throw new Error("Expected the plugin to return a string");
+  return output;
+}
 
 /**
  * Parse a GraphQL string into the `Types.DocumentFile[]` format that `plugin()` expects.

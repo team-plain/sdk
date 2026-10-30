@@ -1,7 +1,6 @@
 import { buildSchema } from "graphql";
 import { describe, expect, it } from "vitest";
-import { plugin } from "../index.js";
-import { compileTypeScript, createDocuments, formatDiagnostics } from "./helpers.js";
+import { compileTypeScript, createDocuments, formatDiagnostics, generate } from "./helpers.js";
 
 // Helper: a value-object type to make entities non-value-objects
 const DATETIME_SCHEMA = `
@@ -36,8 +35,7 @@ describe("SDK generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type CustomerFieldsFragment = { id: string; name: string; createdAt: { iso8601: string } };
@@ -77,8 +75,7 @@ describe("SDK generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     expect(code).toContain('throw new Error("customer not found")');
   });
@@ -125,8 +122,7 @@ describe("SDK generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type CustomerFieldsFragment = { id: string; name: string; createdAt: { iso8601: string } };
@@ -174,8 +170,7 @@ describe("SDK generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type UserFieldsFragment = { id: string; name: string; createdAt: { iso8601: string } };
@@ -215,8 +210,7 @@ describe("SDK generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       type ItemFieldsFragment = { id: string; label: string; createdAt: { iso8601: string } };
@@ -254,8 +248,7 @@ describe("SDK generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       declare const CreateUserDocument: any;
@@ -303,8 +296,7 @@ describe("SDK generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       declare const CreateTestThreadDocument: any;
@@ -354,8 +346,7 @@ describe("SDK generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     const stubs = `
       declare const OldThingDocument: any;
@@ -435,8 +426,7 @@ describe("SDK generation", () => {
       }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     // The plugin should detect that "text" has conflicting types across NoteEntry and CustomEntry
     // and generate alias remappings in the __typename switch
@@ -476,8 +466,7 @@ describe("SDK generation", () => {
       query Alpha($alphaId: ID!) { alpha(alphaId: $alphaId) { ...AlphaFields } }
     `);
 
-    const output = plugin(schema, docs, {});
-    const code = typeof output === "string" ? output : output.content;
+    const code = generate(schema, docs);
 
     // Document imports should be sorted alphabetically
     const docImportMatch = code.match(/import \{([^}]+)\}/);

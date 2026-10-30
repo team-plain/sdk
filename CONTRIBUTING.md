@@ -32,6 +32,7 @@ These are important to understand before contributing:
 
 - **Mutation errors are data, not exceptions.** Plain's API returns `*Output` types with an `error: MutationError` field. The SDK preserves this — mutation methods return the full output type. Only network/auth errors throw.
 - **Lazy-loading relations.** Model classes expose object relations as `Promise<T>` getters that make separate API calls using the entity's `id`. Fragments only select `{ id }` for relations.
+- **Deprecated fields stay in the SDK.** The SDK keeps a field the API deprecates and marks it `@deprecated`, so code that uses it keeps compiling. The API keeps deprecated fields working and only marks them to discourage new use, which is what lets the fragments keep selecting them: each fragment selects all its fields in one request, so a field that stopped working would fail every query that includes it. A deprecation is normally a patch release. It is a major only when it renames a result key through a union field clash (see [Update the GraphQL schema](#update-the-graphql-schema)).
 
 ### Webhooks-specific
 
@@ -85,7 +86,7 @@ Files prefixed with `_generated_` are auto-generated — don't edit them manuall
 | `pnpm build` | Build everything (codegen plugin → SDK → ui-components → webhooks) |
 | `pnpm --filter @team-plain/graphql codegen` | Regenerate documents + SDK from the committed schema |
 | `pnpm --filter @team-plain/graphql update-schema` | Download the production schema, regenerate, and write a changeset |
-| `pnpm typecheck` | Type-check all packages |
+| `pnpm typecheck` | Type-check all packages, including their scripts, tests, and config files (`tsconfig.typecheck.json`) |
 | `pnpm test` | Run tests across all packages |
 | `pnpm --filter @team-plain/graphql-codegen-plugin build` | Build just the codegen plugin |
 | `pnpm --filter @team-plain/graphql build` | Build just the SDK |
@@ -119,7 +120,7 @@ pnpm --filter @team-plain/graphql update-schema
 pnpm typecheck
 ```
 
-`update-schema` downloads the production schema, regenerates the SDK, and writes a changeset with the bump the change needs: major when a field disappears from the generated result types, minor for additions and for values removed from an enum the API only returns, patch for description-only changes. Only a major also bumps `@team-plain/ui-components`, whose peer range on `@team-plain/graphql` it leaves. Review the changeset and add migration notes where a change needs them.
+`update-schema` downloads the production schema, regenerates the SDK, and writes a changeset with the bump the change needs: major when a field disappears from the generated result types or comes back under a different result key, minor for additions and for values removed from an enum the API only returns, patch for description and deprecation changes. A deprecation can still be a major: the documents alias a union member's field when it clashes with a field of another type on another member, so deprecating one side of a clash can rename the other side. Only a major also bumps `@team-plain/ui-components`, whose peer range on `@team-plain/graphql` it leaves. Review the changeset and add migration notes where a change needs them.
 
 Builds, including releases, only ever use the committed `schema.graphql`, and CI fails if the committed generated files don't match it.
 

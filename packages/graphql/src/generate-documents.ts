@@ -107,20 +107,8 @@ const queryableTypes = new Set<string>();
 const queryType = schema.getQueryType();
 if (queryType) {
   for (const field of Object.values(queryType.getFields())) {
-    const { namedType, isList: fieldIsList } = (() => {
-      let isNonNull = false;
-      let fieldIsList = false;
-      let current = field.type as GraphQLOutputType;
-      if (isNonNullType(current)) {
-        isNonNull = true;
-        current = current.ofType;
-      }
-      if (isListType(current)) {
-        fieldIsList = true;
-      }
-      return { namedType: unwrapType(field.type), isNonNull, isList: fieldIsList };
-    })();
-    if (fieldIsList) continue;
+    if (isList(field.type)) continue;
+    const namedType = unwrapType(field.type);
     if (!isObjectType(namedType)) continue;
     if (isConnectionType(namedType)) continue;
     const idArg = field.args.find(
@@ -151,7 +139,6 @@ function registerFragmentType(type: GraphQLNamedType): void {
   // Only register types that have at least one selectable scalar/enum/DateTime field
   const fields = type.getFields();
   const hasSelectableField = Object.values(fields).some((f) => {
-    if (f.deprecationReason != null) return false;
     const named = unwrapType(f.type);
     return isSimpleType(named);
   });
@@ -175,7 +162,6 @@ function registerUnionMemberType(type: GraphQLNamedType): void {
 
   const fields = type.getFields();
   const hasSelectableField = Object.values(fields).some((f) => {
-    if (f.deprecationReason != null) return false;
     const named = unwrapType(f.type);
     return isSimpleType(named);
   });
@@ -268,32 +254,53 @@ while (fragmentTypes.size !== previousSize) {
 function expandValueObject(type: GraphQLObjectType, indent: string): string {
   const fields = type.getFields();
   return Object.values(fields)
-    .filter((f) => f.deprecationReason == null)
     .map((f) => `${indent}${f.name}`)
     .join("\n");
 }
 
 /**
- * Find fields that have the same name but different type signatures across
- * union/interface members. These need GraphQL aliases to avoid validation
- * errors (the "SameResponseShape" rule rejects e.g. String! vs String).
+ * Fields with the same name but different type signatures across union/interface members.
+ * These need GraphQL aliases to avoid validation errors (the "SameResponseShape" rule
+ * rejects e.g. String! vs String).
+ *
+ * `all` holds every clashing name; `current` only the names that clash between fields that
+ * are not deprecated. A field in `current` is aliased on every member. A deprecated field
+ * that clashes is aliased on its own, so keeping deprecated fields never renames a field
+ * that is not deprecated.
  */
-function findConflictingUnionFields(members: readonly GraphQLObjectType[]): Set<string> {
-  const fieldTypeSigs = new Map<string, string>();
-  const conflicting = new Set<string>();
-  for (const member of members) {
-    for (const [fieldName, field] of Object.entries(member.getFields())) {
-      if (field.deprecationReason != null) continue;
-      const sig = field.type.toString();
-      const existing = fieldTypeSigs.get(fieldName);
-      if (existing === undefined) {
-        fieldTypeSigs.set(fieldName, sig);
-      } else if (existing !== sig) {
-        conflicting.add(fieldName);
+interface UnionFieldConflicts {
+  all: Set<string>;
+  current: Set<string>;
+}
+
+function findConflictingUnionFields(members: readonly GraphQLObjectType[]): UnionFieldConflicts {
+  const clashes = (includeDeprecated: boolean): Set<string> => {
+    const fieldTypeSigs = new Map<string, string>();
+    const conflicting = new Set<string>();
+    for (const member of members) {
+      for (const [fieldName, field] of Object.entries(member.getFields())) {
+        if (!includeDeprecated && field.deprecationReason != null) continue;
+        const sig = field.type.toString();
+        const existing = fieldTypeSigs.get(fieldName);
+        if (existing === undefined) {
+          fieldTypeSigs.set(fieldName, sig);
+        } else if (existing !== sig) {
+          conflicting.add(fieldName);
+        }
       }
     }
-  }
-  return conflicting;
+    return conflicting;
+  };
+  return { all: clashes(true), current: clashes(false) };
+}
+
+function needsUnionAlias(
+  conflicts: UnionFieldConflicts | undefined,
+  fieldName: string,
+  field: GraphQLField<unknown, unknown>,
+): boolean {
+  if (!conflicts?.all.has(fieldName)) return false;
+  return field.deprecationReason != null || conflicts.current.has(fieldName);
 }
 
 /**
@@ -302,25 +309,24 @@ function findConflictingUnionFields(members: readonly GraphQLObjectType[]): Set<
  * relations ({ id } for queryable, full inline for non-queryable), and
  * nested union/interface fields.
  *
- * When `conflictingFields` is provided, fields in that set are aliased as
+ * When `conflictingFields` is provided, fields that `needsUnionAlias` picks are aliased as
  * `{TypeName}_{fieldName}: fieldName` to avoid GraphQL SameResponseShape errors.
  */
 function generateMemberInlineSelection(
   type: GraphQLObjectType,
   indent: string,
-  conflictingFields?: Set<string>,
+  conflictingFields?: UnionFieldConflicts,
 ): string {
   const fields = type.getFields();
   const lines: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
-    if (field.deprecationReason != null) continue;
     const namedType = unwrapType(field.type);
     const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
     if (hasRequiredArgs) continue;
 
     // Alias conflicting fields to avoid GraphQL SameResponseShape validation errors
-    const needsAlias = conflictingFields?.has(fieldName) ?? false;
+    const needsAlias = needsUnionAlias(conflictingFields, fieldName, field);
     const alias = needsAlias
       ? `${type.name.charAt(0).toLowerCase()}${type.name.slice(1)}${fieldName.charAt(0).toUpperCase()}${fieldName.slice(1)}`
       : undefined;
@@ -376,8 +382,6 @@ function generateUnionSelectionInner(
   lines.push(`${indent}${fieldName} {`);
   lines.push(`${indent}  __typename`);
   for (const member of members) {
-    // Skip members where all fields are deprecated
-    if (!Object.values(member.getFields()).some((f) => f.deprecationReason == null)) continue;
     const memberFields = generateMemberInlineSelection(member, `${indent}    `, conflictingFields);
     if (memberFields) {
       lines.push(`${indent}  ... on ${member.name} {\n${memberFields}\n${indent}  }`);
@@ -408,7 +412,6 @@ function generateFragment(type: GraphQLObjectType): string {
   const selections: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
-    if (field.deprecationReason != null) continue;
     const namedType = unwrapType(field.type);
     const hasRequiredArgs = field.args.some((a) => isNonNullType(a.type));
     if (hasRequiredArgs) continue;
@@ -482,7 +485,6 @@ function generateInlineScalarSelection(
   const lines: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
-    if (field.deprecationReason != null) continue;
     const namedType = unwrapType(field.type);
     if (isScalarType(namedType) || isEnumType(namedType)) {
       lines.push(`${indent}${fieldName}`);
@@ -542,8 +544,7 @@ function generateSelectionForType(
     lines.push(` {`);
     lines.push(`${indent}  __typename`);
     for (const member of members) {
-      if (!Object.values(member.getFields()).some((f) => f.deprecationReason == null)) continue;
-      if (conflicting.size > 0) {
+      if (conflicting.all.size > 0) {
         // Use inline fields with aliases to avoid SameResponseShape validation errors
         const memberFields = generateMemberInlineSelection(member, `${indent}    `, conflicting);
         if (memberFields) {
@@ -573,8 +574,7 @@ function generateSelectionForType(
     lines.push(` {`);
     lines.push(`${indent}  __typename`);
     for (const impl of implementations) {
-      if (!Object.values(impl.getFields()).some((f) => f.deprecationReason == null)) continue;
-      if (conflicting.size > 0) {
+      if (conflicting.all.size > 0) {
         const memberFields = generateMemberInlineSelection(impl, `${indent}    `, conflicting);
         if (memberFields) {
           lines.push(`${indent}  ... on ${impl.name} {\n${memberFields}\n${indent}  }`);
@@ -732,7 +732,6 @@ function generateMutationOutputSelection(outputType: GraphQLObjectType): string 
   const lines: string[] = [];
 
   for (const [fieldName, field] of Object.entries(fields)) {
-    if (field.deprecationReason != null) continue;
     if (fieldName === "error") {
       lines.push(`    ${MUTATION_ERROR_SELECTION}`);
       continue;
@@ -775,21 +774,6 @@ function generateMutationOutputSelection(outputType: GraphQLObjectType): string 
     if (isInterfaceType(namedType)) {
       const sel = generateSelectionForType(namedType, "    ", true);
       lines.push(`    ${fieldName}${sel}`);
-      continue;
-    }
-
-    // List types
-    if (isList(field.type)) {
-      if (isObjectType(namedType) && fragmentTypes.has(namedType.name)) {
-        lines.push(`    ${fieldName} {\n      ...${namedType.name}Fields\n    }`);
-      } else if (isObjectType(namedType)) {
-        const inlineFields = generateInlineScalarSelection(namedType, "      ");
-        if (inlineFields) {
-          lines.push(`    ${fieldName} {\n${inlineFields}\n    }`);
-        }
-      } else if (isScalarType(namedType) || isEnumType(namedType)) {
-        lines.push(`    ${fieldName}`);
-      }
     }
   }
 
