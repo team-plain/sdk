@@ -65,7 +65,7 @@
     "@graphql-codegen/plugin-helpers": "^7.4.2",
     "@graphql-codegen/typescript": "^6.1.2",
     "@graphql-codegen/typescript-operations": "^6.1.9",
-    "@graphql-codegen/visitor-plugin-common": "^7.3.0",
+    "@graphql-codegen/visitor-plugin-common": "^7.4.0",
     "@graphql-inspector/core": "^8.0.1",
     "@team-plain/graphql-codegen-plugin": "workspace:*",
     "tsdown": "^0.23.1",
