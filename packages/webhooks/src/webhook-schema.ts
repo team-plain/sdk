@@ -400,7 +400,6 @@ export interface WebhooksSchemaDefinition {
     | DiscussionCreatedPublicEventPayload
     | DiscussionToolCallApprovalRequestedPublicEventPayload
     | DiscussionToolCallApprovalResolvedPublicEventPayload
-    | DiscussionQuestionResolvedPublicEventPayload
     | TaskCreatedPublicEventPayload
     | TaskUpdatedPublicEventPayload
     | TaskStatusTransitionedPublicEventPayload
@@ -435,7 +434,6 @@ export interface WebhooksSchemaDefinition {
     | "discussion.discussion_created"
     | "discussion.tool_call_approval_requested"
     | "discussion.tool_call_approval_resolved"
-    | "discussion.question_resolved"
     | "discussion.message_created"
     | "discussion.turn_stop_requested"
     | "thread.thread_labels_changed"
@@ -1282,33 +1280,6 @@ export interface DiscussionToolCallApprovalResolvedPublicEventPayload {
   resolvedAt: Datetime;
   [k: string]: unknown;
 }
-export interface DiscussionQuestionResolvedPublicEventPayload {
-  eventType: "discussion.question_resolved";
-  discussion: Discussion;
-  questionRequestId: string;
-  status: "ANSWERED" | "DISMISSED" | "UNKNOWN_QUESTION_STATUS";
-  questions: {
-    id: string;
-    question: string;
-    isMultiSelect: boolean;
-    options: {
-      id: string;
-      label: string;
-      description: string;
-      [k: string]: unknown;
-    }[];
-    [k: string]: unknown;
-  }[];
-  selections: {
-    questionId: string;
-    optionIds: string[];
-    otherText: string | null;
-    [k: string]: unknown;
-  }[];
-  resolvedBy: InternalActor;
-  resolvedAt: Datetime;
-  [k: string]: unknown;
-}
 export interface TaskCreatedPublicEventPayload {
   eventType: "task.task_created";
   task: Task;
@@ -1436,7 +1407,7 @@ export interface AccountFieldDeletedPublicEventPayload {
 }
 export interface WebhookMetadata {
   webhookTargetId: Id;
-  webhookTargetVersion: "2026-10-26";
+  webhookTargetVersion: "2026-10-06";
   webhookDeliveryAttemptId: Id;
   webhookDeliveryAttemptNumber: number;
   webhookDeliveryAttemptTimestamp: Datetime;

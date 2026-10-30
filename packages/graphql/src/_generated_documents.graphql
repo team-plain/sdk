@@ -436,12 +436,6 @@ fragment AiFeatureFeedbackOutputFields on AiFeatureFeedbackOutput {
       sentiment
       knowledgeGapId
     }
-    ... on McpFeedbackDetails {
-      reason
-      comment
-      sentiment
-      toolName
-    }
   }
 }
 
@@ -482,12 +476,6 @@ fragment AiFeedbackFields on AiFeedback {
       comment
       sentiment
       knowledgeGapId
-    }
-    ... on McpFeedbackDetails {
-      reason
-      comment
-      sentiment
-      toolName
     }
   }
   createdAt {
@@ -2024,14 +2012,6 @@ fragment BusinessHoursScheduleFields on BusinessHoursSchedule {
   name
   timezone {
     name
-  }
-  slots {
-    timezone {
-      name
-    }
-    weekday
-    opensAt
-    closesAt
   }
   createdAt {
     unixTimestamp
@@ -5052,14 +5032,6 @@ fragment CustomRoleFields on CustomRole {
   name
   description
   permissionsPreset
-  scopeDefinitions {
-    resource
-    scopes {
-      primitiveType
-      accessMode
-      values
-    }
-  }
   createdAt {
     unixTimestamp
     iso8601
@@ -5114,7 +5086,6 @@ fragment CustomRoleFields on CustomRole {
       }
     }
   }
-  priority
 }
 
 fragment CustomSidekickSkillFields on CustomSidekickSkill {
@@ -6113,32 +6084,6 @@ fragment HelpCenterFields on HelpCenter {
     }
   }
   isCustomerFacingAiEnabled
-  linkCardsHeading
-  linkCards {
-    title
-    description
-    url
-    icon
-  }
-  isLinkCardsEnabled
-  isPopularTopicsEnabled
-  popularTopicArticleIds
-  popularTopicColumns {
-    columnOneArticleIds
-    columnTwoArticleIds
-  }
-  featuredHomepageItems {
-    type
-    articleId
-    title
-    url
-    description
-  }
-  heroHeading
-  heroSubheading
-  heroSearchPlaceholder
-  heroAlignment
-  isHomepageRedesignEnabled
   color
   socialPreviewImage {
     id
@@ -6327,8 +6272,6 @@ fragment HelpCenterArticleFields on HelpCenterArticle {
   title
   description
   icon
-  isFeatured
-  isPopularTopic
   contentHtml
   slug
   status
@@ -6431,8 +6374,6 @@ fragment HelpCenterArticleDocumentFields on HelpCenterArticleDocument {
 fragment HelpCenterArticleGroupFields on HelpCenterArticleGroup {
   id
   name
-  description
-  icon
   createdAt {
     unixTimestamp
     iso8601
@@ -6529,8 +6470,6 @@ fragment HelpCenterIndexFields on HelpCenterIndex {
     status
     description
     icon
-    isFeatured
-    isPopularTopic
   }
   createdAt {
     unixTimestamp
@@ -6593,19 +6532,6 @@ fragment ImportBroadcastAudienceChannelsResultFields on ImportBroadcastAudienceC
   broadcastAudience {
     id
   }
-  rows {
-    rowNumber
-    status
-    recipient
-    slackTeamId
-    slackChannelId
-    message
-    matches {
-      slackTeamId
-      slackChannelId
-      name
-    }
-  }
   addedCount
   alreadyInAudienceCount
   notFoundCount
@@ -6632,22 +6558,6 @@ fragment ImportJobFields on ImportJob {
   completedAt {
     unixTimestamp
     iso8601
-  }
-  importRuns {
-    id
-    importJobId
-    entityType
-    status
-    downloadedRecords
-    savedRecords
-    startedAt {
-      unixTimestamp
-      iso8601
-    }
-    completedAt {
-      unixTimestamp
-      iso8601
-    }
   }
 }
 
@@ -12306,9 +12216,6 @@ fragment InternalNotificationFields on InternalNotification {
     ... on ThreadNotificationDetail {
       threadId
     }
-    ... on KnowledgeGapNotificationDetail {
-      knowledgeGapId
-    }
   }
   readAt {
     unixTimestamp
@@ -12592,10 +12499,6 @@ fragment KnowledgeGapFeedbackDetailsFields on KnowledgeGapFeedbackDetails {
   reason
   comment
   sentiment
-  knowledgeGapId
-}
-
-fragment KnowledgeGapNotificationDetailFields on KnowledgeGapNotificationDetail {
   knowledgeGapId
 }
 
@@ -13327,13 +13230,6 @@ fragment MachineUserActorFields on MachineUserActor {
   }
 }
 
-fragment McpFeedbackDetailsFields on McpFeedbackDetails {
-  reason
-  comment
-  sentiment
-  toolName
-}
-
 fragment MergedThreadMessageEntryFields on MergedThreadMessageEntry {
   threadLinkId
   childThreadDetails {
@@ -13805,8 +13701,6 @@ fragment OAuthAppFields on OAuthApp {
   description
   clientId
   redirectUrls
-  allowedOrigins
-  usesPkce
   isEnabled
   clientSecret {
     id
@@ -14139,7 +14033,6 @@ fragment RoleFields on Role {
   customRole {
     id
   }
-  priority
 }
 
 fragment RoleChangeCostFields on RoleChangeCost {
@@ -17591,16 +17484,6 @@ fragment ThreadDiscussionMessageFields on ThreadDiscussionMessage {
     }
     ... on ThreadDiscussionQuestionEntryPayload {
       questionRequestId
-      questions {
-        id
-        question
-        isMultiSelect
-        options {
-          id
-          label
-          description
-        }
-      }
       threadDiscussionQuestionEntryPayloadStatus: status
       selections {
         questionId
@@ -17751,16 +17634,6 @@ fragment ThreadDiscussionMessageEntryPayloadFields on ThreadDiscussionMessageEnt
 
 fragment ThreadDiscussionQuestionEntryPayloadFields on ThreadDiscussionQuestionEntryPayload {
   questionRequestId
-  questions {
-    id
-    question
-    isMultiSelect
-    options {
-      id
-      label
-      description
-    }
-  }
   status
   selections {
     questionId
@@ -19525,14 +19398,6 @@ fragment ThreadServiceLevelAgreementPolicyChangedEntryFields on ThreadServiceLev
 }
 
 fragment ThreadSingleValueMetricFields on ThreadSingleValueMetric {
-  values {
-    value
-    group {
-      dimension
-      value
-      label
-    }
-  }
   threadIds
 }
 
@@ -19793,14 +19658,6 @@ fragment ThreadTimeSeriesMetricFields on ThreadTimeSeriesMetric {
   timestamps {
     unixTimestamp
     iso8601
-  }
-  series {
-    values
-    group {
-      dimension
-      value
-      label
-    }
   }
   threadIds
 }
@@ -25551,15 +25408,6 @@ fragment TimeSeriesMetricFields on TimeSeriesMetric {
     unixTimestamp
     iso8601
   }
-  series {
-    values
-    userId
-    dimension {
-      type
-      value
-    }
-    threadIds
-  }
 }
 
 fragment ToggleFeatureEntitlementFields on ToggleFeatureEntitlement {
@@ -26378,7 +26226,6 @@ fragment WorkflowFields on Workflow {
   sourceTemplateId
   references {
     serviceLevelAgreementPolicyIds
-    escalationPathIds
   }
   createdAt {
     unixTimestamp
@@ -26478,27 +26325,6 @@ fragment WorkflowExecutionFields on WorkflowExecution {
         id
       }
     }
-  }
-  stepExecutions {
-    id
-    workflowStepId
-    workflowStepVersion
-    status
-    startedAt {
-      unixTimestamp
-      iso8601
-    }
-    completedAt {
-      unixTimestamp
-      iso8601
-    }
-    output
-    entities {
-      entityType
-      entityId
-    }
-    summary
-    credits
   }
   credits
 }
@@ -26662,20 +26488,6 @@ fragment WorkflowTemplateFields on WorkflowTemplate {
   dependencies {
     integrations
     features
-  }
-  workflows {
-    name
-    trigger
-    startStepId
-    steps {
-      id
-      type
-      name
-      payload
-      transitions
-      positionX
-      positionY
-    }
   }
 }
 
@@ -27691,6 +27503,12 @@ query MyBillingSubscription {
   }
 }
 
+query MemberSeatCapCheck($input: MemberSeatCapCheckInput!) {
+  memberSeatCapCheck(input: $input) {
+    isValid
+  }
+}
+
 query MyBillingRota {
   myBillingRota {
     onRotaUserIds
@@ -28249,12 +28067,6 @@ query GetMSTeamsMembersForChannel($msTeamsChannelId: ID!, $msTeamsTeamId: ID!) {
   }
 }
 
-query ThreadByMSTeamsMessage($msTeamsMessageId: ID!) {
-  threadByMSTeamsMessage(msTeamsMessageId: $msTeamsMessageId) {
-    ...ThreadFields
-  }
-}
-
 query WorkspaceSlackInstallationInfo($redirectUrl: String!) {
   workspaceSlackInstallationInfo(redirectUrl: $redirectUrl) {
     installationUrl
@@ -28714,10 +28526,6 @@ query WorkflowCapabilities($triggerType: WorkflowTriggerType!) {
     hasSidekickActionSupport
     hasAiTriageActionSupport
   }
-}
-
-query WorkflowBuilderGuide {
-  workflowBuilderGuide
 }
 
 query WorkflowExecution($workflowExecutionId: ID!) {
@@ -29563,13 +29371,6 @@ query GeneratedReplies($threadId: ID!, $options: [GenerateReplyOption!]) {
   }
 }
 
-query GeneratedReplyState($threadId: ID!) {
-  generatedReplyState(threadId: $threadId) {
-    timelineEntryId
-    status
-  }
-}
-
 query IndexedDocuments($first: Int, $after: String, $last: Int, $before: String, $filters: IndexedDocumentsFilter) {
   indexedDocuments(first: $first, after: $after, last: $last, before: $before, filters: $filters) {
     edges {
@@ -30096,24 +29897,6 @@ mutation UpdateCustomRole($input: UpdateCustomRoleInput!) {
   updateCustomRole(input: $input) {
     role {
       ...CustomRoleFields
-    }
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation UpdateRolePriorityOrder($input: UpdateRolePriorityOrderInput!) {
-  updateRolePriorityOrder(input: $input) {
-    roles {
-      ...RoleFields
     }
     error {
       message
@@ -31717,24 +31500,6 @@ mutation SendMSTeamsMessage($input: SendMSTeamsMessageInput!) {
   sendMSTeamsMessage(input: $input) {
     msTeamsMessage {
       ...MSTeamsMessageFields
-    }
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation CreateThreadFromMSTeamsMessage($input: CreateThreadFromMSTeamsMessageInput!) {
-  createThreadFromMSTeamsMessage(input: $input) {
-    thread {
-      ...ThreadFields
     }
     error {
       message
@@ -33833,24 +33598,6 @@ mutation RequestDiscussionToolCallApproval($input: RequestDiscussionToolCallAppr
   requestDiscussionToolCallApproval(input: $input) {
     approval {
       ...ThreadDiscussionToolCallApprovalEntryPayloadFields
-    }
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation RequestDiscussionQuestion($input: RequestDiscussionQuestionInput!) {
-  requestDiscussionQuestion(input: $input) {
-    question {
-      ...ThreadDiscussionQuestionEntryPayloadFields
     }
     error {
       message
@@ -36283,21 +36030,6 @@ mutation AddGeneratedReply($input: AddGeneratedReplyInput!) {
   }
 }
 
-mutation RequestGeneratedReply($input: RequestGeneratedReplyInput!) {
-  requestGeneratedReply(input: $input) {
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
 mutation EscalateThread($input: EscalateThreadInput!) {
   escalateThread(input: $input) {
     thread {
@@ -36336,21 +36068,6 @@ mutation CreateAiFeatureFeedback($input: CreateAiFeatureFeedbackInput!) {
 
 mutation CreateAiFeedback($input: CreateAiFeedbackInput!) {
   createAiFeedback(input: $input) {
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation CreateMcpFeedback($input: CreateMcpFeedbackInput!) {
-  createMcpFeedback(input: $input) {
     error {
       message
       type

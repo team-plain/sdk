@@ -273,23 +273,6 @@ function expandValueObject(type: GraphQLObjectType, indent: string): string {
     .join("\n");
 }
 
-// Lists of these are inlined because nothing could load them afterwards (e.g. SidekickQuestion).
-function isNestedValueObjectType(type: GraphQLNamedType): type is GraphQLObjectType {
-  if (!isObjectType(type) || queryableTypes.has(type.name)) return false;
-  return Object.values(type.getFields()).every((f) => isSimpleType(unwrapType(f.type)));
-}
-
-function expandNestedValueObject(type: GraphQLObjectType, indent: string): string {
-  return Object.values(type.getFields())
-    .filter((f) => f.deprecationReason == null)
-    .map((f) => {
-      const named = unwrapType(f.type);
-      if (!isValueObjectType(named)) return `${indent}${f.name}`;
-      return `${indent}${f.name} {\n${expandValueObject(named as GraphQLObjectType, `${indent}  `)}\n${indent}}`;
-    })
-    .join("\n");
-}
-
 /**
  * Find fields that have the same name but different type signatures across
  * union/interface members. These need GraphQL aliases to avoid validation
@@ -364,10 +347,6 @@ function generateMemberInlineSelection(
     } else if (isUnionType(namedType) || isInterfaceType(namedType)) {
       // Nested union/interface — recursively generate
       lines.push(generateUnionSelectionInner(fieldRef, namedType, indent));
-    } else if (isList(field.type) && isNestedValueObjectType(namedType)) {
-      lines.push(
-        `${indent}${fieldRef} {\n${expandNestedValueObject(namedType, `${indent}  `)}\n${indent}}`,
-      );
     }
   }
 
@@ -460,10 +439,8 @@ function generateFragment(type: GraphQLObjectType): string {
     } else if ((isUnionType(namedType) || isInterfaceType(namedType)) && isList(field.type)) {
       // List of union/interface
       selections.push(generateUnionSelection(fieldName, namedType, "  "));
-    } else if (isList(field.type) && isNestedValueObjectType(namedType)) {
-      selections.push(`  ${fieldName} {\n${expandNestedValueObject(namedType, "    ")}\n  }`);
     }
-    // Skip connections and other lists of plain objects
+    // Skip connections and lists of plain objects
   }
 
   return `fragment ${type.name}Fields on ${type.name} {\n${selections.join("\n")}\n}`;
@@ -892,10 +869,7 @@ if (queryType) {
   for (const [typeName, type] of fragmentTypes) {
     if (!queryableTypes.has(typeName)) continue;
 
-    // Find the root query for this type (e.g., thread(threadId: ID!): Thread). Prefer the canonical
-    // camelCase field, as the codegen plugin does, so a lookup like threadByMSTeamsMessage(ID!)
-    // declared earlier doesn't win and leave the generated model reading the wrong root field.
-    const canonicalFieldName = typeName[0].toLowerCase() + typeName.slice(1);
+    // Find the root query for this type (e.g., thread(threadId: ID!): Thread)
     let rootField: { fieldName: string; idArg: GraphQLArgument } | null = null;
     for (const [fieldName, field] of Object.entries(queryType.getFields())) {
       const rt = unwrapType(field.type);
@@ -905,9 +879,10 @@ if (queryType) {
       const idArg = field.args.find(
         (a) => isNonNullType(a.type) && getNamedType(a.type)?.name === "ID",
       );
-      if (!idArg) continue;
-      if (!rootField || fieldName === canonicalFieldName) rootField = { fieldName, idArg };
-      if (fieldName === canonicalFieldName) break;
+      if (idArg) {
+        rootField = { fieldName, idArg };
+        break;
+      }
     }
     if (!rootField) continue;
 

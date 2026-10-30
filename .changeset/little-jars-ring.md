@@ -47,6 +47,7 @@ Regenerate against the current API schema.
 
 **New methods**
 
+- Field 'memberSeatCapCheck' was added to object type 'Query'
 - Field 'threadTimelineEntry' was added to object type 'Query'
 - Field 'oauthApp' was added to object type 'Query'
 - Field 'oauthApps' was added to object type 'Query'

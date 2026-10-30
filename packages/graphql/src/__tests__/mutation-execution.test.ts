@@ -203,49 +203,4 @@ describe("mutation execution", () => {
     expect(query).toContain("createThreadFromSlackMessage(input: $input)");
     expect(query).toContain("...ThreadFields");
   });
-
-  it("returns the pending question card with its question and option ids", async () => {
-    fetchMock = mockFetch();
-    const question = {
-      questionRequestId: "dq_1",
-      status: "PENDING",
-      questions: [
-        {
-          id: "q_1",
-          question: "Refund or replace?",
-          isMultiSelect: false,
-          options: [
-            { id: "opt_1", label: "Refund", description: "Full refund" },
-            { id: "opt_2", label: "Replace", description: "Ship a new unit" },
-          ],
-        },
-      ],
-      selections: [],
-      resolvedAt: null,
-    };
-    fetchMock.mockResolvedValueOnce(
-      graphqlResponse({ requestDiscussionQuestion: { question, error: null } }),
-    );
-    const client = new PlainClient({ apiKey: "test-key" });
-
-    const result = await client.mutation.requestDiscussionQuestion({
-      input: {
-        discussionId: "disc_1",
-        questions: [
-          {
-            question: "Refund or replace?",
-            isMultiSelect: false,
-            options: [
-              { label: "Refund", description: "Full refund" },
-              { label: "Replace", description: "Ship a new unit" },
-            ],
-          },
-        ],
-      },
-    });
-
-    expect(result.question?.questions[0].options.map((o) => o.id)).toEqual(["opt_1", "opt_2"]);
-    const query = sentQuery(getRequestBody(fetchMock));
-    expect(query).toMatch(/questions \{\s+id\s+question\s+isMultiSelect\s+options \{\s+id\s+label/);
-  });
 });

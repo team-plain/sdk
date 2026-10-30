@@ -159,43 +159,4 @@ describe("query execution", () => {
       "customer not found",
     );
   });
-
-  it("exposes a list of plain nested objects on the model", async () => {
-    fetchMock = mockFetch();
-    const at = { unixTimestamp: "1700000000", iso8601: "2023-11-14T22:13:20Z" };
-    const system = {
-      __typename: "SystemActor",
-      systemId: "sys",
-      workflowExecutionId: null,
-      workflow: null,
-    };
-    const slot = {
-      timezone: { name: "Europe/London" },
-      weekday: "MONDAY",
-      opensAt: "09:00",
-      closesAt: "17:00",
-    };
-    fetchMock.mockResolvedValueOnce(
-      graphqlResponse({
-        businessHoursSchedule: {
-          id: "bhs_1",
-          name: "Support hours",
-          timezone: { name: "Europe/London" },
-          slots: [slot],
-          createdAt: at,
-          createdBy: system,
-          updatedAt: at,
-          updatedBy: system,
-        },
-      }),
-    );
-    const client = new PlainClient({ apiKey: "test-key" });
-
-    const schedule = await client.query.businessHoursSchedule({ businessHoursScheduleId: "bhs_1" });
-
-    expect(schedule.slots).toEqual([slot]);
-    expect(sentQuery(getRequestBody(fetchMock))).toMatch(
-      /slots \{\s+timezone \{\s+name\s+\}\s+weekday/,
-    );
-  });
 });

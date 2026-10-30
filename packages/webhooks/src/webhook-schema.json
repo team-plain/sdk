@@ -119,9 +119,6 @@
           "$ref": "#/definitions/discussionToolCallApprovalResolvedPublicEventPayload"
         },
         {
-          "$ref": "#/definitions/discussionQuestionResolvedPublicEventPayload"
-        },
-        {
           "$ref": "#/definitions/taskCreatedPublicEventPayload"
         },
         {
@@ -185,7 +182,6 @@
         "discussion.discussion_created",
         "discussion.tool_call_approval_requested",
         "discussion.tool_call_approval_resolved",
-        "discussion.question_resolved",
         "discussion.message_created",
         "discussion.turn_stop_requested",
         "thread.thread_labels_changed",
@@ -3244,7 +3240,7 @@
         },
         "webhookTargetVersion": {
           "type": "string",
-          "const": "2026-10-26"
+          "const": "2026-10-06"
         },
         "webhookDeliveryAttemptId": {
           "$ref": "#/definitions/id"
@@ -4195,102 +4191,6 @@
         "status",
         "justification",
         "reviewerNote",
-        "resolvedBy",
-        "resolvedAt"
-      ],
-      "additionalProperties": true
-    },
-    "discussionQuestionResolvedPublicEventPayload": {
-      "type": "object",
-      "properties": {
-        "eventType": {
-          "type": "string",
-          "const": "discussion.question_resolved"
-        },
-        "discussion": {
-          "$ref": "#/definitions/discussionMessageCreatedPublicEventPayload/properties/discussion"
-        },
-        "questionRequestId": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["ANSWERED", "DISMISSED", "UNKNOWN_QUESTION_STATUS"]
-        },
-        "questions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "question": {
-                "type": "string"
-              },
-              "isMultiSelect": {
-                "type": "boolean"
-              },
-              "options": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "label": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["id", "label", "description"],
-                  "additionalProperties": true
-                }
-              }
-            },
-            "required": ["id", "question", "isMultiSelect", "options"],
-            "additionalProperties": true
-          }
-        },
-        "selections": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "questionId": {
-                "type": "string"
-              },
-              "optionIds": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "otherText": {
-                "type": ["string", "null"]
-              }
-            },
-            "required": ["questionId", "optionIds", "otherText"],
-            "additionalProperties": true
-          }
-        },
-        "resolvedBy": {
-          "$ref": "#/definitions/internalActor"
-        },
-        "resolvedAt": {
-          "$ref": "#/definitions/datetime"
-        }
-      },
-      "required": [
-        "eventType",
-        "discussion",
-        "questionRequestId",
-        "status",
-        "questions",
-        "selections",
         "resolvedBy",
         "resolvedAt"
       ],
