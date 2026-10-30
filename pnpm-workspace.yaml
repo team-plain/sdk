@@ -1,23 +1,20 @@
 packages:
   - "packages/*"
 
+saveExact: true
+
+minimumReleaseAge: 10080
+minimumReleaseAgeIgnoreMissingTime: false
+
+trustPolicy: no-downgrade
+
+trustPolicyExclude:
+  - 'semver@6.3.1'
+
 allowBuilds:
   esbuild: true
   # Its postinstall only prints a message; nothing needs it to run.
   es5-ext: false
-
-# Must stay at or below the Dependabot cooldown in .github/dependabot.yml (minutes; 10080
-# is 7 days). Longer, and pnpm rejects whatever Dependabot proposes.
-minimumReleaseAge: 10080
-minimumReleaseAgeIgnoreMissingTime: false
-minimumReleaseAgeExclude:
-  # pnpm gates switching to the packageManager pin on minimumReleaseAge. Drop this once
-  # it's older than the cutoff.
-  - "pnpm@12.8.2"
-
-trustPolicy: no-downgrade
-trustPolicyExclude:
-  - 'semver@6.3.1'
 
 # pnpm 12 writes its own pinned version as a first YAML document in
 # pnpm-lock.yaml, and GitHub's dependency graph reads only that document, so

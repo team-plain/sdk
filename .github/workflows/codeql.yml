@@ -13,10 +13,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions: {}
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
       security-events: write
@@ -26,15 +28,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [actions, javascript-typescript]
+        include:
+          - language: actions
+            runner: ubuntu-latest
+            # Only default setup loads .github/codeql/extensions on its own, so the model pack is
+            # handed to the CLI here. It extends codeql/actions-all, so it stays off the JS leg.
+            extra-options: >-
+              {"database": {"run-queries": [
+              "--additional-packs=.github/codeql/extensions",
+              "--model-packs=team-plain/sdk-trusted-actions-owners"]}}
+          - language: javascript-typescript
+            runner: ubuntu-latest
 
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       # build-mode none reads the sources directly, so there is no pnpm install in this job.
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: none
@@ -46,7 +58,8 @@ jobs:
               # Generated from webhook-schema.json: types only.
               - packages/webhooks/src/webhook-schema.ts
 
-      - name: Analyze
-        uses: github/codeql-action/analyze@v4
+      - uses: github/codeql-action/analyze@v4
+        env:
+          CODEQL_ACTION_EXTRA_OPTIONS: ${{ matrix.extra-options }}
         with:
           category: /language:${{ matrix.language }}
