@@ -13701,6 +13701,7 @@ fragment OAuthAppFields on OAuthApp {
   description
   clientId
   redirectUrls
+  allowedOrigins
   isEnabled
   clientSecret {
     id

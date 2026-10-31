@@ -7752,6 +7752,7 @@ export class OAuthAppModel {
   protected _data: OAuthAppFieldsFragment;
   public readonly __typename = "OAuthApp" as const;
 
+  public readonly allowedOrigins: OAuthAppFieldsFragment["allowedOrigins"];
   public readonly clientId: OAuthAppFieldsFragment["clientId"];
   public readonly createdAt: OAuthAppFieldsFragment["createdAt"];
   public readonly description: OAuthAppFieldsFragment["description"];
@@ -7766,6 +7767,7 @@ export class OAuthAppModel {
   constructor(client: PlainGraphQLClient, data: OAuthAppFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.allowedOrigins = data.allowedOrigins;
     this.clientId = data.clientId;
     this.createdAt = data.createdAt;
     this.description = data.description;

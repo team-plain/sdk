@@ -3437,6 +3437,8 @@ export type CreateNoteOutput = {
 };
 
 export type CreateOAuthAppInput = {
+  /** Browser origins allowed to exchange an authorization code for a token, such as https://app.example.com. Each one is a scheme and host with an optional port, using https, or http on localhost. When given, at least one is required. Omit it for an app that only exchanges codes from a server. */
+  allowedOrigins?: InputMaybe<Array<Scalars['String']['input']>>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   /** Absolute URLs using https, or http on localhost. At least one is required. */
@@ -9344,7 +9346,7 @@ export type Mutation = {
   updateMyUser: UpdateMyUserOutput;
   /** Updates the text, markdown, or attachments of an existing note. Requires the `note:edit` permission. */
   updateNote: UpdateNoteOutput;
-  /** Updates the name, description or redirect URLs of an OAuth app. Requires the `oauthApp:edit` permission. */
+  /** Updates the name, description, redirect URLs or allowed origins of an OAuth app. Requires the `oauthApp:edit` permission. */
   updateOAuthApp: UpdateOAuthAppOutput;
   /** Updates an existing saved threads view. All fields in the input are optional; only the fields you provide will be changed. Depending on workspace settings, only the view's creator or workspace admins may be allowed to edit a view they did not create. */
   updateSavedThreadsView: UpdateSavedThreadsViewOutput;
@@ -11380,6 +11382,8 @@ export type NumberSetting = {
 
 /** An OAuth app owned by this workspace. People in the workspace can authorize it to call the Plain API as them, with the permissions their role gives them. */
 export type OAuthApp = {
+  /** The browser origins allowed to exchange an authorization code for a token, such as https://app.example.com. Each one is a scheme and host with an optional port, using https, or http on localhost. Apps created before this was required may have none. */
+  allowedOrigins: Array<Scalars['String']['output']>;
   /** The OAuth client ID the app sends when it asks someone to authorize it. */
   clientId: Scalars['String']['output'];
   /** The app's client secret. Only a hint of the secret is returned; the full secret is only returned once, when the app is created. An app's secret can't be replaced, so an app whose secret is lost has to be replaced with a new app. */
@@ -18835,6 +18839,8 @@ export type UpdateNoteOutput = {
 };
 
 export type UpdateOAuthAppInput = {
+  /** Replaces the whole list of allowed origins. At least one is required. */
+  allowedOrigins?: InputMaybe<StringArrayInput>;
   description?: InputMaybe<OptionalStringInput>;
   name?: InputMaybe<StringInput>;
   oauthAppId: Scalars['ID']['input'];
@@ -23148,7 +23154,7 @@ export type NoteMentionNotificationDetailFieldsFragment = { threadId: string, ti
 
 export type NumberSettingFieldsFragment = { code: string, numberValue: number, scope: { id?: string | null, scopeType: SettingScopeType } };
 
-export type OAuthAppFieldsFragment = { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type OAuthAppFieldsFragment = { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28835,7 +28841,7 @@ export type OauthAppQueryVariables = Exact<{
 }>;
 
 
-export type OauthAppQuery = { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type OauthAppQuery = { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -28853,7 +28859,7 @@ export type OauthAppsQueryVariables = Exact<{
 }>;
 
 
-export type OauthAppsQuery = { oauthApps: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type OauthAppsQuery = { oauthApps: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35738,7 +35744,7 @@ export type CreateOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type CreateOAuthAppMutation = { createOAuthApp: { clientSecret?: string | null, oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type CreateOAuthAppMutation = { createOAuthApp: { clientSecret?: string | null, oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35753,7 +35759,7 @@ export type UpdateOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type UpdateOAuthAppMutation = { updateOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type UpdateOAuthAppMutation = { updateOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35768,7 +35774,7 @@ export type EnableOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type EnableOAuthAppMutation = { enableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type EnableOAuthAppMutation = { enableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35783,7 +35789,7 @@ export type DisableOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type DisableOAuthAppMutation = { disableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type DisableOAuthAppMutation = { disableOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -35798,7 +35804,7 @@ export type DeleteOAuthAppMutationVariables = Exact<{
 }>;
 
 
-export type DeleteOAuthAppMutation = { deleteOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
+export type DeleteOAuthAppMutation = { deleteOAuthApp: { oauthApp?: { id: string, name: string, description?: string | null, clientId: string, redirectUrls: Array<string>, allowedOrigins: Array<string>, isEnabled: boolean, clientSecret?: { id: string, secretHint: string, lastUsedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string } } | null, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -45053,7 +45059,7 @@ export const NoteFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteFields on N
 export const NoteEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteEntryFields on NoteEntry{noteId text markdown@include(if:true)isEdited editedAt@include(if:true){unixTimestamp iso8601}editedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<NoteEntryFieldsFragment, unknown>;
 export const NoteMentionNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteMentionNotificationDetailFields on NoteMentionNotificationDetail{threadId timelineEntryId mentionedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<NoteMentionNotificationDetailFieldsFragment, unknown>;
 export const NumberSettingFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NumberSettingFields on NumberSetting{code numberValue scope{id@include(if:true)scopeType}}") as unknown as DocumentNode<NumberSettingFieldsFragment, unknown>;
-export const OAuthAppFieldsFragmentDoc = /*#__PURE__*/ gql("fragment OAuthAppFields on OAuthApp{id name description@include(if:true)clientId redirectUrls isEnabled clientSecret@include(if:true){id secretHint lastUsedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<OAuthAppFieldsFragment, unknown>;
+export const OAuthAppFieldsFragmentDoc = /*#__PURE__*/ gql("fragment OAuthAppFields on OAuthApp{id name description@include(if:true)clientId redirectUrls allowedOrigins isEnabled clientSecret@include(if:true){id secretHint lastUsedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<OAuthAppFieldsFragment, unknown>;
 export const PendingSenderDomainDnsRecordsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PendingSenderDomainDnsRecordsFields on PendingSenderDomainDnsRecords{domainName dkimDnsRecord{type name value isVerified verifiedAt@include(if:true){unixTimestamp iso8601}lastCheckedAt@include(if:true){unixTimestamp iso8601}}returnPathDnsRecord{type name value isVerified verifiedAt@include(if:true){unixTimestamp iso8601}lastCheckedAt@include(if:true){unixTimestamp iso8601}}}") as unknown as DocumentNode<PendingSenderDomainDnsRecordsFieldsFragment, unknown>;
 export const PerSeatRecurringPriceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PerSeatRecurringPriceFields on PerSeatRecurringPrice{billingIntervalUnit billingIntervalCount currency perSeatAmount}") as unknown as DocumentNode<PerSeatRecurringPriceFieldsFragment, unknown>;
 export const PlainTaskThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PlainTaskThreadLinkFields on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}") as unknown as DocumentNode<PlainTaskThreadLinkFieldsFragment, unknown>;

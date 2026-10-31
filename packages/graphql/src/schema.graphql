@@ -4551,6 +4551,11 @@ type OAuthApp {
   redirectUrls: [String!]!
 
   """
+  The browser origins allowed to exchange an authorization code for a token, such as https://app.example.com. Each one is a scheme and host with an optional port, using https, or http on localhost. Apps created before this was required may have none.
+  """
+  allowedOrigins: [String!]!
+
+  """
   When false, the Plain API rejects every token issued to the app, including ones it already holds.
   """
   isEnabled: Boolean!
@@ -11269,6 +11274,11 @@ input CreateOAuthAppInput {
   Absolute URLs using https, or http on localhost. At least one is required.
   """
   redirectUrls: [String!]!
+
+  """
+  Browser origins allowed to exchange an authorization code for a token, such as https://app.example.com. Each one is a scheme and host with an optional port, using https, or http on localhost. When given, at least one is required. Omit it for an app that only exchanges codes from a server.
+  """
+  allowedOrigins: [String!]
 }
 
 type CreateOAuthAppOutput {
@@ -11288,6 +11298,9 @@ input UpdateOAuthAppInput {
 
   """Replaces the whole list of redirect URLs."""
   redirectUrls: StringArrayInput
+
+  """Replaces the whole list of allowed origins. At least one is required."""
+  allowedOrigins: StringArrayInput
 }
 
 type UpdateOAuthAppOutput {
@@ -12617,7 +12630,7 @@ type Mutation {
   createOAuthApp(input: CreateOAuthAppInput!): CreateOAuthAppOutput!
 
   """
-  Updates the name, description or redirect URLs of an OAuth app. Requires the `oauthApp:edit` permission.
+  Updates the name, description, redirect URLs or allowed origins of an OAuth app. Requires the `oauthApp:edit` permission.
   """
   updateOAuthApp(input: UpdateOAuthAppInput!): UpdateOAuthAppOutput!
 
