@@ -1,5 +1,5 @@
 import type { PlainGraphQLClient } from "./graphql-client.js";
-import { PlainConnection } from "./connection.js";
+import { PlainConnection, paginationVariables } from "./connection.js";
 import {
   AcceptSuggestedLabelTypesDocument,
   AcceptWorkspaceInviteDocument,
@@ -3127,7 +3127,7 @@ export class BroadcastModel {
       nodes: conn.edges.map(e => new ThreadModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
       totalCount: conn.totalCount,
-      fetch: (cursor) => this.threads({ ...variables, ...cursor }),
+      fetch: (cursor) => this.threads(paginationVariables(variables, cursor)),
     });
   }
 }
@@ -3504,7 +3504,7 @@ export class BusinessHoursScheduleModel {
     return new PlainConnection<BusinessHoursOverrideModel>({
       nodes: conn.edges.map(e => new BusinessHoursOverrideModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
-      fetch: (cursor) => this.overrides({ ...variables, ...cursor }),
+      fetch: (cursor) => this.overrides(paginationVariables(variables, cursor)),
     });
   }
 }
@@ -4341,7 +4341,7 @@ export class CustomerModel {
     return new PlainConnection<CustomerGroupMembershipModel>({
       nodes: conn.edges.map(e => new CustomerGroupMembershipModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
-      fetch: (cursor) => this.customerGroupMemberships({ ...variables, ...cursor }),
+      fetch: (cursor) => this.customerGroupMemberships(paginationVariables(variables, cursor)),
     });
   }
 }
@@ -6064,7 +6064,7 @@ export class HelpCenterModel {
     return new PlainConnection<HelpCenterArticleGroupModel>({
       nodes: conn.edges.map(e => new HelpCenterArticleGroupModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
-      fetch: (cursor) => this.articleGroups({ ...variables, ...cursor }),
+      fetch: (cursor) => this.articleGroups(paginationVariables(variables, cursor)),
     });
   }
 
@@ -6079,7 +6079,7 @@ export class HelpCenterModel {
     return new PlainConnection<HelpCenterArticleModel>({
       nodes: conn.edges.map(e => new HelpCenterArticleModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
-      fetch: (cursor) => this.articles({ ...variables, ...cursor }),
+      fetch: (cursor) => this.articles(paginationVariables(variables, cursor)),
     });
   }
 }
@@ -6331,7 +6331,7 @@ export class HelpCenterArticleGroupModel {
     return new PlainConnection<HelpCenterArticleModel>({
       nodes: conn.edges.map(e => new HelpCenterArticleModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
-      fetch: (cursor) => this.articles({ ...variables, ...cursor }),
+      fetch: (cursor) => this.articles(paginationVariables(variables, cursor)),
     });
   }
 
@@ -6346,7 +6346,7 @@ export class HelpCenterArticleGroupModel {
     return new PlainConnection<HelpCenterArticleGroupModel>({
       nodes: conn.edges.map(e => new HelpCenterArticleGroupModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
-      fetch: (cursor) => this.childArticleGroups({ ...variables, ...cursor }),
+      fetch: (cursor) => this.childArticleGroups(paginationVariables(variables, cursor)),
     });
   }
 }
@@ -7492,7 +7492,7 @@ export class MachineUserModel {
     return new PlainConnection<ApiKeyModel>({
       nodes: conn.edges.map(e => new ApiKeyModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
-      fetch: (cursor) => this.apiKeys({ ...variables, ...cursor }),
+      fetch: (cursor) => this.apiKeys(paginationVariables(variables, cursor)),
     });
   }
 }
@@ -9624,7 +9624,7 @@ export class ThreadModel {
     return new PlainConnection<TimelineEntryModel>({
       nodes: conn.edges.map(e => new TimelineEntryModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
-      fetch: (cursor) => this.timelineEntries({ ...variables, ...cursor }),
+      fetch: (cursor) => this.timelineEntries(paginationVariables(variables, cursor)),
     });
   }
 }
@@ -9872,7 +9872,7 @@ export class ThreadDiscussionModel {
     return new PlainConnection<ThreadDiscussionMessageModel>({
       nodes: conn.edges.map(e => new ThreadDiscussionMessageModel(this._client, e.node)),
       pageInfo: conn.pageInfo,
-      fetch: (cursor) => this.messages({ ...variables, ...cursor }),
+      fetch: (cursor) => this.messages(paginationVariables(variables, cursor)),
     });
   }
 }
@@ -13382,7 +13382,7 @@ export class PlainSdk {
       return new PlainConnection<AccountFieldSchemaModel>({
         nodes: conn.edges.map(e => new AccountFieldSchemaModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.accountFieldSchemas({ ...variables, ...cursor } as AccountFieldSchemasQueryVariables),
+        fetch: (cursor) => query.accountFieldSchemas(paginationVariables(variables, cursor) as AccountFieldSchemasQueryVariables),
       });
     },
 
@@ -13394,7 +13394,7 @@ export class PlainSdk {
       return new PlainConnection<AccountModel>({
         nodes: conn.edges.map(e => new AccountModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.accounts({ ...variables, ...cursor } as AccountsQueryVariables),
+        fetch: (cursor) => query.accounts(paginationVariables(variables, cursor) as AccountsQueryVariables),
       });
     },
 
@@ -13424,7 +13424,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new AiFeedbackModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.aiFeedback({ ...variables, ...cursor } as AiFeedbackQueryVariables),
+        fetch: (cursor) => query.aiFeedback(paginationVariables(variables, cursor) as AiFeedbackQueryVariables),
       });
     },
 
@@ -13436,7 +13436,7 @@ export class PlainSdk {
       return new PlainConnection<AiToneRuleModel>({
         nodes: conn.edges.map(e => new AiToneRuleModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.aiToneRules({ ...variables, ...cursor } as AiToneRulesQueryVariables),
+        fetch: (cursor) => query.aiToneRules(paginationVariables(variables, cursor) as AiToneRulesQueryVariables),
       });
     },
 
@@ -13458,7 +13458,7 @@ export class PlainSdk {
       return new PlainConnection<AutoresponderModel>({
         nodes: conn.edges.map(e => new AutoresponderModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.autoresponders({ ...variables, ...cursor } as AutorespondersQueryVariables),
+        fetch: (cursor) => query.autoresponders(paginationVariables(variables, cursor) as AutorespondersQueryVariables),
       });
     },
 
@@ -13470,7 +13470,7 @@ export class PlainSdk {
       return new PlainConnection<BillingPlanModel>({
         nodes: conn.edges.map(e => new BillingPlanModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.billingPlans({ ...variables, ...cursor } as BillingPlansQueryVariables),
+        fetch: (cursor) => query.billingPlans(paginationVariables(variables, cursor) as BillingPlansQueryVariables),
       });
     },
 
@@ -13502,7 +13502,7 @@ export class PlainSdk {
       return new PlainConnection<BroadcastAudienceModel>({
         nodes: conn.edges.map(e => new BroadcastAudienceModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.broadcastAudiences({ ...variables, ...cursor } as BroadcastAudiencesQueryVariables),
+        fetch: (cursor) => query.broadcastAudiences(paginationVariables(variables, cursor) as BroadcastAudiencesQueryVariables),
       });
     },
 
@@ -13514,7 +13514,7 @@ export class PlainSdk {
       return new PlainConnection<BroadcastRecipientUnsubscribeModel>({
         nodes: conn.edges.map(e => new BroadcastRecipientUnsubscribeModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.broadcastRecipientUnsubscribes({ ...variables, ...cursor } as BroadcastRecipientUnsubscribesQueryVariables),
+        fetch: (cursor) => query.broadcastRecipientUnsubscribes(paginationVariables(variables, cursor) as BroadcastRecipientUnsubscribesQueryVariables),
       });
     },
 
@@ -13534,7 +13534,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new BroadcastModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.broadcasts({ ...variables, ...cursor } as BroadcastsQueryVariables),
+        fetch: (cursor) => query.broadcasts(paginationVariables(variables, cursor) as BroadcastsQueryVariables),
       });
     },
 
@@ -13567,7 +13567,7 @@ export class PlainSdk {
       return new PlainConnection<BusinessHoursOverrideModel>({
         nodes: conn.edges.map(e => new BusinessHoursOverrideModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.businessHoursOverrides({ ...variables, ...cursor } as BusinessHoursOverridesQueryVariables),
+        fetch: (cursor) => query.businessHoursOverrides(paginationVariables(variables, cursor) as BusinessHoursOverridesQueryVariables),
       });
     },
 
@@ -13589,7 +13589,7 @@ export class PlainSdk {
       return new PlainConnection<BusinessHoursScheduleModel>({
         nodes: conn.edges.map(e => new BusinessHoursScheduleModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.businessHoursSchedules({ ...variables, ...cursor } as BusinessHoursSchedulesQueryVariables),
+        fetch: (cursor) => query.businessHoursSchedules(paginationVariables(variables, cursor) as BusinessHoursSchedulesQueryVariables),
       });
     },
 
@@ -13629,7 +13629,7 @@ export class PlainSdk {
       return new PlainConnection<ChatAppModel>({
         nodes: conn.edges.map(e => new ChatAppModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.chatApps({ ...variables, ...cursor } as ChatAppsQueryVariables),
+        fetch: (cursor) => query.chatApps(paginationVariables(variables, cursor) as ChatAppsQueryVariables),
       });
     },
 
@@ -13642,7 +13642,7 @@ export class PlainSdk {
       return new PlainConnection<CompanyModel>({
         nodes: conn.edges.map(e => new CompanyModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.companies({ ...variables, ...cursor } as CompaniesQueryVariables),
+        fetch: (cursor) => query.companies(paginationVariables(variables, cursor) as CompaniesQueryVariables),
       });
     },
 
@@ -13665,7 +13665,7 @@ export class PlainSdk {
       return new PlainConnection<ConnectedDiscordChannelModel>({
         nodes: conn.edges.map(e => new ConnectedDiscordChannelModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.connectedDiscordChannels({ ...variables, ...cursor } as ConnectedDiscordChannelsQueryVariables),
+        fetch: (cursor) => query.connectedDiscordChannels(paginationVariables(variables, cursor) as ConnectedDiscordChannelsQueryVariables),
       });
     },
 
@@ -13678,7 +13678,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new ConnectedMSTeamsChannelModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.connectedMSTeamsChannels({ ...variables, ...cursor } as ConnectedMsTeamsChannelsQueryVariables),
+        fetch: (cursor) => query.connectedMSTeamsChannels(paginationVariables(variables, cursor) as ConnectedMsTeamsChannelsQueryVariables),
       });
     },
 
@@ -13701,7 +13701,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new ConnectedSlackChannelModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.connectedSlackChannels({ ...variables, ...cursor } as ConnectedSlackChannelsQueryVariables),
+        fetch: (cursor) => query.connectedSlackChannels(paginationVariables(variables, cursor) as ConnectedSlackChannelsQueryVariables),
       });
     },
 
@@ -13713,7 +13713,7 @@ export class PlainSdk {
       return new PlainConnection<CreditSpendItemModel>({
         nodes: conn.edges.map(e => new CreditSpendItemModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.creditSpend({ ...variables, ...cursor } as CreditSpendQueryVariables),
+        fetch: (cursor) => query.creditSpend(paginationVariables(variables, cursor) as CreditSpendQueryVariables),
       });
     },
 
@@ -13742,7 +13742,7 @@ export class PlainSdk {
       return new PlainConnection<CustomRoleModel>({
         nodes: conn.edges.map(e => new CustomRoleModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.customRoles({ ...variables, ...cursor } as CustomRolesQueryVariables),
+        fetch: (cursor) => query.customRoles(paginationVariables(variables, cursor) as CustomRolesQueryVariables),
       });
     },
 
@@ -13818,7 +13818,7 @@ export class PlainSdk {
       return new PlainConnection<CustomerGroupModel>({
         nodes: conn.edges.map(e => new CustomerGroupModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.customerGroups({ ...variables, ...cursor } as CustomerGroupsQueryVariables),
+        fetch: (cursor) => query.customerGroups(paginationVariables(variables, cursor) as CustomerGroupsQueryVariables),
       });
     },
 
@@ -13840,7 +13840,7 @@ export class PlainSdk {
       return new PlainConnection<CustomerSurveyModel>({
         nodes: conn.edges.map(e => new CustomerSurveyModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.customerSurveys({ ...variables, ...cursor } as CustomerSurveysQueryVariables),
+        fetch: (cursor) => query.customerSurveys(paginationVariables(variables, cursor) as CustomerSurveysQueryVariables),
       });
     },
 
@@ -13853,7 +13853,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new CustomerModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.customers({ ...variables, ...cursor } as CustomersQueryVariables),
+        fetch: (cursor) => query.customers(paginationVariables(variables, cursor) as CustomersQueryVariables),
       });
     },
 
@@ -13865,7 +13865,7 @@ export class PlainSdk {
       return new PlainConnection<DeletedThreadModel>({
         nodes: conn.edges.map(e => new DeletedThreadModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.deletedThreads({ ...variables, ...cursor } as DeletedThreadsQueryVariables),
+        fetch: (cursor) => query.deletedThreads(paginationVariables(variables, cursor) as DeletedThreadsQueryVariables),
       });
     },
 
@@ -13887,7 +13887,7 @@ export class PlainSdk {
       return new PlainConnection<ThreadDiscussionModel>({
         nodes: conn.edges.map(e => new ThreadDiscussionModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.discussions({ ...variables, ...cursor } as DiscussionsQueryVariables),
+        fetch: (cursor) => query.discussions(paginationVariables(variables, cursor) as DiscussionsQueryVariables),
       });
     },
 
@@ -13929,7 +13929,7 @@ export class PlainSdk {
       return new PlainConnection<EscalationPathModel>({
         nodes: conn.edges.map(e => new EscalationPathModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.escalationPaths({ ...variables, ...cursor } as EscalationPathsQueryVariables),
+        fetch: (cursor) => query.escalationPaths(paginationVariables(variables, cursor) as EscalationPathsQueryVariables),
       });
     },
 
@@ -14006,7 +14006,7 @@ export class PlainSdk {
       return new PlainConnection<HelpCenterAiConversationModel>({
         nodes: conn.edges.map(e => new HelpCenterAiConversationModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.helpCenterAiConversations({ ...variables, ...cursor } as HelpCenterAiConversationsQueryVariables),
+        fetch: (cursor) => query.helpCenterAiConversations(paginationVariables(variables, cursor) as HelpCenterAiConversationsQueryVariables),
       });
     },
 
@@ -14068,7 +14068,7 @@ export class PlainSdk {
       return new PlainConnection<HelpCenterModel>({
         nodes: conn.edges.map(e => new HelpCenterModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.helpCenters({ ...variables, ...cursor } as HelpCentersQueryVariables),
+        fetch: (cursor) => query.helpCenters(paginationVariables(variables, cursor) as HelpCentersQueryVariables),
       });
     },
 
@@ -14090,7 +14090,7 @@ export class PlainSdk {
       return new PlainConnection<ImportJobModel>({
         nodes: conn.edges.map(e => new ImportJobModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.importJobs({ ...variables, ...cursor } as ImportJobsQueryVariables),
+        fetch: (cursor) => query.importJobs(paginationVariables(variables, cursor) as ImportJobsQueryVariables),
       });
     },
 
@@ -14117,7 +14117,7 @@ export class PlainSdk {
       return new PlainConnection<IndexedDocumentModel>({
         nodes: conn.edges.map(e => new IndexedDocumentModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.indexedDocuments({ ...variables, ...cursor } as IndexedDocumentsQueryVariables),
+        fetch: (cursor) => query.indexedDocuments(paginationVariables(variables, cursor) as IndexedDocumentsQueryVariables),
       });
     },
 
@@ -14154,7 +14154,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new KnowledgeGapModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.knowledgeGaps({ ...variables, ...cursor } as KnowledgeGapsQueryVariables),
+        fetch: (cursor) => query.knowledgeGaps(paginationVariables(variables, cursor) as KnowledgeGapsQueryVariables),
       });
     },
 
@@ -14210,7 +14210,7 @@ export class PlainSdk {
       return new PlainConnection<LabelTypeModel>({
         nodes: conn.edges.map(e => new LabelTypeModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.labelTypes({ ...variables, ...cursor } as LabelTypesQueryVariables),
+        fetch: (cursor) => query.labelTypes(paginationVariables(variables, cursor) as LabelTypesQueryVariables),
       });
     },
 
@@ -14242,7 +14242,7 @@ export class PlainSdk {
       return new PlainConnection<MachineUserModel>({
         nodes: conn.edges.map(e => new MachineUserModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.machineUsers({ ...variables, ...cursor } as MachineUsersQueryVariables),
+        fetch: (cursor) => query.machineUsers(paginationVariables(variables, cursor) as MachineUsersQueryVariables),
       });
     },
 
@@ -14284,7 +14284,7 @@ export class PlainSdk {
       return new PlainConnection<FavoritePageModel>({
         nodes: conn.edges.map(e => new FavoritePageModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.myFavoritePages({ ...variables, ...cursor } as MyFavoritePagesQueryVariables),
+        fetch: (cursor) => query.myFavoritePages(paginationVariables(variables, cursor) as MyFavoritePagesQueryVariables),
       });
     },
 
@@ -14297,7 +14297,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new InternalNotificationModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.myInternalNotifications({ ...variables, ...cursor } as MyInternalNotificationsQueryVariables),
+        fetch: (cursor) => query.myInternalNotifications(paginationVariables(variables, cursor) as MyInternalNotificationsQueryVariables),
       });
     },
 
@@ -14427,7 +14427,7 @@ export class PlainSdk {
       return new PlainConnection<WorkspaceInviteModel>({
         nodes: conn.edges.map(e => new WorkspaceInviteModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.myWorkspaceInvites({ ...variables, ...cursor } as MyWorkspaceInvitesQueryVariables),
+        fetch: (cursor) => query.myWorkspaceInvites(paginationVariables(variables, cursor) as MyWorkspaceInvitesQueryVariables),
       });
     },
 
@@ -14439,7 +14439,7 @@ export class PlainSdk {
       return new PlainConnection<WorkspaceModel>({
         nodes: conn.edges.map(e => new WorkspaceModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.myWorkspaces({ ...variables, ...cursor } as MyWorkspacesQueryVariables),
+        fetch: (cursor) => query.myWorkspaces(paginationVariables(variables, cursor) as MyWorkspacesQueryVariables),
       });
     },
 
@@ -14461,7 +14461,7 @@ export class PlainSdk {
       return new PlainConnection<OAuthAppModel>({
         nodes: conn.edges.map(e => new OAuthAppModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.oauthApps({ ...variables, ...cursor } as OauthAppsQueryVariables),
+        fetch: (cursor) => query.oauthApps(paginationVariables(variables, cursor) as OauthAppsQueryVariables),
       });
     },
 
@@ -14497,7 +14497,7 @@ export class PlainSdk {
       return new PlainConnection<RoleModel>({
         nodes: conn.edges.map(e => new RoleModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.roles({ ...variables, ...cursor } as RolesQueryVariables),
+        fetch: (cursor) => query.roles(paginationVariables(variables, cursor) as RolesQueryVariables),
       });
     },
 
@@ -14519,7 +14519,7 @@ export class PlainSdk {
       return new PlainConnection<SavedThreadsViewModel>({
         nodes: conn.edges.map(e => new SavedThreadsViewModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.savedThreadsViews({ ...variables, ...cursor } as SavedThreadsViewsQueryVariables),
+        fetch: (cursor) => query.savedThreadsViews(paginationVariables(variables, cursor) as SavedThreadsViewsQueryVariables),
       });
     },
 
@@ -14539,7 +14539,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new BroadcastModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.searchBroadcasts({ ...variables, ...cursor } as SearchBroadcastsQueryVariables),
+        fetch: (cursor) => query.searchBroadcasts(paginationVariables(variables, cursor) as SearchBroadcastsQueryVariables),
       });
     },
 
@@ -14559,7 +14559,7 @@ export class PlainSdk {
       return new PlainConnection<CustomerModel>({
         nodes: conn.edges.map(e => new CustomerModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.searchCustomers({ ...variables, ...cursor } as SearchCustomersQueryVariables),
+        fetch: (cursor) => query.searchCustomers(paginationVariables(variables, cursor) as SearchCustomersQueryVariables),
       });
     },
 
@@ -14585,7 +14585,7 @@ export class PlainSdk {
       return new PlainConnection<SlackUserModel>({
         nodes: conn.edges.map(e => new SlackUserModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.searchSlackUsers({ ...variables, ...cursor } as SearchSlackUsersQueryVariables),
+        fetch: (cursor) => query.searchSlackUsers(paginationVariables(variables, cursor) as SearchSlackUsersQueryVariables),
       });
     },
 
@@ -14605,7 +14605,7 @@ export class PlainSdk {
       return new PlainConnection<ThreadLinkCandidateModel>({
         nodes: conn.edges.map(e => new ThreadLinkCandidateModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.searchThreadLinkCandidates({ ...variables, ...cursor } as SearchThreadLinkCandidatesQueryVariables),
+        fetch: (cursor) => query.searchThreadLinkCandidates(paginationVariables(variables, cursor) as SearchThreadLinkCandidatesQueryVariables),
       });
     },
 
@@ -14617,7 +14617,7 @@ export class PlainSdk {
       return new PlainConnection<SlackUserModel>({
         nodes: conn.edges.map(e => new SlackUserModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.searchThreadSlackUsers({ ...variables, ...cursor } as SearchThreadSlackUsersQueryVariables),
+        fetch: (cursor) => query.searchThreadSlackUsers(paginationVariables(variables, cursor) as SearchThreadSlackUsersQueryVariables),
       });
     },
 
@@ -14646,7 +14646,7 @@ export class PlainSdk {
       return new PlainConnection<ServiceAuthorizationModel>({
         nodes: conn.edges.map(e => new ServiceAuthorizationModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.serviceAuthorizations({ ...variables, ...cursor } as ServiceAuthorizationsQueryVariables),
+        fetch: (cursor) => query.serviceAuthorizations(paginationVariables(variables, cursor) as ServiceAuthorizationsQueryVariables),
       });
     },
 
@@ -14658,7 +14658,7 @@ export class PlainSdk {
       return new PlainConnection<ServiceLevelAgreementPolicyModel>({
         nodes: conn.edges.map(e => new ServiceLevelAgreementPolicyModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.serviceLevelAgreementPolicies({ ...variables, ...cursor } as ServiceLevelAgreementPoliciesQueryVariables),
+        fetch: (cursor) => query.serviceLevelAgreementPolicies(paginationVariables(variables, cursor) as ServiceLevelAgreementPoliciesQueryVariables),
       });
     },
 
@@ -14834,7 +14834,7 @@ export class PlainSdk {
       return new PlainConnection<SnippetModel>({
         nodes: conn.edges.map(e => new SnippetModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.snippets({ ...variables, ...cursor } as SnippetsQueryVariables),
+        fetch: (cursor) => query.snippets(paginationVariables(variables, cursor) as SnippetsQueryVariables),
       });
     },
 
@@ -14888,7 +14888,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new TaskModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.tasks({ ...variables, ...cursor } as TasksQueryVariables),
+        fetch: (cursor) => query.tasks(paginationVariables(variables, cursor) as TasksQueryVariables),
       });
     },
 
@@ -14922,7 +14922,7 @@ export class PlainSdk {
       return new PlainConnection<TenantFieldSchemaModel>({
         nodes: conn.edges.map(e => new TenantFieldSchemaModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.tenantFieldSchemas({ ...variables, ...cursor } as TenantFieldSchemasQueryVariables),
+        fetch: (cursor) => query.tenantFieldSchemas(paginationVariables(variables, cursor) as TenantFieldSchemasQueryVariables),
       });
     },
 
@@ -14935,7 +14935,7 @@ export class PlainSdk {
       return new PlainConnection<TenantModel>({
         nodes: conn.edges.map(e => new TenantModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.tenants({ ...variables, ...cursor } as TenantsQueryVariables),
+        fetch: (cursor) => query.tenants(paginationVariables(variables, cursor) as TenantsQueryVariables),
       });
     },
 
@@ -15041,7 +15041,7 @@ export class PlainSdk {
       return new PlainConnection<ThreadClusterModel>({
         nodes: conn.edges.map(e => new ThreadClusterModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.threadClustersPaginated({ ...variables, ...cursor } as ThreadClustersPaginatedQueryVariables),
+        fetch: (cursor) => query.threadClustersPaginated(paginationVariables(variables, cursor) as ThreadClustersPaginatedQueryVariables),
       });
     },
 
@@ -15073,7 +15073,7 @@ export class PlainSdk {
       return new PlainConnection<ThreadFieldSchemaModel>({
         nodes: conn.edges.map(e => new ThreadFieldSchemaModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.threadFieldSchemas({ ...variables, ...cursor } as ThreadFieldSchemasQueryVariables),
+        fetch: (cursor) => query.threadFieldSchemas(paginationVariables(variables, cursor) as ThreadFieldSchemasQueryVariables),
       });
     },
 
@@ -15092,7 +15092,7 @@ export class PlainSdk {
       return new PlainConnection<ThreadLinkGroupModel>({
         nodes: conn.edges.map(e => new ThreadLinkGroupModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.threadLinkGroups({ ...variables, ...cursor } as ThreadLinkGroupsQueryVariables),
+        fetch: (cursor) => query.threadLinkGroups(paginationVariables(variables, cursor) as ThreadLinkGroupsQueryVariables),
       });
     },
 
@@ -15139,7 +15139,7 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new ThreadModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
-        fetch: (cursor) => query.threads({ ...variables, ...cursor } as ThreadsQueryVariables),
+        fetch: (cursor) => query.threads(paginationVariables(variables, cursor) as ThreadsQueryVariables),
       });
     },
 
@@ -15151,7 +15151,7 @@ export class PlainSdk {
       return new PlainConnection<ThreadModel>({
         nodes: conn.edges.map(e => new ThreadModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.threadsByExternalId({ ...variables, ...cursor } as ThreadsByExternalIdQueryVariables),
+        fetch: (cursor) => query.threadsByExternalId(paginationVariables(variables, cursor) as ThreadsByExternalIdQueryVariables),
       });
     },
 
@@ -15173,7 +15173,7 @@ export class PlainSdk {
       return new PlainConnection<TierModel>({
         nodes: conn.edges.map(e => new TierModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.tiers({ ...variables, ...cursor } as TiersQueryVariables),
+        fetch: (cursor) => query.tiers(paginationVariables(variables, cursor) as TiersQueryVariables),
       });
     },
 
@@ -15196,7 +15196,7 @@ export class PlainSdk {
       return new PlainConnection<TimelineEntryModel>({
         nodes: conn.edges.map(e => new TimelineEntryModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.timelineEntries({ ...variables, ...cursor } as TimelineEntriesQueryVariables),
+        fetch: (cursor) => query.timelineEntries(paginationVariables(variables, cursor) as TimelineEntriesQueryVariables),
       });
     },
 
@@ -15245,7 +15245,7 @@ export class PlainSdk {
       return new PlainConnection<UserAuthDiscordChannelIntegrationModel>({
         nodes: conn.edges.map(e => new UserAuthDiscordChannelIntegrationModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.userAuthDiscordChannelIntegrations({ ...variables, ...cursor } as UserAuthDiscordChannelIntegrationsQueryVariables),
+        fetch: (cursor) => query.userAuthDiscordChannelIntegrations(paginationVariables(variables, cursor) as UserAuthDiscordChannelIntegrationsQueryVariables),
       });
     },
 
@@ -15301,7 +15301,7 @@ export class PlainSdk {
       return new PlainConnection<UserModel>({
         nodes: conn.edges.map(e => new UserModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.users({ ...variables, ...cursor } as UsersQueryVariables),
+        fetch: (cursor) => query.users(paginationVariables(variables, cursor) as UsersQueryVariables),
       });
     },
 
@@ -15313,7 +15313,7 @@ export class PlainSdk {
       return new PlainConnection<WebhookDeliveryAttemptModel>({
         nodes: conn.edges.map(e => new WebhookDeliveryAttemptModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.webhookDeliveryAttempts({ ...variables, ...cursor } as WebhookDeliveryAttemptsQueryVariables),
+        fetch: (cursor) => query.webhookDeliveryAttempts(paginationVariables(variables, cursor) as WebhookDeliveryAttemptsQueryVariables),
       });
     },
 
@@ -15335,7 +15335,7 @@ export class PlainSdk {
       return new PlainConnection<WebhookTargetModel>({
         nodes: conn.edges.map(e => new WebhookTargetModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.webhookTargets({ ...variables, ...cursor } as WebhookTargetsQueryVariables),
+        fetch: (cursor) => query.webhookTargets(paginationVariables(variables, cursor) as WebhookTargetsQueryVariables),
       });
     },
 
@@ -15398,7 +15398,7 @@ export class PlainSdk {
       return new PlainConnection<WorkflowExecutionModel>({
         nodes: conn.edges.map(e => new WorkflowExecutionModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workflowExecutions({ ...variables, ...cursor } as WorkflowExecutionsQueryVariables),
+        fetch: (cursor) => query.workflowExecutions(paginationVariables(variables, cursor) as WorkflowExecutionsQueryVariables),
       });
     },
 
@@ -15410,7 +15410,7 @@ export class PlainSdk {
       return new PlainConnection<WorkflowExecutionModel>({
         nodes: conn.edges.map(e => new WorkflowExecutionModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workflowExecutionsByEntity({ ...variables, ...cursor } as WorkflowExecutionsByEntityQueryVariables),
+        fetch: (cursor) => query.workflowExecutionsByEntity(paginationVariables(variables, cursor) as WorkflowExecutionsByEntityQueryVariables),
       });
     },
 
@@ -15422,7 +15422,7 @@ export class PlainSdk {
       return new PlainConnection<WorkflowExecutionModel>({
         nodes: conn.edges.map(e => new WorkflowExecutionModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workflowExecutionsForWorkspace({ ...variables, ...cursor } as WorkflowExecutionsForWorkspaceQueryVariables),
+        fetch: (cursor) => query.workflowExecutionsForWorkspace(paginationVariables(variables, cursor) as WorkflowExecutionsForWorkspaceQueryVariables),
       });
     },
 
@@ -15444,7 +15444,7 @@ export class PlainSdk {
       return new PlainConnection<WorkflowRuleModel>({
         nodes: conn.edges.map(e => new WorkflowRuleModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workflowRules({ ...variables, ...cursor } as WorkflowRulesQueryVariables),
+        fetch: (cursor) => query.workflowRules(paginationVariables(variables, cursor) as WorkflowRulesQueryVariables),
       });
     },
 
@@ -15483,7 +15483,7 @@ export class PlainSdk {
       return new PlainConnection<WorkflowModel>({
         nodes: conn.edges.map(e => new WorkflowModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workflows({ ...variables, ...cursor } as WorkflowsQueryVariables),
+        fetch: (cursor) => query.workflows(paginationVariables(variables, cursor) as WorkflowsQueryVariables),
       });
     },
 
@@ -15539,7 +15539,7 @@ export class PlainSdk {
       return new PlainConnection<WorkspaceDiscordChannelIntegrationModel>({
         nodes: conn.edges.map(e => new WorkspaceDiscordChannelIntegrationModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workspaceDiscordChannelIntegrations({ ...variables, ...cursor } as WorkspaceDiscordChannelIntegrationsQueryVariables),
+        fetch: (cursor) => query.workspaceDiscordChannelIntegrations(paginationVariables(variables, cursor) as WorkspaceDiscordChannelIntegrationsQueryVariables),
       });
     },
 
@@ -15561,7 +15561,7 @@ export class PlainSdk {
       return new PlainConnection<WorkspaceDiscordIntegrationModel>({
         nodes: conn.edges.map(e => new WorkspaceDiscordIntegrationModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workspaceDiscordIntegrations({ ...variables, ...cursor } as WorkspaceDiscordIntegrationsQueryVariables),
+        fetch: (cursor) => query.workspaceDiscordIntegrations(paginationVariables(variables, cursor) as WorkspaceDiscordIntegrationsQueryVariables),
       });
     },
 
@@ -15590,7 +15590,7 @@ export class PlainSdk {
       return new PlainConnection<WorkspaceInviteModel>({
         nodes: conn.edges.map(e => new WorkspaceInviteModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workspaceInvites({ ...variables, ...cursor } as WorkspaceInvitesQueryVariables),
+        fetch: (cursor) => query.workspaceInvites(paginationVariables(variables, cursor) as WorkspaceInvitesQueryVariables),
       });
     },
 
@@ -15650,7 +15650,7 @@ export class PlainSdk {
       return new PlainConnection<WorkspaceSlackChannelIntegrationModel>({
         nodes: conn.edges.map(e => new WorkspaceSlackChannelIntegrationModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workspaceSlackChannelIntegrations({ ...variables, ...cursor } as WorkspaceSlackChannelIntegrationsQueryVariables),
+        fetch: (cursor) => query.workspaceSlackChannelIntegrations(paginationVariables(variables, cursor) as WorkspaceSlackChannelIntegrationsQueryVariables),
       });
     },
 
@@ -15679,7 +15679,7 @@ export class PlainSdk {
       return new PlainConnection<WorkspaceSlackIntegrationModel>({
         nodes: conn.edges.map(e => new WorkspaceSlackIntegrationModel(_client, e.node)),
         pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workspaceSlackIntegrations({ ...variables, ...cursor } as WorkspaceSlackIntegrationsQueryVariables),
+        fetch: (cursor) => query.workspaceSlackIntegrations(paginationVariables(variables, cursor) as WorkspaceSlackIntegrationsQueryVariables),
       });
     },
 
