@@ -176,7 +176,7 @@ export function unionFieldKeys(schema: GraphQLSchema): Map<string, string> {
     const current = clashes(false);
     for (const member of members) {
       for (const [name, field] of Object.entries(member.getFields())) {
-        if (!isSelectedMemberField(field)) continue;
+        if (!isSelectedMemberField(schema, field)) continue;
         const aliased = all.has(name) && (field.deprecationReason != null || current.has(name));
         const alias = `${member.name.charAt(0).toLowerCase()}${member.name.slice(1)}${name.charAt(0).toUpperCase()}${name.slice(1)}`;
         keys.set(`${type.name}.${member.name}.${name}`, aliased ? alias : name);
@@ -187,8 +187,12 @@ export function unionFieldKeys(schema: GraphQLSchema): Map<string, string> {
 }
 
 // The generator skips fields with a non-null argument, and connections and lists of objects that
-// are not value objects (objects whose fields are all scalars or enums).
-function isSelectedMemberField(field: GraphQLField<unknown, unknown>): boolean {
+// are not value objects (objects whose fields are all scalars or enums). It does select lists of
+// objects that no query can load by ID when their fields are all scalars, enums or value objects.
+function isSelectedMemberField(
+  schema: GraphQLSchema,
+  field: GraphQLField<unknown, unknown>,
+): boolean {
   if (field.args.some((a) => isNonNullType(a.type))) return false;
   const named = getNamedType(field.type);
   if (!isObjectType(named)) return true;
@@ -197,10 +201,35 @@ function isSelectedMemberField(field: GraphQLField<unknown, unknown>): boolean {
     const t = getNamedType(f.type);
     return isScalarType(t) || isEnumType(t);
   });
+  const isNestedValueObject =
+    !isQueryableType(schema, named.name) &&
+    fields.every((f) => {
+      const t = getNamedType(f.type);
+      return (
+        isScalarType(t) ||
+        isEnumType(t) ||
+        (isObjectType(t) &&
+          Object.values(t.getFields()).every((g) => {
+            const u = getNamedType(g.type);
+            return isScalarType(u) || isEnumType(u);
+          }))
+      );
+    });
+  if (isNestedValueObject) return true;
   const isConnection =
     named.name.endsWith("Connection") &&
     "edges" in named.getFields() &&
     "pageInfo" in named.getFields();
   const isList = isListType(isNonNullType(field.type) ? field.type.ofType : field.type);
   return isValueObject || !(isList || isConnection);
+}
+
+// Mirrors queryableTypes in src/generate-documents.ts.
+function isQueryableType(schema: GraphQLSchema, typeName: string): boolean {
+  return Object.values(schema.getQueryType()?.getFields() ?? {}).some(
+    (f) =>
+      !isListType(isNonNullType(f.type) ? f.type.ofType : f.type) &&
+      getNamedType(f.type).name === typeName &&
+      f.args.some((a) => isNonNullType(a.type) && getNamedType(a.type).name === "ID"),
+  );
 }
