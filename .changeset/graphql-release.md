@@ -34,9 +34,9 @@ The API now models tenants and companies as accounts. These keep working and are
 - Mutations: `createTenant`, `upsertTenant`, `deleteTenant`, `updateTenantTier`, `addCustomerToTenants`, `removeCustomerFromTenants`, `setCustomerTenants`, `updateThreadTenant`, `updateThreadChannelAssociationTenantMembershipPolicy`, `importTenants`, `upsertTenantField`, `deleteTenantField`, `upsertTenantFieldSchema`, `deleteTenantFieldSchema`, `importTenantFieldSchemas`, `importTenantFieldSchemasFromService`, `setupTenantFieldSchemaMapping`, `removeTenantFieldSchemaMapping`, `upsertCompany`, `deleteCompany`, `updateCompanyTier`, `updateCustomerCompany`
 - Model fields: `Customer.company`, `Thread.tenant`, `Task.tenant`, `Task.company`, `SlackThreadChannelAssociation.tenantId`, `.companyId` and `.tenantMembershipPolicy`
 
-**Deprecated fields are kept**
+**Deprecated fields are now included**
 
-The SDK now keeps fields the API deprecates, marked `@deprecated` with the API's reason, instead of leaving them out. Fields that earlier releases left out are now in the result types and models, for example `useBusinessHoursOnly` on service level agreements, `BillingPlan.monthlyPrice` and `.yearlyPrice`, `ComponentText.color` and `.size`, `ComponentLinkButton.url` and `.label`, `Customer.status`, `Tier.defaultPriority` and `Workspace.domainName`. Where such a field clashes with a field of the same name on another member of its union, the raw query result types alias it (for example `componentTextSize`); the model classes use the field name.
+Up to 3.2.0, the SDK left out fields the API had deprecated. From this release it includes them, marked `@deprecated` with the API's reason, so a field no longer disappears from the SDK when the API deprecates it. Fields that 3.2.0 left out are therefore new in the result types and models, for example `useBusinessHoursOnly` on service level agreements, `BillingPlan.monthlyPrice` and `.yearlyPrice`, `ComponentText.color` and `.size`, `ComponentLinkButton.url` and `.label`, `Customer.status`, `Tier.defaultPriority` and `Workspace.domainName`. Where such a field clashes with a field of the same name on another member of its union, the raw query result types alias it (for example `componentTextSize`); the model classes use the field name.
 
 **New members of returned unions and enums**
 
