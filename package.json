@@ -22,10 +22,10 @@
     "@biomejs/biome": "^2.6.4",
     "@changesets/cli": "^3.0.3",
     "@size-limit/file": "^14.3.0",
-    "graphql": "^17.0.2",
+    "graphql": "^17.1.0",
     "publint": "^0.3.25",
     "size-limit": "^14.3.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   },
   "packageManager": "pnpm@12.12.1+sha512.b7f98934c0b1f29a65f5da52f2d7f994e7faad573ffdddea1497fb4dcb5aec051590ee7c7d95a38172b4bfae103a5b83edf2ee866e11731c2cafa96063610ac5"
 }
