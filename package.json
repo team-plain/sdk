@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
-    "@biomejs/biome": "^2.6.4",
+    "@biomejs/biome": "^2.6.5",
     "@changesets/cli": "^3.0.3",
     "@size-limit/file": "^14.3.0",
     "graphql": "^17.0.2",
