@@ -619,6 +619,7 @@ fragment ApiKeyFields on ApiKey {
     roleIds
     customRoleIds
   }
+  allowedCidrs
   createdBy {
     __typename
     ... on UserActor {
@@ -5316,6 +5317,84 @@ fragment CustomSidekickSkillFields on CustomSidekickSkill {
   customSkillId
 }
 
+fragment DashboardFields on Dashboard {
+  id
+  name
+  globalRange {
+    __typename
+    ... on DashboardPresetRange {
+      duration
+    }
+    ... on DashboardCustomRange {
+      from
+      to
+    }
+  }
+  createdAt {
+    unixTimestamp
+    iso8601
+  }
+  createdBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  updatedAt {
+    unixTimestamp
+    iso8601
+  }
+  updatedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+}
+
+fragment DashboardCustomRangeFields on DashboardCustomRange {
+  from
+  to
+}
+
+fragment DashboardPresetRangeFields on DashboardPresetRange {
+  duration
+}
+
 fragment DefaultServiceIntegrationFields on DefaultServiceIntegration {
   name
   key
@@ -6852,6 +6931,9 @@ fragment ImportJobDefinitionFields on ImportJobDefinition {
       id
       name
     }
+  }
+  tenantFieldMappings {
+    alternateDomainsTenantFieldSchemaId
   }
   enabledAt {
     unixTimestamp
@@ -14292,38 +14374,6 @@ fragment OAuthAppFields on OAuthApp {
   }
 }
 
-fragment PendingSenderDomainDnsRecordsFields on PendingSenderDomainDnsRecords {
-  domainName
-  dkimDnsRecord {
-    type
-    name
-    value
-    isVerified
-    verifiedAt {
-      unixTimestamp
-      iso8601
-    }
-    lastCheckedAt {
-      unixTimestamp
-      iso8601
-    }
-  }
-  returnPathDnsRecord {
-    type
-    name
-    value
-    isVerified
-    verifiedAt {
-      unixTimestamp
-      iso8601
-    }
-    lastCheckedAt {
-      unixTimestamp
-      iso8601
-    }
-  }
-}
-
 fragment PerSeatRecurringPriceFields on PerSeatRecurringPrice {
   billingIntervalUnit
   billingIntervalCount
@@ -14814,6 +14864,35 @@ fragment ServiceLevelAgreementPolicyFields on ServiceLevelAgreementPolicy {
   id
   name
   description
+  isArchived
+  archivedAt {
+    unixTimestamp
+    iso8601
+  }
+  archivedBy {
+    __typename
+    ... on UserActor {
+      userId
+      user {
+        id
+      }
+    }
+    ... on SystemActor {
+      systemId
+      workflowExecutionId
+      workflow {
+        id
+        name
+      }
+    }
+    ... on MachineUserActor {
+      machineUserId
+      machineUser {
+        id
+      }
+    }
+  }
+  openThreadCount
   createdAt {
     unixTimestamp
     iso8601
@@ -19321,6 +19400,7 @@ fragment ThreadHeatmapMetricFields on ThreadHeatmapMetric {
     percentage
   }
   threadIds
+  machineUsers
 }
 
 fragment ThreadLinkCandidateFields on ThreadLinkCandidate {
@@ -20098,6 +20178,16 @@ fragment ThreadLinkTargetDeletedEntryFields on ThreadLinkTargetDeletedEntry {
   }
 }
 
+fragment ThreadMetricCapabilityFields on ThreadMetricCapability {
+  kind
+  metricName
+  machineUsers {
+    default
+    supported
+    description
+  }
+}
+
 fragment ThreadNotificationDetailFields on ThreadNotificationDetail {
   threadId
 }
@@ -20128,6 +20218,7 @@ fragment ThreadSingleValueMetricFields on ThreadSingleValueMetric {
     }
   }
   threadIds
+  machineUsers
 }
 
 fragment ThreadStatusDetailCreatedFields on ThreadStatusDetailCreated {
@@ -20560,6 +20651,7 @@ fragment ThreadTimeSeriesMetricFields on ThreadTimeSeriesMetric {
     }
   }
   threadIds
+  machineUsers
 }
 
 fragment ThreadWithDistanceFields on ThreadWithDistance {
@@ -27485,71 +27577,6 @@ fragment WorkflowExecutionFields on WorkflowExecution {
   credits
 }
 
-fragment WorkflowRuleFields on WorkflowRule {
-  id
-  name
-  payload
-  publishedAt {
-    unixTimestamp
-    iso8601
-  }
-  order
-  createdAt {
-    unixTimestamp
-    iso8601
-  }
-  createdBy {
-    __typename
-    ... on UserActor {
-      userId
-      user {
-        id
-      }
-    }
-    ... on SystemActor {
-      systemId
-      workflowExecutionId
-      workflow {
-        id
-        name
-      }
-    }
-    ... on MachineUserActor {
-      machineUserId
-      machineUser {
-        id
-      }
-    }
-  }
-  updatedAt {
-    unixTimestamp
-    iso8601
-  }
-  updatedBy {
-    __typename
-    ... on UserActor {
-      userId
-      user {
-        id
-      }
-    }
-    ... on SystemActor {
-      systemId
-      workflowExecutionId
-      workflow {
-        id
-        name
-      }
-    }
-    ... on MachineUserActor {
-      machineUserId
-      machineUser {
-        id
-      }
-    }
-  }
-}
-
 fragment WorkflowShareLinkFields on WorkflowShareLink {
   name
   trigger
@@ -29643,29 +29670,6 @@ query InterpolationVariables {
   }
 }
 
-query WorkflowRule($workflowRuleId: ID!) {
-  workflowRule(workflowRuleId: $workflowRuleId) {
-    ...WorkflowRuleFields
-  }
-}
-
-query WorkflowRules($first: Int, $after: String, $last: Int, $before: String) {
-  workflowRules(first: $first, after: $after, last: $last, before: $before) {
-    edges {
-      node {
-        ...WorkflowRuleFields
-      }
-      cursor
-    }
-    pageInfo {
-      hasNextPage
-      hasPreviousPage
-      startCursor
-      endCursor
-    }
-  }
-}
-
 query Workflow($workflowId: ID!) {
   workflow(workflowId: $workflowId) {
     ...WorkflowFields
@@ -29965,6 +29969,12 @@ query ThreadSingleValueMetric($input: ThreadSingleValueMetricInput!) {
 query ThreadHeatmapMetric($input: ThreadHeatmapMetricInput!) {
   threadHeatmapMetric(input: $input) {
     ...ThreadHeatmapMetricFields
+  }
+}
+
+query ThreadMetricCapabilities {
+  threadMetricCapabilities {
+    ...ThreadMetricCapabilityFields
   }
 }
 
@@ -30673,6 +30683,29 @@ query SavedThreadsView($savedThreadsViewId: ID!) {
   }
 }
 
+query Dashboards($first: Int, $after: String, $last: Int, $before: String) {
+  dashboards(first: $first, after: $after, last: $last, before: $before) {
+    edges {
+      node {
+        ...DashboardFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query Dashboard($dashboardId: ID!) {
+  dashboard(dashboardId: $dashboardId) {
+    ...DashboardFields
+  }
+}
+
 query SearchThreadLinkCandidates($filters: ThreadLinkCandidateFilter!, $searchQuery: String!, $first: Int, $after: String, $last: Int, $before: String) {
   searchThreadLinkCandidates(filters: $filters, searchQuery: $searchQuery, first: $first, after: $after, last: $last, before: $before) {
     edges {
@@ -31253,6 +31286,24 @@ mutation MoveLabelType($input: MoveLabelTypeInput!) {
   }
 }
 
+mutation RearrangeLabelTypes($input: RearrangeLabelTypesInput!) {
+  rearrangeLabelTypes(input: $input) {
+    labelTypes {
+      ...LabelTypeFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation AcceptSuggestedLabelTypes($input: AcceptSuggestedLabelTypesInput!) {
   acceptSuggestedLabelTypes(input: $input) {
     labelTypes {
@@ -31546,6 +31597,58 @@ mutation UpdateSavedThreadsView($input: UpdateSavedThreadsViewInput!) {
 
 mutation DeleteSavedThreadsView($input: DeleteSavedThreadsViewInput!) {
   deleteSavedThreadsView(input: $input) {
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CreateDashboard($input: CreateDashboardInput!) {
+  createDashboard(input: $input) {
+    dashboard {
+      ...DashboardFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UpdateDashboard($input: UpdateDashboardInput!) {
+  updateDashboard(input: $input) {
+    dashboard {
+      ...DashboardFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DeleteDashboard($input: DeleteDashboardInput!) {
+  deleteDashboard(input: $input) {
+    deletedDashboardId
     error {
       message
       type
@@ -32315,90 +32418,6 @@ mutation DeleteEscalationPath($input: DeleteEscalationPathInput!) {
   }
 }
 
-mutation CreateWorkflowRule($input: CreateWorkflowRuleInput!) {
-  createWorkflowRule(input: $input) {
-    workflowRule {
-      ...WorkflowRuleFields
-    }
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation UpdateWorkflowRule($input: UpdateWorkflowRuleInput!) {
-  updateWorkflowRule(input: $input) {
-    workflowRule {
-      ...WorkflowRuleFields
-    }
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation ToggleWorkflowRulePublished($input: ToggleWorkflowRulePublishedInput!) {
-  toggleWorkflowRulePublished(input: $input) {
-    workflowRule {
-      ...WorkflowRuleFields
-    }
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation DeleteWorkflowRule($input: DeleteWorkflowRuleInput!) {
-  deleteWorkflowRule(input: $input) {
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
-mutation TriggerWorkflowRule($input: TriggerWorkflowRuleInput!) {
-  triggerWorkflowRule(input: $input) {
-    error {
-      message
-      type
-      code
-      fields {
-        field
-        message
-        type
-      }
-    }
-  }
-}
-
 mutation CreateWorkflow($input: CreateWorkflowInput!) {
   createWorkflow(input: $input) {
     workflow {
@@ -32473,6 +32492,40 @@ mutation TriggerWorkflow($input: TriggerWorkflowInput!) {
     workflowExecution {
       ...WorkflowExecutionFields
     }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CancelWorkflowExecution($input: CancelWorkflowExecutionInput!) {
+  cancelWorkflowExecution(input: $input) {
+    workflowExecution {
+      ...WorkflowExecutionFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation CancelPendingWorkflowExecutions($input: CancelPendingWorkflowExecutionsInput!) {
+  cancelPendingWorkflowExecutions(input: $input) {
+    cancelledCount
     error {
       message
       type
@@ -33060,9 +33113,6 @@ mutation AddWorkspaceAlternateSupportEmailAddress($input: AddWorkspaceAlternateS
   addWorkspaceAlternateSupportEmailAddress(input: $input) {
     workspaceEmailDomainSettings {
       ...WorkspaceEmailDomainSettingsFields
-    }
-    pendingDnsRecords {
-      ...PendingSenderDomainDnsRecordsFields
     }
     error {
       message
@@ -36226,6 +36276,42 @@ mutation DeleteServiceLevelAgreementPolicy($input: DeleteServiceLevelAgreementPo
   }
 }
 
+mutation ArchiveServiceLevelAgreementPolicy($input: ArchiveServiceLevelAgreementPolicyInput!) {
+  archiveServiceLevelAgreementPolicy(input: $input) {
+    serviceLevelAgreementPolicy {
+      ...ServiceLevelAgreementPolicyFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation UnarchiveServiceLevelAgreementPolicy($input: UnarchiveServiceLevelAgreementPolicyInput!) {
+  unarchiveServiceLevelAgreementPolicy(input: $input) {
+    serviceLevelAgreementPolicy {
+      ...ServiceLevelAgreementPolicyFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
 mutation AddMembersToTier($input: AddMembersToTierInput!) {
   addMembersToTier(input: $input) {
     memberships {
@@ -36730,6 +36816,24 @@ mutation CreateIndexedDocument($input: CreateIndexedDocumentInput!) {
 
 mutation UpdateGeneratedReply($input: UpdateGeneratedReplyInput!) {
   updateGeneratedReply(input: $input) {
+    generatedReply {
+      ...GeneratedReplyFields
+    }
+    error {
+      message
+      type
+      code
+      fields {
+        field
+        message
+        type
+      }
+    }
+  }
+}
+
+mutation DismissGeneratedReply($input: DismissGeneratedReplyInput!) {
+  dismissGeneratedReply(input: $input) {
     generatedReply {
       ...GeneratedReplyFields
     }

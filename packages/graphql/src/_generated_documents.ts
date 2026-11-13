@@ -218,7 +218,7 @@ export type AccountFieldValue = AccountFieldAccountReferenceValue | AccountField
 export type AccountIdentifierInput = {
   /** Plain's ID for the account, such as `te_01…`. Not the account's name. */
   accountId?: InputMaybe<Scalars['ID']['input']>;
-  /** Your own ID for the account, set when it was created. Not its name: find an account by name with `searchAccounts`. */
+  /** Your identifier for the account, assigned at creation. This field accepts the external identifier rather than the display name. */
   externalId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -432,11 +432,6 @@ export type AddWorkspaceAlternateSupportEmailAddressInput = {
 
 export type AddWorkspaceAlternateSupportEmailAddressOutput = {
   error?: Maybe<MutationError>;
-  /**
-   * Populated when the alternate address is on a domain different from the primary support domain and
-   * therefore requires its own DNS setup. Null for same-domain addresses.
-   */
-  pendingDnsRecords?: Maybe<PendingSenderDomainDnsRecords>;
   workspaceEmailDomainSettings?: Maybe<WorkspaceEmailDomainSettings>;
 };
 
@@ -660,6 +655,8 @@ export type AnswerSidekickQuestionSelectionInput = {
 };
 
 export type ApiKey = {
+  /** The IP ranges (CIDR notation) this key may be used from. Null means the key may be used from any IP address. */
+  allowedCidrs?: Maybe<Array<Scalars['String']['output']>>;
   createdAt: DateTime;
   createdBy: InternalActor;
   /** The timestamp at which the key was revoked, or null if it is still active. */
@@ -708,6 +705,15 @@ export type ArchiveLabelTypeInput = {
 export type ArchiveLabelTypeOutput = {
   error?: Maybe<MutationError>;
   labelType?: Maybe<LabelType>;
+};
+
+export type ArchiveServiceLevelAgreementPolicyInput = {
+  serviceLevelAgreementPolicyId: Scalars['ID']['input'];
+};
+
+export type ArchiveServiceLevelAgreementPolicyOutput = {
+  error?: Maybe<MutationError>;
+  serviceLevelAgreementPolicy?: Maybe<ServiceLevelAgreementPolicy>;
 };
 
 export type AriKnowledgeGapSignal = {
@@ -772,7 +778,7 @@ export type AttachmentDownloadUrl = {
 
 export type AttachmentType =
   | 'CHAT'
-  /** Attachment for a custom timeline entry created via `createCustomerEvent` or `createThreadEvent`. */
+  /** Attachment for a custom timeline entry created for a customer or a thread. */
   | 'CUSTOM_TIMELINE_ENTRY'
   | 'DISCORD'
   | 'EMAIL'
@@ -2051,7 +2057,7 @@ export type BulkUpsertWorkflowStepInput = {
   /** Optional name for the step. */
   name?: InputMaybe<Scalars['String']['input']>;
   /**
-   * JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+   * JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. IDs belong to the current workspace. Accepted action types depend on the workflow trigger.
    * - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
    * - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
    * - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
@@ -2081,7 +2087,7 @@ export type BulkUpsertWorkflowStepResultItem = {
 };
 
 export type BulkUpsertWorkflowStepsInput = {
-  /** Optional: Set this as the workflow's startStepId. Use null to clear. If not provided, startStepId is unchanged. Clearing to null fails on a published workflow — unpublish before restructuring, then republish. */
+  /** Optional: Set this as the workflow's startStepId. Use null to clear. If not provided, startStepId is unchanged. Clearing to null fails while the workflow is published. */
   startStepId?: InputMaybe<Scalars['ID']['input']>;
   /** The complete list of steps. Steps with existing IDs are updated, new IDs are created, missing IDs are deleted. */
   steps: Array<BulkUpsertWorkflowStepInput>;
@@ -2276,6 +2282,27 @@ export type CalculateRoleChangeCostOutput = {
 
 export type CancelHyperlineSubscriptionOutput = {
   error?: Maybe<MutationError>;
+};
+
+export type CancelPendingWorkflowExecutionsInput = {
+  workflowId: Scalars['ID']['input'];
+};
+
+export type CancelPendingWorkflowExecutionsOutput = {
+  /** How many QUEUED or WAITING executions were cancelled. Zero when the workflow had none. */
+  cancelledCount?: Maybe<Scalars['Int']['output']>;
+  error?: Maybe<MutationError>;
+};
+
+export type CancelWorkflowExecutionInput = {
+  /** The execution to cancel. Must be QUEUED or WAITING. */
+  workflowExecutionId: Scalars['ID']['input'];
+};
+
+export type CancelWorkflowExecutionOutput = {
+  error?: Maybe<MutationError>;
+  /** The cancelled execution, now CANCELLED. */
+  workflowExecution?: Maybe<WorkflowExecution>;
 };
 
 export type ChangeBillingPlanInput = {
@@ -2931,6 +2958,8 @@ export type CreateAllTestThreadsOutput = {
 };
 
 export type CreateApiKeyInput = {
+  /** The IP addresses or ranges (CIDR notation, IPv4 or IPv6) this key may be used from, at most 100. Omit to allow any IP address. */
+  allowedCidrs?: InputMaybe<Array<Scalars['String']['input']>>;
   description?: InputMaybe<Scalars['String']['input']>;
   /** The workspace users, roles and custom roles this key may reply as. Omit to create a key that cannot reply as anyone yet. */
   impersonationAllowList?: InputMaybe<ApiKeyImpersonationAllowListInput>;
@@ -3082,7 +3111,7 @@ export type CreateChatAppSecretOutput = {
 export type CreateCustomRoleInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
-  /** The built-in role whose permissions this custom role inherits. Only `SUPPORT` and `VIEWER` are accepted, and it cannot be changed later. Defaults to `SUPPORT`. Users with a `VIEWER` custom role take a viewer seat rather than a member seat, and cannot be assigned threads. */
+  /** The built-in role whose permissions this custom role inherits. Only `SUPPORT` and `VIEWER` are accepted, and it cannot be changed later. Defaults to `SUPPORT`. A Support-based custom role uses a member seat, and a Viewer-based one uses a viewer seat. */
   permissionsPreset?: InputMaybe<RoleKey>;
 };
 
@@ -3162,6 +3191,17 @@ export type CreateCustomerSurveyInput = {
 
 export type CreateCustomerSurveyOutput = {
   customerSurvey?: Maybe<CustomerSurvey>;
+  error?: Maybe<MutationError>;
+};
+
+export type CreateDashboardInput = {
+  /** Defaults to the 30-day preset. */
+  globalRange?: InputMaybe<DashboardRangeInput>;
+  name: Scalars['String']['input'];
+};
+
+export type CreateDashboardOutput = {
+  dashboard?: Maybe<Dashboard>;
   error?: Maybe<MutationError>;
 };
 
@@ -3323,6 +3363,8 @@ export type CreateHyperlineComponentsAuthTokenOutput = {
 export type CreateImportSyncInput = {
   filters: ImportSyncFiltersInput;
   serviceIntegrationKey: Scalars['String']['input'];
+  /** How fields on the external service map onto tenants. Only supported for Salesforce. */
+  tenantFieldMappings?: InputMaybe<ImportSyncTenantFieldMappingsInput>;
 };
 
 export type CreateImportSyncOutput = {
@@ -3943,17 +3985,6 @@ export type CreateWorkflowOutput = {
   workflow?: Maybe<Workflow>;
 };
 
-export type CreateWorkflowRuleInput = {
-  name: Scalars['String']['input'];
-  /** JSON-encoded payload of the rule definition. */
-  payload: Scalars['String']['input'];
-};
-
-export type CreateWorkflowRuleOutput = {
-  error?: Maybe<MutationError>;
-  workflowRule?: Maybe<WorkflowRule>;
-};
-
 export type CreateWorkflowShareLinkInput = {
   workflowId: Scalars['ID']['input'];
 };
@@ -3967,7 +3998,7 @@ export type CreateWorkflowStepInput = {
   /** Optional name for the step. */
   name?: InputMaybe<Scalars['String']['input']>;
   /**
-   * JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. Use IDs from this workspace; `workflowCapabilities` lists which action types a trigger allows.
+   * JSON-encoded step configuration: an object with `"version":1` and a `type`, using exactly the fields below. IDs belong to the current workspace. Accepted action types depend on the workflow trigger.
    * - CONDITION: a leaf, or a combinator `{"version":1,"type":"and"|"or","conditions":[…]}` / `{"version":1,"type":"not","condition":{…}}`. Leaves: `any_message_contains` / `any_customer_message_contains` (`keywords`: string[], `matchType`?: `CONTAINS`|`MATCHES_WORD`); `contains_label` (`labelTypeIds`); `priority_equals` (`priorities`: int[], 0=Urgent … 3=Low); `tier_equals` (`tierIds`); `customer_email_includes` (`customerEmails`); `support_channel_equals` (`supportChannels`: `SLACK`|`MS_TEAMS`|`EMAIL`|`CHAT`|`DISCORD`|`API`); `outside_business_hours` (`businessHoursScheduleId`?); `thread_field_equals` (`threadFieldKey`, `fieldValue`: {`type`, `operator`, `value`}); `ai_workflow_rule_condition` (`prompt`, for checks with no native type).
    * - ACTION: `apply_labels` / `remove_labels` (`labelTypeIds`); `set_priority` (`priority`: 0–3); `set_tier` (`tierId`); `assign_to_user` (`userId`); `assign_to_team` (`teamLabelId`); `add_note` / `send_message` (`text`, `markdown` or null); `set_status` (`statusDetail`, e.g. `ThreadStatusDetailDoneManuallySet`); `set_thread_field` (`threadFieldKey`, `threadFieldType`, one value field).
    * - WAIT: `{"duration":<seconds>}`. NOTE: `{"text":"…"}`.
@@ -4907,6 +4938,278 @@ export type CustomersSort = {
 export type CustomersSortField =
   | 'FULL_NAME';
 
+export type Dashboard = {
+  createdAt: DateTime;
+  createdBy: InternalActor;
+  globalRange: DashboardRange;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: DateTime;
+  updatedBy: InternalActor;
+  /** Ordered by position. */
+  widgets: Array<DashboardWidget>;
+};
+
+/** The config of every widget kind except MARKDOWN. */
+export type DashboardChartWidgetConfig = {
+  catalogueEntryId: Scalars['ID']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  /** JSON-encoded `ThreadMetricFilters` input, as saved. */
+  filters?: Maybe<Scalars['String']['output']>;
+  keyMetric?: Maybe<DashboardWidgetKeyMetric>;
+  metrics: Array<DashboardWidgetMetric>;
+  rangeOverride?: Maybe<DashboardRange>;
+  theme?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+  valueType: DashboardWidgetValueType;
+};
+
+export type DashboardChartWidgetConfigInput = {
+  catalogueEntryId: Scalars['ID']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<ThreadMetricFilters>;
+  keyMetric?: InputMaybe<DashboardWidgetKeyMetricInput>;
+  /** At least one. */
+  metrics: Array<DashboardWidgetMetricInput>;
+  rangeOverride?: InputMaybe<DashboardRangeInput>;
+  theme?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  valueType: DashboardWidgetValueType;
+};
+
+export type DashboardChartWidgetInput = {
+  /** Required for TIMESERIES. Omit or set null for every other kind. */
+  chartType?: InputMaybe<DashboardWidgetChartType>;
+  config: DashboardChartWidgetConfigInput;
+  kind: DashboardChartWidgetKind;
+};
+
+/** The widget kinds that render metrics: every `DashboardWidgetKind` except MARKDOWN. */
+export type DashboardChartWidgetKind =
+  | 'BREAKDOWN'
+  | 'HEATMAP'
+  | 'STAT'
+  | 'TIMESERIES';
+
+export type DashboardConnection = {
+  edges: Array<DashboardEdge>;
+  pageInfo: PageInfo;
+};
+
+export type DashboardCustomRange = {
+  /** ISO 8601 timestamp with offset, before `to`. */
+  from: Scalars['String']['output'];
+  /** ISO 8601 timestamp with offset. */
+  to: Scalars['String']['output'];
+};
+
+export type DashboardCustomRangeInput = {
+  /** ISO 8601 timestamp with offset, before `to`. */
+  from: Scalars['String']['input'];
+  /** ISO 8601 timestamp with offset. */
+  to: Scalars['String']['input'];
+};
+
+export type DashboardEdge = {
+  cursor: Scalars['String']['output'];
+  node: Dashboard;
+};
+
+/** Rendered with `threadHeatmapMetric`. */
+export type DashboardHeatmapWidgetMetric = {
+  colorTransform?: Maybe<Scalars['String']['output']>;
+  /** JSON-encoded `ThreadMetricFilters` input, as saved. */
+  filters?: Maybe<Scalars['String']['output']>;
+  /** Null uses the metric's default, so the series follows any later change to it. */
+  machineUsers?: Maybe<MachineUserMode>;
+  name: HeatmapMetricName;
+  seriesLabel?: Maybe<Scalars['String']['output']>;
+};
+
+export type DashboardHeatmapWidgetMetricInput = {
+  colorTransform?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<ThreadMetricFilters>;
+  /** Null uses the metric's default, so the series follows any later change to it. */
+  machineUsers?: InputMaybe<MachineUserMode>;
+  name: HeatmapMetricName;
+  seriesLabel?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** The config of a MARKDOWN widget. */
+export type DashboardMarkdownWidgetConfig = {
+  /** Markdown as the user wrote it, at most 5000 characters. May be empty. */
+  markdown: Scalars['String']['output'];
+};
+
+export type DashboardMarkdownWidgetInput = {
+  /** At most 5000 characters. May be empty, so a text widget added in the editor saves before anyone writes in it. */
+  markdown: Scalars['String']['input'];
+};
+
+export type DashboardMetricGroupBy = {
+  dimension: ThreadMetricGroupBy;
+  subKey?: Maybe<Scalars['String']['output']>;
+  topN?: Maybe<Scalars['Int']['output']>;
+};
+
+export type DashboardMetricInterval = {
+  unit: ThreadMetricIntervalUnit;
+};
+
+/** A range ending now. */
+export type DashboardPresetRange = {
+  /** Length of the range in days: 1, 7, 30, 60, 120, 182 or 365. */
+  duration: Scalars['Int']['output'];
+};
+
+export type DashboardPresetRangeInput = {
+  /** Length of the range in days: 1, 7, 30, 60, 120, 182 or 365. */
+  duration: Scalars['Int']['input'];
+};
+
+export type DashboardRange = DashboardCustomRange | DashboardPresetRange;
+
+/** Set exactly one of `preset` or `custom`. */
+export type DashboardRangeInput = {
+  custom?: InputMaybe<DashboardCustomRangeInput>;
+  preset?: InputMaybe<DashboardPresetRangeInput>;
+};
+
+/** Rendered with `threadSingleValueMetric`. */
+export type DashboardSingleValueWidgetMetric = {
+  colorTransform?: Maybe<Scalars['String']['output']>;
+  /** JSON-encoded `ThreadMetricFilters` input, as saved. */
+  filters?: Maybe<Scalars['String']['output']>;
+  groupBy?: Maybe<DashboardMetricGroupBy>;
+  /** Null uses the metric's default, so the series follows any later change to it. */
+  machineUsers?: Maybe<MachineUserMode>;
+  name: SingleValueMetricName;
+  percentile?: Maybe<Scalars['Int']['output']>;
+  seriesLabel?: Maybe<Scalars['String']['output']>;
+};
+
+export type DashboardSingleValueWidgetMetricInput = {
+  colorTransform?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<ThreadMetricFilters>;
+  groupBy?: InputMaybe<ThreadMetricGroupByInput>;
+  /** Null uses the metric's default, so the series follows any later change to it. */
+  machineUsers?: InputMaybe<MachineUserMode>;
+  name: SingleValueMetricName;
+  /** Greater than 0, at most 100. */
+  percentile?: InputMaybe<Scalars['Int']['input']>;
+  seriesLabel?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Rendered with `threadTimeSeriesMetric`. */
+export type DashboardTimeSeriesWidgetMetric = {
+  colorTransform?: Maybe<Scalars['String']['output']>;
+  /** JSON-encoded `ThreadMetricFilters` input, as saved. */
+  filters?: Maybe<Scalars['String']['output']>;
+  groupBy?: Maybe<DashboardMetricGroupBy>;
+  interval?: Maybe<DashboardMetricInterval>;
+  /** Null uses the metric's default, so the series follows any later change to it. */
+  machineUsers?: Maybe<MachineUserMode>;
+  name: TimeSeriesMetricName;
+  percentile?: Maybe<Scalars['Int']['output']>;
+  seriesLabel?: Maybe<Scalars['String']['output']>;
+};
+
+export type DashboardTimeSeriesWidgetMetricInput = {
+  colorTransform?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<ThreadMetricFilters>;
+  groupBy?: InputMaybe<ThreadMetricGroupByInput>;
+  interval?: InputMaybe<ThreadMetricInterval>;
+  /** Null uses the metric's default, so the series follows any later change to it. */
+  machineUsers?: InputMaybe<MachineUserMode>;
+  name: TimeSeriesMetricName;
+  /** Greater than 0, at most 100. */
+  percentile?: InputMaybe<Scalars['Int']['input']>;
+  seriesLabel?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type DashboardWidget = {
+  /** Timeseries widgets only. Always null for MARKDOWN. */
+  chartType?: Maybe<DashboardWidgetChartType>;
+  config: DashboardWidgetConfig;
+  id: Scalars['ID']['output'];
+  kind: DashboardWidgetKind;
+  layout: DashboardWidgetLayout;
+  position: Scalars['Int']['output'];
+};
+
+export type DashboardWidgetChartType =
+  | 'BAR'
+  | 'LINE'
+  | 'STACKED_BAR';
+
+/** DashboardMarkdownWidgetConfig for MARKDOWN widgets, DashboardChartWidgetConfig for every other kind. */
+export type DashboardWidgetConfig = DashboardChartWidgetConfig | DashboardMarkdownWidgetConfig;
+
+/** Set exactly one field. It decides what the widget shows. */
+export type DashboardWidgetContentInput = {
+  chart?: InputMaybe<DashboardChartWidgetInput>;
+  markdown?: InputMaybe<DashboardMarkdownWidgetInput>;
+};
+
+export type DashboardWidgetInput = {
+  /** The widget's content. Required when creating a new widget. When updating an existing widget, omit to keep its current content or provide a value to replace it. */
+  content?: InputMaybe<DashboardWidgetContentInput>;
+  layout: DashboardWidgetLayoutInput;
+  /** The ID of an existing widget on this dashboard. Omit to create a new widget. Each ID can only be used once. */
+  widgetId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type DashboardWidgetKeyMetric = {
+  /** Null uses the metric's default, so the series follows any later change to it. */
+  machineUsers?: Maybe<MachineUserMode>;
+  name: SingleValueMetricName;
+  percentile?: Maybe<Scalars['Int']['output']>;
+};
+
+export type DashboardWidgetKeyMetricInput = {
+  /** Null uses the metric's default, so the series follows any later change to it. */
+  machineUsers?: InputMaybe<MachineUserMode>;
+  name: SingleValueMetricName;
+  /** Greater than 0, at most 100. */
+  percentile?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type DashboardWidgetKind =
+  | 'BREAKDOWN'
+  | 'HEATMAP'
+  /** User-written markdown, with no metrics. */
+  | 'MARKDOWN'
+  | 'STAT'
+  | 'TIMESERIES';
+
+export type DashboardWidgetLayout = {
+  /** Columns spanned. Always 1. */
+  width: Scalars['Int']['output'];
+  /** Column, 0 to 2. */
+  x: Scalars['Int']['output'];
+};
+
+export type DashboardWidgetLayoutInput = {
+  /** Columns spanned. Must be 1. */
+  width: Scalars['Int']['input'];
+  /** Column, 0 to 2. */
+  x: Scalars['Int']['input'];
+};
+
+export type DashboardWidgetMetric = DashboardHeatmapWidgetMetric | DashboardSingleValueWidgetMetric | DashboardTimeSeriesWidgetMetric;
+
+/** Set exactly one field, naming the metric query that renders the series. The widget `kind` decides which are allowed: TIMESERIES takes `timeSeries`, STAT takes `singleValue`, HEATMAP takes `heatmap`, and BREAKDOWN takes `timeSeries` or `singleValue`. */
+export type DashboardWidgetMetricInput = {
+  heatmap?: InputMaybe<DashboardHeatmapWidgetMetricInput>;
+  singleValue?: InputMaybe<DashboardSingleValueWidgetMetricInput>;
+  timeSeries?: InputMaybe<DashboardTimeSeriesWidgetMetricInput>;
+};
+
+export type DashboardWidgetValueType =
+  | 'COUNT'
+  | 'PERCENTAGE'
+  | 'TIME';
+
 /** Filters calendar dates, which have no time or timezone. */
 export type DateFilter = {
   /** On or after this date, in YYYY-MM-DD format. */
@@ -5099,6 +5402,15 @@ export type DeleteCustomerSurveyInput = {
 };
 
 export type DeleteCustomerSurveyOutput = {
+  error?: Maybe<MutationError>;
+};
+
+export type DeleteDashboardInput = {
+  dashboardId: Scalars['ID']['input'];
+};
+
+export type DeleteDashboardOutput = {
+  deletedDashboardId?: Maybe<Scalars['ID']['output']>;
   error?: Maybe<MutationError>;
 };
 
@@ -5450,14 +5762,6 @@ export type DeleteWorkflowOutput = {
   error?: Maybe<MutationError>;
 };
 
-export type DeleteWorkflowRuleInput = {
-  workflowRuleId: Scalars['ID']['input'];
-};
-
-export type DeleteWorkflowRuleOutput = {
-  error?: Maybe<MutationError>;
-};
-
 export type DeleteWorkflowStepInput = {
   stepId: Scalars['ID']['input'];
 };
@@ -5750,6 +6054,15 @@ export type DiscussionsSortField =
   | 'CREATED_AT'
   | 'LAST_ACTIVITY_AT'
   | 'UPDATED_AT';
+
+export type DismissGeneratedReplyInput = {
+  generatedReplyId: Scalars['ID']['input'];
+};
+
+export type DismissGeneratedReplyOutput = {
+  error?: Maybe<MutationError>;
+  generatedReply?: Maybe<GeneratedReply>;
+};
 
 export type DismissSidekickQuestionInput = {
   threadDiscussionMessageId: Scalars['ID']['input'];
@@ -7303,6 +7616,8 @@ export type ImportJobDefinition = {
   metadata?: Maybe<ImportJobDefinitionMetadata>;
   /** The sync mode for this definition (e.g. SYNC for continuous synchronization). */
   mode: Scalars['String']['output'];
+  /** How fields on the external service map onto tenants. Null when no mapping is configured. */
+  tenantFieldMappings?: Maybe<ImportJobDefinitionTenantFieldMappings>;
   updatedAt: DateTime;
   updatedBy: InternalActor;
 };
@@ -7314,6 +7629,11 @@ export type ImportJobDefinitionList = {
 
 export type ImportJobDefinitionMetadata = {
   lists: Array<ImportJobDefinitionList>;
+};
+
+export type ImportJobDefinitionTenantFieldMappings = {
+  /** The ID of the tenant field schema imported as the tenant's alternate domains. */
+  alternateDomainsTenantFieldSchemaId?: Maybe<Scalars['ID']['output']>;
 };
 
 export type ImportJobEdge = {
@@ -7349,6 +7669,11 @@ export type ImportRun = {
 export type ImportSyncFiltersInput = {
   tenantListId?: InputMaybe<Scalars['ID']['input']>;
   tenantListName?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ImportSyncTenantFieldMappingsInput = {
+  /** The ID of a text tenant field schema from this service whose contents are imported as the tenant's alternate domains. Values can be separated by newlines, commas, semicolons, pipes or spaces, and values that are not valid domains are skipped. */
+  alternateDomainsTenantFieldSchemaId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ImportTenantFieldSchemaInput = {
@@ -7486,7 +7811,9 @@ export type ImportThreadMessageInput = {
   emailMessageId?: InputMaybe<Scalars['String']['input']>;
   /** An external ID for this message. Duplicate imports with the same externalId are skipped. */
   externalId: Scalars['ID']['input'];
-  /** The text content of the message. */
+  /** How to interpret `text`. Omit to keep plain text. */
+  format?: ImportThreadMessageTextFormat;
+  /** The message body. Plain text unless `format` is `MARKDOWN`. */
   text: Scalars['String']['input'];
   type: ImportThreadMessageType;
 };
@@ -7498,6 +7825,13 @@ export type ImportThreadMessageResult = {
   /** The imported thread message. Null if the import of this message failed. */
   threadMessage?: Maybe<ImportedThreadMessage>;
 };
+
+/** How to interpret the `text` of an imported message. */
+export type ImportThreadMessageTextFormat =
+  /** Markdown. Rendered the same way as other Markdown timeline messages and notes. */
+  | 'MARKDOWN'
+  /** Plain text. Links and formatting characters are shown as written. */
+  | 'PLAIN_TEXT';
 
 export type ImportThreadMessageType =
   | 'INBOUND'
@@ -7866,6 +8200,8 @@ export type KnowledgeGap = {
   /** AI-generated description providing more detail about the knowledge gap. */
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  /** The label types this gap is scoped to. Empty when the gap is not scoped to a label. */
+  labelTypes: Array<LabelType>;
   /** Timestamp of the most recently linked signal. Monotonically increasing — it only advances forward as new signals are attached to this gap. */
   lastSeenAt: DateTime;
   /** Paginated list of signals linked to this knowledge gap. */
@@ -7945,6 +8281,8 @@ export type KnowledgeGapTaskLink = TaskLink & {
 };
 
 export type KnowledgeGapsFilter = {
+  /** Only return gaps scoped to at least one of these label types. */
+  labelTypeIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Only return gaps most recently hit by a customer within this range. Set only `after` to get every gap hit at least once since that time. */
   lastSeenAt?: InputMaybe<DatetimeFilter>;
   statuses?: InputMaybe<Array<KnowledgeGapStatus>>;
@@ -8111,6 +8449,13 @@ export type LabelTypeFilter = {
   isArchived?: InputMaybe<Scalars['Boolean']['input']>;
   /** Only label types changed in this range, including archiving and unarchiving. Use it to sync changes since a previous read. */
   updatedAt?: InputMaybe<DatetimeFilter>;
+};
+
+export type LabelTypeSiblingGroupInput = {
+  /** The label types that should sit under this parent, in the order they should appear. Label types already under this parent that are not listed keep their current position. */
+  labelTypeIds: Array<Scalars['ID']['input']>;
+  /** The parent of the label types in `labelTypeIds`. Omit or pass null for top-level label types. */
+  parentLabelTypeId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type LabelTypeType =
@@ -8319,6 +8664,24 @@ export type MachineUserEdge = {
   node: MachineUser;
 };
 
+/**
+ * How machine users count in a thread metric. Every machine user counts, AI agent or API user. Each metric defines machine-user activity, and `threadMetricCapabilities` returns the exact definition, default and supported modes:
+ * - Thread counts, status counts, CSAT and customer waiting time: a machine-user thread is one whose assignees were all machine users. A thread with a human assignee, or none, counts as human.
+ * - First response time and first-response SLA compliance: a thread whose first outbound message a machine user sent.
+ * - Time between responses: each response a machine user sent.
+ * - Resolution time: a machine-user thread, or one a machine user created and first replied to.
+ * - Status transitions and messages sent: each change or message a machine user made.
+ * - Next-response SLA compliance: not supported (INCLUDE only).
+ * - `agent_*` metrics: the agent credited is a machine user.
+ */
+export type MachineUserMode =
+  /** Leave machine-user activity out. */
+  | 'EXCLUDE'
+  /** Count machine-user activity alongside human activity. */
+  | 'INCLUDE'
+  /** Count only machine-user activity. */
+  | 'ONLY';
+
 export type MachineUserType =
   /** A machine user that represents an AI Agent */
   | 'AI_AGENT'
@@ -8520,6 +8883,8 @@ export type Mutation = {
   answerSidekickQuestion: AnswerSidekickQuestionOutput;
   /** Archives a label type so it can no longer be applied to threads, while preserving it on threads that already have it. To apply an archived label type again, unarchive it first. Requires the `labelType:edit` permission. */
   archiveLabelType: ArchiveLabelTypeOutput;
+  /** Archive an SLA policy to retire it. Threads already on the policy keep it and their SLA trackers keep running, but it can no longer be assigned to other threads, by a user, the API or a workflow. Unarchive it to assign it again. Requires the `serviceLevelAgreement:edit` permission. */
+  archiveServiceLevelAgreementPolicy: ArchiveServiceLevelAgreementPolicyOutput;
   /** Assigns a role to a user in the workspace. Supply exactly one of `roleKey` (for built-in roles) or `customRoleId` (for custom roles) — not both. You can also set `usingBillingRotaSeat` to control whether the user occupies a billable seat on the billing rota. Requires the `roles:assign` permission. */
   assignRolesToUser: AssignRolesToUserOutput;
   /** Assign a thread to a specific user or machine user, replacing any existing primary assignee. Requires the `thread:assign` and `thread:read` permissions. */
@@ -8535,16 +8900,10 @@ export type Mutation = {
    * matching one rule, identified by its channel name prefix and suffix.
    */
   bulkJoinSlackChannels: BulkJoinSlackChannelsOutput;
-  /**
-   * Applies many connected-slack-channel updates in a single request. Each
-   * update is applied independently with the same semantics as
-   * `updateConnectedSlackChannel`; partial failures are reported per-item.
-   */
+  /** Applies many connected-slack-channel updates in a single request. Each update is applied independently; partial failures are reported per item. */
   bulkUpdateConnectedSlackChannels: BulkUpdateConnectedSlackChannelsOutput;
   /**
-   * Applies many Slack per-channel setting writes in a single request. Each
-   * update targets the `WORKSPACE_SLACK_CONNECTED_CHANNEL` scope and is
-   * written with the same semantics as `updateSetting`. The writes are
+   * Applies many Slack per-channel setting writes in a single request. Each update writes a setting at the `WORKSPACE_SLACK_CONNECTED_CHANNEL` scope. The writes are
    * attempted independently; partial failures are reported per-item.
    */
   bulkUpdateSlackChannelSettings: BulkUpdateSlackChannelSettingsOutput;
@@ -8552,13 +8911,17 @@ export type Mutation = {
   bulkUpsertThreadFields: BulkUpsertThreadFieldsOutput;
   /**
    * Atomically replace all steps in a workflow. Steps with a matching `stepId` are updated; steps without an ID (or with a new ID) are created; steps that existed before but are absent from the input are deleted.
-   * Optionally updates `startStepId` and the trigger configuration in the same call. Maximum 60 steps per workflow. Read `workflowBuilderGuide` first for the trigger events and every step payload.
+   * Optionally updates `startStepId` and the trigger configuration in the same call. Maximum 60 steps per workflow.
    */
   bulkUpsertWorkflowSteps: BulkUpsertWorkflowStepsOutput;
   /** Calculates the billing cost delta of changing a user's role or seat type, including prorated and full-period amounts. Use this before making a role change to show the user an accurate cost preview. */
   calculateRoleChangeCost: CalculateRoleChangeCostOutput;
   /** Cancels the workspace's active Hyperline subscription. The subscription remains active until the end of the current billing period. Requires the `billing:edit` permission. */
   cancelHyperlineSubscription: CancelHyperlineSubscriptionOutput;
+  /** Cancel every QUEUED and WAITING execution of a workflow. Running executions are left to finish. */
+  cancelPendingWorkflowExecutions: CancelPendingWorkflowExecutionsOutput;
+  /** Cancel a QUEUED or WAITING workflow execution. It stops where it is: a waiting execution does not take its wait step's cancelled branch. Fails with `workflow_execution_not_cancellable` for any other status. */
+  cancelWorkflowExecution: CancelWorkflowExecutionOutput;
   /** Switches the workspace to a different billing plan. Use `previewBillingPlanChange` first to show the user the cost impact before applying the change. */
   changeBillingPlan: ChangeBillingPlanOutput;
   /** Reassign a thread to a different customer. The original customer retains all their other threads. Requires the `thread:edit` permission. */
@@ -8575,7 +8938,7 @@ export type Mutation = {
   completeSidekickMcpServerConnection: CompleteSidekickMcpServerConnectionOutput;
   /**
    * Creates a new account. Fails with a validation error if an account already exists with the provided `externalId`.
-   * Use `upsertAccount` instead if you want to create or update an account idempotently.
+   *
    * Requires the `tenant:create` permission.
    */
   createAccount: CreateAccountOutput;
@@ -8589,12 +8952,11 @@ export type Mutation = {
   /** Creates a single AI tone rule with the given category and description. Rules are enabled by default; pass `isEnabled: false` to create the rule in a disabled state. A workspace may have at most 7 simultaneously enabled rules across all categories. Requires the `aiToneRule:create` permission. */
   createAiToneRule: CreateAiToneRuleOutput;
   /**
-   * Create one test thread per scenario for the signed-in user, so they get a populated inbox in a
-   * single call rather than one `createTestThread` per scenario. Each thread comes from that
+   * Create one test thread per scenario for the signed-in user, so they get a populated inbox in a single call. Each thread comes from that
    * scenario's own test customer, and its opening message is written shortly after this
    * returns. Scenarios the caller already has a test thread for are skipped, so calling this again
    * tops the set up rather than duplicating it, and a scenario that fails does not stop the rest.
-   * Use `testThreads` for the caller's full set. Requires the `thread:create` permission.
+   *  Requires the `thread:create` permission.
    */
   createAllTestThreads: CreateAllTestThreadsOutput;
   /** Create an API key for a machine user. The plaintext secret is returned only once in `apiKeySecret` and cannot be retrieved again — store it immediately. You can only grant permissions that you yourself hold; attempting to escalate privileges returns an error. Requires the `apiKey:create` permission. */
@@ -8609,8 +8971,7 @@ export type Mutation = {
   /**
    * Generate a presigned upload URL for an attachment. Use the returned `uploadFormUrl` and
    * `uploadFormData` fields to POST the file as multipart/form-data directly to storage. The
-   * upload URL expires after 2 hours; the resulting `attachment.id` can then be referenced in
-   * mutations such as `createThread`, `replyToEmail`, or `createNote`. Requires the
+   * upload URL expires after 2 hours; the resulting `attachment.id` identifies the uploaded file in messages or notes. Requires the
    * `attachment:create` permission. Attachments that are never referenced in a message are
    * automatically deleted after 24 hours.
    */
@@ -8647,7 +9008,7 @@ export type Mutation = {
    * Requires the `chatAppSecret:create` permission and the live-chat billing entitlement.
    */
   createChatAppSecret: CreateChatAppSecretOutput;
-  /** Creates a new custom role in the workspace. Custom roles inherit the Support permissions by default; set `permissionsPreset` to `VIEWER` for a view-only role that takes a viewer seat rather than a member seat. Thread visibility can be further limited using `upsertRoleScopes`. Requires the `roles:create` permission and the `custom_roles` billing entitlement. */
+  /** Creates a new custom role in the workspace. Custom roles inherit the Support permissions by default; set `permissionsPreset` to `VIEWER` to inherit the Viewer role. A Support-based custom role uses a member seat, and a Viewer-based one uses a viewer seat. Thread visibility can be further limited using `upsertRoleScopes`. Requires the `roles:create` permission and the `custom_roles` billing entitlement. */
   createCustomRole: CreateCustomRoleOutput;
   /**
    * Creates a new customer card config. New configs are placed at the bottom of the list (order 100000) by default.
@@ -8666,6 +9027,8 @@ export type Mutation = {
   createCustomerGroup: CreateCustomerGroupOutput;
   /** Creates a new customer survey (e.g. a CSAT survey) in the workspace. A survey is sent to the customer when a thread they're on is marked done and matches the survey's conditions, after `responseDelayMinutes`. Requires the `customerSurvey:create` permission and a billing entitlement for customer surveys. You must supply a template (currently only `csatTemplate` is supported) and can optionally specify targeting conditions, an enabled state, a send delay, and a per-customer cooldown interval. */
   createCustomerSurvey: CreateCustomerSurveyOutput;
+  /** Creates a dashboard. Requires `dashboard:create`. */
+  createDashboard: CreateDashboardOutput;
   /**
    * Create a new discussion. Supersedes createThreadDiscussion and additionally supports Sidekick Agent
    * AGENT_SESSION discussions (which can be started without a thread). For Slack, Email, and Cursor
@@ -8695,19 +9058,19 @@ export type Mutation = {
   createHyperlineComponentsAuthToken: CreateHyperlineComponentsAuthTokenOutput;
   /** Create an import job definition that continuously syncs tenant field schemas, tenants, and customers from a connected external service (Attio, HubSpot, or Salesforce). Only one enabled import job definition can exist per service authorization at a time; calling this when one is already enabled returns an error. Use updateImportJobDefinition to disable an existing definition before creating a new one. */
   createImportSync: CreateImportSyncOutput;
-  /** Manually add a single URL as an indexed document within an existing knowledge source. The document is fetched and queued for indexing asynchronously. Requires Plain AI to be enabled on the workspace; turn it on with `updateSetting` (code `plain_ai`, WORKSPACE scope, boolean `true`). */
+  /** Manually add a single URL as an indexed document within an existing knowledge source. The document is fetched and queued for indexing asynchronously. Requires Plain AI to be enabled on the workspace. */
   createIndexedDocument: CreateIndexedDocumentOutput;
   /**
-   * Create a new issue in a connected issue tracker (Shortcut, Rootly, incident.io, or GitHub) and return a `ThreadLinkCandidate` that can immediately be used with `createThreadLink` to link it to a thread.
-   * The `fields` array must include all required fields for the chosen tracker (use `issueTrackerFields` to discover which fields are required and their allowed values).
-   * For GitHub, the acting user must have a personal GitHub user auth integration set up via `createGithubUserAuthIntegration`; the issue is created on their behalf.
+   * Create a new issue in a connected issue tracker (Shortcut, Rootly, incident.io, or GitHub) and return a `ThreadLinkCandidate` that identifies the created issue as a possible thread link target.
+   * The `fields` array must include all required fields for the chosen tracker (including the required fields and their allowed values).
+   * For GitHub, the acting user must have a personal GitHub user auth integration set up; the issue is created on their behalf.
    * Requires the `threadLink:create` permission.
    */
   createIssueTrackerIssue: CreateIssueTrackerIssueOutput;
   /**
    * Create a new knowledge source that Plain AI will index and use when generating replies.
    * Use type `SITEMAP` to crawl all URLs listed in a sitemap XML file, or type `URL` to index a
-   * single page. Requires Plain AI to be enabled on the workspace; turn it on with `updateSetting` (code `plain_ai`, WORKSPACE scope, boolean `true`).
+   * single page. Requires Plain AI to be enabled on the workspace.
    */
   createKnowledgeSource: CreateKnowledgeSourceOutput;
   /** Creates a new label type in the workspace. Label types define the labels available to apply to threads and users. Requires the `labelType:create` permission. */
@@ -8715,7 +9078,7 @@ export type Mutation = {
   createLinearAppIntegration: CreateLinearAppIntegrationOutput;
   /** Creates a new machine user in the workspace. Each machine user can hold multiple API keys and optionally has a public-facing name shown to customers. Only one machine user of type AI_AGENT is allowed per workspace. Requires the `machineUser:create` permission. */
   createMachineUser: CreateMachineUserOutput;
-  /** Report a problem or an idea about Plain's MCP tools to the Plain team. Call this when a tool fails unexpectedly, when you cannot do what the user asked with the available tools, or when you have a concrete idea that would make the tools more useful. Describe the problem in `comment` and name the tool in `toolName` if one was involved. Do not include customer data, personal information, or message content in `comment`. Requires the `aiFeatureFeedback:create` permission. */
+  /** Report a problem or an idea about Plain's MCP tools to the Plain team. The report can describe a tool error, a missing capability, or an improvement idea. Describe the problem in `comment` and name the tool in `toolName` if one was involved. Do not include customer data, personal information, or message content in `comment`. Requires the `aiFeatureFeedback:create` permission. */
   createMcpFeedback: CreateMcpFeedbackOutput;
   /** Saves a page as a favorite for the currently authenticated user. If the caller has already favorited a page with the same key, the existing record is returned unchanged (idempotent). Requires the `favoritePage:create` permission. */
   createMyFavoritePage: CreateMyFavoritePageOutput;
@@ -8746,7 +9109,7 @@ export type Mutation = {
   createServiceLevelAgreement: CreateServiceLevelAgreementOutput;
   /** Create an SLA policy together with its targets. A policy holds at most one target per type, and any combination of types is valid. Business hours schedules are chosen once per policy: every target that uses business hours must reference the same schedules, and a target with none is tracked 24/7. A policy only starts tracking once it is applied to a thread. Requires the `serviceLevelAgreement:create` permission. */
   createServiceLevelAgreementPolicy: CreateServiceLevelAgreementPolicyOutput;
-  /** Create a workspace custom skill. The name must be a unique URL-safe slug. */
+  /** Create an enabled workspace custom skill. The unique URL-safe slug is derived from displayName. */
   createSidekickCustomSkill: CreateSidekickCustomSkillOutput;
   /** Register a custom (customer-owned) MCP server for Sidekick Agent and mint a Nango Connect session for in-browser OAuth consent. The server is created in an unreachable state; call completeSidekickMcpServerConnection after consent to discover its tools and mark it connected. */
   createSidekickMcpServer: CreateSidekickMcpServerOutput;
@@ -8756,7 +9119,7 @@ export type Mutation = {
   createTask: CreateTaskOutput;
   /**
    * Creates a new tenant. Fails with a validation error if a tenant already exists with the provided `externalId`.
-   * Use `upsertTenant` instead if you want to create or update a tenant idempotently.
+   *
    * Requires the `tenant:create` permission.
    * @deprecated Use createAccount instead
    */
@@ -8764,8 +9127,7 @@ export type Mutation = {
   /**
    * Create a test thread for the signed-in user. Test threads come from a test customer rather
    * than a real one. The scenario is picked for you and fixes the thread's title; its opening
-   * message is written shortly after this returns. They are listed by `testThreads` rather than
-   * `threads`, and only for the user who created them. Pass `channel: SLACK` to have the
+   * message is written shortly after this returns. They are visible in the test-thread list only to the user who created them. Pass `channel: SLACK` to have the
    * conversation happen in the workspace's Slack test channel instead of chat, so the caller sees a
    * thread arrive the way a customer's Slack message does. Requires the `thread:create`
    * permission.
@@ -8832,18 +9194,13 @@ export type Mutation = {
   /** Register a new HTTP endpoint to receive Plain webhook events. You must specify the URL, a human-readable description, the webhook schema version to pin to, whether deliveries should start immediately, and the list of event types to subscribe to. You can optionally supply custom HTTP headers (e.g. an `Authorization` header) to send with every delivery. Use `subscriptionEventTypes` to discover valid event type identifiers. Requires the `webhookTarget:create` permission. */
   createWebhookTarget: CreateWebhookTargetOutput;
   /**
-   * Create a new workflow. The workflow starts unpublished with no steps; use `bulkUpsertWorkflowSteps` to add steps and `updateWorkflow` to publish it.
-   * The `trigger` field must be a valid JSON-encoded trigger configuration. Read `workflowBuilderGuide` first for the trigger events and every step payload.
+   * Create a new workflow. The workflow starts unpublished with no steps.
+   * The `trigger` field must be a valid JSON-encoded trigger configuration.
    */
   createWorkflow: CreateWorkflowOutput;
-  /**
-   * Create a new workflow rule. The rule starts unpublished; use `toggleWorkflowRulePublished` to activate it.
-   * The `payload` field must be a valid JSON-encoded rule definition.
-   */
-  createWorkflowRule: CreateWorkflowRuleOutput;
   /** Create a content-addressed share link for a workflow. Returns a short token that can be used to load the workflow in another workspace. */
   createWorkflowShareLink: CreateWorkflowShareLinkOutput;
-  /** Add a single step to a workflow. For bulk changes to a workflow's step graph, prefer `bulkUpsertWorkflowSteps`. `workflowBuilderGuide` lists every step payload. */
+  /** Add a single step to a workflow. */
   createWorkflowStep: CreateWorkflowStepOutput;
   /** Create a new Plain workspace. The authenticated user becomes the owner of the new workspace. Requires a unique internal name and a public-facing display name. */
   createWorkspace: CreateWorkspaceOutput;
@@ -8863,7 +9220,7 @@ export type Mutation = {
   createWorkspaceDiscordIntegration: CreateWorkspaceDiscordIntegrationOutput;
   /** Configures a custom email domain for the workspace using the provided support email address. After creation, complete setup by verifying email forwarding with verifyWorkspaceEmailForwardingSettings and DNS records with verifyWorkspaceEmailDnsSettings. */
   createWorkspaceEmailDomainSettings: CreateWorkspaceEmailDomainSettingsOutput;
-  /** Generate a fresh download URL for a workspace file. For PRIVATE files, returns a short-lived pre-signed URL (valid for 3 minutes); for PUBLIC files, returns a permanent CDN URL with no expiry. Call this whenever you need to give a user access to a file rather than caching URLs, as private URLs expire quickly. */
+  /** Generate a fresh download URL for a workspace file. For PRIVATE files, returns a short-lived pre-signed URL (valid for 3 minutes); for PUBLIC files, returns a permanent CDN URL with no expiry. */
   createWorkspaceFileDownloadUrl: CreateWorkspaceFileDownloadUrlOutput;
   /** Begin a two-step file upload. Returns a pre-signed S3 form URL and form data fields that you POST the raw file bytes to directly from the client. The upload URL expires in 2 hours. Files must be 50 MB or smaller; certain executable file extensions (e.g. .exe, .bat) are rejected. Requires the `workspaceFile:create` permission. */
   createWorkspaceFileUploadUrl: CreateWorkspaceFileUploadUrlOutput;
@@ -8873,7 +9230,7 @@ export type Mutation = {
   createWorkspaceSlackChannelIntegration: CreateWorkspaceSlackChannelIntegrationOutput;
   /** Connects a workspace-level Slack notifications integration using an OAuth auth code. This integration enables Plain to post notifications to a Slack channel on behalf of the workspace. Get the installation URL from workspaceSlackInstallationInfo. */
   createWorkspaceSlackIntegration: CreateWorkspaceSlackIntegrationOutput;
-  /** Connects a workspace-level Slack notifications integration reusing a Slack connection the workspace already has, with no second OAuth install. Pass the ID of an existing workspace Slack channel integration (`wsSlackInt_…`, as listed by `workspaceSlackChannelIntegrations`); the notifications integration doesn't exist until this creates it. Choose the notification channel afterwards with the notification/slack/channel_id setting. */
+  /** Connects a workspace-level Slack notifications integration reusing a Slack connection the workspace already has, with no second OAuth install. Pass the ID of an existing workspace Slack channel integration (`wsSlackInt_…`); the notifications integration doesn't exist until this creates it. Choose the notification channel afterwards with the notification/slack/channel_id setting. */
   createWorkspaceSlackIntegrationFromAuth: CreateWorkspaceSlackIntegrationFromAuthOutput;
   /** Installs Plain's Sidekick Agent into the workspace's Slack. Exchanges the OAuth authorization code (obtained by sending the user through the URL from workspaceSlackSidekickInstallationInfo) for a bot token, creates the Sidekick Agent Slack channel, and persists the integration. The channel is normally #ask-plain; if that name is already taken in the Slack workspace the next free name is used instead, so read askSidekickSlackChannelName off the returned integration and show the user which channel was created rather than assuming #ask-plain. Fails only if every candidate name is taken. Only one Sidekick Agent integration is allowed per workspace and per Slack team; calling this when one already exists returns an error. Requires the workspaceSlackSidekickIntegration:create permission and the ai_agent billing entitlement. */
   createWorkspaceSlackSidekickIntegration: CreateWorkspaceSlackSidekickIntegrationOutput;
@@ -8897,8 +9254,7 @@ export type Mutation = {
   /** Permanently delete an autoresponder. The deleted autoresponder is returned in the response. Requires the `autoresponder:delete` permission. */
   deleteAutoresponder: DeleteAutoresponderOutput;
   /**
-   * Soft-deletes a broadcast. Deleted broadcasts are excluded from `broadcasts`
-   * and `searchBroadcasts` but remain fetchable by ID with `isDeleted: true`. Requires
+   * Soft-deletes a broadcast. Deleted broadcasts are excluded from lists and searches but remain fetchable by ID with `isDeleted: true`. Requires
    * the `broadcast:delete` permission.
    */
   deleteBroadcast: DeleteBroadcastOutput;
@@ -8946,6 +9302,8 @@ export type Mutation = {
   deleteCustomerGroup: DeleteCustomerGroupOutput;
   /** Permanently deletes a customer survey. Returns an error if the survey does not exist. Requires the `customerSurvey:delete` permission. */
   deleteCustomerSurvey: DeleteCustomerSurveyOutput;
+  /** Deletes a dashboard and its widgets. Requires `dashboard:delete`. */
+  deleteDashboard: DeleteDashboardOutput;
   /** Removes a hard-bounce or manual suppression for one email address. Spam-complaint suppressions cannot be removed. */
   deleteEmailSuppression: DeleteEmailSuppressionOutput;
   /**
@@ -8997,7 +9355,7 @@ export type Mutation = {
   deleteServiceLevelAgreementPolicy: DeleteServiceLevelAgreementPolicyOutput;
   /** Delete a stored setting value at the given scope, causing the effective value to revert to the next level in the scope hierarchy (for example, removing a per-channel override exposes the workspace-level default). Returns the value that was removed in `previousSetting`, or null if no explicit value was stored at that scope. This operation is idempotent — deleting a setting that does not exist returns null without an error. */
   deleteSetting: DeleteSettingOutput;
-  /** Delete a workspace custom skill. */
+  /** Permanently delete a workspace custom skill. Returns a not-found error if the skill does not exist. */
   deleteSidekickCustomSkill: DeleteSidekickCustomSkillOutput;
   /** Delete a custom MCP server and best-effort revoke its Nango connection. Idempotent: deleting an unknown server is a no-op success. */
   deleteSidekickMcpServer: DeleteSidekickMcpServerOutput;
@@ -9052,8 +9410,6 @@ export type Mutation = {
   deleteWebhookTarget: DeleteWebhookTargetOutput;
   /** Permanently delete a workflow and all its steps. Existing executions are retained for audit purposes. */
   deleteWorkflow: DeleteWorkflowOutput;
-  /** Permanently delete a workflow rule. This action cannot be undone. */
-  deleteWorkflowRule: DeleteWorkflowRuleOutput;
   /** Delete a single step from a workflow. You are responsible for updating any steps that reference this step in their transitions. */
   deleteWorkflowStep: DeleteWorkflowStepOutput;
   /** Removes the workspace's Cursor integration. If no integration with the given ID exists, the operation succeeds and returns a null `id`. Requires the `workspaceCursorIntegration:delete` permission. */
@@ -9078,6 +9434,8 @@ export type Mutation = {
   deleteWorkspaceSlackSidekickIntegration: DeleteWorkspaceSlackSidekickIntegrationOutput;
   /** Turns an OAuth app off. The Plain API rejects every token issued to it, including ones it already holds, until it's turned back on. Requires the `oauthApp:edit` permission. */
   disableOAuthApp: DisableOAuthAppOutput;
+  /** Dismiss a suggested reply so teammates no longer see it. Use this when a suggestion is wrong, out of date, or was already sent by hand. Dismissing an already dismissed reply has no effect. A new suggested reply can still be added for the same message. Requires the `generatedReply:edit` permission. */
+  dismissGeneratedReply: DismissGeneratedReplyOutput;
   /** Dismisses a question card so the person can reply in the chat instead. A connected agent learns of it through discussion.question_resolved. */
   dismissSidekickQuestion: DismissSidekickQuestionOutput;
   /** Dismisses one or more pending suggested label types without creating label types. All ids must currently be PENDING. Requires the `labelType:create` permission. */
@@ -9098,7 +9456,7 @@ export type Mutation = {
   editQueuedAgentSessionMessage: EditQueuedAgentSessionMessageOutput;
   /** Turns an OAuth app on, so the Plain API accepts its tokens again. Requires the `oauthApp:edit` permission. */
   enableOAuthApp: EnableOAuthAppOutput;
-  /** Advance a thread to the next step in its escalation path. The thread must already have an escalation path attached (via `updateThreadEscalationPath`) — if not, this call returns an error. Requires the `thread:edit` permission. */
+  /** Advance a thread to the next step in its escalation path. The thread must already have an escalation path attached — if not, this call returns an error. Requires the `thread:edit` permission. */
   escalateThread: EscalateThreadOutput;
   /**
    * Build the files for publishing a workflow as a template; writes nothing. Requires the
@@ -9156,7 +9514,7 @@ export type Mutation = {
    * thread returns an error. Threads with more than 800 messages cannot be imported.
    */
   importThreadDiscussion: ImportThreadDiscussionOutput;
-  /** Backfill up to 25 historical messages onto an existing thread. Each message requires an externalId for idempotency — re-importing the same ID returns NOOP for that message. INBOUND messages must be authored by a customer; OUTBOUND and NOTE messages must be authored by a user. Requires the thread:import permission. */
+  /** Backfill up to 25 historical messages onto an existing thread. Each message requires an externalId for idempotency — re-importing the same ID returns NOOP for that message. INBOUND messages must be authored by a customer; OUTBOUND and NOTE messages must be authored by a user. Message text is plain text unless `format` is `MARKDOWN`. Requires the thread:import permission. */
   importThreadMessages: ImportThreadMessagesOutput;
   /** Send a workspace invitation to a user by email. Specify either a built-in roleKey (e.g. SUPPORT, ADMIN) or a customRoleId to control the permissions they receive on joining. Sends an invitation email to the provided address. */
   inviteUserToWorkspace: InviteUserToWorkspaceOutput;
@@ -9194,7 +9552,9 @@ export type Mutation = {
   previewBillingPlanChange: PreviewBillingPlanChangeOutput;
   /** Purchases a top-up credit bundle for AI features. The count must match the unit count of a configured top-up bundle. Returns the updated top-up credit balance after purchase. Requires the `billing:edit` permission. */
   purchaseCredits: PurchaseCreditsOutput;
-  /** Syncs the list of Discord channels for a guild from the Discord API into Plain. Call this after channels are added or renamed in Discord so that `connectedDiscordChannels` reflects the latest state. */
+  /** Moves and reorders many label types in one operation. Each sibling group sets the order of the label types under one parent, and listing a label type under a different parent moves it there. All changes are applied together or not at all, and only label types whose parent or position changes are updated. Requires the `labelType:edit` permission. */
+  rearrangeLabelTypes: RearrangeLabelTypesOutput;
+  /** Syncs the list of Discord channels for a guild from the Discord API into Plain. The synced list reflects channels added or renamed in Discord. */
   refreshConnectedDiscordChannels: RefreshConnectedDiscordChannelsOutput;
   /** Re-discover a custom MCP server's tools (tools/list) and reconcile the cached snapshot: newly-appeared tools start in the "ask" (approval-required) state. */
   refreshSidekickMcpServerTools: RefreshSidekickMcpServerToolsOutput;
@@ -9207,13 +9567,13 @@ export type Mutation = {
   /**
    * Trigger an immediate re-index of a knowledge source. Use this when the source content has changed
    * and you do not want to wait for the automatic weekly re-index. The knowledge source status is reset
-   * to pending and indexing is queued asynchronously. Requires Plain AI to be enabled on the workspace; turn it on with `updateSetting` (code `plain_ai`, WORKSPACE scope, boolean `true`).
+   * to pending and indexing is queued asynchronously. Requires Plain AI to be enabled on the workspace.
    */
   reindexKnowledgeSource: ReindexKnowledgeSourceOutput;
   /**
    * Forces a fresh load of a customer card instance, bypassing the cache.
    *
-   * Use this when you know your external data has changed and you want to immediately fetch updated card content from your API URL. The response will be a `CustomerCardInstanceLoading`; subscribe to `customerCardInstanceChanges` to receive the loaded or errored result.
+   * Use this when you know your external data has changed and you want to immediately fetch updated card content from your API URL. The response will be a `CustomerCardInstanceLoading`; the load completes asynchronously with a loaded or errored result.
    */
   reloadCustomerCardInstance: ReloadCustomerCardInstanceOutput;
   /** Removes the mapping between an account field schema and a built-in Plain concept, disabling any automatic behaviour (such as tier assignment) driven by that field. */
@@ -9414,14 +9774,12 @@ export type Mutation = {
   syncUserWorkingHours: SyncUserWorkingHoursOutput;
   /** Adds or removes a reaction from a slack message timeline entry. */
   toggleSlackMessageReaction: ToggleSlackMessageReactionOutput;
-  /** Toggle the published state of a workflow rule. Published rules are active and will fire automatically; unpublished rules are drafts. */
-  toggleWorkflowRulePublished: ToggleWorkflowRulePublishedOutput;
   /** Manually trigger a workflow against a specific thread. Returns the resulting WorkflowExecution so you can track the run's status and step results. */
   triggerWorkflow: TriggerWorkflowOutput;
-  /** Manually trigger a workflow rule against a specific thread, bypassing its automatic trigger conditions. Useful for testing rules or applying them on demand. */
-  triggerWorkflowRule: TriggerWorkflowRuleOutput;
   /** Restores an archived label type so it can be applied to threads again. Requires the `labelType:edit` permission. */
   unarchiveLabelType: UnarchiveLabelTypeOutput;
+  /** Restore an archived SLA policy so it can be assigned to threads again. Requires the `serviceLevelAgreement:edit` permission. */
+  unarchiveServiceLevelAgreementPolicy: UnarchiveServiceLevelAgreementPolicyOutput;
   /** Remove the primary assignee from a thread, leaving it unassigned. Requires the `thread:unassign` and `thread:read` permissions. */
   unassignThread: UnassignThreadOutput;
   /**
@@ -9434,7 +9792,7 @@ export type Mutation = {
    * `broadcast:edit` permission and the broadcasts feature flag.
    */
   unsubscribeBroadcastRecipient: UnsubscribeBroadcastRecipientOutput;
-  /** Sets the tier for a single account, identified by its Plain ID or external ID. Pass a null `tierIdentifier` to remove the account from its current tier. Use `addMembersToTier` when you need to move multiple accounts at once. Requires the `tierMembership:read` and `tierMembership:create` permissions. */
+  /** Sets the tier for a single account, identified by its Plain ID or external ID. Pass a null `tierIdentifier` to remove the account from its current tier. Requires the `tierMembership:read` and `tierMembership:create` permissions. */
   updateAccountTier: UpdateAccountTierOutput;
   /** Atomically adds and removes multiple users from the active billing rota in a single call. At least one user must be added or removed; the same user cannot appear in both lists. Requires the `billingSeat:edit` permission. */
   updateActiveBillingRota: UpdateActiveBillingRotaOutput;
@@ -9503,6 +9861,8 @@ export type Mutation = {
   updateCustomerGroup: UpdateCustomerGroupOutput;
   /** Updates an existing customer survey. At least one field must be provided. Partial updates are supported — only the fields you include are changed. Requires the `customerSurvey:edit` permission. */
   updateCustomerSurvey: UpdateCustomerSurveyOutput;
+  /** Updates metadata and, when `widgets` is provided, replaces the dashboard's full widget set in one transaction. Requires `dashboard:edit`. */
+  updateDashboard: UpdateDashboardOutput;
   /**
    * Report what an agent the workspace built is doing on a discussion. Only that agent may call this:
    * Plain runs no session for it, so without a report the discussion looks permanently idle. Plain
@@ -9525,8 +9885,7 @@ export type Mutation = {
   updateHelpCenterCustomDomainName: UpdateHelpCenterCustomDomainNameOutput;
   /**
    * Replace the navigation index (sidebar order and hierarchy) of a help center in a single call.
-   * You must supply the hash returned by the helpCenterIndex query — if the index has changed since
-   * you read it, the call will fail so you can re-fetch and re-apply your changes.
+   * The input requires the current navigation index hash. A stale hash fails the update because the index changed since that snapshot.
    * Requires the helpCenter:edit permission.
    */
   updateHelpCenterIndex: UpdateHelpCenterIndexOutput;
@@ -9553,11 +9912,11 @@ export type Mutation = {
   updateRolePriorityOrder: UpdateRolePriorityOrderOutput;
   /** Updates an existing saved threads view. All fields in the input are optional; only the fields you provide will be changed. Depending on workspace settings, only the view's creator or workspace admins may be allowed to edit a view they did not create. */
   updateSavedThreadsView: UpdateSavedThreadsViewOutput;
-  /** Update an existing SLA's time target, priority or label filter, business-hours setting, or breach actions. An SLA belongs to a tier or to an SLA policy: read a tier's SLAs with `tier` and a policy's with `serviceLevelAgreementPolicy`, though the SLA's ID alone is enough to update it. You cannot change an SLA's type after creation. Use the field-level wrapper inputs (e.g. `{ "value": 60 }`) for the fields you want to change and omit the rest. Requires the `serviceLevelAgreement:edit` permission. */
+  /** Update an existing SLA's time target, priority or label filter, business-hours setting, or breach actions. An SLA belongs to a tier or to an SLA policy. The SLA's ID alone identifies the update target. You cannot change an SLA's type after creation. Use the field-level wrapper inputs (e.g. `{ "value": 60 }`) for the fields you want to change and omit the rest. Requires the `serviceLevelAgreement:edit` permission. */
   updateServiceLevelAgreement: UpdateServiceLevelAgreementOutput;
   /** Update an SLA policy and its targets. Pass the full set of targets you want the policy to have: a target of an existing type is updated in place, so live SLA trackers are unaffected, a new type is added, and a type you leave out is removed along with its trackers. Requires the `serviceLevelAgreement:edit` permission. */
   updateServiceLevelAgreementPolicy: UpdateServiceLevelAgreementPolicyOutput;
-  /** Create or overwrite a named setting at the given scope. Provide exactly one value field in `SettingValueInput` (boolean, string, number, or stringArray) that matches the expected type for the setting code. Returns the stored setting on success. To clear a value and revert to the scope hierarchy default, use `deleteSetting` instead. */
+  /** Create or overwrite a named setting at the given scope. Provide exactly one value field in `SettingValueInput` (boolean, string, number, or stringArray) that matches the expected type for the setting code. Returns the stored setting on success. */
   updateSetting: UpdateSettingOutput;
   /** Update a workspace custom skill. Only the provided fields are changed. */
   updateSidekickCustomSkill: UpdateSidekickCustomSkillOutput;
@@ -9578,7 +9937,7 @@ export type Mutation = {
   /** Update an existing task. Only the fields you include are changed — omitted fields are left as-is. Setting `companyId` clears any existing `tenantId` and vice versa, since a task may be linked to at most one. Requires the `task:edit` permission. */
   updateTask: UpdateTaskOutput;
   /**
-   * Sets the tier for a single tenant, identified by its Plain ID or external ID. Pass a null `tierIdentifier` to remove the tenant from its current tier. Use `addMembersToTier` when you need to move multiple tenants at once. Requires the `tierMembership:read` and `tierMembership:create` permissions.
+   * Sets the tier for a single tenant, identified by its Plain ID or external ID. Pass a null `tierIdentifier` to remove the tenant from its current tier. Requires the `tierMembership:read` and `tierMembership:create` permissions.
    * @deprecated Use updateAccountTier instead
    */
   updateTenantTier: UpdateTenantTierOutput;
@@ -9618,11 +9977,9 @@ export type Mutation = {
   updateUserDefaultSavedThreadsView: UpdateUserDefaultSavedThreadsViewOutput;
   /** Update an existing webhook target. You can change the URL, pause or resume deliveries via `isEnabled`, switch to a newer schema version, change which event types are subscribed to, or replace the custom HTTP headers. Scalar fields use a `{ value: ... }` wrapper so you can omit fields you do not want to change; `eventSubscriptions` and `headers` are full replacements of the previous lists, so include every entry the target should keep. At least one field must be provided. Requires the `webhookTarget:edit` permission. */
   updateWebhookTarget: UpdateWebhookTargetOutput;
-  /** Update a workflow's name, trigger configuration, entry step, or published status. To change where a workflow sits in the list, use `moveWorkflow`. Read `workflowBuilderGuide` first for the trigger events and every step payload. */
+  /** Update a workflow's name, trigger configuration, entry step, or published status. */
   updateWorkflow: UpdateWorkflowOutput;
-  /** Update the name, payload, or display order of an existing workflow rule. */
-  updateWorkflowRule: UpdateWorkflowRuleOutput;
-  /** Update a single workflow step's configuration, transitions, or canvas position. Replacing `transitions` is a full replacement of the array. `workflowBuilderGuide` lists every step payload. */
+  /** Update a single workflow step's configuration, transitions, or canvas position. Replacing `transitions` is a full replacement of the array. */
   updateWorkflowStep: UpdateWorkflowStepOutput;
   /** Update workspace settings such as the display name, logo, or allowed email domain names. At least one field must be provided. Domain names are stored in lowercase. */
   updateWorkspace: UpdateWorkspaceOutput;
@@ -9674,7 +10031,7 @@ export type Mutation = {
   upsertHelpCenterArticle: UpsertHelpCenterArticleOutput;
   /** Creates or updates the email signature for the currently authenticated user. The signature is appended automatically to outbound emails sent by that user. */
   upsertMyEmailSignature: UpsertMyEmailSignatureOutput;
-  /** Sets the thread-visibility scopes for a custom role, replacing any previously configured scopes for the given resource. Each scope condition limits which threads users with this role can see, based on a primitive type (label, tier, channel, tenant, or company) and an access mode. Requires the `roles:edit` permission and the `custom_roles` billing entitlement. */
+  /** Sets the thread-visibility scopes for a custom role, replacing any previously configured scopes for the given resource. Each scope condition limits which threads users with this role can see, based on a primitive type (label, tier, channel, or account) and an access mode. Requires the `roles:edit` permission and the `custom_roles` billing entitlement. */
   upsertRoleScopes: UpsertRoleScopesOutput;
   /** Create or update the settings for a team (label type of kind TEAM). If settings do not yet exist for the given team, they are created with defaults (round-robin disabled, max capacity 5); otherwise the existing settings are updated with the supplied values. The labelTypeId must refer to a label type of type TEAM — passing any other label type ID returns a validation error. Requires the `labelType:edit` permission. */
   upsertTeamSettings: UpsertTeamSettingsOutput;
@@ -9687,7 +10044,7 @@ export type Mutation = {
    */
   upsertTenant: UpsertTenantOutput;
   /**
-   * Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier`: the tenant plus the field's `externalFieldId`, which is the field's key (such as `contract_value`). Pass the field's `type` and the one value argument for it: `STRING_TYPE` uses `stringValue`, `NUMBER_TYPE` `numberValue`, `BOOLEAN_TYPE` `booleanValue`, `STRING_ARRAY` `arrayValue`, `DATETIME_TYPE` `dateValue`, `USER_REFERENCE_TYPE` `userReferenceValues` and `TENANT_REFERENCE_TYPE` `tenantReferenceValues`. When the key and type are known, call this directly; there is no need to look up the field schema first. Requires `tenant:edit` permission.
+   * Sets or updates a field value for a specific tenant. Identify the target field using `tenantFieldIdentifier`: the tenant plus the field's `externalFieldId`, which is the field's key (such as `contract_value`). Pass the field's `type` and the one value argument for it: `STRING_TYPE` uses `stringValue`, `NUMBER_TYPE` `numberValue`, `BOOLEAN_TYPE` `booleanValue`, `STRING_ARRAY` `arrayValue`, `DATETIME_TYPE` `dateValue`, `USER_REFERENCE_TYPE` `userReferenceValues` and `TENANT_REFERENCE_TYPE` `tenantReferenceValues`. Requires `tenant:edit` permission.
    * @deprecated Use upsertAccountField instead
    */
   upsertTenantField: UpsertTenantFieldOutput;
@@ -9696,7 +10053,7 @@ export type Mutation = {
    * @deprecated Use upsertAccountFieldSchema instead
    */
   upsertTenantFieldSchema: UpsertTenantFieldSchemaOutput;
-  /** Sets (or updates) a single thread field value on a thread, identified by thread ID and field key. Creates the field if it does not exist, or overwrites the existing value if it does. Requires the `threadField:create` and `threadField:update` permissions. To clear a field on one thread, use `deleteThreadField`. */
+  /** Sets (or updates) a single thread field value on a thread, identified by thread ID and field key. Creates the field if it does not exist, or overwrites the existing value if it does. Requires the `threadField:create` and `threadField:update` permissions. */
   upsertThreadField: UpsertThreadFieldOutput;
   /** Trigger a DNS verification check for the custom domain configured on the help center. Returns an error if the expected TXT record is not yet visible. Requires the helpCenter:edit permission. */
   verifyHelpCenterCustomDomainName: VerifyHelpCenterCustomDomainNameOutput;
@@ -9777,6 +10134,11 @@ export type MutationArchiveLabelTypeArgs = {
 };
 
 
+export type MutationArchiveServiceLevelAgreementPolicyArgs = {
+  input: ArchiveServiceLevelAgreementPolicyInput;
+};
+
+
 export type MutationAssignRolesToUserArgs = {
   input: AssignRolesToUserInput;
 };
@@ -9824,6 +10186,16 @@ export type MutationBulkUpsertWorkflowStepsArgs = {
 
 export type MutationCalculateRoleChangeCostArgs = {
   input: CalculateRoleChangeCostInput;
+};
+
+
+export type MutationCancelPendingWorkflowExecutionsArgs = {
+  input: CancelPendingWorkflowExecutionsInput;
+};
+
+
+export type MutationCancelWorkflowExecutionArgs = {
+  input: CancelWorkflowExecutionInput;
 };
 
 
@@ -9954,6 +10326,11 @@ export type MutationCreateCustomerGroupArgs = {
 
 export type MutationCreateCustomerSurveyArgs = {
   input: CreateCustomerSurveyInput;
+};
+
+
+export type MutationCreateDashboardArgs = {
+  input: CreateDashboardInput;
 };
 
 
@@ -10177,11 +10554,6 @@ export type MutationCreateWorkflowArgs = {
 };
 
 
-export type MutationCreateWorkflowRuleArgs = {
-  input: CreateWorkflowRuleInput;
-};
-
-
 export type MutationCreateWorkflowShareLinkArgs = {
   input: CreateWorkflowShareLinkInput;
 };
@@ -10339,6 +10711,11 @@ export type MutationDeleteCustomerGroupArgs = {
 
 export type MutationDeleteCustomerSurveyArgs = {
   input: DeleteCustomerSurveyInput;
+};
+
+
+export type MutationDeleteDashboardArgs = {
+  input: DeleteDashboardInput;
 };
 
 
@@ -10527,11 +10904,6 @@ export type MutationDeleteWorkflowArgs = {
 };
 
 
-export type MutationDeleteWorkflowRuleArgs = {
-  input: DeleteWorkflowRuleInput;
-};
-
-
 export type MutationDeleteWorkflowStepArgs = {
   input: DeleteWorkflowStepInput;
 };
@@ -10579,6 +10951,11 @@ export type MutationDeleteWorkspaceSlackIntegrationArgs = {
 
 export type MutationDisableOAuthAppArgs = {
   input: DisableOAuthAppInput;
+};
+
+
+export type MutationDismissGeneratedReplyArgs = {
+  input: DismissGeneratedReplyInput;
 };
 
 
@@ -10744,6 +11121,11 @@ export type MutationPreviewBillingPlanChangeArgs = {
 
 export type MutationPurchaseCreditsArgs = {
   input: PurchaseCreditsInput;
+};
+
+
+export type MutationRearrangeLabelTypesArgs = {
+  input: RearrangeLabelTypesInput;
 };
 
 
@@ -11022,23 +11404,18 @@ export type MutationToggleSlackMessageReactionArgs = {
 };
 
 
-export type MutationToggleWorkflowRulePublishedArgs = {
-  input: ToggleWorkflowRulePublishedInput;
-};
-
-
 export type MutationTriggerWorkflowArgs = {
   input: TriggerWorkflowInput;
 };
 
 
-export type MutationTriggerWorkflowRuleArgs = {
-  input: TriggerWorkflowRuleInput;
+export type MutationUnarchiveLabelTypeArgs = {
+  input: UnarchiveLabelTypeInput;
 };
 
 
-export type MutationUnarchiveLabelTypeArgs = {
-  input: UnarchiveLabelTypeInput;
+export type MutationUnarchiveServiceLevelAgreementPolicyArgs = {
+  input: UnarchiveServiceLevelAgreementPolicyInput;
 };
 
 
@@ -11154,6 +11531,11 @@ export type MutationUpdateCustomerGroupArgs = {
 
 export type MutationUpdateCustomerSurveyArgs = {
   input: UpdateCustomerSurveyInput;
+};
+
+
+export type MutationUpdateDashboardArgs = {
+  input: UpdateDashboardInput;
 };
 
 
@@ -11379,11 +11761,6 @@ export type MutationUpdateWebhookTargetArgs = {
 
 export type MutationUpdateWorkflowArgs = {
   input: UpdateWorkflowInput;
-};
-
-
-export type MutationUpdateWorkflowRuleArgs = {
-  input: UpdateWorkflowRuleInput;
 };
 
 
@@ -11680,16 +12057,6 @@ export type PageInfo = {
   startCursor?: Maybe<Scalars['String']['output']>;
 };
 
-/** The DNS records a customer must configure for an alternate support email address on a new domain. */
-export type PendingSenderDomainDnsRecords = {
-  /** The DKIM DNS TXT record that must be added to authenticate outbound emails from this domain. */
-  dkimDnsRecord: DnsRecord;
-  /** The domain that the DNS records must be added to, e.g. otheracme.com. */
-  domainName: Scalars['String']['output'];
-  /** The return-path (bounce) DNS CNAME record that must be added for this domain. */
-  returnPathDnsRecord: DnsRecord;
-};
-
 export type PerSeatRecurringPrice = RecurringPrice & {
   billingIntervalCount: Scalars['Int']['output'];
   billingIntervalUnit: BillingIntervalUnit;
@@ -11853,6 +12220,7 @@ export type Query = {
   /**
    * Returns a paginated list of Slack channels that have opted out of broadcasts, newest first.
    * Requires the `broadcast:read` permission and the broadcasts feature flag.
+   * The user resubscribes a channel in the Plain app at `https://app.plain.com/workspace/w_…/broadcasts/unsubscribes`; replace `w_…` with this workspace's ID.
    */
   broadcastRecipientUnsubscribes: BroadcastRecipientUnsubscribeConnection;
   /**
@@ -11893,19 +12261,18 @@ export type Query = {
   businessHoursSlots: Array<BusinessHoursSlot>;
   /**
    * Fetch a single chat app by its ID. Returns null if no chat app with that ID exists in the workspace.
-   * Requires the `chatApp:read` permission. Deleting a chat app is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/chat/<chatAppId>` (never the `<workspaceId>` placeholder).
+   * Requires the `chatApp:read` permission. Deleting a chat app is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/chat/<chatAppId>`.
    */
   chatApp?: Maybe<ChatApp>;
   /**
    * Check whether a signing secret exists for a chat app. Returns metadata about the secret (creation time,
-   * actor) but never the secret value itself — the raw secret is only returned once, at creation time via
-   * `createChatAppSecret`. Returns null if no secret has been created for the given chat app.
+   * actor) but never the secret value itself — the raw secret is only returned once, at creation time. Returns null if no secret has been created for the given chat app.
    * Requires the `chatAppSecret:read` permission.
    */
   chatAppSecret?: Maybe<ChatAppHiddenSecret>;
   /**
    * List all chat apps in the workspace. Supports cursor-based pagination.
-   * Requires the `chatApp:read` permission. Deleting a chat app is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/chat/<chatAppId>` (never the `<workspaceId>` placeholder).
+   * Requires the `chatApp:read` permission. Deleting a chat app is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/chat/<chatAppId>`.
    */
   chatApps: ChatAppConnection;
   /**
@@ -11918,25 +12285,21 @@ export type Query = {
    * @deprecated Use account instead
    */
   company?: Maybe<Company>;
-  /** Returns a paginated list of Discord channels synced from a specific guild. Use `refreshConnectedDiscordChannels` to pull the latest channel list from Discord before querying. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/discord` (never the `<workspaceId>` placeholder), which takes them straight to Discord to approve, then read this again to confirm. */
+  /** Returns a paginated list of Discord channels synced from a specific guild. The list reflects the channels last synced from Discord. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/install/discord`. */
   connectedDiscordChannels: ConnectedDiscordChannelConnection;
-  /** Returns a paginated list of Microsoft Teams channels that are connected to this workspace. Supports forward and backward cursor pagination. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/ms-teams` (never the `<workspaceId>` placeholder), which takes them straight to Microsoft Teams to approve, then read this again to confirm. */
+  /** Returns a paginated list of Microsoft Teams channels that are connected to this workspace. Supports forward and backward cursor pagination. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/install/ms-teams`. */
   connectedMSTeamsChannels: ConnectedMsTeamsChannelConnection;
   /** Returns a single connected Slack channel by its Plain ID, or null if not found. */
   connectedSlackChannel?: Maybe<ConnectedSlackChannel>;
-  /**
-   * Gets all slack channels for this workspace, which match the specified filters. To count or list
-   * the channels a broadcast would reach, use `broadcastSendTargetRecipients` instead: it leaves out
-   * channels that unsubscribed.
-   */
+  /** Gets all slack channels for this workspace, which match the specified filters. This list can include channels that opted out of broadcasts and does not represent a broadcast audience. */
   connectedSlackChannels: ConnectedSlackChannelConnection;
   /** Every billable item the workspace has used credits on, newest first: Sidekick sessions, Sidekick actions a workflow ran, and work done by the workspace's own agents. Items with status FREE_BETA were not charged; their credits show what they would have cost. Use it to show the line-by-line breakdown behind a credit total. Supports standard forward and backward pagination. Requires the `billing:read` permission. */
   creditSpend: CreditSpendConnection;
   /** Returns the list of GitHub repositories accessible via the given Cursor integration. Results are fetched live from the Cursor API and cached for up to 5 minutes. Requires the `workspaceCursorIntegration:read` permission. */
   cursorRepositories: Array<CursorRepository>;
-  /** Returns a single custom role by its ID, or null if not found. Requires the `roles:read` permission. Changing a role's permissions or which threads it can see is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/roles/<customRoleId>` (never the `<workspaceId>` placeholder). */
+  /** Returns a single custom role by its ID, or null if not found. Requires the `roles:read` permission. Changing a role's permissions or which threads it can see is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/roles/<customRoleId>`. */
   customRole?: Maybe<CustomRole>;
-  /** Returns all custom roles defined in the workspace. Use this to list the custom roles you have created and inspect their scope definitions. Supports cursor-based pagination. Requires the `roles:read` permission. Changing a role's permissions or which threads it can see is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/roles/<customRoleId>` (never the `<workspaceId>` placeholder). */
+  /** Returns the workspace's custom roles. Each includes its name, the Support or Viewer base role it inherits (`permissionsPreset`), and thread visibility rules (`scopeDefinitions`) that limit which threads a member can see by account, tier, label, or channel. An empty `scopeDefinitions` list means every thread is visible. A custom role has the same permissions as its base role, and individual permissions can't be added or removed. Supports cursor-based pagination. Requires the `roles:read` permission. Changing a role's permissions or which threads it can see is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/roles/<customRoleId>`. */
   customRoles: CustomRoleConnection;
   /** Fetch a single customer by their Plain customer ID. Returns null if no customer with that ID exists. Requires the `customer:read` permission. */
   customer?: Maybe<Customer>;
@@ -11944,16 +12307,15 @@ export type Query = {
   customerByEmail?: Maybe<Customer>;
   /** Get a customer by its external ID. A customer's external ID is unique within a workspace. */
   customerByExternalId?: Maybe<Customer>;
-  /** Returns a single customer card config by ID. Returns null if no config with the given ID exists. Deleting a card is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/customer-cards/<customerCardConfigId>` (never the `<workspaceId>` placeholder). */
+  /** Returns a single customer card config by ID. Returns null if no config with the given ID exists. Deleting a card is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/customer-cards/<customerCardConfigId>`. */
   customerCardConfig?: Maybe<CustomerCardConfig>;
-  /** Returns all customer card configs for the workspace, ordered by their `order` field. Deleting a card is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/customer-cards/<customerCardConfigId>` (never the `<workspaceId>` placeholder). */
+  /** Returns all customer card configs for the workspace, ordered by their `order` field. Deleting a card is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/customer-cards/<customerCardConfigId>`. */
   customerCardConfigs: Array<CustomerCardConfig>;
   /**
    * Returns the current customer card instances for a customer, triggering a fresh load for any cards that are expired or in an error state.
    *
    * Cards that are cached and within their TTL are returned immediately as `CustomerCardInstanceLoaded`. Cards that need
-   * to be fetched are returned as `CustomerCardInstanceLoading`; subscribe to `customerCardInstanceChanges` to receive
-   * the result when loading completes. Pass `threadId` to provide thread context to your card API endpoint.
+   * to be fetched are returned as `CustomerCardInstanceLoading`; the load completes asynchronously. Pass `threadId` to provide thread context to your card API endpoint.
    *
    * A maximum of 25 card instances will be returned, due to only allowing 25 customer card configs.
    */
@@ -11972,6 +12334,10 @@ export type Query = {
    * (`first`/`after` or `last`/`before`) to page through large result sets. Requires the `customer:read` permission.
    */
   customers: CustomerConnection;
+  /** A single dashboard with its widgets. Null if it doesn't exist. Requires `dashboard:read`. */
+  dashboard?: Maybe<Dashboard>;
+  /** Every dashboard in the workspace. Requires `dashboard:read`. */
+  dashboards: DashboardConnection;
   /** Paginated list of threads that have been deleted. Only threads deleted after the deletion audit log was enabled for your workspace are included. Useful for auditing or syncing deletions to an external system. Requires the `thread:read` permission. */
   deletedThreads: DeletedThreadConnection;
   /** Fetch a single discussion by its ID. Preferred over threadDiscussion for new integrations. */
@@ -11991,7 +12357,7 @@ export type Query = {
   escalationPaths: EscalationPathConnection;
   /**
    * This API is in beta and may change without notice.
-   * Returns the current suggested reply candidates for a thread, scoped to the most recent inbound message from the customer or from a machine user. Suggestions submitted via `addGeneratedReply` are always included. Suggestions generated by Plain AI are excluded when suggested responses are disabled or not available for the workspace, or when an externally submitted suggestion exists for the same message. Returns an empty list if the thread has no such message or no suggestion is available. Requires the `generatedReply:read` permission.
+   * Returns the current suggested reply candidates for a thread, scoped to the most recent inbound message from the customer or from a machine user. Externally submitted suggestions are always included. Suggestions generated by Plain AI are excluded when suggested responses are disabled or not available for the workspace, or when an externally submitted suggestion exists for the same message. Returns an empty list if the thread has no such message or no suggestion is available. Requires the `generatedReply:read` permission.
    */
   generatedReplies?: Maybe<Array<GeneratedReply>>;
   /** The state of the Plain AI suggested reply for the most recent inbound message on a thread. Returns null when suggested responses are disabled or not available for the workspace, or when the thread has no such message. Requires the `generatedReply:read` permission. */
@@ -12022,7 +12388,7 @@ export type Query = {
    * Requires the `helpCenter:read` permission. Not available to machine users.
    */
   helpCenterAiConversations: HelpCenterAiConversationConnection;
-  /** Fetch a single help center article by ID. Returns null if not found. Deleting an article is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/help-center/<helpCenterId>/articles/<articleId>` (never the `<workspaceId>` placeholder). */
+  /** Fetch a single help center article by ID. Returns null if not found. Deleting an article is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/help-center/<helpCenterId>/articles/<articleId>`. */
   helpCenterArticle?: Maybe<HelpCenterArticle>;
   /** Fetch an article by its URL slug within a specific help center. Slugs are unique per help center. Returns null if no article matches. */
   helpCenterArticleBySlug?: Maybe<HelpCenterArticle>;
@@ -12032,7 +12398,7 @@ export type Query = {
   helpCenterArticleGroupBySlug?: Maybe<HelpCenterArticleGroup>;
   /** Fetch the navigation index for a help center by its ID. Returns null if not found. Use the returned hash when calling updateHelpCenterIndex to avoid clobbering concurrent edits. */
   helpCenterIndex?: Maybe<HelpCenterIndex>;
-  /** List all help centers in the workspace. Supports cursor-based pagination and optional filtering. Custom JavaScript, sign-in, access, the type and the subdomain of an existing help center are set by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/help-center/<helpCenterId>` (never the `<workspaceId>` placeholder), or `…/help-center/create` for a new help center that needs them. */
+  /** List all help centers in the workspace. Supports cursor-based pagination and optional filtering. Custom JavaScript, sign-in, access, the type and the subdomain of an existing help center are set by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/help-center/<helpCenterId>`, or `…/help-center/create` for a new help center that needs them. The user sets or clears a custom domain at `https://app.plain.com/workspace/w_…/help-center/<helpCenterId>/domains`; replace `w_…` and `<helpCenterId>` with the workspace and help center IDs. */
   helpCenters: HelpCenterConnection;
   /** Fetch the import job definition for a connected service integration. Pass isEnabled: true to return only the currently active definition, or isEnabled: false to return any definition regardless of enabled state. Returns null if no matching definition exists. */
   importJobDefinition?: Maybe<ImportJobDefinition>;
@@ -12052,7 +12418,7 @@ export type Query = {
   /**
    * Fetch the configurable fields for a connected issue tracker (e.g. Shortcut, Rootly, incident.io, GitHub).
    * Pass previously selected field values in `selectedFields` so that dependent fields (such as labels that depend on a chosen repository) are populated correctly.
-   * Returns the list of fields the caller must or may provide when calling `createIssueTrackerIssue`.
+   * Returns the required and optional issue fields.
    * Requires the `threadLinkCandidate:search` permission.
    */
   issueTrackerFields: Array<IssueTrackerField>;
@@ -12066,17 +12432,17 @@ export type Query = {
   knowledgeSourceCitationsByThread: Array<KnowledgeSourceCitation>;
   /** List all knowledge sources in the workspace. Use the `type` filter to retrieve only sitemap or single-URL sources. */
   knowledgeSources: KnowledgeSourceConnection;
-  /** Returns a single label type by its ID. Returns null if no label type with that ID exists. Requires the `labelType:read` permission. A team's assignment settings, such as its round-robin capacity, come from `teamSettings`. */
+  /** Returns a single label type by its ID. Returns null if no label type with that ID exists. Requires the `labelType:read` permission. Team assignment settings, such as round-robin capacity, are separate from the label type. */
   labelType?: Maybe<LabelType>;
   /** Returns a label type by its external ID. Returns null if no match is found. External IDs are unique within a workspace and are set when creating or updating a label type. Requires the `labelType:read` permission. */
   labelTypeByExternalId?: Maybe<LabelType>;
   /** Returns a paginated list of label types in the workspace. By default includes both active and archived label types; pass `filters: { isArchived: false }` to exclude archived ones. Requires the `labelType:read` permission. */
   labelTypes: LabelTypeConnection;
-  /** The workspace-level Linear app integration, if one has been authorised. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/linear` (never the `<workspaceId>` placeholder), which takes them straight to Linear to approve, then read this again to confirm. */
+  /** The workspace-level Linear app integration, if one has been authorised. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/install/linear`. */
   linearAppIntegration?: Maybe<WorkspaceLinearIntegration>;
   /** Fetches a single machine user by ID. Returns null if no machine user with the given ID exists in the workspace. Deleting a machine user, and creating, changing or deleting its API keys, are done by the user in the Plain app, so a key's secret never passes through an agent. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/machine-users/<machineUserId>` (never the `<workspaceId>` placeholder), or `…/api-keys/add` and `…/api-keys/<apiKeyId>` under it for keys. */
   machineUser?: Maybe<MachineUser>;
-  /** Returns a paginated list of all machine users in the workspace. Use the optional `filters.type` argument to restrict results to a specific machine user type (e.g. API_USER or AI_AGENT). Deleting a machine user, and creating, changing or deleting its API keys, are done by the user in the Plain app, so a key's secret never passes through an agent. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/machine-users/<machineUserId>` (never the `<workspaceId>` placeholder), or `…/api-keys/add` and `…/api-keys/<apiKeyId>` under it for keys. */
+  /** Returns a paginated list of all machine users in the workspace. Use the optional `filters.type` argument to restrict results to a specific machine user type (e.g. API_USER or AI_AGENT). Deleting a machine user, and creating, changing or deleting its API keys, are done by the user in the Plain app, so a key's secret never passes through an agent. The Plain app page is `https://app.plain.com/workspace/w_…/settings/machine-users/<machineUserId>`, or `…/api-keys/add` and `…/api-keys/<apiKeyId>` under it for keys. */
   machineUsers: MachineUserConnection;
   /** Returns the current billing rota for the workspace, listing which users are actively on-rota and which are off-rota. The rota is used to track which users currently consume an active eng-rota seat. */
   myBillingRota?: Maybe<BillingRota>;
@@ -12141,14 +12507,15 @@ export type Query = {
   publicEventRequestBody?: Maybe<Scalars['String']['output']>;
   /** Find threads that are semantically similar to the given thread, ranked by relevance. Each result includes the thread and a distance score (lower means more similar). Useful for surfacing related support history or finding duplicate issues. Requires the `thread:read` permission. */
   relatedThreads: Array<ThreadWithDistance>;
-  /** Returns all roles available in the workspace, including both built-in roles (Owner, Admin, Support, Viewer, None) and any custom roles. Supports cursor-based pagination. Each role carries its full permission list, often hundreds of entries, so ask for about 5 roles at a time. Requires the `roles:read` permission. */
+  /** Returns all roles available in the workspace, including both built-in roles (Owner, Admin, Support, Viewer, None) and any custom roles. Supports cursor-based pagination. Each role carries its full permission list, often hundreds of entries, so ask for about 5 roles at a time. Requires the `roles:read` permission. The user changes role priority for SSO or directory sync at `https://app.plain.com/workspace/w_…/settings/roles`; replace `w_…` with this workspace's ID. */
   roles: RoleConnection;
   /** Fetches a single saved threads view by its ID. Returns null if no view with the given ID exists in the workspace. */
   savedThreadsView?: Maybe<SavedThreadsView>;
   /** Returns all saved threads views for the workspace, ordered by creation time. Use this to list the views available in your workspace. Supports forward and backward cursor pagination. */
   savedThreadsViews: SavedThreadsViewConnection;
   /**
-   * Searches accounts by name or domain (case-insensitive partial match), or by external ID (exact match).
+   * Searches accounts by name, domain, or external ID.
+   * The name matches when it contains the term. A match at the start of the name, or of a word in it, ranks ahead of a match inside a word. The domain matches when it contains the term. The external ID matches only in full. Matching is case-insensitive.
    * The search term must be at least 2 characters long. Returns a paginated list of results.
    * Requires the `tenant:read` permission.
    */
@@ -12194,13 +12561,14 @@ export type Query = {
    */
   searchSlackUsers: SlackUserConnection;
   /**
-   * Searches tenants by name or domain (case-insensitive partial match), or by external ID (exact match).
+   * Searches tenants by name, domain, or external ID.
+   * The name matches when it contains the term. A match at the start of the name, or of a word in it, ranks ahead of a match inside a word. The domain matches when it contains the term. The external ID matches only in full. Matching is case-insensitive.
    * The search term must be at least 2 characters long. Returns a paginated list of results.
    * Requires the `tenant:read` permission.
    * @deprecated Use searchAccounts instead
    */
   searchTenants: TenantSearchResultConnection;
-  /** Searches issue trackers (GitHub issues, Shortcut stories, incident.io and Rootly incidents) for issues that can be linked to a thread. Filter by `sourceType` to scope the search to a specific issue tracker, and provide a free-text `searchQuery` to match against issue titles or identifiers. Returns candidates that can then be passed to `createThreadLink`. Requires a connected issue tracker integration for the specified source type. */
+  /** Searches issue trackers (GitHub issues, Shortcut stories, incident.io and Rootly incidents) for issues that can be linked to a thread. Filter by `sourceType` to scope the search to a specific issue tracker, and provide a free-text `searchQuery` to match against issue titles or identifiers. Returns possible thread link targets. Requires a connected issue tracker integration for the specified source type. */
   searchThreadLinkCandidates: ThreadLinkCandidateConnection;
   /**
    * Searches for slack users in a thread based on a search term.
@@ -12213,12 +12581,12 @@ export type Query = {
   serviceAuthorization?: Maybe<ServiceAuthorization>;
   /**
    * List all completed service authorizations for the workspace. Only authorizations with status CONNECTED or REINSTALL_REQUIRED are returned; pending authorizations are excluded.
-   * Optionally filter by serviceIntegrationKey. Supports cursor-based pagination. Requires the `serviceAuthorization:read` permission. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/integrations` (never the `<workspaceId>` placeholder), then read this again to confirm.
+   * Optionally filter by serviceIntegrationKey. Supports cursor-based pagination. Requires the `serviceAuthorization:read` permission. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/settings/integrations`.
    */
   serviceAuthorizations: ServiceAuthorizationConnection;
-  /** Returns the SLA policies in the workspace, sorted by name. Pass `filters` to narrow by name or by the target types a policy holds. Supports cursor-based pagination. Requires the `serviceLevelAgreement:read` permission. Deleting a policy is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slas/<policy id>` (never the `<workspaceId>` placeholder). */
+  /** Returns the SLA policies in the workspace, sorted by name. Pass `filters` to narrow by name, by the target types a policy holds, or by archived state; by default both active and archived policies are returned. Supports cursor-based pagination. Requires the `serviceLevelAgreement:read` permission. An archived policy cannot be assigned to new threads; existing threads retain their SLAs. Deleting a policy is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/slas/<policy id>`. */
   serviceLevelAgreementPolicies: ServiceLevelAgreementPolicyConnection;
-  /** Returns a single SLA policy by its Plain ID. Returns null if no policy with that ID exists. Requires the `serviceLevelAgreement:read` permission. Deleting a policy is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slas/<policy id>` (never the `<workspaceId>` placeholder). */
+  /** Returns a single SLA policy by its Plain ID. Returns null if no policy with that ID exists. Requires the `serviceLevelAgreement:read` permission. An archived policy cannot be assigned to new threads; existing threads retain their SLAs. Deleting a policy is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/slas/<policy id>`. */
   serviceLevelAgreementPolicy?: Maybe<ServiceLevelAgreementPolicy>;
   /** Fetch the effective value of a named setting at the given scope. Returns null when the setting has no stored value at that scope and no default applies. Use this to read notification preferences, workflow flags, chat-app configuration, and similar per-scope options. The `code` identifies which setting to read (e.g. `workflow/unassign_thread_after_mark_thread_as_done`) and `scope` pins the context (workspace, user, chat app, Slack channel, etc.). */
   setting?: Maybe<Setting>;
@@ -12230,7 +12598,7 @@ export type Query = {
   sidekickCreditUsageByDay: SidekickCreditUsageByDay;
   /** A single workspace custom skill, including its instructions, for editing. */
   sidekickCustomSkill?: Maybe<SidekickCustomSkill>;
-  /** Returns every GitHub repository the Sidekick Agent integration (identified by serviceAuthorizationId) can currently see via its OAuth token. Use this list to let users pick which repos Sidekick Agent should focus on before calling updateSidekickGithubConfig. */
+  /** Returns every GitHub repository the Sidekick Agent integration (identified by serviceAuthorizationId) can currently see via its OAuth token. The result identifies the repositories available for the integration's configuration. */
   sidekickGithubAccessibleRepos: Array<SidekickGithubRepo>;
   /** Returns the Sidekick Agent GitHub configuration for a workspace: which repositories are selected for Sidekick Agent to use and any workspace-level or per-repo operating instructions. Returns null when no configuration has been saved yet. */
   sidekickGithubServiceConfig?: Maybe<SidekickGithubServiceConfig>;
@@ -12240,7 +12608,7 @@ export type Query = {
   sidekickMcpServers: Array<SidekickMcpServer>;
   /** Returns the Sidekick Agent PostHog configuration for a workspace, including any operating instructions and the default project the agent queries. Returns null when no configuration has been saved yet. */
   sidekickPosthogServiceConfig?: Maybe<SidekickPosthogServiceConfig>;
-  /** Returns the Sidekick Agent configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick Agent uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog have their own configuration shapes — use sidekickGithubServiceConfig / sidekickPosthogServiceConfig instead. */
+  /** Returns the Sidekick Agent configuration for a connected service (Datadog, Sentry, Grafana, Linear, Notion, incident.io, Attio, HubSpot, Jira, Granola, LaunchDarkly, Grain or Cursor), identified by its serviceAuthorizationId. Includes any operating instructions that guide how Sidekick Agent uses the integration. Returns null when no configuration has been saved yet. GitHub and PostHog use separate configuration shapes and are not covered by this result. */
   sidekickServiceConfig?: Maybe<SidekickServiceConfig>;
   /** Returns workspace-level Sidekick Agent settings, including the custom prompt that is appended to every Sidekick Agent session's system prompt and the tools selected during onboarding. Always returns an object. customPrompt is null when not configured. preferredIntegrations is empty when none are selected. */
   sidekickSettings: SidekickSettings;
@@ -12262,8 +12630,7 @@ export type Query = {
   singleValueMetric?: Maybe<SingleValueMetric>;
   /**
    * Gets the auto-join rules for a workspace slack channel integration.
-   * Rules that have not yet been saved through `setSlackAutoJoinRules` are
-   * read from the legacy prefix/suffix settings and have a null id.
+   * Unsaved rules are read from the legacy prefix/suffix settings and have a null id.
    */
   slackAutoJoinRules: Array<SlackAutoJoinRule>;
   /** Returns a Slack user within a specific channel, looked up by their Slack user ID. Returns null if the user is not found in that channel. */
@@ -12330,8 +12697,8 @@ export type Query = {
    * set. Returns null if Plain has not ingested the message. For a channel post, pass the root
    * post's ID.
    *
-   * After `createThreadFromMSTeamsMessage` returns no thread, poll this query until it returns a
-   * thread whose `lockedAt` is null. While the first thread is being created it returns null;
+   * While a thread is being created asynchronously, poll this query until it returns a thread
+   * whose `lockedAt` is null. While the first thread is being created it returns null;
    * while a successor to a closed thread is being created it returns the closed thread. Requires
    * the `thread:read` permission.
    */
@@ -12339,8 +12706,7 @@ export type Query = {
   /** Fetch a thread by its human-readable ref (e.g. `T-1234`). Useful when the ref is more convenient to store than the internal ID. Returns null if no match. Requires the `thread:read` permission. */
   threadByRef?: Maybe<Thread>;
   /**
-   * Resolves a Slack message to the Plain thread it belongs to, using the same channel ID and
-   * message timestamp as `createThreadFromSlackMessage`. Returns null if no thread is associated
+   * Resolves a Slack message to the Plain thread it belongs to, using its Slack channel ID and message timestamp. Returns null if no thread is associated
    * with the given Slack message. Requires the `thread:read` permission.
    */
   threadBySlackMessage?: Maybe<Thread>;
@@ -12382,6 +12748,8 @@ export type Query = {
   threadHeatmapMetric: ThreadHeatmapMetric;
   /** Returns a paginated list of thread link groups, each representing a distinct external entity (e.g. a Linear issue or Jira ticket) that is linked to one or more threads. Use this to build views that aggregate threads by a shared linked issue. Supports filtering by status, specific group IDs, company, or tier. */
   threadLinkGroups: ThreadLinkGroupConnection;
+  /** Lists, for every thread metric, its default `machineUsers` mode, the modes it supports and what counts as machine-user activity. Requires `metrics:read`. */
+  threadMetricCapabilities: Array<ThreadMetricCapability>;
   /**
    * Fetch an aggregate (single-value) metric for threads with rich filter and group-by support.
    * Returns one value per group bucket for the specified date range and `SingleValueMetricName`, making
@@ -12405,11 +12773,11 @@ export type Query = {
   threadTimelineEntry?: Maybe<TimelineEntry>;
   /** List threads with optional filtering and sorting, returned as a paginated connection. Supports rich filters (status, assignee, customer, label, priority, date ranges, tenant, tier, thread fields, and more) and multiple sort orders. Use this query to build inbox-style views or to export threads in bulk. Requires the `thread:read` permission. */
   threads: ThreadConnection;
-  /** Fetch all threads that share the given external ID, returned as a paginated connection. Unlike `threadByExternalId`, this is not scoped to a customer: because `externalId` is only unique per-customer, the same external ID can appear on threads belonging to different customers, and this query returns all of them. Returns an empty connection if there are no matches. Requires the `thread:read` permission. */
+  /** Fetch all threads that share the given external ID, returned as a paginated connection. This is not scoped to a customer: because `externalId` is only unique per-customer, the same external ID can appear on threads belonging to different customers, and this query returns all of them. Returns an empty connection if there are no matches. Requires the `thread:read` permission. */
   threadsByExternalId: ThreadsByExternalIdConnection;
-  /** Returns a single tier by its Plain ID. Returns null if no tier with that ID exists. Requires the `tier:read` permission. Deleting a tier is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/tiers/<tierId>` (never the `<workspaceId>` placeholder). */
+  /** Returns a single tier by its Plain ID. Returns null if no tier with that ID exists. Requires the `tier:read` permission. Deleting a tier is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/tiers/<tierId>`. */
   tier?: Maybe<Tier>;
-  /** Returns all tiers in the workspace, sorted by creation date. Supports cursor-based pagination. Requires the `tier:read` permission. Deleting a tier is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/tiers/<tierId>` (never the `<workspaceId>` placeholder). */
+  /** Returns all tiers in the workspace, sorted by creation date. Supports cursor-based pagination. Requires the `tier:read` permission. Deleting a tier is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/tiers/<tierId>`. */
   tiers: TierConnection;
   /**
    * Fetch a named time-series metric for the workspace, returning data points bucketed over a time range.
@@ -12430,7 +12798,7 @@ export type Query = {
   timelineEntries: TimelineEntryConnection;
   /** Fetches a single timeline entry by its ID within a customer's timeline. Returns null if the entry does not exist. */
   timelineEntry?: Maybe<TimelineEntry>;
-  /** Fetch a single workspace member by their ID. Returns null if no user with that ID exists. Requires the `user:read` permission. Changing a member's role is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/members/<userId>` (never the `<workspaceId>` placeholder). */
+  /** Fetch a single workspace member by their ID. Returns null if no user with that ID exists. Requires the `user:read` permission. Changing a member's role is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/members/<userId>`. */
   user?: Maybe<User>;
   /**
    * Returns the Discord OAuth URL for a user to personally authenticate with Discord.
@@ -12456,13 +12824,13 @@ export type Query = {
   userByEmail?: Maybe<User>;
   /** Returns the Slack channels the current user belongs to within the given Slack workspace. Useful for populating channel pickers in UI integrations. */
   userSlackChannelMemberships: Array<SlackChannelMembership>;
-  /** List all human members of the workspace, with optional filters to narrow results by role assignability. Supports cursor-based pagination. Requires the `user:read` permission. Inviting people and changing their roles are done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/members/add` (never the `<workspaceId>` placeholder), or `…/settings/members/<userId>` to change a member's role. */
+  /** List all human members of the workspace, with optional filters to narrow results by role assignability. Supports cursor-based pagination. Requires the `user:read` permission. Inviting people and changing their roles are done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/members/add`, or `…/settings/members/<userId>` to change a member's role. */
   users: UserConnection;
   /** List delivery attempts for a webhook target, newest first. Each attempt records the event that was delivered, when it was attempted, how long it took, and whether it succeeded or failed. Use the optional `filters` argument to narrow results by event type or result status — useful for surfacing recent failures in your own observability tooling. Requires the `webhookTarget:read` permission. */
   webhookDeliveryAttempts: WebhookDeliveryAttemptConnection;
-  /** Fetch a single webhook target by its ID. Returns null if no target with that ID exists in the workspace. Requires the `webhookTarget:read` permission. Creating, changing and deleting webhook targets are done by the user in the Plain app, because a webhook sends workspace events to an outside URL. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/webhooks/<webhookTargetId>` (never the `<workspaceId>` placeholder), or `…/settings/webhooks/add` for a new one. */
+  /** Fetch a single webhook target by its ID. Returns null if no target with that ID exists in the workspace. Requires the `webhookTarget:read` permission. Creating, changing and deleting webhook targets are done by the user in the Plain app, because a webhook sends workspace events to an outside URL. The Plain app page is `https://app.plain.com/workspace/w_…/settings/webhooks/<webhookTargetId>`, or `…/settings/webhooks/add` for a new one. */
   webhookTarget?: Maybe<WebhookTarget>;
-  /** List all webhook targets registered in the workspace, paginated. Returns every endpoint Plain is configured to deliver events to. Requires the `webhookTarget:read` permission. Creating, changing and deleting webhook targets are done by the user in the Plain app, because a webhook sends workspace events to an outside URL. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/webhooks/add` (never the `<workspaceId>` placeholder), or `…/settings/webhooks/<webhookTargetId>` for an existing one. */
+  /** List all webhook targets registered in the workspace, paginated. Returns every endpoint Plain is configured to deliver events to. Requires the `webhookTarget:read` permission. Creating, changing and deleting webhook targets are done by the user in the Plain app, because a webhook sends workspace events to an outside URL. The Plain app page is `https://app.plain.com/workspace/w_…/settings/webhooks/add`, or `…/settings/webhooks/<webhookTargetId>` for an existing one. */
   webhookTargets: WebhookTargetConnection;
   /** List all available webhook schema versions. Use this to discover which versions you can pin a webhook target to, and to check whether a version you are already using has been deprecated. Requires the `webhookTarget:read` permission. */
   webhookVersions: WebhookVersionConnection;
@@ -12478,13 +12846,13 @@ export type Query = {
    * Workflows are the step-based automation model that supports conditions, actions, and wait steps connected in a graph.
    */
   workflow?: Maybe<Workflow>;
-  /** How to build or edit a workflow with these tools, as markdown: the trigger events, every condition and action payload with its fields, how steps connect, and how to publish and link to the result. Read it before creating or changing a workflow. Requires the `workflowRule:read` permission. */
+  /** How to build or edit a workflow with these tools, as markdown: the trigger events, every condition and action payload with its fields, how steps connect, and how to publish and link to the result. Requires the `workflowRule:read` permission. */
   workflowBuilderGuide: Scalars['String']['output'];
   /**
    * Returns which blocks (condition/action/wait steps) are available for a workflow of the given
    * trigger type. The builder UI sources its palette from this so the allow-list lives in the
    * backend, not hardcoded in the UI. E.g. SCHEDULE workflows have no thread, so they allow no
-   * conditions/waits and only a restricted set of action types. Read `workflowBuilderGuide` first for the trigger events and every step payload.
+   * conditions/waits and only a restricted set of action types.
    */
   workflowCapabilities: WorkflowCapabilities;
   /**
@@ -12505,16 +12873,6 @@ export type Query = {
    * by the entity a run fired against, or by state. Executions that have not started yet sort to the top.
    */
   workflowExecutionsForWorkspace: WorkflowExecutionConnection;
-  /**
-   * Get a workflow rule by id. Returns null if no rule with the given ID exists.
-   * Workflow rules are the older, condition-plus-action configuration model; see `workflow` for the newer step-based model.
-   */
-  workflowRule?: Maybe<WorkflowRule>;
-  /**
-   * List all workflow rules in the workspace, paginated. Rules are returned in their configured display order.
-   * Use `workflowRule` to fetch a single rule by ID.
-   */
-  workflowRules: WorkflowRuleConnection;
   /** Fetch a workflow share link by its token. Returns null if no share link with the given token exists. */
   workflowShareLink?: Maybe<WorkflowShareLink>;
   /**
@@ -12525,7 +12883,7 @@ export type Query = {
   workflowTemplate?: Maybe<WorkflowTemplate>;
   /**
    * Published templates for the gallery, metadata only — deprecated ones are already absent because the
-   * templates repo omits them. Use `workflowTemplate` for one with its workflows.
+   * templates repo omits them.
    * Needs an authenticated caller and nothing more: templates are one published document, identical
    * for every workspace, so there is nothing to scope by permission.
    */
@@ -12548,51 +12906,49 @@ export type Query = {
    * Redirect the user to the returned URL to begin the OAuth flow; after authorization Discord will redirect back to the provided `redirectUrl` with an `authCode` you can pass to `createWorkspaceDiscordChannelIntegration`.
    */
   workspaceDiscordChannelInstallationInfo: WorkspaceDiscordChannelInstallationInfo;
-  /** Fetches a single workspace Discord channel integration by its ID. Returns null if no integration with that ID exists. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/discord` (never the `<workspaceId>` placeholder), which takes them straight to Discord to approve, then read this again to confirm. */
+  /** Fetches a single workspace Discord channel integration by its ID. Returns null if no integration with that ID exists. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/install/discord`. */
   workspaceDiscordChannelIntegration?: Maybe<WorkspaceDiscordChannelIntegration>;
-  /** Returns a paginated list of all Discord server (guild) channel integrations connected to this workspace. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/discord` (never the `<workspaceId>` placeholder), which takes them straight to Discord to approve, then read this again to confirm. */
+  /** Returns a paginated list of all Discord server (guild) channel integrations connected to this workspace. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/install/discord`. */
   workspaceDiscordChannelIntegrations: WorkspaceDiscordChannelIntegrationConnection;
   /** Fetches a single webhook-based workspace Discord integration by its ID. Returns null if not found. */
   workspaceDiscordIntegration?: Maybe<WorkspaceDiscordIntegration>;
   /** Returns a paginated list of all webhook-based Discord integrations configured for this workspace. */
   workspaceDiscordIntegrations: WorkspaceDiscordIntegrationConnection;
-  /** Returns the workspace's email settings, including whether email is enabled, any custom domain configuration, and BCC addresses. Changing these settings, including the support email domain, its forwarding and alternate addresses, is done by the user in the Plain app, because they decide where mail is sent from and to. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/email` (never the `<workspaceId>` placeholder). */
+  /** Returns the workspace's email settings, including whether email is enabled, any custom domain configuration, and BCC addresses. Changing these settings, including the support email domain, its forwarding and alternate addresses, is done by the user in the Plain app, because they decide where mail is sent from and to. The Plain app page is `https://app.plain.com/workspace/w_…/settings/email`. */
   workspaceEmailSettings: WorkspaceEmailSettings;
   /** Returns the workspace's HMAC configuration, including the secret used to sign outbound webhook and HTTP-request payloads. Returns null if no secret has been generated yet. Requires the `workspaceHmac:read` permission. */
   workspaceHmac?: Maybe<WorkspaceHmac>;
-  /** Returns all pending invites for the current workspace. Use this to view outstanding invitations and their status from an admin perspective. Inviting someone is done by the user in the Plain app. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/members/add` (never the `<workspaceId>` placeholder). */
+  /** Returns all pending invites for the current workspace. Use this to view outstanding invitations and their status from an admin perspective. Inviting someone is done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/members/add`. */
   workspaceInvites: WorkspaceInviteConnection;
   /** Builds the Linear OAuth installation URL for the app actor flow (actor=app). */
   workspaceLinearInstallationInfo: WorkspaceLinearInstallationInfo;
   /** Returns the Microsoft Teams admin-consent URL that a workspace administrator must visit to authorize Plain's bot for the workspace's Azure AD tenant. Pass the URL the user should be redirected to after consent as `redirectUrl`. If the workspace already has an integration, the URL is scoped to that tenant to prevent accidentally consenting in the wrong one. */
   workspaceMSTeamsInstallationInfo: WorkspaceMsTeamsInstallationInfo;
-  /** Returns the workspace-level Microsoft Teams integration, or null if none has been created yet. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/ms-teams` (never the `<workspaceId>` placeholder), which takes them straight to Microsoft Teams to approve, then read this again to confirm. */
+  /** Returns the workspace-level Microsoft Teams integration, or null if none has been created yet. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/install/ms-teams`. */
   workspaceMSTeamsIntegration?: Maybe<WorkspaceMsTeamsIntegration>;
   /**
    * Returns how far this workspace has progressed through setup: channels, teammates, label
    * types, tiers, automation and Sidekick Agent tools. These are the same steps as the Onboarding
    * checklist the user sees in the Plain app. Connecting the email channel
-   * and inviting teammates are done by the user in the Plain app. Get this workspace's ID and give
-   * the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/email`
-   * or `https://app.plain.com/workspace/w_…/settings/members/add` (never the `<workspaceId>`
-   * placeholder).
+   * and inviting teammates are done by the user in the Plain app. The Plain app page is `https://app.plain.com/workspace/w_…/settings/email`
+   * or `https://app.plain.com/workspace/w_…/settings/members/add`.
    */
   workspaceSetup: WorkspaceSetup;
   /** Returns a Slack OAuth installation URL for connecting a workspace Slack channel integration. Pass this URL to Slack's OAuth flow and exchange the resulting code with createWorkspaceSlackChannelIntegration. */
   workspaceSlackChannelInstallationInfo: WorkspaceSlackChannelInstallationInfo;
-  /** Returns a single workspace Slack channel integration by ID, or null if not found. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/slack` (never the `<workspaceId>` placeholder), which takes them straight to Slack to approve, then read this again to confirm. */
+  /** Returns a single workspace Slack channel integration by ID, or null if not found. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/install/slack`. */
   workspaceSlackChannelIntegration?: Maybe<WorkspaceSlackChannelIntegration>;
-  /** Returns a paginated list of all workspace Slack channel integrations for this workspace. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/install/slack` (never the `<workspaceId>` placeholder), which takes them straight to Slack to approve, then read this again to confirm. */
+  /** Returns a paginated list of all workspace Slack channel integrations for this workspace. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/install/slack`. */
   workspaceSlackChannelIntegrations: WorkspaceSlackChannelIntegrationConnection;
   /** Returns a Slack OAuth installation URL for connecting a workspace-level Slack notifications integration. Pass this URL to Slack's OAuth flow and exchange the resulting code with createWorkspaceSlackIntegration. */
   workspaceSlackInstallationInfo: WorkspaceSlackInstallationInfo;
-  /** Returns a single workspace-level Slack notifications integration by ID, or null if not found. A Slack channel integration's ID (from `workspaceSlackChannelIntegrations`) returns null here; to connect notifications through one, use `createWorkspaceSlackIntegrationFromAuth`. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slack` (never the `<workspaceId>` placeholder), then read this again to confirm. */
+  /** Returns a single workspace-level Slack notifications integration by ID, or null if not found. A Slack channel integration's ID returns null here because channel and notification integrations have separate records. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/settings/slack`. */
   workspaceSlackIntegration?: Maybe<WorkspaceSlackIntegration>;
-  /** Returns a paginated list of all workspace-level Slack notifications integrations for this workspace. For the Slack teams connected for support channels, use `workspaceSlackChannelIntegrations`. To connect notifications through a Slack channel integration the workspace already has, use `createWorkspaceSlackIntegrationFromAuth`. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slack` (never the `<workspaceId>` placeholder), then read this again to confirm. */
+  /** Returns a paginated list of all workspace-level Slack notifications integrations for this workspace. Slack support-channel integrations have separate records from notification integrations. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/settings/slack`. */
   workspaceSlackIntegrations: WorkspaceSlackIntegrationConnection;
   /** Returns the OAuth installation URL to begin installing Plain's Sidekick Agent into your Slack workspace. Pass the returned URL to your users to redirect them through Slack's OAuth flow; on completion, pass the resulting auth code to createWorkspaceSlackSidekickIntegration. */
   workspaceSlackSidekickInstallationInfo: WorkspaceSlackSidekickInstallationInfo;
-  /** Returns the current workspace's Slack Sidekick Agent integration, or null if Sidekick Agent has not been installed. Requires the workspaceSlackSidekickIntegration:read permission. Not connected yet? Connecting needs the user's approval in the provider. Get this workspace's ID and give the user the full link with that ID in it, `https://app.plain.com/workspace/w_…/settings/slack` (never the `<workspaceId>` placeholder), then read this again to confirm. */
+  /** Returns the current workspace's Slack Sidekick Agent integration, or null if Sidekick Agent has not been installed. Requires the workspaceSlackSidekickIntegration:read permission. Not connected yet? Connecting needs the user's approval in the provider. The Plain app page is `https://app.plain.com/workspace/w_…/settings/slack`. */
   workspaceSlackSidekickIntegration?: Maybe<WorkspaceSlackSidekickIntegration>;
 };
 
@@ -12889,6 +13245,19 @@ export type QueryCustomersArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
   sortBy?: InputMaybe<CustomersSort>;
+};
+
+
+export type QueryDashboardArgs = {
+  dashboardId: Scalars['ID']['input'];
+};
+
+
+export type QueryDashboardsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -13783,19 +14152,6 @@ export type QueryWorkflowExecutionsForWorkspaceArgs = {
 };
 
 
-export type QueryWorkflowRuleArgs = {
-  workflowRuleId: Scalars['ID']['input'];
-};
-
-
-export type QueryWorkflowRulesArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryWorkflowShareLinkArgs = {
   token: Scalars['String']['input'];
 };
@@ -13924,6 +14280,17 @@ export type QueuedAgentSessionMessage = {
   updatedAt: DateTime;
   updatedBy: Actor;
   workspaceFiles: Array<WorkspaceFile>;
+};
+
+export type RearrangeLabelTypesInput = {
+  /** One entry per parent whose children change. A parent can appear at most once, and a label type can appear in at most one group. */
+  siblingGroups: Array<LabelTypeSiblingGroupInput>;
+};
+
+export type RearrangeLabelTypesOutput = {
+  error?: Maybe<MutationError>;
+  /** The label types whose parent or position changed. */
+  labelTypes: Array<LabelType>;
 };
 
 export type RecurringPrice = {
@@ -14371,7 +14738,7 @@ export type RolePriorityOrderEntryInput = {
 export type RoleScope = {
   /** Whether users see all threads, only threads matching specific values, or all threads except those matching specific values. */
   accessMode: RoleScopeAccessMode;
-  /** The dimension on which thread visibility is filtered (e.g. label, tier, channel). */
+  /** The dimension on which thread visibility is filtered: label, tier, channel, or account. */
   primitiveType: ThreadScopePrimitiveType;
   /** IDs of the values included/excluded (empty for VIEW_ANY). */
   values: Array<Scalars['ID']['output']>;
@@ -14957,6 +15324,8 @@ export type ServiceLevelAgreementPauseStatusDetailTypeArrayInput = {
 
 /** Narrows the SLA policy list. Omit a field to leave that dimension unconstrained. */
 export type ServiceLevelAgreementPoliciesFilter = {
+  /** Narrows to archived (`true`) or active (`false`) policies. By default both are returned, so a client syncing policies keeps seeing the archived ones its threads still point at. */
+  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
   /** Narrows to policies whose name contains this, matched case-insensitively and unanchored. Searched in the database rather than on the page, so it finds policies a client has not loaded. */
   searchQuery?: InputMaybe<Scalars['String']['input']>;
   /** Narrows to policies holding a target of at least one of these types. A policy with no target of any given type is excluded. */
@@ -14965,11 +15334,19 @@ export type ServiceLevelAgreementPoliciesFilter = {
 
 /** A named group of SLA targets that a workflow or a user applies to a thread. Unlike tier SLAs, a policy's targets are selected by type alone, so a policy holds at most one target per type. */
 export type ServiceLevelAgreementPolicy = {
+  /** When this policy was archived. Null if the policy is not archived. */
+  archivedAt?: Maybe<DateTime>;
+  /** The user or machine user who archived this policy. Null if the policy is not archived. */
+  archivedBy?: Maybe<InternalActor>;
   createdAt: DateTime;
   createdBy: InternalActor;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  /** Whether this policy has been archived. An archived policy keeps serving the threads already on it but can no longer be assigned to other threads. */
+  isArchived: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  /** How many threads currently on this policy are open, meaning their status is not DONE. Snoozed threads count, since their resolution clocks still run. */
+  openThreadCount: Scalars['Int']['output'];
   /** The SLA targets this policy applies. At most one per type. */
   targets: Array<ServiceLevelAgreementPolicyTarget>;
   updatedAt: DateTime;
@@ -15803,7 +16180,7 @@ export type SlackCustomerIdentity = {
 export type SlackIngestionMode =
   /** An AI model decides when a message starts a new thread. */
   | 'AI_BASED'
-  /** A thread is created only when the `createThreadFromSlackMessage` mutation is called for a message. */
+  /** A thread is created only through an explicit API request for a message. */
   | 'API_ONLY'
   /** A thread is created only when a user reacts with a specific emoji. */
   | 'MANUAL'
@@ -16349,6 +16726,11 @@ export type TaskLinkEdge = {
   node: TaskLink;
 };
 
+/** The kind of entity that raised a task. */
+export type TaskLinkSourceType =
+  /** Raised by a knowledge gap. */
+  | 'KNOWLEDGE_GAP';
+
 /** The lifecycle status of a task. */
 export type TaskStatus =
   /** The task has been cancelled and no longer needs to be done. */
@@ -16367,6 +16749,8 @@ export type TasksFilter = {
   /** @deprecated Use accountIds instead */
   companyIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   isAssigned?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Only tasks raised by one of these sources. Combine with `not` to hide them. */
+  linkSourceTypes?: InputMaybe<Array<TaskLinkSourceType>>;
   not?: InputMaybe<TasksFilter>;
   or?: InputMaybe<Array<TasksFilter>>;
   statuses?: InputMaybe<Array<TaskStatus>>;
@@ -16581,7 +16965,7 @@ export type TenantFieldUserReferenceValue = {
 export type TenantFieldValue = TenantFieldBooleanValue | TenantFieldDateTimeValue | TenantFieldNumberValue | TenantFieldStringArrayValue | TenantFieldStringValue | TenantFieldTenantReferenceValue | TenantFieldUserReferenceValue;
 
 export type TenantIdentifierInput = {
-  /** Your own ID for the tenant, set when it was created. Not its name: find a tenant by name with `searchTenants`. */
+  /** Your identifier for the tenant, assigned at creation. This field accepts the external identifier rather than the display name. */
   externalId?: InputMaybe<Scalars['String']['input']>;
   /** Plain's ID for the tenant, such as `te_01…`. Not the tenant's name. */
   tenantId?: InputMaybe<Scalars['ID']['input']>;
@@ -17564,20 +17948,24 @@ export type ThreadHeatmapHour = {
 export type ThreadHeatmapMetric = {
   /** 7 elements (Monday=0 … Sunday=6), each containing 24 hourly buckets (hour 0–23 UTC). Null in threadIds mode. */
   days?: Maybe<Array<Array<ThreadHeatmapHour>>>;
+  /** The machine-user mode the result used: the requested `machineUsers`, or the metric's default when it was omitted. */
+  machineUsers: MachineUserMode;
   /** The distinct thread ids behind the clicked cell. Populated only when mode is threadIds; null otherwise. */
   threadIds?: Maybe<Array<Scalars['ID']['output']>>;
 };
 
 export type ThreadHeatmapMetricInput = {
   filters?: InputMaybe<ThreadMetricFilters>;
-  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). */
+  /** UTC date time ending in Z (e.g. 2024-10-28T18:30:00Z or 2024-10-28T18:30:00.000Z). Offsets such as +00:00 are rejected. */
   from: Scalars['String']['input'];
+  /** How machine users count in this metric. Omit to use the metric's default. A mode the metric does not support is rejected with `input_validation`. See `threadMetricCapabilities` for each metric's default, supported modes and what counts as machine-user activity. */
+  machineUsers?: InputMaybe<MachineUserMode>;
   metricName: HeatmapMetricName;
   /** The return mode. Either METRIC - the values of the metric. Or THREAD_IDS - the distinct thread ids behind the values. Use filters and to/from to narrow search if looking for threadsIds for a specific subset */
   mode: ThreadMetricMode;
   /** The clicked cell to drill into. Required when mode is threadIds; rejected otherwise. */
   threadIdsArgs?: InputMaybe<ThreadHeatmapThreadIdsArgs>;
-  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Must not be more than 5 minutes in the future. */
+  /** UTC date time ending in Z (e.g. 2024-10-28T18:30:00Z or 2024-10-28T18:30:00.000Z). Offsets such as +00:00 are rejected. A future value is treated as now. */
   to: Scalars['String']['input'];
 };
 
@@ -17853,6 +18241,15 @@ export type ThreadMessageInfo = {
   timestamp: DateTime;
 };
 
+/** What a thread metric supports. One entry per metric name and kind. */
+export type ThreadMetricCapability = {
+  kind: ThreadMetricKind;
+  /** How the metric handles machine users. */
+  machineUsers: ThreadMetricMachineUserCapability;
+  /** A value of the kind's metric-name enum. */
+  metricName: Scalars['String']['output'];
+};
+
 export type ThreadMetricFilters = {
   accountFields?: InputMaybe<Array<AccountFieldFilter>>;
   accountIdentifiers?: InputMaybe<Array<AccountIdentifierInput>>;
@@ -17926,6 +18323,25 @@ export type ThreadMetricIntervalUnit =
   | 'WEEK'
   | 'YEAR';
 
+/** Which thread metric query a metric name belongs to. */
+export type ThreadMetricKind =
+  /** `threadHeatmapMetric`, named by `HeatmapMetricName`. */
+  | 'HEATMAP'
+  /** `threadSingleValueMetric`, named by `SingleValueMetricName`. */
+  | 'SINGLE_VALUE'
+  /** `threadTimeSeriesMetric`, named by `TimeSeriesMetricName`. */
+  | 'TIME_SERIES';
+
+/** How a thread metric handles machine users. */
+export type ThreadMetricMachineUserCapability = {
+  /** The mode used when `machineUsers` is omitted. */
+  default: MachineUserMode;
+  /** What counts as machine-user activity for this metric, and what each mode does with it. */
+  description: Scalars['String']['output'];
+  /** The modes the metric accepts. Always contains `default`; a single entry means the mode cannot be changed for this metric. */
+  supported: Array<MachineUserMode>;
+};
+
 /** What a thread metric query returns: the chart data or the thread ids behind a slice. */
 export type ThreadMetricMode =
   | 'METRIC'
@@ -17976,6 +18392,8 @@ export type ThreadServiceLevelAgreementPolicyChangedEntry = {
 
 /** Result of a `threadSingleValueMetric` query. Contains one aggregate value per group bucket. */
 export type ThreadSingleValueMetric = {
+  /** The machine-user mode the result used: the requested `machineUsers`, or the metric's default when it was omitted. */
+  machineUsers: MachineUserMode;
   /** The distinct thread ids behind the value. Populated only when mode is threadIds; null otherwise. */
   threadIds?: Maybe<Array<Scalars['ID']['output']>>;
   /** One aggregate value per group bucket. Null in threadIds mode. */
@@ -17984,16 +18402,18 @@ export type ThreadSingleValueMetric = {
 
 export type ThreadSingleValueMetricInput = {
   filters?: InputMaybe<ThreadMetricFilters>;
-  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Required for all metrics except all-time counts (e.g. threads_all_time_count_done), which reject a date range. */
+  /** UTC date time ending in Z (e.g. 2024-10-28T18:30:00Z or 2024-10-28T18:30:00.000Z). Offsets such as +00:00 are rejected. Required for all metrics except all-time counts (e.g. threads_all_time_count_done), which reject a date range. */
   from?: InputMaybe<Scalars['String']['input']>;
   /** Required for `agent_*` metrics in METRIC mode: pass `[{ dimension: ASSIGNEE }]`, or another dimension together with `filters.userIds`. */
   groupBy?: InputMaybe<Array<ThreadMetricGroupByInput>>;
+  /** How machine users count in this metric. Omit to use the metric's default. A mode the metric does not support is rejected with `input_validation`. See `threadMetricCapabilities` for each metric's default, supported modes and what counts as machine-user activity. */
+  machineUsers?: InputMaybe<MachineUserMode>;
   metricName: SingleValueMetricName;
   /** The return mode. Either METRIC - the values of the metric. Or THREAD_IDS - the distinct thread ids behind the values. Use filters and to/from to narrow search if looking for threadsIds for a specific subset */
   mode: ThreadMetricMode;
   /** Percentile (integer 1-99, e.g. 90 for P90) for the configurable-percentile duration metrics (threads_first_response_time, threads_resolution_time, threads_time_customer_waiting, threads_time_between_follow_up_responses, and their agent_ variants). Defaults to 50 (median). Rejected for any other metric. */
   percentile?: InputMaybe<Scalars['Int']['input']>;
-  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Must not be more than 5 minutes in the future. Required for all metrics except all-time counts (e.g. threads_all_time_count_done), which reject a date range. */
+  /** UTC date time ending in Z (e.g. 2024-10-28T18:30:00Z or 2024-10-28T18:30:00.000Z). Offsets such as +00:00 are rejected. A future value is treated as now. Required for all metrics except all-time counts (e.g. threads_all_time_count_done), which reject a date range. */
   to?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -18109,6 +18529,8 @@ export type ThreadStatusTransitionedEntry = {
 
 /** Result of a `threadTimeSeriesMetric` query. Each element in `timestamps` aligns with the same index across all series. */
 export type ThreadTimeSeriesMetric = {
+  /** The machine-user mode the result used: the requested `machineUsers`, or the metric's default when it was omitted. */
+  machineUsers: MachineUserMode;
   /** One series entry per group bucket (or a single entry when no group-by is requested). Null in threadIds mode. */
   series?: Maybe<Array<ThreadTimeSeriesSeries>>;
   /** The distinct thread ids behind the slice. Populated only when mode is threadIds; null otherwise. */
@@ -18119,17 +18541,19 @@ export type ThreadTimeSeriesMetric = {
 
 export type ThreadTimeSeriesMetricInput = {
   filters?: InputMaybe<ThreadMetricFilters>;
-  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). */
+  /** UTC date time ending in Z (e.g. 2024-10-28T18:30:00Z or 2024-10-28T18:30:00.000Z). Offsets such as +00:00 are rejected. */
   from: Scalars['String']['input'];
   /** Required for `agent_*` metrics in METRIC mode: pass `[{ dimension: ASSIGNEE }]`, or another dimension together with `filters.userIds`. */
   groupBy?: InputMaybe<Array<ThreadMetricGroupByInput>>;
   interval: ThreadMetricInterval;
+  /** How machine users count in this metric. Omit to use the metric's default. A mode the metric does not support is rejected with `input_validation`. See `threadMetricCapabilities` for each metric's default, supported modes and what counts as machine-user activity. */
+  machineUsers?: InputMaybe<MachineUserMode>;
   metricName: TimeSeriesMetricName;
   /** The return mode. Either METRIC - the values of the metric. Or THREAD_IDS - the distinct thread ids behind the values. Use filters and to/from to narrow search if looking for threadsIds for a specific subset */
   mode: ThreadMetricMode;
   /** Percentile (integer 1-99, e.g. 90 for P90) for the configurable-percentile duration metrics (threads_first_response_time, threads_resolution_time, threads_time_customer_waiting, threads_time_between_follow_up_responses, threads_time_between_all_responses, and their agent_ variants). Defaults to 50 (median). Rejected for any other metric. */
   percentile?: InputMaybe<Scalars['Int']['input']>;
-  /** ISO 8601 format (e.g. 2024-10-28T18:30:00Z). Must not be more than 5 minutes in the future. */
+  /** UTC date time ending in Z (e.g. 2024-10-28T18:30:00Z or 2024-10-28T18:30:00.000Z). Offsets such as +00:00 are rejected. A future value is treated as now. */
   to: Scalars['String']['input'];
 };
 
@@ -18354,7 +18778,7 @@ export type TierEdge = {
 };
 
 export type TierIdentifierInput = {
-  /** Your own ID for the tier, set when it was created. Not its name: find a tier by name with `tiers`. */
+  /** Your identifier for the tier, assigned at creation. This field accepts the external identifier rather than the display name. */
   externalId?: InputMaybe<Scalars['String']['input']>;
   /** Plain's ID for the tier, such as `tier_01…`. Not the tier's name. */
   tierId?: InputMaybe<Scalars['ID']['input']>;
@@ -18607,15 +19031,6 @@ export type ToggleSlackMessageReactionOutput = {
   error?: Maybe<MutationError>;
 };
 
-export type ToggleWorkflowRulePublishedInput = {
-  workflowRuleId: Scalars['ID']['input'];
-};
-
-export type ToggleWorkflowRulePublishedOutput = {
-  error?: Maybe<MutationError>;
-  workflowRule?: Maybe<WorkflowRule>;
-};
-
 export type ToneRuleFeedbackDetails = {
   comment?: Maybe<Scalars['String']['output']>;
   reason: Scalars['String']['output'];
@@ -18654,15 +19069,6 @@ export type TriggerWorkflowOutput = {
   workflowExecution?: Maybe<WorkflowExecution>;
 };
 
-export type TriggerWorkflowRuleInput = {
-  threadId: Scalars['ID']['input'];
-  workflowRuleId: Scalars['ID']['input'];
-};
-
-export type TriggerWorkflowRuleOutput = {
-  error?: Maybe<MutationError>;
-};
-
 export type UnarchiveLabelTypeInput = {
   labelTypeId: Scalars['ID']['input'];
 };
@@ -18670,6 +19076,15 @@ export type UnarchiveLabelTypeInput = {
 export type UnarchiveLabelTypeOutput = {
   error?: Maybe<MutationError>;
   labelType?: Maybe<LabelType>;
+};
+
+export type UnarchiveServiceLevelAgreementPolicyInput = {
+  serviceLevelAgreementPolicyId: Scalars['ID']['input'];
+};
+
+export type UnarchiveServiceLevelAgreementPolicyOutput = {
+  error?: Maybe<MutationError>;
+  serviceLevelAgreementPolicy?: Maybe<ServiceLevelAgreementPolicy>;
 };
 
 export type UnassignThreadInput = {
@@ -18758,6 +19173,8 @@ export type UpdateAllMyInternalNotificationsOutput = {
 };
 
 export type UpdateApiKeyInput = {
+  /** Replaces the IP addresses or ranges (CIDR notation, IPv4 or IPv6) this key may be used from, at most 100. Omit to leave it unchanged; send null to allow any IP address. */
+  allowedCidrs?: InputMaybe<Array<Scalars['String']['input']>>;
   apiKeyId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   /** Replaces the whole list of workspace users, roles and custom roles this key may reply as. Omit to leave it unchanged; send null or empty lists to clear it. */
@@ -18995,6 +19412,19 @@ export type UpdateCustomerSurveyInput = {
 
 export type UpdateCustomerSurveyOutput = {
   customerSurvey?: Maybe<CustomerSurvey>;
+  error?: Maybe<MutationError>;
+};
+
+export type UpdateDashboardInput = {
+  dashboardId: Scalars['ID']['input'];
+  globalRange?: InputMaybe<DashboardRangeInput>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** When provided, this list is the dashboard's full widget set, with position = array index. A widget with `widgetId` keeps that id, widgets of the dashboard whose ids are not listed are deleted, and a widget without `widgetId` is created. Omit to leave widgets untouched. */
+  widgets?: InputMaybe<Array<DashboardWidgetInput>>;
+};
+
+export type UpdateDashboardOutput = {
+  dashboard?: Maybe<Dashboard>;
   error?: Maybe<MutationError>;
 };
 
@@ -19654,19 +20084,6 @@ export type UpdateWorkflowInput = {
 export type UpdateWorkflowOutput = {
   error?: Maybe<MutationError>;
   workflow?: Maybe<Workflow>;
-};
-
-export type UpdateWorkflowRuleInput = {
-  name?: InputMaybe<StringInput>;
-  order?: InputMaybe<IntInput>;
-  /** JSON-encoded payload of the rule definition. */
-  payload?: InputMaybe<StringInput>;
-  workflowRuleId: Scalars['ID']['input'];
-};
-
-export type UpdateWorkflowRuleOutput = {
-  error?: Maybe<MutationError>;
-  workflowRule?: Maybe<WorkflowRule>;
 };
 
 export type UpdateWorkflowStepInput = {
@@ -20604,31 +21021,6 @@ export type WorkflowReferencesFilter = {
   serviceLevelAgreementPolicyIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
-export type WorkflowRule = {
-  createdAt: DateTime;
-  createdBy: InternalActor;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  /** Display order of this rule relative to other rules. Lower values appear first. */
-  order: Scalars['Int']['output'];
-  /** JSON-encoded payload of the rule definition. */
-  payload: Scalars['String']['output'];
-  /** Timestamp when the rule was last published. Null means the rule is an inactive draft. */
-  publishedAt?: Maybe<DateTime>;
-  updatedAt: DateTime;
-  updatedBy: InternalActor;
-};
-
-export type WorkflowRuleConnection = {
-  edges: Array<WorkflowRuleEdge>;
-  pageInfo: PageInfo;
-};
-
-export type WorkflowRuleEdge = {
-  cursor: Scalars['String']['output'];
-  node: WorkflowRule;
-};
-
 export type WorkflowShareLink = {
   name: Scalars['String']['output'];
   /** The ID of the first step to execute, or null if the workflow has no steps. */
@@ -20824,7 +21216,7 @@ export type WorkflowTemplateWorkflow = {
 export type WorkflowTriggerType =
   /** The workflow runs automatically in response to domain events (e.g. thread created, label added). */
   | 'EVENTS'
-  /** The workflow runs only when explicitly triggered via the `triggerWorkflow` mutation or a UI button. */
+  /** The workflow runs only when explicitly started through the API or a UI button. */
   | 'MANUAL'
   /** The workflow runs on a recurring cron schedule (evaluated in UTC), with no thread. */
   | 'SCHEDULE';
@@ -20858,10 +21250,7 @@ export type WorkflowsSortField =
   | 'POSITION'
   /** When the workflow was published. Drafts have no such time and sort as the earliest possible instant, so they lead ascending and trail descending. */
   | 'PUBLISHED_AT'
-  /**
-   * When the workflow row itself was last changed. Editing steps one at a time does not move it —
-   * only `bulkUpsertWorkflowSteps` touches the workflow alongside its steps.
-   */
+  /** When the workflow row itself was last changed. Individual step edits do not change the workflow row timestamp. Atomic replacement of the workflow steps also updates the workflow row. */
   | 'UPDATED_AT';
 
 export type WorkosConnectAuthMechanismInput = {
@@ -21055,7 +21444,7 @@ export type WorkspaceFileUploadUrl = {
 
 /** Controls where the file is stored and how it can be accessed. */
 export type WorkspaceFileVisibility =
-  /** File is stored in a private bucket; access requires a short-lived pre-signed download URL obtained via createWorkspaceFileDownloadUrl. */
+  /** File is stored in a private bucket; access requires a short-lived pre-signed download URL. */
   | 'PRIVATE'
   /** File is stored in a public bucket and is accessible via a permanent CDN URL with no authentication required. */
   | 'PUBLIC';
@@ -21375,7 +21764,7 @@ export type AiToneRuleFieldsFragment = { id: string, category: string, descripti
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type ApiKeyFieldsFragment = { id: string, description?: string | null, permissions: Array<string>, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
+export type ApiKeyFieldsFragment = { id: string, description?: string | null, permissions: Array<string>, allowedCidrs?: Array<string> | null, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -22203,6 +22592,23 @@ export type CustomRoleFieldsFragment = { id: string, name: string, description?:
 
 export type CustomSidekickSkillFieldsFragment = { name: string, displayName: string, description: string, isEnabled: boolean, customSkillId: string };
 
+export type DashboardFieldsFragment = { id: string, name: string, globalRange:
+    | { __typename: 'DashboardCustomRange', from: string, to: string }
+    | { __typename: 'DashboardPresetRange', duration: number }
+  , createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+    | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+    | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+    | { __typename: 'UserActor', userId: string, user: { id: string } }
+  , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+    | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+    | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+    | { __typename: 'UserActor', userId: string, user: { id: string } }
+   };
+
+export type DashboardCustomRangeFieldsFragment = { from: string, to: string };
+
+export type DashboardPresetRangeFieldsFragment = { duration: number };
+
 export type DefaultServiceIntegrationFieldsFragment = { name: string, key: string };
 
 export type DeletedCustomerActorFieldsFragment = { customerId: string };
@@ -22435,7 +22841,7 @@ export type ImportBroadcastRecipientUnsubscribesResultFieldsFragment = { isDryRu
 
 export type ImportJobFieldsFragment = { id: string, status: ImporterStatus, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, importRuns: Array<{ id: string, importJobId: string, entityType: ImporterEntityType, status: ImporterStatus, downloadedRecords?: number | null, savedRecords?: number | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null }> };
 
-export type ImportJobDefinitionFieldsFragment = { id: string, mode: string, entityTypes: Array<string>, metadata?: { lists: Array<{ id: string, name?: string | null }> } | null, enabledAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type ImportJobDefinitionFieldsFragment = { id: string, mode: string, entityTypes: Array<string>, metadata?: { lists: Array<{ id: string, name?: string | null }> } | null, tenantFieldMappings?: { alternateDomainsTenantFieldSchemaId?: string | null } | null, enabledAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -23582,8 +23988,6 @@ export type OAuthAppFieldsFragment = { id: string, name: string, description?: s
     | { __typename: 'UserActor', userId: string, user: { id: string } }
   , updatedAt: { unixTimestamp: string, iso8601: string } };
 
-export type PendingSenderDomainDnsRecordsFieldsFragment = { domainName: string, dkimDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null }, returnPathDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null } };
-
 export type PerSeatRecurringPriceFieldsFragment = { billingIntervalUnit: BillingIntervalUnit, billingIntervalCount: number, currency: CurrencyCode, perSeatAmount: number };
 
 export type PlainTaskThreadLinkFieldsFragment = { id: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, threadId: string, sourceId: string, sourceType: string, linkType: ThreadLinkLinkType, plainTaskId: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
@@ -23651,7 +24055,11 @@ export type ServiceAuthorizationFieldsFragment = { id: string, status: ServiceAu
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type ServiceLevelAgreementPolicyFieldsFragment = { id: string, name: string, description?: string | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type ServiceLevelAgreementPolicyFieldsFragment = { id: string, name: string, description?: string | null, isArchived: boolean, openThreadCount: number, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
+    | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+    | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+    | { __typename: 'UserActor', userId: string, user: { id: string } }
+   | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
     | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -24373,7 +24781,7 @@ export type ThreadFieldSchemaFieldsFragment = { id: string, label: string, key: 
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    };
 
-export type ThreadHeatmapMetricFieldsFragment = { threadIds?: Array<string> | null, days?: Array<Array<{ total: number, percentage: number }>> | null };
+export type ThreadHeatmapMetricFieldsFragment = { threadIds?: Array<string> | null, machineUsers: MachineUserMode, days?: Array<Array<{ total: number, percentage: number }>> | null };
 
 export type ThreadLinkCandidateFieldsFragment = { sourceId: string, sourceType: string, title: string, description?: string | null, url: string, status: ThreadLinkStatus, sourceStatus?: { key: string, label: string, color?: string | null, icon?: string | null } | null };
 
@@ -24475,13 +24883,15 @@ export type ThreadLinkTargetDeletedEntryFieldsFragment = { threadLink:
        }
   , sourceThread: { id: string, ref: string, title?: string | null } };
 
+export type ThreadMetricCapabilityFieldsFragment = { kind: ThreadMetricKind, metricName: string, machineUsers: { default: MachineUserMode, supported: Array<MachineUserMode>, description: string } };
+
 export type ThreadNotificationDetailFieldsFragment = { threadId: string };
 
 export type ThreadPriorityChangedEntryFieldsFragment = { previousPriority: number, nextPriority: number };
 
 export type ThreadServiceLevelAgreementPolicyChangedEntryFieldsFragment = { previousServiceLevelAgreementPolicy?: { id: string, name: string } | null, nextServiceLevelAgreementPolicy?: { id: string, name: string } | null };
 
-export type ThreadSingleValueMetricFieldsFragment = { threadIds?: Array<string> | null, values?: Array<{ value?: number | null, group?: { dimension: ThreadMetricGroupBy, value: string, label?: string | null } | null }> | null };
+export type ThreadSingleValueMetricFieldsFragment = { threadIds?: Array<string> | null, machineUsers: MachineUserMode, values?: Array<{ value?: number | null, group?: { dimension: ThreadMetricGroupBy, value: string, label?: string | null } | null }> | null };
 
 export type ThreadStatusDetailCreatedFieldsFragment = { statusChangedAt: { unixTimestamp: string, iso8601: string }, createdAt: { unixTimestamp: string, iso8601: string } };
 
@@ -24547,7 +24957,7 @@ export type ThreadStatusTransitionedEntryFieldsFragment = { previousStatus: Thre
     | { __typename: 'ThreadStatusDetailWaitingIndefinitely', statusChangedAt: { unixTimestamp: string, iso8601: string } }
    | null };
 
-export type ThreadTimeSeriesMetricFieldsFragment = { threadIds?: Array<string> | null, timestamps?: Array<{ unixTimestamp: string, iso8601: string }> | null, series?: Array<{ values: Array<number | null>, group?: { dimension: ThreadMetricGroupBy, value: string, label?: string | null } | null }> | null };
+export type ThreadTimeSeriesMetricFieldsFragment = { threadIds?: Array<string> | null, machineUsers: MachineUserMode, timestamps?: Array<{ unixTimestamp: string, iso8601: string }> | null, series?: Array<{ values: Array<number | null>, group?: { dimension: ThreadMetricGroupBy, value: string, label?: string | null } | null }> | null };
 
 export type ThreadWithDistanceFieldsFragment = { distance: number, thread: { id: string } };
 
@@ -25579,16 +25989,6 @@ export type WorkflowExecutionFieldsFragment = { id: string, workflowId: string, 
     | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
     | { __typename: 'UserActor', userId: string, user: { id: string } }
    | null, stepExecutions: Array<{ id: string, workflowStepId: string, workflowStepVersion: number, status: WorkflowStepExecutionStatus, output?: string | null, summary?: string | null, credits?: number | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, entities: Array<{ entityType: WorkflowStepEntityType, entityId: string }> }> };
-
-export type WorkflowRuleFieldsFragment = { id: string, name: string, payload: string, order: number, publishedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
-    | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-    | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-    | { __typename: 'UserActor', userId: string, user: { id: string } }
-  , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
-    | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-    | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-    | { __typename: 'UserActor', userId: string, user: { id: string } }
-   };
 
 export type WorkflowShareLinkFieldsFragment = { name: string, trigger: string, startStepId?: string | null, steps: Array<{ id: string, type: WorkflowStepType, name?: string | null, payload: string, transitions: Array<string | null>, positionX: number, positionY: number }> };
 
@@ -30330,39 +30730,6 @@ export type InterpolationVariablesQueryVariables = Exact<{ [key: string]: never;
 
 export type InterpolationVariablesQuery = { interpolationVariables: Array<{ key: string, label: string, group: InterpolationVariableGroup, isCustomerFacing: boolean }> };
 
-export type WorkflowRuleQueryVariables = Exact<{
-  workflowRuleId: string;
-}>;
-
-
-export type WorkflowRuleQuery = { workflowRule?: { id: string, name: string, payload: string, order: number, publishedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
-      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-      | { __typename: 'UserActor', userId: string, user: { id: string } }
-    , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
-      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-      | { __typename: 'UserActor', userId: string, user: { id: string } }
-     } | null };
-
-export type WorkflowRulesQueryVariables = Exact<{
-  first?: number | null | undefined;
-  after?: string | null | undefined;
-  last?: number | null | undefined;
-  before?: string | null | undefined;
-}>;
-
-
-export type WorkflowRulesQuery = { workflowRules: { edges: Array<{ cursor: string, node: { id: string, name: string, payload: string, order: number, publishedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
-          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-          | { __typename: 'UserActor', userId: string, user: { id: string } }
-        , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
-          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-          | { __typename: 'UserActor', userId: string, user: { id: string } }
-         } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
-
 export type WorkflowQueryVariables = Exact<{
   workflowId: string;
 }>;
@@ -31646,21 +32013,26 @@ export type ThreadTimeSeriesMetricQueryVariables = Exact<{
 }>;
 
 
-export type ThreadTimeSeriesMetricQuery = { threadTimeSeriesMetric: { threadIds?: Array<string> | null, timestamps?: Array<{ unixTimestamp: string, iso8601: string }> | null, series?: Array<{ values: Array<number | null>, group?: { dimension: ThreadMetricGroupBy, value: string, label?: string | null } | null }> | null } };
+export type ThreadTimeSeriesMetricQuery = { threadTimeSeriesMetric: { threadIds?: Array<string> | null, machineUsers: MachineUserMode, timestamps?: Array<{ unixTimestamp: string, iso8601: string }> | null, series?: Array<{ values: Array<number | null>, group?: { dimension: ThreadMetricGroupBy, value: string, label?: string | null } | null }> | null } };
 
 export type ThreadSingleValueMetricQueryVariables = Exact<{
   input: ThreadSingleValueMetricInput;
 }>;
 
 
-export type ThreadSingleValueMetricQuery = { threadSingleValueMetric: { threadIds?: Array<string> | null, values?: Array<{ value?: number | null, group?: { dimension: ThreadMetricGroupBy, value: string, label?: string | null } | null }> | null } };
+export type ThreadSingleValueMetricQuery = { threadSingleValueMetric: { threadIds?: Array<string> | null, machineUsers: MachineUserMode, values?: Array<{ value?: number | null, group?: { dimension: ThreadMetricGroupBy, value: string, label?: string | null } | null }> | null } };
 
 export type ThreadHeatmapMetricQueryVariables = Exact<{
   input: ThreadHeatmapMetricInput;
 }>;
 
 
-export type ThreadHeatmapMetricQuery = { threadHeatmapMetric: { threadIds?: Array<string> | null, days?: Array<Array<{ total: number, percentage: number }>> | null } };
+export type ThreadHeatmapMetricQuery = { threadHeatmapMetric: { threadIds?: Array<string> | null, machineUsers: MachineUserMode, days?: Array<Array<{ total: number, percentage: number }>> | null } };
+
+export type ThreadMetricCapabilitiesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ThreadMetricCapabilitiesQuery = { threadMetricCapabilities: Array<{ kind: ThreadMetricKind, metricName: string, machineUsers: { default: MachineUserMode, supported: Array<MachineUserMode>, description: string } }> };
 
 export type CompaniesQueryVariables = Exact<{
   first?: number | null | undefined;
@@ -32365,7 +32737,7 @@ export type ImportJobDefinitionQueryVariables = Exact<{
 }>;
 
 
-export type ImportJobDefinitionQuery = { importJobDefinition?: { id: string, mode: string, entityTypes: Array<string>, metadata?: { lists: Array<{ id: string, name?: string | null }> } | null, enabledAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type ImportJobDefinitionQuery = { importJobDefinition?: { id: string, mode: string, entityTypes: Array<string>, metadata?: { lists: Array<{ id: string, name?: string | null }> } | null, tenantFieldMappings?: { alternateDomainsTenantFieldSchemaId?: string | null } | null, enabledAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32566,7 +32938,11 @@ export type ServiceLevelAgreementPoliciesQueryVariables = Exact<{
 }>;
 
 
-export type ServiceLevelAgreementPoliciesQuery = { serviceLevelAgreementPolicies: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type ServiceLevelAgreementPoliciesQuery = { serviceLevelAgreementPolicies: { edges: Array<{ cursor: string, node: { id: string, name: string, description?: string | null, isArchived: boolean, openThreadCount: number, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+         | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
           | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
           | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
           | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -32581,7 +32957,11 @@ export type ServiceLevelAgreementPolicyQueryVariables = Exact<{
 }>;
 
 
-export type ServiceLevelAgreementPolicyQuery = { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type ServiceLevelAgreementPolicyQuery = { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, isArchived: boolean, openThreadCount: number, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+     | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33052,6 +33432,45 @@ export type SavedThreadsViewQueryVariables = Exact<{
 
 
 export type SavedThreadsViewQuery = { savedThreadsView?: { id: string, name: string, icon: string, color: string, isHidden: boolean, threadsFilter: { statuses: Array<ThreadStatus>, statusDetails: Array<StatusDetailType>, priorities: Array<number>, assignedToUser: Array<string>, participants: Array<string>, customerGroups: Array<string>, companies: Array<string>, tenants: Array<string>, accounts: Array<string>, tiers: Array<string>, serviceLevelAgreementPolicyIds: Array<string>, labelTypeIds: Array<string>, messageSource: Array<MessageSource>, supportEmailAddresses: Array<string>, slaTypes: Array<string>, slaStatuses: Array<string>, threadLinkGroupIds: Array<string>, groupBy: ThreadsGroupBy, layout: ThreadsLayout, threadLinkSources: Array<{ sourceType: string, sourceId: string }>, createdAtFilter?: { after?: string | null, before?: string | null } | null, sort: { field?: ThreadsSortField | null, direction?: SortDirection | null, threadFieldKey?: string | null }, displayOptions: { hasStatus: boolean, hasCustomer: boolean, hasCompany: boolean, hasPreviewText: boolean, hasTier: boolean, hasCustomerGroups: boolean, hasLabels: boolean, hasLinearIssues: boolean, hasJiraIssues: boolean, hasLinkedThreads: boolean, hasServiceLevelAgreements: boolean, hasChannels: boolean, hasLastUpdated: boolean, hasCreatedAt: boolean, hasAssignees: boolean, hasRef: boolean, hasIssueTrackerIssues: boolean, hasTasks: boolean, hasThreadFieldKeys: Array<string>, hasTenants: boolean, hasAccounts: boolean, hasTenantFieldExternalIds: Array<string>, hasAccountFieldExternalIds: Array<string> } }, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+    , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+      | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+      | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+      | { __typename: 'UserActor', userId: string, user: { id: string } }
+     } | null };
+
+export type DashboardsQueryVariables = Exact<{
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  last?: number | null | undefined;
+  before?: string | null | undefined;
+}>;
+
+
+export type DashboardsQuery = { dashboards: { edges: Array<{ cursor: string, node: { id: string, name: string, globalRange:
+          | { __typename: 'DashboardCustomRange', from: string, to: string }
+          | { __typename: 'DashboardPresetRange', duration: number }
+        , createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+        , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+          | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+          | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+          | { __typename: 'UserActor', userId: string, user: { id: string } }
+         } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type DashboardQueryVariables = Exact<{
+  dashboardId: string;
+}>;
+
+
+export type DashboardQuery = { dashboard?: { id: string, name: string, globalRange:
+      | { __typename: 'DashboardCustomRange', from: string, to: string }
+      | { __typename: 'DashboardPresetRange', duration: number }
+    , createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
       | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
       | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
       | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -33771,6 +34190,25 @@ export type MoveLabelTypeMutation = { moveLabelType: { labelType?: { id: string,
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
+export type RearrangeLabelTypesMutationVariables = Exact<{
+  input: RearrangeLabelTypesInput;
+}>;
+
+
+export type RearrangeLabelTypesMutation = { rearrangeLabelTypes: { labelTypes: Array<{ id: string, name: string, icon?: string | null, color?: string | null, type: LabelTypeType, description?: string | null, position: string, externalId?: string | null, isArchived: boolean, isExcludedFromAi: boolean, parentLabelType?: { id: string } | null, archivedBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, archivedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       }>, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
 export type AcceptSuggestedLabelTypesMutationVariables = Exact<{
   input: AcceptSuggestedLabelTypesInput;
 }>;
@@ -34414,6 +34852,49 @@ export type DeleteSavedThreadsViewMutationVariables = Exact<{
 
 
 export type DeleteSavedThreadsViewMutation = { deleteSavedThreadsView: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type CreateDashboardMutationVariables = Exact<{
+  input: CreateDashboardInput;
+}>;
+
+
+export type CreateDashboardMutation = { createDashboard: { dashboard?: { id: string, name: string, globalRange:
+        | { __typename: 'DashboardCustomRange', from: string, to: string }
+        | { __typename: 'DashboardPresetRange', duration: number }
+      , createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type UpdateDashboardMutationVariables = Exact<{
+  input: UpdateDashboardInput;
+}>;
+
+
+export type UpdateDashboardMutation = { updateDashboard: { dashboard?: { id: string, name: string, globalRange:
+        | { __typename: 'DashboardCustomRange', from: string, to: string }
+        | { __typename: 'DashboardPresetRange', duration: number }
+      , createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type DeleteDashboardMutationVariables = Exact<{
+  input: DeleteDashboardInput;
+}>;
+
+
+export type DeleteDashboardMutation = { deleteDashboard: { deletedDashboardId?: string | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type CreateMyFavoritePageMutationVariables = Exact<{
   input: CreateMyFavoritePageInput;
@@ -35248,65 +35729,6 @@ export type DeleteEscalationPathMutationVariables = Exact<{
 
 export type DeleteEscalationPathMutation = { deleteEscalationPath: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
-export type CreateWorkflowRuleMutationVariables = Exact<{
-  input: CreateWorkflowRuleInput;
-}>;
-
-
-export type CreateWorkflowRuleMutation = { createWorkflowRule: { workflowRule?: { id: string, name: string, payload: string, order: number, publishedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
-        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-        | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
-        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-        | { __typename: 'UserActor', userId: string, user: { id: string } }
-       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
-
-export type UpdateWorkflowRuleMutationVariables = Exact<{
-  input: UpdateWorkflowRuleInput;
-}>;
-
-
-export type UpdateWorkflowRuleMutation = { updateWorkflowRule: { workflowRule?: { id: string, name: string, payload: string, order: number, publishedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
-        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-        | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
-        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-        | { __typename: 'UserActor', userId: string, user: { id: string } }
-       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
-
-export type ToggleWorkflowRulePublishedMutationVariables = Exact<{
-  input: ToggleWorkflowRulePublishedInput;
-}>;
-
-
-export type ToggleWorkflowRulePublishedMutation = { toggleWorkflowRulePublished: { workflowRule?: { id: string, name: string, payload: string, order: number, publishedAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
-        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-        | { __typename: 'UserActor', userId: string, user: { id: string } }
-      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
-        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
-        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
-        | { __typename: 'UserActor', userId: string, user: { id: string } }
-       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
-
-export type DeleteWorkflowRuleMutationVariables = Exact<{
-  input: DeleteWorkflowRuleInput;
-}>;
-
-
-export type DeleteWorkflowRuleMutation = { deleteWorkflowRule: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
-
-export type TriggerWorkflowRuleMutationVariables = Exact<{
-  input: TriggerWorkflowRuleInput;
-}>;
-
-
-export type TriggerWorkflowRuleMutation = { triggerWorkflowRule: { error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
-
 export type CreateWorkflowMutationVariables = Exact<{
   input: CreateWorkflowInput;
 }>;
@@ -35369,6 +35791,24 @@ export type TriggerWorkflowMutation = { triggerWorkflow: { workflowExecution?: {
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
        | null, stepExecutions: Array<{ id: string, workflowStepId: string, workflowStepVersion: number, status: WorkflowStepExecutionStatus, output?: string | null, summary?: string | null, credits?: number | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, entities: Array<{ entityType: WorkflowStepEntityType, entityId: string }> }> } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type CancelWorkflowExecutionMutationVariables = Exact<{
+  input: CancelWorkflowExecutionInput;
+}>;
+
+
+export type CancelWorkflowExecutionMutation = { cancelWorkflowExecution: { workflowExecution?: { id: string, workflowId: string, triggeredBy: string, executionStatus: WorkflowExecutionStatus, errorMessage?: string | null, executionDurationMs?: number | null, entityType?: WorkflowExecutionEntityType | null, entityId?: string | null, credits?: number | null, workflow?: { id: string } | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, manuallyTriggeredBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, stepExecutions: Array<{ id: string, workflowStepId: string, workflowStepVersion: number, status: WorkflowStepExecutionStatus, output?: string | null, summary?: string | null, credits?: number | null, startedAt?: { unixTimestamp: string, iso8601: string } | null, completedAt?: { unixTimestamp: string, iso8601: string } | null, entities: Array<{ entityType: WorkflowStepEntityType, entityId: string }> }> } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type CancelPendingWorkflowExecutionsMutationVariables = Exact<{
+  input: CancelPendingWorkflowExecutionsInput;
+}>;
+
+
+export type CancelPendingWorkflowExecutionsMutation = { cancelPendingWorkflowExecutions: { cancelledCount?: number | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type CreateWorkflowShareLinkMutationVariables = Exact<{
   input: CreateWorkflowShareLinkInput;
@@ -36290,7 +36730,7 @@ export type AddWorkspaceAlternateSupportEmailAddressMutationVariables = Exact<{
 }>;
 
 
-export type AddWorkspaceAlternateSupportEmailAddressMutation = { addWorkspaceAlternateSupportEmailAddress: { workspaceEmailDomainSettings?: { domainName: string, supportEmailAddress: string, isPlainManagedDomain: boolean, alternateSupportEmailAddresses: Array<string>, isForwardingConfigured: boolean, inboundForwardingEmail: string, isDomainConfigured: boolean, dkimDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null }, returnPathDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null } } | null, pendingDnsRecords?: { domainName: string, dkimDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null }, returnPathDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+export type AddWorkspaceAlternateSupportEmailAddressMutation = { addWorkspaceAlternateSupportEmailAddress: { workspaceEmailDomainSettings?: { domainName: string, supportEmailAddress: string, isPlainManagedDomain: boolean, alternateSupportEmailAddresses: Array<string>, isForwardingConfigured: boolean, inboundForwardingEmail: string, isDomainConfigured: boolean, dkimDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null }, returnPathDnsRecord: { type: string, name: string, value: string, isVerified: boolean, verifiedAt?: { unixTimestamp: string, iso8601: string } | null, lastCheckedAt?: { unixTimestamp: string, iso8601: string } | null } } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
 
 export type RemoveWorkspaceAlternateSupportEmailAddressMutationVariables = Exact<{
   input: RemoveWorkspaceAlternateSupportEmailAddressInput;
@@ -36433,7 +36873,7 @@ export type CreateApiKeyMutationVariables = Exact<{
 }>;
 
 
-export type CreateApiKeyMutation = { createApiKey: { apiKeySecret?: string | null, apiKey?: { id: string, description?: string | null, permissions: Array<string>, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
+export type CreateApiKeyMutation = { createApiKey: { apiKeySecret?: string | null, apiKey?: { id: string, description?: string | null, permissions: Array<string>, allowedCidrs?: Array<string> | null, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -36454,7 +36894,7 @@ export type UpdateApiKeyMutationVariables = Exact<{
 }>;
 
 
-export type UpdateApiKeyMutation = { updateApiKey: { apiKey?: { id: string, description?: string | null, permissions: Array<string>, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
+export type UpdateApiKeyMutation = { updateApiKey: { apiKey?: { id: string, description?: string | null, permissions: Array<string>, allowedCidrs?: Array<string> | null, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -36475,7 +36915,7 @@ export type DeleteApiKeyMutationVariables = Exact<{
 }>;
 
 
-export type DeleteApiKeyMutation = { deleteApiKey: { apiKey?: { id: string, description?: string | null, permissions: Array<string>, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
+export type DeleteApiKeyMutation = { deleteApiKey: { apiKey?: { id: string, description?: string | null, permissions: Array<string>, allowedCidrs?: Array<string> | null, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -42581,7 +43021,7 @@ export type CreateImportSyncMutationVariables = Exact<{
 }>;
 
 
-export type CreateImportSyncMutation = { createImportSync: { importJobDefinition?: { id: string, mode: string, entityTypes: Array<string>, metadata?: { lists: Array<{ id: string, name?: string | null }> } | null, enabledAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateImportSyncMutation = { createImportSync: { importJobDefinition?: { id: string, mode: string, entityTypes: Array<string>, metadata?: { lists: Array<{ id: string, name?: string | null }> } | null, tenantFieldMappings?: { alternateDomainsTenantFieldSchemaId?: string | null } | null, enabledAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -42626,7 +43066,7 @@ export type UpdateImportJobDefinitionMutationVariables = Exact<{
 }>;
 
 
-export type UpdateImportJobDefinitionMutation = { updateImportJobDefinition: { importJobDefinition?: { id: string, mode: string, entityTypes: Array<string>, metadata?: { lists: Array<{ id: string, name?: string | null }> } | null, enabledAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateImportJobDefinitionMutation = { updateImportJobDefinition: { importJobDefinition?: { id: string, mode: string, entityTypes: Array<string>, metadata?: { lists: Array<{ id: string, name?: string | null }> } | null, tenantFieldMappings?: { alternateDomainsTenantFieldSchemaId?: string | null } | null, enabledAt?: { unixTimestamp: string, iso8601: string } | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43121,7 +43561,11 @@ export type CreateServiceLevelAgreementPolicyMutationVariables = Exact<{
 }>;
 
 
-export type CreateServiceLevelAgreementPolicyMutation = { createServiceLevelAgreementPolicy: { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type CreateServiceLevelAgreementPolicyMutation = { createServiceLevelAgreementPolicy: { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, isArchived: boolean, openThreadCount: number, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43136,7 +43580,11 @@ export type UpdateServiceLevelAgreementPolicyMutationVariables = Exact<{
 }>;
 
 
-export type UpdateServiceLevelAgreementPolicyMutation = { updateServiceLevelAgreementPolicy: { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type UpdateServiceLevelAgreementPolicyMutation = { updateServiceLevelAgreementPolicy: { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, isArchived: boolean, openThreadCount: number, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43151,7 +43599,49 @@ export type DeleteServiceLevelAgreementPolicyMutationVariables = Exact<{
 }>;
 
 
-export type DeleteServiceLevelAgreementPolicyMutation = { deleteServiceLevelAgreementPolicy: { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+export type DeleteServiceLevelAgreementPolicyMutation = { deleteServiceLevelAgreementPolicy: { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, isArchived: boolean, openThreadCount: number, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type ArchiveServiceLevelAgreementPolicyMutationVariables = Exact<{
+  input: ArchiveServiceLevelAgreementPolicyInput;
+}>;
+
+
+export type ArchiveServiceLevelAgreementPolicyMutation = { archiveServiceLevelAgreementPolicy: { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, isArchived: boolean, openThreadCount: number, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type UnarchiveServiceLevelAgreementPolicyMutationVariables = Exact<{
+  input: UnarchiveServiceLevelAgreementPolicyInput;
+}>;
+
+
+export type UnarchiveServiceLevelAgreementPolicyMutation = { unarchiveServiceLevelAgreementPolicy: { serviceLevelAgreementPolicy?: { id: string, name: string, description?: string | null, isArchived: boolean, openThreadCount: number, archivedAt?: { unixTimestamp: string, iso8601: string } | null, archivedBy?:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       | null, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -43487,6 +43977,21 @@ export type UpdateGeneratedReplyMutationVariables = Exact<{
 
 
 export type UpdateGeneratedReplyMutation = { updateGeneratedReply: { generatedReply?: { id: string, markdown: string, timelineEntryId?: string | null, text: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+      , updatedAt: { unixTimestamp: string, iso8601: string }, updatedBy:
+        | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
+        | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
+        | { __typename: 'UserActor', userId: string, user: { id: string } }
+       } | null, error?: { message: string, type: MutationErrorType, code: string, fields: Array<{ field: string, message: string, type: MutationFieldErrorType }> } | null } };
+
+export type DismissGeneratedReplyMutationVariables = Exact<{
+  input: DismissGeneratedReplyInput;
+}>;
+
+
+export type DismissGeneratedReplyMutation = { dismissGeneratedReply: { generatedReply?: { id: string, markdown: string, timelineEntryId?: string | null, text: string, createdAt: { unixTimestamp: string, iso8601: string }, createdBy:
         | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
         | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
         | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -44333,7 +44838,7 @@ export type MachineUserApiKeysQueryVariables = Exact<{
 }>;
 
 
-export type MachineUserApiKeysQuery = { machineUser?: { apiKeys: { edges: Array<{ cursor: string, node: { id: string, description?: string | null, permissions: Array<string>, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
+export type MachineUserApiKeysQuery = { machineUser?: { apiKeys: { edges: Array<{ cursor: string, node: { id: string, description?: string | null, permissions: Array<string>, allowedCidrs?: Array<string> | null, isDeleted: boolean, impersonationAllowList: { userIds: Array<string>, roleIds: Array<string>, customRoleIds: Array<string> }, createdBy:
             | { __typename: 'MachineUserActor', machineUserId: string, machineUser: { id: string } }
             | { __typename: 'SystemActor', systemId: string, workflowExecutionId?: string | null, workflow?: { id: string, name: string } | null }
             | { __typename: 'UserActor', userId: string, user: { id: string } }
@@ -45671,7 +46176,7 @@ export const AiAgentFeedbackDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragme
 export const AiFeatureFeedbackOutputFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AiFeatureFeedbackOutputFields on AiFeatureFeedbackOutput{id feature details{__typename ...on AiAgentFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId timelineEntryId}...on ThreadCatchupFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId}...on ThreadClustersFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)clusterId}...on ToneRuleFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toneRuleId toneRuleInput toneRuleDescription}...on KnowledgeGapFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)knowledgeGapId}...on McpFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toolName@include(if:true)}}}") as unknown as DocumentNode<AiFeatureFeedbackOutputFieldsFragment, unknown>;
 export const AiFeedbackFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AiFeedbackFields on AiFeedback{id feature details{__typename ...on AiAgentFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId timelineEntryId}...on ThreadCatchupFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)threadId}...on ThreadClustersFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)clusterId}...on ToneRuleFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toneRuleId toneRuleInput toneRuleDescription}...on KnowledgeGapFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)knowledgeGapId}...on McpFeedbackDetails{reason comment@include(if:true)sentiment@include(if:true)toolName@include(if:true)}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AiFeedbackFieldsFragment, unknown>;
 export const AiToneRuleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AiToneRuleFields on AiToneRule{id category description isEnabled createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AiToneRuleFieldsFragment, unknown>;
-export const ApiKeyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ApiKeyFields on ApiKey{id description@include(if:true)permissions impersonationAllowList{userIds roleIds customRoleIds}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ApiKeyFieldsFragment, unknown>;
+export const ApiKeyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ApiKeyFields on ApiKey{id description@include(if:true)permissions impersonationAllowList{userIds roleIds customRoleIds}allowedCidrs@include(if:true)createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}isDeleted deletedAt@include(if:true){unixTimestamp iso8601}deletedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ApiKeyFieldsFragment, unknown>;
 export const AttachmentDownloadUrlFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AttachmentDownloadUrlFields on AttachmentDownloadUrl{attachment{id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType type createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}downloadUrl expiresAt{unixTimestamp iso8601}}") as unknown as DocumentNode<AttachmentDownloadUrlFieldsFragment, unknown>;
 export const AttachmentUploadUrlFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AttachmentUploadUrlFields on AttachmentUploadUrl{attachment{id fileName fileSize{bytes kiloBytes megaBytes}fileExtension@include(if:true)fileMimeType type createdAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}}uploadFormUrl uploadFormData{key value}expiresAt{unixTimestamp iso8601}}") as unknown as DocumentNode<AttachmentUploadUrlFieldsFragment, unknown>;
 export const AutoresponderFieldsFragmentDoc = /*#__PURE__*/ gql("fragment AutoresponderFields on Autoresponder{id name order messageSources conditions{__typename ...on AutoresponderTierCondition{tierId}...on AutoresponderBusinessHoursCondition{isOutsideBusinessHours}...on AutoresponderSupportEmailsCondition{supportEmailAddresses}...on AutoresponderLabelCondition{labelTypeIds}...on AutoresponderPrioritiesCondition{priorities}}textContent markdownContent@include(if:true)isEnabled responseDelaySeconds createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<AutoresponderFieldsFragment, unknown>;
@@ -45754,6 +46259,9 @@ export const CustomerSurveySupportEmailsConditionFieldsFragmentDoc = /*#__PURE__
 export const CustomerSurveyTiersConditionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomerSurveyTiersConditionFields on CustomerSurveyTiersCondition{tierIds operator}") as unknown as DocumentNode<CustomerSurveyTiersConditionFieldsFragment, unknown>;
 export const CustomRoleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomRoleFields on CustomRole{id name description@include(if:true)permissionsPreset scopeDefinitions{resource scopes{primitiveType accessMode values}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}priority}") as unknown as DocumentNode<CustomRoleFieldsFragment, unknown>;
 export const CustomSidekickSkillFieldsFragmentDoc = /*#__PURE__*/ gql("fragment CustomSidekickSkillFields on CustomSidekickSkill{name displayName description isEnabled customSkillId}") as unknown as DocumentNode<CustomSidekickSkillFieldsFragment, unknown>;
+export const DashboardFieldsFragmentDoc = /*#__PURE__*/ gql("fragment DashboardFields on Dashboard{id name globalRange{__typename ...on DashboardPresetRange{duration}...on DashboardCustomRange{from to}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<DashboardFieldsFragment, unknown>;
+export const DashboardCustomRangeFieldsFragmentDoc = /*#__PURE__*/ gql("fragment DashboardCustomRangeFields on DashboardCustomRange{from to}") as unknown as DocumentNode<DashboardCustomRangeFieldsFragment, unknown>;
+export const DashboardPresetRangeFieldsFragmentDoc = /*#__PURE__*/ gql("fragment DashboardPresetRangeFields on DashboardPresetRange{duration}") as unknown as DocumentNode<DashboardPresetRangeFieldsFragment, unknown>;
 export const DefaultServiceIntegrationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment DefaultServiceIntegrationFields on DefaultServiceIntegration{name key}") as unknown as DocumentNode<DefaultServiceIntegrationFieldsFragment, unknown>;
 export const DeletedCustomerActorFieldsFragmentDoc = /*#__PURE__*/ gql("fragment DeletedCustomerActorFields on DeletedCustomerActor{customerId}") as unknown as DocumentNode<DeletedCustomerActorFieldsFragment, unknown>;
 export const DeletedThreadFieldsFragmentDoc = /*#__PURE__*/ gql("fragment DeletedThreadFields on DeletedThread{threadId deletedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<DeletedThreadFieldsFragment, unknown>;
@@ -45793,7 +46301,7 @@ export const HelpCenterIndexFieldsFragmentDoc = /*#__PURE__*/ gql("fragment Help
 export const ImportBroadcastAudienceChannelsResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportBroadcastAudienceChannelsResultFields on ImportBroadcastAudienceChannelsResult{isDryRun broadcastAudience{id}rows{rowNumber status recipient@include(if:true)slackTeamId@include(if:true)slackChannelId@include(if:true)message@include(if:true)matches{slackTeamId slackChannelId name}}addedCount alreadyInAudienceCount notFoundCount ambiguousCount invalidCount}") as unknown as DocumentNode<ImportBroadcastAudienceChannelsResultFieldsFragment, unknown>;
 export const ImportBroadcastRecipientUnsubscribesResultFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportBroadcastRecipientUnsubscribesResultFields on ImportBroadcastRecipientUnsubscribesResult{isDryRun createdCount alreadyUnsubscribedCount notFoundCount ambiguousCount invalidCount}") as unknown as DocumentNode<ImportBroadcastRecipientUnsubscribesResultFieldsFragment, unknown>;
 export const ImportJobFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportJobFields on ImportJob{id status startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}importRuns{id importJobId entityType status downloadedRecords@include(if:true)savedRecords@include(if:true)startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}}}") as unknown as DocumentNode<ImportJobFieldsFragment, unknown>;
-export const ImportJobDefinitionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportJobDefinitionFields on ImportJobDefinition{id mode entityTypes metadata@include(if:true){lists{id name@include(if:true)}}enabledAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ImportJobDefinitionFieldsFragment, unknown>;
+export const ImportJobDefinitionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportJobDefinitionFields on ImportJobDefinition{id mode entityTypes metadata@include(if:true){lists{id name@include(if:true)}}tenantFieldMappings@include(if:true){alternateDomainsTenantFieldSchemaId@include(if:true)}enabledAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ImportJobDefinitionFieldsFragment, unknown>;
 export const ImportThreadChannelDetailsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ImportThreadChannelDetailsFields on ImportThreadChannelDetails{importSourceUrl@include(if:true)importIntegrationKey}") as unknown as DocumentNode<ImportThreadChannelDetailsFieldsFragment, unknown>;
 export const RoleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment RoleFields on Role{id name description@include(if:true)permissions isAssignableToCustomer isAssignableToThread isAssignableToTask assignableBillingSeats requiresBillableSeat key@include(if:true)customRoleId@include(if:true)customRole@include(if:true){id}priority}") as unknown as DocumentNode<RoleFieldsFragment, unknown>;
 export const UserWorkingHoursFieldsFragmentDoc = /*#__PURE__*/ gql("fragment UserWorkingHoursFields on UserWorkingHours{id userId timezone{name}isEnabled nextStatusTransitionAt@include(if:true){unixTimestamp iso8601}nextStatusTransitionTo@include(if:true)slots{id weekday startsAt endsAt}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<UserWorkingHoursFieldsFragment, unknown>;
@@ -45837,7 +46345,6 @@ export const NoteEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteEntryF
 export const NoteMentionNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NoteMentionNotificationDetailFields on NoteMentionNotificationDetail{threadId timelineEntryId mentionedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<NoteMentionNotificationDetailFieldsFragment, unknown>;
 export const NumberSettingFieldsFragmentDoc = /*#__PURE__*/ gql("fragment NumberSettingFields on NumberSetting{code numberValue scope{id@include(if:true)scopeType}}") as unknown as DocumentNode<NumberSettingFieldsFragment, unknown>;
 export const OAuthAppFieldsFragmentDoc = /*#__PURE__*/ gql("fragment OAuthAppFields on OAuthApp{id name description@include(if:true)clientId redirectUrls allowedOrigins usesPkce isEnabled clientSecret@include(if:true){id secretHint lastUsedAt@include(if:true){unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}createdAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<OAuthAppFieldsFragment, unknown>;
-export const PendingSenderDomainDnsRecordsFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PendingSenderDomainDnsRecordsFields on PendingSenderDomainDnsRecords{domainName dkimDnsRecord{type name value isVerified verifiedAt@include(if:true){unixTimestamp iso8601}lastCheckedAt@include(if:true){unixTimestamp iso8601}}returnPathDnsRecord{type name value isVerified verifiedAt@include(if:true){unixTimestamp iso8601}lastCheckedAt@include(if:true){unixTimestamp iso8601}}}") as unknown as DocumentNode<PendingSenderDomainDnsRecordsFieldsFragment, unknown>;
 export const PerSeatRecurringPriceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PerSeatRecurringPriceFields on PerSeatRecurringPrice{billingIntervalUnit billingIntervalCount currency perSeatAmount}") as unknown as DocumentNode<PerSeatRecurringPriceFieldsFragment, unknown>;
 export const PlainTaskThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PlainTaskThreadLinkFields on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}") as unknown as DocumentNode<PlainTaskThreadLinkFieldsFragment, unknown>;
 export const PlainThreadThreadLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment PlainThreadThreadLinkFields on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}") as unknown as DocumentNode<PlainThreadThreadLinkFieldsFragment, unknown>;
@@ -45845,7 +46352,7 @@ export const QueuedAgentSessionMessageFieldsFragmentDoc = /*#__PURE__*/ gql("fra
 export const RoleChangeCostFieldsFragmentDoc = /*#__PURE__*/ gql("fragment RoleChangeCostFields on RoleChangeCost{totalPrice{amount currency}fullPrice{amount currency}adjustedPrice{amount currency}dueNowPrice{amount currency}quantity intervalUnit intervalCount addingSeatType removingSeatType@include(if:true)}") as unknown as DocumentNode<RoleChangeCostFieldsFragment, unknown>;
 export const SavedThreadsViewFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SavedThreadsViewFields on SavedThreadsView{id name icon color threadsFilter{statuses statusDetails priorities assignedToUser participants customerGroups companies tenants accounts tiers serviceLevelAgreementPolicyIds labelTypeIds messageSource supportEmailAddresses slaTypes slaStatuses threadLinkGroupIds threadLinkSources{sourceType sourceId}createdAtFilter@include(if:true){after@include(if:true)before@include(if:true)}sort{field@include(if:true)direction@include(if:true)threadFieldKey@include(if:true)}displayOptions{hasStatus hasCustomer hasCompany hasPreviewText hasTier hasCustomerGroups hasLabels hasLinearIssues hasJiraIssues hasLinkedThreads hasServiceLevelAgreements hasChannels hasLastUpdated hasCreatedAt hasAssignees hasRef hasIssueTrackerIssues hasTasks hasThreadFieldKeys hasTenants hasAccounts hasTenantFieldExternalIds hasAccountFieldExternalIds}groupBy layout}isHidden createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<SavedThreadsViewFieldsFragment, unknown>;
 export const ServiceAuthorizationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ServiceAuthorizationFields on ServiceAuthorization{id serviceIntegration{__typename ...on JiraSiteIntegration{name key site{id name url avatarUrl@include(if:true)}}...on DefaultServiceIntegration{name key}}status createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}connectedAt{unixTimestamp iso8601}connectedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}isImportRunnerIntegration}") as unknown as DocumentNode<ServiceAuthorizationFieldsFragment, unknown>;
-export const ServiceLevelAgreementPolicyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ServiceLevelAgreementPolicyFields on ServiceLevelAgreementPolicy{id name description@include(if:true)createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ServiceLevelAgreementPolicyFieldsFragment, unknown>;
+export const ServiceLevelAgreementPolicyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ServiceLevelAgreementPolicyFields on ServiceLevelAgreementPolicy{id name description@include(if:true)isArchived archivedAt@include(if:true){unixTimestamp iso8601}archivedBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}openThreadCount createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ServiceLevelAgreementPolicyFieldsFragment, unknown>;
 export const ServiceLevelAgreementStatusTransitionedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ServiceLevelAgreementStatusTransitionedEntryFields on ServiceLevelAgreementStatusTransitionedEntry{previousStatus nextStatus serviceLevelAgreement@include(if:true){__typename ...on FirstResponseTimeServiceLevelAgreement{id firstResponseTimeMinutes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on NextResponseTimeServiceLevelAgreement{id nextResponseTimeMinutes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on FirstResolutionTimeServiceLevelAgreement{id firstResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on TotalResolutionTimeServiceLevelAgreement{id totalResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}}") as unknown as DocumentNode<ServiceLevelAgreementStatusTransitionedEntryFieldsFragment, unknown>;
 export const SidekickAvailableToolFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SidekickAvailableToolFields on SidekickAvailableTool{service op displayName description approvalMode risk configurableArgs{name source dependsOn@include(if:true)exclusiveWith@include(if:true)defaultValue@include(if:true)isMultiValued}}") as unknown as DocumentNode<SidekickAvailableToolFieldsFragment, unknown>;
 export const SidekickCreditBalanceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment SidekickCreditBalanceFields on SidekickCreditBalance{status allowance@include(if:true){grant@include(if:true)used@include(if:true)remaining periodEndsAt@include(if:true)lowBalanceThreshold@include(if:true)}topup@include(if:true){remaining}}") as unknown as DocumentNode<SidekickCreditBalanceFieldsFragment, unknown>;
@@ -45903,15 +46410,16 @@ export const ThreadDiscussionToolCallEntryPayloadFieldsFragmentDoc = /*#__PURE__
 export const ThreadEventFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadEventFields on ThreadEvent{id customerId threadId title components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}isCollapsed createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on CustomerActor{customerId customer{id}}...on DeletedCustomerActor{customerId}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadEventFieldsFragment, unknown>;
 export const ThreadEventEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadEventEntryFields on ThreadEventEntry{timelineEventId title components{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}...on ComponentContainer{containerContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}...on ComponentRow{rowMainContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}rowAsideContent{__typename ...on ComponentText{textSize@include(if:true)textColor@include(if:true)text color@include(if:true)componentTextSize:size@include(if:true)}...on ComponentPlainText{plainTextSize@include(if:true)plainTextColor@include(if:true)plainText}...on ComponentSpacer{spacerSize componentSpacerSize:size}...on ComponentDivider{dividerSpacingSize@include(if:true)spacingSize@include(if:true)}...on ComponentLinkButton{linkButtonUrl linkButtonLabel url label}...on ComponentWorkflowButton{workflowButtonWorkflowIdentifier{workflowId@include(if:true)workflowKey@include(if:true)}workflowButtonLabel}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}}}}...on ComponentBadge{badgeLabel badgeColor@include(if:true)}...on ComponentCopyButton{copyButtonValue copyButtonTooltipLabel@include(if:true)}...on ComponentDateTime{dateTimeIso8601{unixTimestamp iso8601}}...on ComponentUser{user@include(if:true){id}userMachineUser@include(if:true){id}}}customerId externalId@include(if:true)isCollapsed}") as unknown as DocumentNode<ThreadEventEntryFieldsFragment, unknown>;
 export const ThreadFieldSchemaFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadFieldSchemaFields on ThreadFieldSchema{id label key description order type enumValues defaultStringValue@include(if:true)defaultBooleanValue@include(if:true)defaultNumberValue@include(if:true)defaultDateValue@include(if:true){unixTimestamp iso8601}isRequired isAiAutoFillEnabled isAvailableToAgents isClientReadonly dependsOnThreadField@include(if:true){threadFieldSchemaId threadFieldSchemaValue}dependsOnLabels{labelTypeId}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<ThreadFieldSchemaFieldsFragment, unknown>;
-export const ThreadHeatmapMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadHeatmapMetricFields on ThreadHeatmapMetric{days@include(if:true){total percentage}threadIds@include(if:true)}") as unknown as DocumentNode<ThreadHeatmapMetricFieldsFragment, unknown>;
+export const ThreadHeatmapMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadHeatmapMetricFields on ThreadHeatmapMetric{days@include(if:true){total percentage}threadIds@include(if:true)machineUsers}") as unknown as DocumentNode<ThreadHeatmapMetricFieldsFragment, unknown>;
 export const ThreadLinkCandidateFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadLinkCandidateFields on ThreadLinkCandidate{sourceId sourceType title description@include(if:true)url status sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}}") as unknown as DocumentNode<ThreadLinkCandidateFieldsFragment, unknown>;
 export const ThreadLinkGroupFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadLinkGroupFields on ThreadLinkGroup{id tierMetrics{noTier{totalCount}}companyMetrics{noCompany{totalCount}}tenantMetrics{noTenant{totalCount}}accountMetrics{noAccount{totalCount}}defaultViewRank@include(if:true)currentViewRank}") as unknown as DocumentNode<ThreadLinkGroupFieldsFragment, unknown>;
 export const ThreadLinkTargetCreatedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadLinkTargetCreatedEntryFields on ThreadLinkTargetCreatedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}linearIssueUrl}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}sourceThread{id ref title@include(if:true)}}") as unknown as DocumentNode<ThreadLinkTargetCreatedEntryFieldsFragment, unknown>;
 export const ThreadLinkTargetDeletedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadLinkTargetDeletedEntryFields on ThreadLinkTargetDeletedEntry{threadLink{__typename ...on LinearIssueThreadLink{id title description@include(if:true)url status linkType threadId sourceId sourceType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}linearIssueId linearIssueIdentifier linearIssueState{type label color}linearIssueCreatedAt{unixTimestamp iso8601}linearIssueUpdatedAt{unixTimestamp iso8601}linearIssueUrl}...on JiraIssueThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}jiraIssueId jiraIssueKey jiraIssueType{name iconUrl}}...on PlainThreadThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainThreadId plainThreadStatusDetailType}...on PlainTaskThreadLink{id title description@include(if:true)url status threadId sourceId sourceType linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}plainTaskId}...on GenericThreadLink{id title description@include(if:true)url status threadId sourceId sourceType sourceStatus@include(if:true){key label color@include(if:true)icon@include(if:true)}linkType createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}sourceThread{id ref title@include(if:true)}}") as unknown as DocumentNode<ThreadLinkTargetDeletedEntryFieldsFragment, unknown>;
+export const ThreadMetricCapabilityFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadMetricCapabilityFields on ThreadMetricCapability{kind metricName machineUsers{default supported description}}") as unknown as DocumentNode<ThreadMetricCapabilityFieldsFragment, unknown>;
 export const ThreadNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadNotificationDetailFields on ThreadNotificationDetail{threadId}") as unknown as DocumentNode<ThreadNotificationDetailFieldsFragment, unknown>;
 export const ThreadPriorityChangedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadPriorityChangedEntryFields on ThreadPriorityChangedEntry{previousPriority nextPriority}") as unknown as DocumentNode<ThreadPriorityChangedEntryFieldsFragment, unknown>;
 export const ThreadServiceLevelAgreementPolicyChangedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadServiceLevelAgreementPolicyChangedEntryFields on ThreadServiceLevelAgreementPolicyChangedEntry{previousServiceLevelAgreementPolicy@include(if:true){id name}nextServiceLevelAgreementPolicy@include(if:true){id name}}") as unknown as DocumentNode<ThreadServiceLevelAgreementPolicyChangedEntryFieldsFragment, unknown>;
-export const ThreadSingleValueMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadSingleValueMetricFields on ThreadSingleValueMetric{values@include(if:true){value@include(if:true)group@include(if:true){dimension value label@include(if:true)}}threadIds@include(if:true)}") as unknown as DocumentNode<ThreadSingleValueMetricFieldsFragment, unknown>;
+export const ThreadSingleValueMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadSingleValueMetricFields on ThreadSingleValueMetric{values@include(if:true){value@include(if:true)group@include(if:true){dimension value label@include(if:true)}}threadIds@include(if:true)machineUsers}") as unknown as DocumentNode<ThreadSingleValueMetricFieldsFragment, unknown>;
 export const ThreadStatusDetailCreatedFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadStatusDetailCreatedFields on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadStatusDetailCreatedFieldsFragment, unknown>;
 export const ThreadStatusDetailDoneAutomaticallySetFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadStatusDetailDoneAutomaticallySetFields on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}") as unknown as DocumentNode<ThreadStatusDetailDoneAutomaticallySetFieldsFragment, unknown>;
 export const ThreadStatusDetailDoneManuallySetFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadStatusDetailDoneManuallySetFields on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadStatusDetailDoneManuallySetFieldsFragment, unknown>;
@@ -45928,7 +46436,7 @@ export const ThreadStatusDetailWaitingForCustomerFieldsFragmentDoc = /*#__PURE__
 export const ThreadStatusDetailWaitingForDurationFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadStatusDetailWaitingForDurationFields on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadStatusDetailWaitingForDurationFieldsFragment, unknown>;
 export const ThreadStatusDetailWaitingIndefinitelyFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadStatusDetailWaitingIndefinitelyFields on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}") as unknown as DocumentNode<ThreadStatusDetailWaitingIndefinitelyFieldsFragment, unknown>;
 export const ThreadStatusTransitionedEntryFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadStatusTransitionedEntryFields on ThreadStatusTransitionedEntry{previousStatus previousStatusDetail@include(if:true){__typename ...on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}...on ThreadStatusDetailSnoozed{snoozedAt{unixTimestamp iso8601}snoozedUntil{unixTimestamp iso8601}statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailUnsnoozed{snoozedAt{unixTimestamp iso8601}statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailNewReply{statusChangedAt{unixTimestamp iso8601}newReplyAt@include(if:true){unixTimestamp iso8601}}...on ThreadStatusDetailReplied{repliedAt{unixTimestamp iso8601}statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailLinearUpdated{statusChangedAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}threadStatusDetailLinearUpdatedLinearIssueId:linearIssueId}...on ThreadStatusDetailInProgress{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForCustomer{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailThreadLinkUpdated{statusChangedAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}linearIssueId@include(if:true)}...on ThreadStatusDetailIgnored{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}...on ThreadStatusDetailThreadDiscussionResolved{statusChangedAt{unixTimestamp iso8601}threadDiscussionId@include(if:true)}}nextStatus nextStatusDetail@include(if:true){__typename ...on ThreadStatusDetailCreated{statusChangedAt{unixTimestamp iso8601}createdAt{unixTimestamp iso8601}}...on ThreadStatusDetailSnoozed{snoozedAt{unixTimestamp iso8601}snoozedUntil{unixTimestamp iso8601}statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailUnsnoozed{snoozedAt{unixTimestamp iso8601}statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailNewReply{statusChangedAt{unixTimestamp iso8601}newReplyAt@include(if:true){unixTimestamp iso8601}}...on ThreadStatusDetailReplied{repliedAt{unixTimestamp iso8601}statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailLinearUpdated{statusChangedAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}threadStatusDetailLinearUpdatedLinearIssueId:linearIssueId}...on ThreadStatusDetailInProgress{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForCustomer{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingForDuration{statusChangedAt{unixTimestamp iso8601}waitingUntil{unixTimestamp iso8601}}...on ThreadStatusDetailWaitingIndefinitely{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailThreadLinkUpdated{statusChangedAt{unixTimestamp iso8601}updatedAt{unixTimestamp iso8601}linearIssueId@include(if:true)}...on ThreadStatusDetailIgnored{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneManuallySet{statusChangedAt{unixTimestamp iso8601}}...on ThreadStatusDetailDoneAutomaticallySet{statusChangedAt{unixTimestamp iso8601}afterSeconds@include(if:true)}...on ThreadStatusDetailThreadDiscussionResolved{statusChangedAt{unixTimestamp iso8601}threadDiscussionId@include(if:true)}}}") as unknown as DocumentNode<ThreadStatusTransitionedEntryFieldsFragment, unknown>;
-export const ThreadTimeSeriesMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadTimeSeriesMetricFields on ThreadTimeSeriesMetric{timestamps@include(if:true){unixTimestamp iso8601}series@include(if:true){values group@include(if:true){dimension value label@include(if:true)}}threadIds@include(if:true)}") as unknown as DocumentNode<ThreadTimeSeriesMetricFieldsFragment, unknown>;
+export const ThreadTimeSeriesMetricFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadTimeSeriesMetricFields on ThreadTimeSeriesMetric{timestamps@include(if:true){unixTimestamp iso8601}series@include(if:true){values group@include(if:true){dimension value label@include(if:true)}}threadIds@include(if:true)machineUsers}") as unknown as DocumentNode<ThreadTimeSeriesMetricFieldsFragment, unknown>;
 export const ThreadWithDistanceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment ThreadWithDistanceFields on ThreadWithDistance{thread{id}distance}") as unknown as DocumentNode<ThreadWithDistanceFieldsFragment, unknown>;
 export const TierFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TierFields on Tier{id name externalId@include(if:true)color isDefault defaultPriority defaultThreadPriority isMachineTier serviceLevelAgreements{__typename ...on FirstResponseTimeServiceLevelAgreement{id firstResponseTimeMinutes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on NextResponseTimeServiceLevelAgreement{id nextResponseTimeMinutes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on FirstResolutionTimeServiceLevelAgreement{id firstResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}...on TotalResolutionTimeServiceLevelAgreement{id totalResolutionTimeMinutes pauseOnStatusDetailTypes useBusinessHoursOnly threadPriorityFilter threadLabelTypeIdFilter@include(if:true){labelTypeIds requireAll}breachActions{__typename ...on BeforeBreachAction{beforeBreachMinutes createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<TierFieldsFragment, unknown>;
 export const TieredRecurringPriceFieldsFragmentDoc = /*#__PURE__*/ gql("fragment TieredRecurringPriceFields on TieredRecurringPrice{billingIntervalUnit billingIntervalCount currency tiers{maxSeats perSeatAmount flatAmount}}") as unknown as DocumentNode<TieredRecurringPriceFieldsFragment, unknown>;
@@ -45953,7 +46461,6 @@ export const WebhookTargetFieldsFragmentDoc = /*#__PURE__*/ gql("fragment Webhoo
 export const WebhookTargetNotificationDetailFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WebhookTargetNotificationDetailFields on WebhookTargetNotificationDetail{webhookTargetId}") as unknown as DocumentNode<WebhookTargetNotificationDetailFieldsFragment, unknown>;
 export const WorkflowFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowFields on Workflow{id name trigger startStepId@include(if:true)publishedAt@include(if:true){unixTimestamp iso8601}position order lastTriggeredAt@include(if:true){unixTimestamp iso8601}sourceTemplateId@include(if:true)references{serviceLevelAgreementPolicyIds escalationPathIds}createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WorkflowFieldsFragment, unknown>;
 export const WorkflowExecutionFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowExecutionFields on WorkflowExecution{id workflowId workflow@include(if:true){id}triggeredBy executionStatus errorMessage@include(if:true)startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}executionDurationMs@include(if:true)entityType@include(if:true)entityId@include(if:true)manuallyTriggeredBy@include(if:true){__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}stepExecutions{id workflowStepId workflowStepVersion status startedAt@include(if:true){unixTimestamp iso8601}completedAt@include(if:true){unixTimestamp iso8601}output@include(if:true)entities{entityType entityId}summary@include(if:true)credits@include(if:true)}credits@include(if:true)}") as unknown as DocumentNode<WorkflowExecutionFieldsFragment, unknown>;
-export const WorkflowRuleFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowRuleFields on WorkflowRule{id name payload publishedAt@include(if:true){unixTimestamp iso8601}order createdAt{unixTimestamp iso8601}createdBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}updatedAt{unixTimestamp iso8601}updatedBy{__typename ...on UserActor{userId user{id}}...on SystemActor{systemId workflowExecutionId@include(if:true)workflow@include(if:true){id name}}...on MachineUserActor{machineUserId machineUser{id}}}}") as unknown as DocumentNode<WorkflowRuleFieldsFragment, unknown>;
 export const WorkflowShareLinkFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowShareLinkFields on WorkflowShareLink{name trigger startStepId@include(if:true)steps{id type name@include(if:true)payload transitions positionX positionY}}") as unknown as DocumentNode<WorkflowShareLinkFieldsFragment, unknown>;
 export const WorkflowTemplateFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowTemplateFields on WorkflowTemplate{id title content{type value}tags isFeatured author authorDomain dependencies{integrations features}workflows{name trigger startStepId@include(if:true)steps{id type name@include(if:true)payload transitions positionX positionY}}}") as unknown as DocumentNode<WorkflowTemplateFieldsFragment, unknown>;
 export const WorkflowTemplateGalleryItemFieldsFragmentDoc = /*#__PURE__*/ gql("fragment WorkflowTemplateGalleryItemFields on WorkflowTemplateGalleryItem{id title content{type value}tags isFeatured author authorDomain dependencies{integrations features}}") as unknown as DocumentNode<WorkflowTemplateGalleryItemFieldsFragment, unknown>;
@@ -46092,8 +46599,6 @@ export const WebhookDeliveryAttemptsDocument = /*#__PURE__*/ gql("query WebhookD
 export const PublicEventRequestBodyDocument = /*#__PURE__*/ gql("query PublicEventRequestBody($publicEventId:ID!){publicEventRequestBody(publicEventId:$publicEventId)@include(if:true)}") as unknown as DocumentNode<PublicEventRequestBodyQuery, PublicEventRequestBodyQueryVariables>;
 export const SubscriptionEventTypesDocument = /*#__PURE__*/ gql("query SubscriptionEventTypes{subscriptionEventTypes{eventType description}}") as unknown as DocumentNode<SubscriptionEventTypesQuery, SubscriptionEventTypesQueryVariables>;
 export const InterpolationVariablesDocument = /*#__PURE__*/ gql("query InterpolationVariables{interpolationVariables{key label group isCustomerFacing}}") as unknown as DocumentNode<InterpolationVariablesQuery, InterpolationVariablesQueryVariables>;
-export const WorkflowRuleDocument = /*#__PURE__*/ gql("query WorkflowRule($workflowRuleId:ID!){workflowRule(workflowRuleId:$workflowRuleId)@include(if:true){...WorkflowRuleFields}}", WorkflowRuleFieldsFragmentDoc) as unknown as DocumentNode<WorkflowRuleQuery, WorkflowRuleQueryVariables>;
-export const WorkflowRulesDocument = /*#__PURE__*/ gql("query WorkflowRules($first:Int$after:String$last:Int$before:String){workflowRules(first:$first after:$after last:$last before:$before){edges{node{...WorkflowRuleFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkflowRuleFieldsFragmentDoc) as unknown as DocumentNode<WorkflowRulesQuery, WorkflowRulesQueryVariables>;
 export const WorkflowDocument = /*#__PURE__*/ gql("query Workflow($workflowId:ID!){workflow(workflowId:$workflowId)@include(if:true){...WorkflowFields}}", WorkflowFieldsFragmentDoc) as unknown as DocumentNode<WorkflowQuery, WorkflowQueryVariables>;
 export const WorkflowsDocument = /*#__PURE__*/ gql("query Workflows($first:Int$after:String$last:Int$before:String$filters:WorkflowsFilter$sortBy:WorkflowsSort){workflows(first:$first after:$after last:$last before:$before filters:$filters sortBy:$sortBy){edges{node{...WorkflowFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", WorkflowFieldsFragmentDoc) as unknown as DocumentNode<WorkflowsQuery, WorkflowsQueryVariables>;
 export const WorkflowCapabilitiesDocument = /*#__PURE__*/ gql("query WorkflowCapabilities($triggerType:WorkflowTriggerType!){workflowCapabilities(triggerType:$triggerType){hasConditionSupport hasWaitSupport allowedActionTypes hasSidekickActionSupport hasAiTriageActionSupport}}") as unknown as DocumentNode<WorkflowCapabilitiesQuery, WorkflowCapabilitiesQueryVariables>;
@@ -46124,6 +46629,7 @@ export const HeatmapMetricDocument = /*#__PURE__*/ gql("query HeatmapMetric($nam
 export const ThreadTimeSeriesMetricDocument = /*#__PURE__*/ gql("query ThreadTimeSeriesMetric($input:ThreadTimeSeriesMetricInput!){threadTimeSeriesMetric(input:$input){...ThreadTimeSeriesMetricFields}}", ThreadTimeSeriesMetricFieldsFragmentDoc) as unknown as DocumentNode<ThreadTimeSeriesMetricQuery, ThreadTimeSeriesMetricQueryVariables>;
 export const ThreadSingleValueMetricDocument = /*#__PURE__*/ gql("query ThreadSingleValueMetric($input:ThreadSingleValueMetricInput!){threadSingleValueMetric(input:$input){...ThreadSingleValueMetricFields}}", ThreadSingleValueMetricFieldsFragmentDoc) as unknown as DocumentNode<ThreadSingleValueMetricQuery, ThreadSingleValueMetricQueryVariables>;
 export const ThreadHeatmapMetricDocument = /*#__PURE__*/ gql("query ThreadHeatmapMetric($input:ThreadHeatmapMetricInput!){threadHeatmapMetric(input:$input){...ThreadHeatmapMetricFields}}", ThreadHeatmapMetricFieldsFragmentDoc) as unknown as DocumentNode<ThreadHeatmapMetricQuery, ThreadHeatmapMetricQueryVariables>;
+export const ThreadMetricCapabilitiesDocument = /*#__PURE__*/ gql("query ThreadMetricCapabilities{threadMetricCapabilities{...ThreadMetricCapabilityFields}}", ThreadMetricCapabilityFieldsFragmentDoc) as unknown as DocumentNode<ThreadMetricCapabilitiesQuery, ThreadMetricCapabilitiesQueryVariables>;
 export const CompaniesDocument = /*#__PURE__*/ gql("query Companies($first:Int$after:String$last:Int$before:String$filters:CompaniesFilter){companies(first:$first after:$after last:$last before:$before filters:$filters){edges{node{...CompanyFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", CompanyFieldsFragmentDoc) as unknown as DocumentNode<CompaniesQuery, CompaniesQueryVariables>;
 export const CompanyDocument = /*#__PURE__*/ gql("query Company($companyId:ID!){company(companyId:$companyId)@include(if:true){...CompanyFields}}", CompanyFieldsFragmentDoc) as unknown as DocumentNode<CompanyQuery, CompanyQueryVariables>;
 export const SearchCompaniesDocument = /*#__PURE__*/ gql("query SearchCompanies($searchQuery:CompaniesSearchQuery!$filters:CompaniesFilter$first:Int$after:String$last:Int$before:String){searchCompanies(searchQuery:$searchQuery filters:$filters first:$first after:$after last:$last before:$before){edges{node{company{...CompanyFields}}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", CompanyFieldsFragmentDoc) as unknown as DocumentNode<SearchCompaniesQuery, SearchCompaniesQueryVariables>;
@@ -46189,6 +46695,8 @@ export const AiToneRulesDocument = /*#__PURE__*/ gql("query AiToneRules($first:I
 export const EnabledAiToneRulesTextDocument = /*#__PURE__*/ gql("query EnabledAiToneRulesText{enabledAiToneRulesText@include(if:true)}") as unknown as DocumentNode<EnabledAiToneRulesTextQuery, EnabledAiToneRulesTextQueryVariables>;
 export const SavedThreadsViewsDocument = /*#__PURE__*/ gql("query SavedThreadsViews($first:Int$after:String$last:Int$before:String){savedThreadsViews(first:$first after:$after last:$last before:$before){edges{node{...SavedThreadsViewFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", SavedThreadsViewFieldsFragmentDoc) as unknown as DocumentNode<SavedThreadsViewsQuery, SavedThreadsViewsQueryVariables>;
 export const SavedThreadsViewDocument = /*#__PURE__*/ gql("query SavedThreadsView($savedThreadsViewId:ID!){savedThreadsView(savedThreadsViewId:$savedThreadsViewId)@include(if:true){...SavedThreadsViewFields}}", SavedThreadsViewFieldsFragmentDoc) as unknown as DocumentNode<SavedThreadsViewQuery, SavedThreadsViewQueryVariables>;
+export const DashboardsDocument = /*#__PURE__*/ gql("query Dashboards($first:Int$after:String$last:Int$before:String){dashboards(first:$first after:$after last:$last before:$before){edges{node{...DashboardFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", DashboardFieldsFragmentDoc) as unknown as DocumentNode<DashboardsQuery, DashboardsQueryVariables>;
+export const DashboardDocument = /*#__PURE__*/ gql("query Dashboard($dashboardId:ID!){dashboard(dashboardId:$dashboardId)@include(if:true){...DashboardFields}}", DashboardFieldsFragmentDoc) as unknown as DocumentNode<DashboardQuery, DashboardQueryVariables>;
 export const SearchThreadLinkCandidatesDocument = /*#__PURE__*/ gql("query SearchThreadLinkCandidates($filters:ThreadLinkCandidateFilter!$searchQuery:String!$first:Int$after:String$last:Int$before:String){searchThreadLinkCandidates(filters:$filters searchQuery:$searchQuery first:$first after:$after last:$last before:$before){edges{node{...ThreadLinkCandidateFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", ThreadLinkCandidateFieldsFragmentDoc) as unknown as DocumentNode<SearchThreadLinkCandidatesQuery, SearchThreadLinkCandidatesQueryVariables>;
 export const HelpCentersDocument = /*#__PURE__*/ gql("query HelpCenters($first:Int$after:String$last:Int$before:String$filters:HelpCentersFilter){helpCenters(first:$first after:$after last:$last before:$before filters:$filters){edges{node{...HelpCenterFields}cursor}pageInfo{hasNextPage hasPreviousPage startCursor@include(if:true)endCursor@include(if:true)}}}", HelpCenterFieldsFragmentDoc) as unknown as DocumentNode<HelpCentersQuery, HelpCentersQueryVariables>;
 export const HelpCenterDocument = /*#__PURE__*/ gql("query HelpCenter($id:ID!){helpCenter(id:$id)@include(if:true){...HelpCenterFields}}", HelpCenterFieldsFragmentDoc) as unknown as DocumentNode<HelpCenterQuery, HelpCenterQueryVariables>;
@@ -46229,6 +46737,7 @@ export const ArchiveLabelTypeDocument = /*#__PURE__*/ gql("mutation ArchiveLabel
 export const UnarchiveLabelTypeDocument = /*#__PURE__*/ gql("mutation UnarchiveLabelType($input:UnarchiveLabelTypeInput!){unarchiveLabelType(input:$input){labelType@include(if:true){...LabelTypeFields}error@include(if:true){message type code fields{field message type}}}}", LabelTypeFieldsFragmentDoc) as unknown as DocumentNode<UnarchiveLabelTypeMutation, UnarchiveLabelTypeMutationVariables>;
 export const UpdateLabelTypeDocument = /*#__PURE__*/ gql("mutation UpdateLabelType($input:UpdateLabelTypeInput!){updateLabelType(input:$input){labelType@include(if:true){...LabelTypeFields}error@include(if:true){message type code fields{field message type}}}}", LabelTypeFieldsFragmentDoc) as unknown as DocumentNode<UpdateLabelTypeMutation, UpdateLabelTypeMutationVariables>;
 export const MoveLabelTypeDocument = /*#__PURE__*/ gql("mutation MoveLabelType($input:MoveLabelTypeInput!){moveLabelType(input:$input){labelType@include(if:true){...LabelTypeFields}error@include(if:true){message type code fields{field message type}}}}", LabelTypeFieldsFragmentDoc) as unknown as DocumentNode<MoveLabelTypeMutation, MoveLabelTypeMutationVariables>;
+export const RearrangeLabelTypesDocument = /*#__PURE__*/ gql("mutation RearrangeLabelTypes($input:RearrangeLabelTypesInput!){rearrangeLabelTypes(input:$input){labelTypes{...LabelTypeFields}error@include(if:true){message type code fields{field message type}}}}", LabelTypeFieldsFragmentDoc) as unknown as DocumentNode<RearrangeLabelTypesMutation, RearrangeLabelTypesMutationVariables>;
 export const AcceptSuggestedLabelTypesDocument = /*#__PURE__*/ gql("mutation AcceptSuggestedLabelTypes($input:AcceptSuggestedLabelTypesInput!){acceptSuggestedLabelTypes(input:$input){labelTypes{...LabelTypeFields}error@include(if:true){message type code fields{field message type}}}}", LabelTypeFieldsFragmentDoc) as unknown as DocumentNode<AcceptSuggestedLabelTypesMutation, AcceptSuggestedLabelTypesMutationVariables>;
 export const DismissSuggestedLabelTypesDocument = /*#__PURE__*/ gql("mutation DismissSuggestedLabelTypes($input:DismissSuggestedLabelTypesInput!){dismissSuggestedLabelTypes(input:$input){suggestedLabelTypes{...SuggestedLabelTypeFields}error@include(if:true){message type code fields{field message type}}}}", SuggestedLabelTypeFieldsFragmentDoc) as unknown as DocumentNode<DismissSuggestedLabelTypesMutation, DismissSuggestedLabelTypesMutationVariables>;
 export const AddLabelsDocument = /*#__PURE__*/ gql("mutation AddLabels($input:AddLabelsInput!){addLabels(input:$input){labels{...LabelFields}thread@include(if:true){...ThreadFields}error@include(if:true){message type code fields{field message type}}}}", LabelFieldsFragmentDoc, ThreadFieldsFragmentDoc) as unknown as DocumentNode<AddLabelsMutation, AddLabelsMutationVariables>;
@@ -46245,6 +46754,9 @@ export const DeleteNoteDocument = /*#__PURE__*/ gql("mutation DeleteNote($input:
 export const CreateSavedThreadsViewDocument = /*#__PURE__*/ gql("mutation CreateSavedThreadsView($input:CreateSavedThreadsViewInput!){createSavedThreadsView(input:$input){savedThreadsView@include(if:true){...SavedThreadsViewFields}error@include(if:true){message type code fields{field message type}}}}", SavedThreadsViewFieldsFragmentDoc) as unknown as DocumentNode<CreateSavedThreadsViewMutation, CreateSavedThreadsViewMutationVariables>;
 export const UpdateSavedThreadsViewDocument = /*#__PURE__*/ gql("mutation UpdateSavedThreadsView($input:UpdateSavedThreadsViewInput!){updateSavedThreadsView(input:$input){savedThreadsView@include(if:true){...SavedThreadsViewFields}error@include(if:true){message type code fields{field message type}}}}", SavedThreadsViewFieldsFragmentDoc) as unknown as DocumentNode<UpdateSavedThreadsViewMutation, UpdateSavedThreadsViewMutationVariables>;
 export const DeleteSavedThreadsViewDocument = /*#__PURE__*/ gql("mutation DeleteSavedThreadsView($input:DeleteSavedThreadsViewInput!){deleteSavedThreadsView(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteSavedThreadsViewMutation, DeleteSavedThreadsViewMutationVariables>;
+export const CreateDashboardDocument = /*#__PURE__*/ gql("mutation CreateDashboard($input:CreateDashboardInput!){createDashboard(input:$input){dashboard@include(if:true){...DashboardFields}error@include(if:true){message type code fields{field message type}}}}", DashboardFieldsFragmentDoc) as unknown as DocumentNode<CreateDashboardMutation, CreateDashboardMutationVariables>;
+export const UpdateDashboardDocument = /*#__PURE__*/ gql("mutation UpdateDashboard($input:UpdateDashboardInput!){updateDashboard(input:$input){dashboard@include(if:true){...DashboardFields}error@include(if:true){message type code fields{field message type}}}}", DashboardFieldsFragmentDoc) as unknown as DocumentNode<UpdateDashboardMutation, UpdateDashboardMutationVariables>;
+export const DeleteDashboardDocument = /*#__PURE__*/ gql("mutation DeleteDashboard($input:DeleteDashboardInput!){deleteDashboard(input:$input){deletedDashboardId@include(if:true)error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteDashboardMutation, DeleteDashboardMutationVariables>;
 export const CreateMyFavoritePageDocument = /*#__PURE__*/ gql("mutation CreateMyFavoritePage($input:CreateMyFavoritePageInput!){createMyFavoritePage(input:$input){favoritePage@include(if:true){...FavoritePageFields}error@include(if:true){message type code fields{field message type}}}}", FavoritePageFieldsFragmentDoc) as unknown as DocumentNode<CreateMyFavoritePageMutation, CreateMyFavoritePageMutationVariables>;
 export const DeleteMyFavoritePageDocument = /*#__PURE__*/ gql("mutation DeleteMyFavoritePage($input:DeleteMyFavoritePageInput!){deleteMyFavoritePage(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteMyFavoritePageMutation, DeleteMyFavoritePageMutationVariables>;
 export const CreateSnippetDocument = /*#__PURE__*/ gql("mutation CreateSnippet($input:CreateSnippetInput!){createSnippet(input:$input){snippet@include(if:true){...SnippetFields}error@include(if:true){message type code fields{field message type}}}}", SnippetFieldsFragmentDoc) as unknown as DocumentNode<CreateSnippetMutation, CreateSnippetMutationVariables>;
@@ -46288,16 +46800,13 @@ export const DeleteThreadFieldDocument = /*#__PURE__*/ gql("mutation DeleteThrea
 export const CreateEscalationPathDocument = /*#__PURE__*/ gql("mutation CreateEscalationPath($input:CreateEscalationPathInput!){createEscalationPath(input:$input){escalationPath@include(if:true){...EscalationPathFields}error@include(if:true){message type code fields{field message type}}}}", EscalationPathFieldsFragmentDoc) as unknown as DocumentNode<CreateEscalationPathMutation, CreateEscalationPathMutationVariables>;
 export const UpdateEscalationPathDocument = /*#__PURE__*/ gql("mutation UpdateEscalationPath($input:UpdateEscalationPathInput!){updateEscalationPath(input:$input){escalationPath@include(if:true){...EscalationPathFields}error@include(if:true){message type code fields{field message type}}}}", EscalationPathFieldsFragmentDoc) as unknown as DocumentNode<UpdateEscalationPathMutation, UpdateEscalationPathMutationVariables>;
 export const DeleteEscalationPathDocument = /*#__PURE__*/ gql("mutation DeleteEscalationPath($input:DeleteEscalationPathInput!){deleteEscalationPath(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteEscalationPathMutation, DeleteEscalationPathMutationVariables>;
-export const CreateWorkflowRuleDocument = /*#__PURE__*/ gql("mutation CreateWorkflowRule($input:CreateWorkflowRuleInput!){createWorkflowRule(input:$input){workflowRule@include(if:true){...WorkflowRuleFields}error@include(if:true){message type code fields{field message type}}}}", WorkflowRuleFieldsFragmentDoc) as unknown as DocumentNode<CreateWorkflowRuleMutation, CreateWorkflowRuleMutationVariables>;
-export const UpdateWorkflowRuleDocument = /*#__PURE__*/ gql("mutation UpdateWorkflowRule($input:UpdateWorkflowRuleInput!){updateWorkflowRule(input:$input){workflowRule@include(if:true){...WorkflowRuleFields}error@include(if:true){message type code fields{field message type}}}}", WorkflowRuleFieldsFragmentDoc) as unknown as DocumentNode<UpdateWorkflowRuleMutation, UpdateWorkflowRuleMutationVariables>;
-export const ToggleWorkflowRulePublishedDocument = /*#__PURE__*/ gql("mutation ToggleWorkflowRulePublished($input:ToggleWorkflowRulePublishedInput!){toggleWorkflowRulePublished(input:$input){workflowRule@include(if:true){...WorkflowRuleFields}error@include(if:true){message type code fields{field message type}}}}", WorkflowRuleFieldsFragmentDoc) as unknown as DocumentNode<ToggleWorkflowRulePublishedMutation, ToggleWorkflowRulePublishedMutationVariables>;
-export const DeleteWorkflowRuleDocument = /*#__PURE__*/ gql("mutation DeleteWorkflowRule($input:DeleteWorkflowRuleInput!){deleteWorkflowRule(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteWorkflowRuleMutation, DeleteWorkflowRuleMutationVariables>;
-export const TriggerWorkflowRuleDocument = /*#__PURE__*/ gql("mutation TriggerWorkflowRule($input:TriggerWorkflowRuleInput!){triggerWorkflowRule(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<TriggerWorkflowRuleMutation, TriggerWorkflowRuleMutationVariables>;
 export const CreateWorkflowDocument = /*#__PURE__*/ gql("mutation CreateWorkflow($input:CreateWorkflowInput!){createWorkflow(input:$input){workflow@include(if:true){...WorkflowFields}error@include(if:true){message type code fields{field message type}}}}", WorkflowFieldsFragmentDoc) as unknown as DocumentNode<CreateWorkflowMutation, CreateWorkflowMutationVariables>;
 export const UpdateWorkflowDocument = /*#__PURE__*/ gql("mutation UpdateWorkflow($input:UpdateWorkflowInput!){updateWorkflow(input:$input){workflow@include(if:true){...WorkflowFields}error@include(if:true){message type code fields{field message type}}}}", WorkflowFieldsFragmentDoc) as unknown as DocumentNode<UpdateWorkflowMutation, UpdateWorkflowMutationVariables>;
 export const MoveWorkflowDocument = /*#__PURE__*/ gql("mutation MoveWorkflow($input:MoveWorkflowInput!){moveWorkflow(input:$input){workflow@include(if:true){...WorkflowFields}error@include(if:true){message type code fields{field message type}}}}", WorkflowFieldsFragmentDoc) as unknown as DocumentNode<MoveWorkflowMutation, MoveWorkflowMutationVariables>;
 export const DeleteWorkflowDocument = /*#__PURE__*/ gql("mutation DeleteWorkflow($input:DeleteWorkflowInput!){deleteWorkflow(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteWorkflowMutation, DeleteWorkflowMutationVariables>;
 export const TriggerWorkflowDocument = /*#__PURE__*/ gql("mutation TriggerWorkflow($input:TriggerWorkflowInput!){triggerWorkflow(input:$input){workflowExecution@include(if:true){...WorkflowExecutionFields}error@include(if:true){message type code fields{field message type}}}}", WorkflowExecutionFieldsFragmentDoc) as unknown as DocumentNode<TriggerWorkflowMutation, TriggerWorkflowMutationVariables>;
+export const CancelWorkflowExecutionDocument = /*#__PURE__*/ gql("mutation CancelWorkflowExecution($input:CancelWorkflowExecutionInput!){cancelWorkflowExecution(input:$input){workflowExecution@include(if:true){...WorkflowExecutionFields}error@include(if:true){message type code fields{field message type}}}}", WorkflowExecutionFieldsFragmentDoc) as unknown as DocumentNode<CancelWorkflowExecutionMutation, CancelWorkflowExecutionMutationVariables>;
+export const CancelPendingWorkflowExecutionsDocument = /*#__PURE__*/ gql("mutation CancelPendingWorkflowExecutions($input:CancelPendingWorkflowExecutionsInput!){cancelPendingWorkflowExecutions(input:$input){cancelledCount@include(if:true)error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<CancelPendingWorkflowExecutionsMutation, CancelPendingWorkflowExecutionsMutationVariables>;
 export const CreateWorkflowShareLinkDocument = /*#__PURE__*/ gql("mutation CreateWorkflowShareLink($input:CreateWorkflowShareLinkInput!){createWorkflowShareLink(input:$input){token@include(if:true)error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<CreateWorkflowShareLinkMutation, CreateWorkflowShareLinkMutationVariables>;
 export const ExportWorkflowTemplateDocument = /*#__PURE__*/ gql("mutation ExportWorkflowTemplate($input:ExportWorkflowTemplateInput!){exportWorkflowTemplate(input:$input){files{path content}error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<ExportWorkflowTemplateMutation, ExportWorkflowTemplateMutationVariables>;
 export const CreateWorkflowStepDocument = /*#__PURE__*/ gql("mutation CreateWorkflowStep($input:CreateWorkflowStepInput!){createWorkflowStep(input:$input){workflowStep@include(if:true){...WorkflowStepFields}error@include(if:true){message type code fields{field message type}}}}", WorkflowStepFieldsFragmentDoc) as unknown as DocumentNode<CreateWorkflowStepMutation, CreateWorkflowStepMutationVariables>;
@@ -46331,7 +46840,7 @@ export const DeleteEmailSuppressionDocument = /*#__PURE__*/ gql("mutation Delete
 export const VerifyWorkspaceEmailForwardingSettingsDocument = /*#__PURE__*/ gql("mutation VerifyWorkspaceEmailForwardingSettings($input:VerifyWorkspaceEmailForwardingSettingsInput!){verifyWorkspaceEmailForwardingSettings(input:$input){workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc) as unknown as DocumentNode<VerifyWorkspaceEmailForwardingSettingsMutation, VerifyWorkspaceEmailForwardingSettingsMutationVariables>;
 export const VerifyWorkspaceEmailDnsSettingsDocument = /*#__PURE__*/ gql("mutation VerifyWorkspaceEmailDnsSettings{verifyWorkspaceEmailDnsSettings{workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc) as unknown as DocumentNode<VerifyWorkspaceEmailDnsSettingsMutation, VerifyWorkspaceEmailDnsSettingsMutationVariables>;
 export const UpdateWorkspaceEmailSettingsDocument = /*#__PURE__*/ gql("mutation UpdateWorkspaceEmailSettings($input:UpdateWorkspaceEmailSettingsInput!){updateWorkspaceEmailSettings(input:$input){workspaceEmailSettings@include(if:true){...WorkspaceEmailSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailSettingsFieldsFragmentDoc) as unknown as DocumentNode<UpdateWorkspaceEmailSettingsMutation, UpdateWorkspaceEmailSettingsMutationVariables>;
-export const AddWorkspaceAlternateSupportEmailAddressDocument = /*#__PURE__*/ gql("mutation AddWorkspaceAlternateSupportEmailAddress($input:AddWorkspaceAlternateSupportEmailAddressInput!){addWorkspaceAlternateSupportEmailAddress(input:$input){workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}pendingDnsRecords@include(if:true){...PendingSenderDomainDnsRecordsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc, PendingSenderDomainDnsRecordsFieldsFragmentDoc) as unknown as DocumentNode<AddWorkspaceAlternateSupportEmailAddressMutation, AddWorkspaceAlternateSupportEmailAddressMutationVariables>;
+export const AddWorkspaceAlternateSupportEmailAddressDocument = /*#__PURE__*/ gql("mutation AddWorkspaceAlternateSupportEmailAddress($input:AddWorkspaceAlternateSupportEmailAddressInput!){addWorkspaceAlternateSupportEmailAddress(input:$input){workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc) as unknown as DocumentNode<AddWorkspaceAlternateSupportEmailAddressMutation, AddWorkspaceAlternateSupportEmailAddressMutationVariables>;
 export const RemoveWorkspaceAlternateSupportEmailAddressDocument = /*#__PURE__*/ gql("mutation RemoveWorkspaceAlternateSupportEmailAddress($input:RemoveWorkspaceAlternateSupportEmailAddressInput!){removeWorkspaceAlternateSupportEmailAddress(input:$input){workspaceEmailDomainSettings@include(if:true){...WorkspaceEmailDomainSettingsFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceEmailDomainSettingsFieldsFragmentDoc) as unknown as DocumentNode<RemoveWorkspaceAlternateSupportEmailAddressMutation, RemoveWorkspaceAlternateSupportEmailAddressMutationVariables>;
 export const SendNewEmailDocument = /*#__PURE__*/ gql("mutation SendNewEmail($input:SendNewEmailInput!){sendNewEmail(input:$input){email@include(if:true){...EmailFields}error@include(if:true){message type code fields{field message type}}}}", EmailFieldsFragmentDoc) as unknown as DocumentNode<SendNewEmailMutation, SendNewEmailMutationVariables>;
 export const ReplyToEmailDocument = /*#__PURE__*/ gql("mutation ReplyToEmail($input:ReplyToEmailInput!){replyToEmail(input:$input){email@include(if:true){...EmailFields}error@include(if:true){message type code fields{field message type}}}}", EmailFieldsFragmentDoc) as unknown as DocumentNode<ReplyToEmailMutation, ReplyToEmailMutationVariables>;
@@ -46505,6 +47014,8 @@ export const DeleteServiceLevelAgreementDocument = /*#__PURE__*/ gql("mutation D
 export const CreateServiceLevelAgreementPolicyDocument = /*#__PURE__*/ gql("mutation CreateServiceLevelAgreementPolicy($input:CreateServiceLevelAgreementPolicyInput!){createServiceLevelAgreementPolicy(input:$input){serviceLevelAgreementPolicy@include(if:true){...ServiceLevelAgreementPolicyFields}error@include(if:true){message type code fields{field message type}}}}", ServiceLevelAgreementPolicyFieldsFragmentDoc) as unknown as DocumentNode<CreateServiceLevelAgreementPolicyMutation, CreateServiceLevelAgreementPolicyMutationVariables>;
 export const UpdateServiceLevelAgreementPolicyDocument = /*#__PURE__*/ gql("mutation UpdateServiceLevelAgreementPolicy($input:UpdateServiceLevelAgreementPolicyInput!){updateServiceLevelAgreementPolicy(input:$input){serviceLevelAgreementPolicy@include(if:true){...ServiceLevelAgreementPolicyFields}error@include(if:true){message type code fields{field message type}}}}", ServiceLevelAgreementPolicyFieldsFragmentDoc) as unknown as DocumentNode<UpdateServiceLevelAgreementPolicyMutation, UpdateServiceLevelAgreementPolicyMutationVariables>;
 export const DeleteServiceLevelAgreementPolicyDocument = /*#__PURE__*/ gql("mutation DeleteServiceLevelAgreementPolicy($input:DeleteServiceLevelAgreementPolicyInput!){deleteServiceLevelAgreementPolicy(input:$input){serviceLevelAgreementPolicy@include(if:true){...ServiceLevelAgreementPolicyFields}error@include(if:true){message type code fields{field message type}}}}", ServiceLevelAgreementPolicyFieldsFragmentDoc) as unknown as DocumentNode<DeleteServiceLevelAgreementPolicyMutation, DeleteServiceLevelAgreementPolicyMutationVariables>;
+export const ArchiveServiceLevelAgreementPolicyDocument = /*#__PURE__*/ gql("mutation ArchiveServiceLevelAgreementPolicy($input:ArchiveServiceLevelAgreementPolicyInput!){archiveServiceLevelAgreementPolicy(input:$input){serviceLevelAgreementPolicy@include(if:true){...ServiceLevelAgreementPolicyFields}error@include(if:true){message type code fields{field message type}}}}", ServiceLevelAgreementPolicyFieldsFragmentDoc) as unknown as DocumentNode<ArchiveServiceLevelAgreementPolicyMutation, ArchiveServiceLevelAgreementPolicyMutationVariables>;
+export const UnarchiveServiceLevelAgreementPolicyDocument = /*#__PURE__*/ gql("mutation UnarchiveServiceLevelAgreementPolicy($input:UnarchiveServiceLevelAgreementPolicyInput!){unarchiveServiceLevelAgreementPolicy(input:$input){serviceLevelAgreementPolicy@include(if:true){...ServiceLevelAgreementPolicyFields}error@include(if:true){message type code fields{field message type}}}}", ServiceLevelAgreementPolicyFieldsFragmentDoc) as unknown as DocumentNode<UnarchiveServiceLevelAgreementPolicyMutation, UnarchiveServiceLevelAgreementPolicyMutationVariables>;
 export const AddMembersToTierDocument = /*#__PURE__*/ gql("mutation AddMembersToTier($input:AddMembersToTierInput!){addMembersToTier(input:$input){memberships{__typename ...on TenantTierMembership{...TenantTierMembershipFields}...on CompanyTierMembership{...CompanyTierMembershipFields}}error@include(if:true){message type code fields{field message type}}}}", TenantTierMembershipFieldsFragmentDoc, CompanyTierMembershipFieldsFragmentDoc) as unknown as DocumentNode<AddMembersToTierMutation, AddMembersToTierMutationVariables>;
 export const RemoveMembersFromTierDocument = /*#__PURE__*/ gql("mutation RemoveMembersFromTier($input:RemoveMembersFromTierInput!){removeMembersFromTier(input:$input){memberships{__typename ...on TenantTierMembership{...TenantTierMembershipFields}...on CompanyTierMembership{...CompanyTierMembershipFields}}error@include(if:true){message type code fields{field message type}}}}", TenantTierMembershipFieldsFragmentDoc, CompanyTierMembershipFieldsFragmentDoc) as unknown as DocumentNode<RemoveMembersFromTierMutation, RemoveMembersFromTierMutationVariables>;
 export const UpdateCompanyTierDocument = /*#__PURE__*/ gql("mutation UpdateCompanyTier($input:UpdateCompanyTierInput!){updateCompanyTier(input:$input){companyTierMembership@include(if:true){...CompanyTierMembershipFields}error@include(if:true){message type code fields{field message type}}}}", CompanyTierMembershipFieldsFragmentDoc) as unknown as DocumentNode<UpdateCompanyTierMutation, UpdateCompanyTierMutationVariables>;
@@ -46534,6 +47045,7 @@ export const PurchaseCreditsDocument = /*#__PURE__*/ gql("mutation PurchaseCredi
 export const RegenerateWorkspaceHmacDocument = /*#__PURE__*/ gql("mutation RegenerateWorkspaceHmac{regenerateWorkspaceHmac{workspaceHmac@include(if:true){...WorkspaceHmacFields}error@include(if:true){message type code fields{field message type}}}}", WorkspaceHmacFieldsFragmentDoc) as unknown as DocumentNode<RegenerateWorkspaceHmacMutation, RegenerateWorkspaceHmacMutationVariables>;
 export const CreateIndexedDocumentDocument = /*#__PURE__*/ gql("mutation CreateIndexedDocument($input:CreateIndexedDocumentInput!){createIndexedDocument(input:$input){error@include(if:true){message type code fields{field message type}}indexedDocument@include(if:true){...IndexedDocumentFields}}}", IndexedDocumentFieldsFragmentDoc) as unknown as DocumentNode<CreateIndexedDocumentMutation, CreateIndexedDocumentMutationVariables>;
 export const UpdateGeneratedReplyDocument = /*#__PURE__*/ gql("mutation UpdateGeneratedReply($input:UpdateGeneratedReplyInput!){updateGeneratedReply(input:$input){generatedReply@include(if:true){...GeneratedReplyFields}error@include(if:true){message type code fields{field message type}}}}", GeneratedReplyFieldsFragmentDoc) as unknown as DocumentNode<UpdateGeneratedReplyMutation, UpdateGeneratedReplyMutationVariables>;
+export const DismissGeneratedReplyDocument = /*#__PURE__*/ gql("mutation DismissGeneratedReply($input:DismissGeneratedReplyInput!){dismissGeneratedReply(input:$input){generatedReply@include(if:true){...GeneratedReplyFields}error@include(if:true){message type code fields{field message type}}}}", GeneratedReplyFieldsFragmentDoc) as unknown as DocumentNode<DismissGeneratedReplyMutation, DismissGeneratedReplyMutationVariables>;
 export const CreateKnowledgeSourceDocument = /*#__PURE__*/ gql("mutation CreateKnowledgeSource($input:CreateKnowledgeSourceInput!){createKnowledgeSource(input:$input){knowledgeSource@include(if:true){__typename ...on KnowledgeSourceSitemap{...KnowledgeSourceSitemapFields}...on KnowledgeSourceUrl{...KnowledgeSourceUrlFields}}error@include(if:true){message type code fields{field message type}}}}", KnowledgeSourceSitemapFieldsFragmentDoc, KnowledgeSourceUrlFieldsFragmentDoc) as unknown as DocumentNode<CreateKnowledgeSourceMutation, CreateKnowledgeSourceMutationVariables>;
 export const DeleteKnowledgeSourceDocument = /*#__PURE__*/ gql("mutation DeleteKnowledgeSource($input:DeleteKnowledgeSourceInput!){deleteKnowledgeSource(input:$input){error@include(if:true){message type code fields{field message type}}}}") as unknown as DocumentNode<DeleteKnowledgeSourceMutation, DeleteKnowledgeSourceMutationVariables>;
 export const ReindexKnowledgeSourceDocument = /*#__PURE__*/ gql("mutation ReindexKnowledgeSource($input:ReindexKnowledgeSourceInput!){reindexKnowledgeSource(input:$input){knowledgeSource@include(if:true){__typename ...on KnowledgeSourceSitemap{...KnowledgeSourceSitemapFields}...on KnowledgeSourceUrl{...KnowledgeSourceUrlFields}}error@include(if:true){message type code fields{field message type}}}}", KnowledgeSourceSitemapFieldsFragmentDoc, KnowledgeSourceUrlFieldsFragmentDoc) as unknown as DocumentNode<ReindexKnowledgeSourceMutation, ReindexKnowledgeSourceMutationVariables>;

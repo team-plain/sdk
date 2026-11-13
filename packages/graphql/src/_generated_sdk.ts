@@ -22,6 +22,7 @@ import {
   AiToneRulesDocument,
   AnswerSidekickQuestionDocument,
   ArchiveLabelTypeDocument,
+  ArchiveServiceLevelAgreementPolicyDocument,
   AssignRolesToUserDocument,
   AssignThreadDocument,
   AutoresponderDocument,
@@ -50,6 +51,8 @@ import {
   BusinessHoursSlotsDocument,
   CalculateRoleChangeCostDocument,
   CancelHyperlineSubscriptionDocument,
+  CancelPendingWorkflowExecutionsDocument,
+  CancelWorkflowExecutionDocument,
   ChangeBillingPlanDocument,
   ChangeThreadCustomerDocument,
   ChangeThreadDiscussionStatusDocument,
@@ -86,6 +89,7 @@ import {
   CreateCustomerEventDocument,
   CreateCustomerGroupDocument,
   CreateCustomerSurveyDocument,
+  CreateDashboardDocument,
   CreateDiscussionDocument,
   CreateEmailPreviewUrlDocument,
   CreateEscalationPathDocument,
@@ -132,7 +136,6 @@ import {
   CreateUserAuthSlackIntegrationDocument,
   CreateWebhookTargetDocument,
   CreateWorkflowDocument,
-  CreateWorkflowRuleDocument,
   CreateWorkflowShareLinkDocument,
   CreateWorkflowStepDocument,
   CreateWorkspaceCursorIntegrationDocument,
@@ -163,6 +166,8 @@ import {
   CustomerSurveyDocument,
   CustomerSurveysDocument,
   CustomersDocument,
+  DashboardDocument,
+  DashboardsDocument,
   DeleteAccountDocument,
   DeleteAccountFieldDocument,
   DeleteAccountFieldSchemaDocument,
@@ -183,6 +188,7 @@ import {
   DeleteCustomerDocument,
   DeleteCustomerGroupDocument,
   DeleteCustomerSurveyDocument,
+  DeleteDashboardDocument,
   DeleteEmailSuppressionDocument,
   DeleteEscalationPathDocument,
   DeleteGithubUserAuthIntegrationDocument,
@@ -225,7 +231,6 @@ import {
   DeleteUserDocument,
   DeleteWebhookTargetDocument,
   DeleteWorkflowDocument,
-  DeleteWorkflowRuleDocument,
   DeleteWorkflowStepDocument,
   DeleteWorkspaceCursorIntegrationDocument,
   DeleteWorkspaceDiscordChannelIntegrationDocument,
@@ -241,6 +246,7 @@ import {
   DisableOAuthAppDocument,
   DiscussionDocument,
   DiscussionsDocument,
+  DismissGeneratedReplyDocument,
   DismissSidekickQuestionDocument,
   DismissSuggestedLabelTypesDocument,
   DuplicateBroadcastDocument,
@@ -339,6 +345,7 @@ import {
   PreviewBillingPlanChangeDocument,
   PublicEventRequestBodyDocument,
   PurchaseCreditsDocument,
+  RearrangeLabelTypesDocument,
   RefreshConnectedDiscordChannelsDocument,
   RefreshSidekickMcpServerToolsDocument,
   RefreshWorkspaceSlackChannelIntegrationDocument,
@@ -459,6 +466,7 @@ import {
   ThreadFieldSchemasDocument,
   ThreadHeatmapMetricDocument,
   ThreadLinkGroupsDocument,
+  ThreadMetricCapabilitiesDocument,
   ThreadSingleValueMetricDocument,
   ThreadSlackUserDocument,
   ThreadTimeSeriesMetricDocument,
@@ -472,10 +480,9 @@ import {
   TimelineEntriesDocument,
   TimelineEntryDocument,
   ToggleSlackMessageReactionDocument,
-  ToggleWorkflowRulePublishedDocument,
   TriggerWorkflowDocument,
-  TriggerWorkflowRuleDocument,
   UnarchiveLabelTypeDocument,
+  UnarchiveServiceLevelAgreementPolicyDocument,
   UnassignThreadDocument,
   UnmarkCustomerAsSpamDocument,
   UnsubscribeBroadcastRecipientDocument,
@@ -499,6 +506,7 @@ import {
   UpdateCustomerCompanyDocument,
   UpdateCustomerGroupDocument,
   UpdateCustomerSurveyDocument,
+  UpdateDashboardDocument,
   UpdateDiscussionAgentStatusDocument,
   UpdateEscalationPathDocument,
   UpdateGeneratedReplyDocument,
@@ -544,7 +552,6 @@ import {
   UpdateUserDefaultSavedThreadsViewDocument,
   UpdateWebhookTargetDocument,
   UpdateWorkflowDocument,
-  UpdateWorkflowRuleDocument,
   UpdateWorkflowStepDocument,
   UpdateWorkspaceDocument,
   UpdateWorkspaceEmailSettingsDocument,
@@ -589,8 +596,6 @@ import {
   WorkflowExecutionsByEntityDocument,
   WorkflowExecutionsDocument,
   WorkflowExecutionsForWorkspaceDocument,
-  WorkflowRuleDocument,
-  WorkflowRulesDocument,
   WorkflowShareLinkDocument,
   WorkflowTemplateDocument,
   WorkflowTemplateGalleryDocument,
@@ -680,6 +685,8 @@ import type {
   ApiKeyFieldsFragment,
   ArchiveLabelTypeMutation,
   ArchiveLabelTypeMutationVariables,
+  ArchiveServiceLevelAgreementPolicyMutation,
+  ArchiveServiceLevelAgreementPolicyMutationVariables,
   AssignRolesToUserMutation,
   AssignRolesToUserMutationVariables,
   AssignThreadMutation,
@@ -763,6 +770,10 @@ import type {
   CalculateRoleChangeCostMutation,
   CalculateRoleChangeCostMutationVariables,
   CancelHyperlineSubscriptionMutation,
+  CancelPendingWorkflowExecutionsMutation,
+  CancelPendingWorkflowExecutionsMutationVariables,
+  CancelWorkflowExecutionMutation,
+  CancelWorkflowExecutionMutationVariables,
   ChangeBillingPlanMutation,
   ChangeBillingPlanMutationVariables,
   ChangeThreadCustomerMutation,
@@ -854,6 +865,8 @@ import type {
   CreateCustomerGroupMutationVariables,
   CreateCustomerSurveyMutation,
   CreateCustomerSurveyMutationVariables,
+  CreateDashboardMutation,
+  CreateDashboardMutationVariables,
   CreateDiscussionMutation,
   CreateDiscussionMutationVariables,
   CreateEmailPreviewUrlMutation,
@@ -944,8 +957,6 @@ import type {
   CreateWebhookTargetMutationVariables,
   CreateWorkflowMutation,
   CreateWorkflowMutationVariables,
-  CreateWorkflowRuleMutation,
-  CreateWorkflowRuleMutationVariables,
   CreateWorkflowShareLinkMutation,
   CreateWorkflowShareLinkMutationVariables,
   CreateWorkflowStepMutation,
@@ -1034,6 +1045,13 @@ import type {
   CustomerSurveysQueryVariables,
   CustomersQuery,
   CustomersQueryVariables,
+  DashboardCustomRangeFieldsFragment,
+  DashboardFieldsFragment,
+  DashboardPresetRangeFieldsFragment,
+  DashboardQuery,
+  DashboardQueryVariables,
+  DashboardsQuery,
+  DashboardsQueryVariables,
   DefaultServiceIntegrationFieldsFragment,
   DeleteAccountFieldMutation,
   DeleteAccountFieldMutationVariables,
@@ -1073,6 +1091,8 @@ import type {
   DeleteCustomerMutationVariables,
   DeleteCustomerSurveyMutation,
   DeleteCustomerSurveyMutationVariables,
+  DeleteDashboardMutation,
+  DeleteDashboardMutationVariables,
   DeleteEmailSuppressionMutation,
   DeleteEmailSuppressionMutationVariables,
   DeleteEscalationPathMutation,
@@ -1152,8 +1172,6 @@ import type {
   DeleteWebhookTargetMutationVariables,
   DeleteWorkflowMutation,
   DeleteWorkflowMutationVariables,
-  DeleteWorkflowRuleMutation,
-  DeleteWorkflowRuleMutationVariables,
   DeleteWorkflowStepMutation,
   DeleteWorkflowStepMutationVariables,
   DeleteWorkspaceCursorIntegrationMutation,
@@ -1189,6 +1207,8 @@ import type {
   DiscussionResolvedNotificationDetailFieldsFragment,
   DiscussionsQuery,
   DiscussionsQueryVariables,
+  DismissGeneratedReplyMutation,
+  DismissGeneratedReplyMutationVariables,
   DismissSidekickQuestionMutation,
   DismissSidekickQuestionMutationVariables,
   DismissSuggestedLabelTypesMutation,
@@ -1433,7 +1453,6 @@ import type {
   OauthAppQueryVariables,
   OauthAppsQuery,
   OauthAppsQueryVariables,
-  PendingSenderDomainDnsRecordsFieldsFragment,
   PerSeatRecurringPriceFieldsFragment,
   PermissionsQuery,
   PlainTaskThreadLinkFieldsFragment,
@@ -1445,6 +1464,8 @@ import type {
   PurchaseCreditsMutation,
   PurchaseCreditsMutationVariables,
   QueuedAgentSessionMessageFieldsFragment,
+  RearrangeLabelTypesMutation,
+  RearrangeLabelTypesMutationVariables,
   RefreshConnectedDiscordChannelsMutation,
   RefreshConnectedDiscordChannelsMutationVariables,
   RefreshSidekickMcpServerToolsMutation,
@@ -1742,6 +1763,8 @@ import type {
   ThreadLinkGroupsQueryVariables,
   ThreadLinkTargetCreatedEntryFieldsFragment,
   ThreadLinkTargetDeletedEntryFieldsFragment,
+  ThreadMetricCapabilitiesQuery,
+  ThreadMetricCapabilityFieldsFragment,
   ThreadNotificationDetailFieldsFragment,
   ThreadPriorityChangedEntryFieldsFragment,
   ThreadQuery,
@@ -1797,16 +1820,14 @@ import type {
   ToggleFeatureEntitlementFieldsFragment,
   ToggleSlackMessageReactionMutation,
   ToggleSlackMessageReactionMutationVariables,
-  ToggleWorkflowRulePublishedMutation,
-  ToggleWorkflowRulePublishedMutationVariables,
   ToneRuleFeedbackDetailsFieldsFragment,
   TotalResolutionTimeServiceLevelAgreementFieldsFragment,
   TriggerWorkflowMutation,
   TriggerWorkflowMutationVariables,
-  TriggerWorkflowRuleMutation,
-  TriggerWorkflowRuleMutationVariables,
   UnarchiveLabelTypeMutation,
   UnarchiveLabelTypeMutationVariables,
+  UnarchiveServiceLevelAgreementPolicyMutation,
+  UnarchiveServiceLevelAgreementPolicyMutationVariables,
   UnassignThreadMutation,
   UnassignThreadMutationVariables,
   UnmarkCustomerAsSpamMutation,
@@ -1853,6 +1874,8 @@ import type {
   UpdateCustomerGroupMutationVariables,
   UpdateCustomerSurveyMutation,
   UpdateCustomerSurveyMutationVariables,
+  UpdateDashboardMutation,
+  UpdateDashboardMutationVariables,
   UpdateDiscussionAgentStatusMutation,
   UpdateDiscussionAgentStatusMutationVariables,
   UpdateEscalationPathMutation,
@@ -1943,8 +1966,6 @@ import type {
   UpdateWebhookTargetMutationVariables,
   UpdateWorkflowMutation,
   UpdateWorkflowMutationVariables,
-  UpdateWorkflowRuleMutation,
-  UpdateWorkflowRuleMutationVariables,
   UpdateWorkflowStepMutation,
   UpdateWorkflowStepMutationVariables,
   UpdateWorkspaceEmailSettingsMutation,
@@ -2048,11 +2069,6 @@ import type {
   WorkflowFieldsFragment,
   WorkflowQuery,
   WorkflowQueryVariables,
-  WorkflowRuleFieldsFragment,
-  WorkflowRuleQuery,
-  WorkflowRuleQueryVariables,
-  WorkflowRulesQuery,
-  WorkflowRulesQueryVariables,
   WorkflowShareLinkFieldsFragment,
   WorkflowShareLinkQuery,
   WorkflowShareLinkQueryVariables,
@@ -2595,6 +2611,7 @@ export class ApiKeyModel {
   protected _data: ApiKeyFieldsFragment;
   public readonly __typename = "ApiKey" as const;
 
+  public readonly allowedCidrs: ApiKeyFieldsFragment["allowedCidrs"];
   public readonly createdAt: ApiKeyFieldsFragment["createdAt"];
   public readonly deletedAt: ApiKeyFieldsFragment["deletedAt"];
   public readonly description: ApiKeyFieldsFragment["description"];
@@ -2610,6 +2627,7 @@ export class ApiKeyModel {
   constructor(client: PlainGraphQLClient, data: ApiKeyFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.allowedCidrs = data.allowedCidrs;
     this.createdAt = data.createdAt;
     this.deletedAt = data.deletedAt;
     this.description = data.description;
@@ -5160,6 +5178,82 @@ export class CustomSidekickSkillModel {
   }
 }
 
+export class DashboardModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: DashboardFieldsFragment;
+  public readonly __typename = "Dashboard" as const;
+
+  public readonly createdAt: DashboardFieldsFragment["createdAt"];
+  public readonly id: DashboardFieldsFragment["id"];
+  public readonly name: DashboardFieldsFragment["name"];
+  public readonly updatedAt: DashboardFieldsFragment["updatedAt"];
+  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+  public readonly globalRange: DashboardCustomRangeModel | DashboardPresetRangeModel;
+  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
+
+  constructor(client: PlainGraphQLClient, data: DashboardFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.createdAt = data.createdAt;
+    this.id = data.id;
+    this.name = data.name;
+    this.updatedAt = data.updatedAt;
+    this.createdBy = (() => {
+    switch ((data.createdBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
+      case "UserActor": return new UserActorModel(client, data.createdBy as any);
+      default: return data.createdBy as any;
+    }
+  })();
+    this.globalRange = (() => {
+    switch ((data.globalRange as any).__typename) {
+      case "DashboardCustomRange": return new DashboardCustomRangeModel(client, data.globalRange as any);
+      case "DashboardPresetRange": return new DashboardPresetRangeModel(client, data.globalRange as any);
+      default: return data.globalRange as any;
+    }
+  })();
+    this.updatedBy = (() => {
+    switch ((data.updatedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
+      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
+      default: return data.updatedBy as any;
+    }
+  })();
+  }
+}
+
+export class DashboardCustomRangeModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: DashboardCustomRangeFieldsFragment;
+  public readonly __typename = "DashboardCustomRange" as const;
+
+  public readonly from: DashboardCustomRangeFieldsFragment["from"];
+  public readonly to: DashboardCustomRangeFieldsFragment["to"];
+
+  constructor(client: PlainGraphQLClient, data: DashboardCustomRangeFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.from = data.from;
+    this.to = data.to;
+  }
+}
+
+export class DashboardPresetRangeModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: DashboardPresetRangeFieldsFragment;
+  public readonly __typename = "DashboardPresetRange" as const;
+
+  public readonly duration: DashboardPresetRangeFieldsFragment["duration"];
+
+  constructor(client: PlainGraphQLClient, data: DashboardPresetRangeFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.duration = data.duration;
+  }
+}
+
 export class DefaultServiceIntegrationModel {
   protected _client: PlainGraphQLClient;
   protected _data: DefaultServiceIntegrationFieldsFragment;
@@ -6548,6 +6642,7 @@ export class ImportJobDefinitionModel {
   public readonly entityTypes: ImportJobDefinitionFieldsFragment["entityTypes"];
   public readonly id: ImportJobDefinitionFieldsFragment["id"];
   public readonly mode: ImportJobDefinitionFieldsFragment["mode"];
+  public readonly tenantFieldMappings: ImportJobDefinitionFieldsFragment["tenantFieldMappings"];
   public readonly updatedAt: ImportJobDefinitionFieldsFragment["updatedAt"];
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
@@ -6560,6 +6655,7 @@ export class ImportJobDefinitionModel {
     this.entityTypes = data.entityTypes;
     this.id = data.id;
     this.mode = data.mode;
+    this.tenantFieldMappings = data.tenantFieldMappings;
     this.updatedAt = data.updatedAt;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
@@ -7966,20 +8062,6 @@ export class OAuthAppModel {
   }
 }
 
-export class PendingSenderDomainDnsRecordsModel {
-  protected _client: PlainGraphQLClient;
-  protected _data: PendingSenderDomainDnsRecordsFieldsFragment;
-  public readonly __typename = "PendingSenderDomainDnsRecords" as const;
-
-  public readonly domainName: PendingSenderDomainDnsRecordsFieldsFragment["domainName"];
-
-  constructor(client: PlainGraphQLClient, data: PendingSenderDomainDnsRecordsFieldsFragment) {
-    this._client = client;
-    this._data = data;
-    this.domainName = data.domainName;
-  }
-}
-
 export class PerSeatRecurringPriceModel {
   protected _client: PlainGraphQLClient;
   protected _data: PerSeatRecurringPriceFieldsFragment;
@@ -8338,22 +8420,37 @@ export class ServiceLevelAgreementPolicyModel {
   protected _data: ServiceLevelAgreementPolicyFieldsFragment;
   public readonly __typename = "ServiceLevelAgreementPolicy" as const;
 
+  public readonly archivedAt: ServiceLevelAgreementPolicyFieldsFragment["archivedAt"];
   public readonly createdAt: ServiceLevelAgreementPolicyFieldsFragment["createdAt"];
   public readonly description: ServiceLevelAgreementPolicyFieldsFragment["description"];
   public readonly id: ServiceLevelAgreementPolicyFieldsFragment["id"];
+  public readonly isArchived: ServiceLevelAgreementPolicyFieldsFragment["isArchived"];
   public readonly name: ServiceLevelAgreementPolicyFieldsFragment["name"];
+  public readonly openThreadCount: ServiceLevelAgreementPolicyFieldsFragment["openThreadCount"];
   public readonly updatedAt: ServiceLevelAgreementPolicyFieldsFragment["updatedAt"];
+  public readonly archivedBy: (MachineUserActorModel | SystemActorModel | UserActorModel) | null;
   public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
   public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
 
   constructor(client: PlainGraphQLClient, data: ServiceLevelAgreementPolicyFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.archivedAt = data.archivedAt;
     this.createdAt = data.createdAt;
     this.description = data.description;
     this.id = data.id;
+    this.isArchived = data.isArchived;
     this.name = data.name;
+    this.openThreadCount = data.openThreadCount;
     this.updatedAt = data.updatedAt;
+    this.archivedBy = data.archivedBy ? (() => {
+    switch ((data.archivedBy as any).__typename) {
+      case "MachineUserActor": return new MachineUserActorModel(client, data.archivedBy as any);
+      case "SystemActor": return new SystemActorModel(client, data.archivedBy as any);
+      case "UserActor": return new UserActorModel(client, data.archivedBy as any);
+      default: return data.archivedBy as any;
+    }
+  })() : null;
     this.createdBy = (() => {
     switch ((data.createdBy as any).__typename) {
       case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
@@ -10495,12 +10592,14 @@ export class ThreadHeatmapMetricModel {
   public readonly __typename = "ThreadHeatmapMetric" as const;
 
   public readonly days: ThreadHeatmapMetricFieldsFragment["days"];
+  public readonly machineUsers: ThreadHeatmapMetricFieldsFragment["machineUsers"];
   public readonly threadIds: ThreadHeatmapMetricFieldsFragment["threadIds"];
 
   constructor(client: PlainGraphQLClient, data: ThreadHeatmapMetricFieldsFragment) {
     this._client = client;
     this._data = data;
     this.days = data.days;
+    this.machineUsers = data.machineUsers;
     this.threadIds = data.threadIds;
   }
 }
@@ -10599,6 +10698,24 @@ export class ThreadLinkTargetDeletedEntryModel {
   }
 }
 
+export class ThreadMetricCapabilityModel {
+  protected _client: PlainGraphQLClient;
+  protected _data: ThreadMetricCapabilityFieldsFragment;
+  public readonly __typename = "ThreadMetricCapability" as const;
+
+  public readonly kind: ThreadMetricCapabilityFieldsFragment["kind"];
+  public readonly machineUsers: ThreadMetricCapabilityFieldsFragment["machineUsers"];
+  public readonly metricName: ThreadMetricCapabilityFieldsFragment["metricName"];
+
+  constructor(client: PlainGraphQLClient, data: ThreadMetricCapabilityFieldsFragment) {
+    this._client = client;
+    this._data = data;
+    this.kind = data.kind;
+    this.machineUsers = data.machineUsers;
+    this.metricName = data.metricName;
+  }
+}
+
 export class ThreadNotificationDetailModel {
   protected _client: PlainGraphQLClient;
   protected _data: ThreadNotificationDetailFieldsFragment;
@@ -10650,12 +10767,14 @@ export class ThreadSingleValueMetricModel {
   protected _data: ThreadSingleValueMetricFieldsFragment;
   public readonly __typename = "ThreadSingleValueMetric" as const;
 
+  public readonly machineUsers: ThreadSingleValueMetricFieldsFragment["machineUsers"];
   public readonly threadIds: ThreadSingleValueMetricFieldsFragment["threadIds"];
   public readonly values: ThreadSingleValueMetricFieldsFragment["values"];
 
   constructor(client: PlainGraphQLClient, data: ThreadSingleValueMetricFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.machineUsers = data.machineUsers;
     this.threadIds = data.threadIds;
     this.values = data.values;
   }
@@ -10972,6 +11091,7 @@ export class ThreadTimeSeriesMetricModel {
   protected _data: ThreadTimeSeriesMetricFieldsFragment;
   public readonly __typename = "ThreadTimeSeriesMetric" as const;
 
+  public readonly machineUsers: ThreadTimeSeriesMetricFieldsFragment["machineUsers"];
   public readonly series: ThreadTimeSeriesMetricFieldsFragment["series"];
   public readonly threadIds: ThreadTimeSeriesMetricFieldsFragment["threadIds"];
   public readonly timestamps: ThreadTimeSeriesMetricFieldsFragment["timestamps"];
@@ -10979,6 +11099,7 @@ export class ThreadTimeSeriesMetricModel {
   constructor(client: PlainGraphQLClient, data: ThreadTimeSeriesMetricFieldsFragment) {
     this._client = client;
     this._data = data;
+    this.machineUsers = data.machineUsers;
     this.series = data.series;
     this.threadIds = data.threadIds;
     this.timestamps = data.timestamps;
@@ -11925,50 +12046,6 @@ export class WorkflowExecutionModel {
   }
 }
 
-export class WorkflowRuleModel {
-  protected _client: PlainGraphQLClient;
-  protected _data: WorkflowRuleFieldsFragment;
-  public readonly __typename = "WorkflowRule" as const;
-
-  public readonly createdAt: WorkflowRuleFieldsFragment["createdAt"];
-  public readonly id: WorkflowRuleFieldsFragment["id"];
-  public readonly name: WorkflowRuleFieldsFragment["name"];
-  public readonly order: WorkflowRuleFieldsFragment["order"];
-  public readonly payload: WorkflowRuleFieldsFragment["payload"];
-  public readonly publishedAt: WorkflowRuleFieldsFragment["publishedAt"];
-  public readonly updatedAt: WorkflowRuleFieldsFragment["updatedAt"];
-  public readonly createdBy: MachineUserActorModel | SystemActorModel | UserActorModel;
-  public readonly updatedBy: MachineUserActorModel | SystemActorModel | UserActorModel;
-
-  constructor(client: PlainGraphQLClient, data: WorkflowRuleFieldsFragment) {
-    this._client = client;
-    this._data = data;
-    this.createdAt = data.createdAt;
-    this.id = data.id;
-    this.name = data.name;
-    this.order = data.order;
-    this.payload = data.payload;
-    this.publishedAt = data.publishedAt;
-    this.updatedAt = data.updatedAt;
-    this.createdBy = (() => {
-    switch ((data.createdBy as any).__typename) {
-      case "MachineUserActor": return new MachineUserActorModel(client, data.createdBy as any);
-      case "SystemActor": return new SystemActorModel(client, data.createdBy as any);
-      case "UserActor": return new UserActorModel(client, data.createdBy as any);
-      default: return data.createdBy as any;
-    }
-  })();
-    this.updatedBy = (() => {
-    switch ((data.updatedBy as any).__typename) {
-      case "MachineUserActor": return new MachineUserActorModel(client, data.updatedBy as any);
-      case "SystemActor": return new SystemActorModel(client, data.updatedBy as any);
-      case "UserActor": return new UserActorModel(client, data.updatedBy as any);
-      default: return data.updatedBy as any;
-    }
-  })();
-  }
-}
-
 export class WorkflowShareLinkModel {
   protected _client: PlainGraphQLClient;
   protected _data: WorkflowShareLinkFieldsFragment;
@@ -12755,6 +12832,8 @@ export interface PlainSdkQueries {
   customerSurvey(variables: CustomerSurveyQueryVariables): Promise<CustomerSurveyModel>;
   customerSurveys(variables: CustomerSurveysQueryVariables): Promise<PlainConnection<CustomerSurveyModel>>;
   customers(variables: CustomersQueryVariables): Promise<PlainConnection<CustomerModel>>;
+  dashboard(variables: DashboardQueryVariables): Promise<DashboardModel>;
+  dashboards(variables: DashboardsQueryVariables): Promise<PlainConnection<DashboardModel>>;
   deletedThreads(variables: DeletedThreadsQueryVariables): Promise<PlainConnection<DeletedThreadModel>>;
   discussion(variables: DiscussionQueryVariables): Promise<ThreadDiscussionModel>;
   discussions(variables: DiscussionsQueryVariables): Promise<PlainConnection<ThreadDiscussionModel>>;
@@ -12890,6 +12969,7 @@ export interface PlainSdkQueries {
   threadFieldSchemas(variables: ThreadFieldSchemasQueryVariables): Promise<PlainConnection<ThreadFieldSchemaModel>>;
   threadHeatmapMetric(variables: ThreadHeatmapMetricQueryVariables): Promise<ThreadHeatmapMetricModel>;
   threadLinkGroups(variables: ThreadLinkGroupsQueryVariables): Promise<PlainConnection<ThreadLinkGroupModel>>;
+  threadMetricCapabilities(): Promise<ThreadMetricCapabilityModel[]>;
   threadSingleValueMetric(variables: ThreadSingleValueMetricQueryVariables): Promise<ThreadSingleValueMetricModel>;
   threadSlackUser(variables: ThreadSlackUserQueryVariables): Promise<SlackUserModel>;
   threadTimeSeriesMetric(variables: ThreadTimeSeriesMetricQueryVariables): Promise<ThreadTimeSeriesMetricModel>;
@@ -12924,8 +13004,6 @@ export interface PlainSdkQueries {
   workflowExecutions(variables: WorkflowExecutionsQueryVariables): Promise<PlainConnection<WorkflowExecutionModel>>;
   workflowExecutionsByEntity(variables: WorkflowExecutionsByEntityQueryVariables): Promise<PlainConnection<WorkflowExecutionModel>>;
   workflowExecutionsForWorkspace(variables: WorkflowExecutionsForWorkspaceQueryVariables): Promise<PlainConnection<WorkflowExecutionModel>>;
-  workflowRule(variables: WorkflowRuleQueryVariables): Promise<WorkflowRuleModel>;
-  workflowRules(variables: WorkflowRulesQueryVariables): Promise<PlainConnection<WorkflowRuleModel>>;
   workflowShareLink(variables: WorkflowShareLinkQueryVariables): Promise<WorkflowShareLinkModel>;
   workflowTemplate(variables: WorkflowTemplateQueryVariables): Promise<WorkflowTemplateModel>;
   workflowTemplateGallery(): Promise<WorkflowTemplateGalleryItemModel[]>;
@@ -12971,6 +13049,7 @@ export interface PlainSdkMutations {
   addWorkspaceAlternateSupportEmailAddress(variables: AddWorkspaceAlternateSupportEmailAddressMutationVariables): Promise<AddWorkspaceAlternateSupportEmailAddressMutation["addWorkspaceAlternateSupportEmailAddress"]>;
   answerSidekickQuestion(variables: AnswerSidekickQuestionMutationVariables): Promise<AnswerSidekickQuestionMutation["answerSidekickQuestion"]>;
   archiveLabelType(variables: ArchiveLabelTypeMutationVariables): Promise<ArchiveLabelTypeMutation["archiveLabelType"]>;
+  archiveServiceLevelAgreementPolicy(variables: ArchiveServiceLevelAgreementPolicyMutationVariables): Promise<ArchiveServiceLevelAgreementPolicyMutation["archiveServiceLevelAgreementPolicy"]>;
   assignRolesToUser(variables: AssignRolesToUserMutationVariables): Promise<AssignRolesToUserMutation["assignRolesToUser"]>;
   assignThread(variables: AssignThreadMutationVariables): Promise<AssignThreadMutation["assignThread"]>;
   bulkCreateThreadLinks(variables: BulkCreateThreadLinksMutationVariables): Promise<BulkCreateThreadLinksMutation["bulkCreateThreadLinks"]>;
@@ -12982,6 +13061,8 @@ export interface PlainSdkMutations {
   bulkUpsertWorkflowSteps(variables: BulkUpsertWorkflowStepsMutationVariables): Promise<BulkUpsertWorkflowStepsMutation["bulkUpsertWorkflowSteps"]>;
   calculateRoleChangeCost(variables: CalculateRoleChangeCostMutationVariables): Promise<CalculateRoleChangeCostMutation["calculateRoleChangeCost"]>;
   cancelHyperlineSubscription(): Promise<CancelHyperlineSubscriptionMutation["cancelHyperlineSubscription"]>;
+  cancelPendingWorkflowExecutions(variables: CancelPendingWorkflowExecutionsMutationVariables): Promise<CancelPendingWorkflowExecutionsMutation["cancelPendingWorkflowExecutions"]>;
+  cancelWorkflowExecution(variables: CancelWorkflowExecutionMutationVariables): Promise<CancelWorkflowExecutionMutation["cancelWorkflowExecution"]>;
   changeBillingPlan(variables: ChangeBillingPlanMutationVariables): Promise<ChangeBillingPlanMutation["changeBillingPlan"]>;
   changeThreadCustomer(variables: ChangeThreadCustomerMutationVariables): Promise<ChangeThreadCustomerMutation["changeThreadCustomer"]>;
   changeThreadDiscussionStatus(variables: ChangeThreadDiscussionStatusMutationVariables): Promise<ChangeThreadDiscussionStatusMutation["changeThreadDiscussionStatus"]>;
@@ -13010,6 +13091,7 @@ export interface PlainSdkMutations {
   createCustomerEvent(variables: CreateCustomerEventMutationVariables): Promise<CreateCustomerEventMutation["createCustomerEvent"]>;
   createCustomerGroup(variables: CreateCustomerGroupMutationVariables): Promise<CreateCustomerGroupMutation["createCustomerGroup"]>;
   createCustomerSurvey(variables: CreateCustomerSurveyMutationVariables): Promise<CreateCustomerSurveyMutation["createCustomerSurvey"]>;
+  createDashboard(variables: CreateDashboardMutationVariables): Promise<CreateDashboardMutation["createDashboard"]>;
   createDiscussion(variables: CreateDiscussionMutationVariables): Promise<CreateDiscussionMutation["createDiscussion"]>;
   createEmailPreviewUrl(variables: CreateEmailPreviewUrlMutationVariables): Promise<CreateEmailPreviewUrlMutation["createEmailPreviewUrl"]>;
   createEscalationPath(variables: CreateEscalationPathMutationVariables): Promise<CreateEscalationPathMutation["createEscalationPath"]>;
@@ -13057,7 +13139,6 @@ export interface PlainSdkMutations {
   createUserAuthSlackIntegration(variables: CreateUserAuthSlackIntegrationMutationVariables): Promise<CreateUserAuthSlackIntegrationMutation["createUserAuthSlackIntegration"]>;
   createWebhookTarget(variables: CreateWebhookTargetMutationVariables): Promise<CreateWebhookTargetMutation["createWebhookTarget"]>;
   createWorkflow(variables: CreateWorkflowMutationVariables): Promise<CreateWorkflowMutation["createWorkflow"]>;
-  createWorkflowRule(variables: CreateWorkflowRuleMutationVariables): Promise<CreateWorkflowRuleMutation["createWorkflowRule"]>;
   createWorkflowShareLink(variables: CreateWorkflowShareLinkMutationVariables): Promise<CreateWorkflowShareLinkMutation["createWorkflowShareLink"]>;
   createWorkflowStep(variables: CreateWorkflowStepMutationVariables): Promise<CreateWorkflowStepMutation["createWorkflowStep"]>;
   createWorkspace(variables: CreateWorkspaceMutationVariables): Promise<CreateWorkspaceMutation["createWorkspace"]>;
@@ -13094,6 +13175,7 @@ export interface PlainSdkMutations {
   deleteCustomerCardConfig(variables: DeleteCustomerCardConfigMutationVariables): Promise<DeleteCustomerCardConfigMutation["deleteCustomerCardConfig"]>;
   deleteCustomerGroup(variables: DeleteCustomerGroupMutationVariables): Promise<DeleteCustomerGroupMutation["deleteCustomerGroup"]>;
   deleteCustomerSurvey(variables: DeleteCustomerSurveyMutationVariables): Promise<DeleteCustomerSurveyMutation["deleteCustomerSurvey"]>;
+  deleteDashboard(variables: DeleteDashboardMutationVariables): Promise<DeleteDashboardMutation["deleteDashboard"]>;
   deleteEmailSuppression(variables: DeleteEmailSuppressionMutationVariables): Promise<DeleteEmailSuppressionMutation["deleteEmailSuppression"]>;
   deleteEscalationPath(variables: DeleteEscalationPathMutationVariables): Promise<DeleteEscalationPathMutation["deleteEscalationPath"]>;
   deleteGithubUserAuthIntegration(): Promise<DeleteGithubUserAuthIntegrationMutation["deleteGithubUserAuthIntegration"]>;
@@ -13139,7 +13221,6 @@ export interface PlainSdkMutations {
   deleteUserAuthSlackIntegration(variables: DeleteUserAuthSlackIntegrationMutationVariables): Promise<DeleteUserAuthSlackIntegrationMutation["deleteUserAuthSlackIntegration"]>;
   deleteWebhookTarget(variables: DeleteWebhookTargetMutationVariables): Promise<DeleteWebhookTargetMutation["deleteWebhookTarget"]>;
   deleteWorkflow(variables: DeleteWorkflowMutationVariables): Promise<DeleteWorkflowMutation["deleteWorkflow"]>;
-  deleteWorkflowRule(variables: DeleteWorkflowRuleMutationVariables): Promise<DeleteWorkflowRuleMutation["deleteWorkflowRule"]>;
   deleteWorkflowStep(variables: DeleteWorkflowStepMutationVariables): Promise<DeleteWorkflowStepMutation["deleteWorkflowStep"]>;
   deleteWorkspaceCursorIntegration(variables: DeleteWorkspaceCursorIntegrationMutationVariables): Promise<DeleteWorkspaceCursorIntegrationMutation["deleteWorkspaceCursorIntegration"]>;
   deleteWorkspaceDiscordChannelIntegration(variables: DeleteWorkspaceDiscordChannelIntegrationMutationVariables): Promise<DeleteWorkspaceDiscordChannelIntegrationMutation["deleteWorkspaceDiscordChannelIntegration"]>;
@@ -13152,6 +13233,7 @@ export interface PlainSdkMutations {
   deleteWorkspaceSlackIntegration(variables: DeleteWorkspaceSlackIntegrationMutationVariables): Promise<DeleteWorkspaceSlackIntegrationMutation["deleteWorkspaceSlackIntegration"]>;
   deleteWorkspaceSlackSidekickIntegration(): Promise<DeleteWorkspaceSlackSidekickIntegrationMutation["deleteWorkspaceSlackSidekickIntegration"]>;
   disableOAuthApp(variables: DisableOAuthAppMutationVariables): Promise<DisableOAuthAppMutation["disableOAuthApp"]>;
+  dismissGeneratedReply(variables: DismissGeneratedReplyMutationVariables): Promise<DismissGeneratedReplyMutation["dismissGeneratedReply"]>;
   dismissSidekickQuestion(variables: DismissSidekickQuestionMutationVariables): Promise<DismissSidekickQuestionMutation["dismissSidekickQuestion"]>;
   dismissSuggestedLabelTypes(variables: DismissSuggestedLabelTypesMutationVariables): Promise<DismissSuggestedLabelTypesMutation["dismissSuggestedLabelTypes"]>;
   duplicateBroadcast(variables: DuplicateBroadcastMutationVariables): Promise<DuplicateBroadcastMutation["duplicateBroadcast"]>;
@@ -13188,6 +13270,7 @@ export interface PlainSdkMutations {
   moveWorkflow(variables: MoveWorkflowMutationVariables): Promise<MoveWorkflowMutation["moveWorkflow"]>;
   previewBillingPlanChange(variables: PreviewBillingPlanChangeMutationVariables): Promise<PreviewBillingPlanChangeMutation["previewBillingPlanChange"]>;
   purchaseCredits(variables: PurchaseCreditsMutationVariables): Promise<PurchaseCreditsMutation["purchaseCredits"]>;
+  rearrangeLabelTypes(variables: RearrangeLabelTypesMutationVariables): Promise<RearrangeLabelTypesMutation["rearrangeLabelTypes"]>;
   refreshConnectedDiscordChannels(variables: RefreshConnectedDiscordChannelsMutationVariables): Promise<RefreshConnectedDiscordChannelsMutation["refreshConnectedDiscordChannels"]>;
   refreshSidekickMcpServerTools(variables: RefreshSidekickMcpServerToolsMutationVariables): Promise<RefreshSidekickMcpServerToolsMutation["refreshSidekickMcpServerTools"]>;
   refreshWorkspaceSlackChannelIntegration(variables: RefreshWorkspaceSlackChannelIntegrationMutationVariables): Promise<RefreshWorkspaceSlackChannelIntegrationMutation["refreshWorkspaceSlackChannelIntegration"]>;
@@ -13249,10 +13332,9 @@ export interface PlainSdkMutations {
   syncBusinessHoursSlots(variables: SyncBusinessHoursSlotsMutationVariables): Promise<SyncBusinessHoursSlotsMutation["syncBusinessHoursSlots"]>;
   syncUserWorkingHours(variables: SyncUserWorkingHoursMutationVariables): Promise<SyncUserWorkingHoursMutation["syncUserWorkingHours"]>;
   toggleSlackMessageReaction(variables: ToggleSlackMessageReactionMutationVariables): Promise<ToggleSlackMessageReactionMutation["toggleSlackMessageReaction"]>;
-  toggleWorkflowRulePublished(variables: ToggleWorkflowRulePublishedMutationVariables): Promise<ToggleWorkflowRulePublishedMutation["toggleWorkflowRulePublished"]>;
   triggerWorkflow(variables: TriggerWorkflowMutationVariables): Promise<TriggerWorkflowMutation["triggerWorkflow"]>;
-  triggerWorkflowRule(variables: TriggerWorkflowRuleMutationVariables): Promise<TriggerWorkflowRuleMutation["triggerWorkflowRule"]>;
   unarchiveLabelType(variables: UnarchiveLabelTypeMutationVariables): Promise<UnarchiveLabelTypeMutation["unarchiveLabelType"]>;
+  unarchiveServiceLevelAgreementPolicy(variables: UnarchiveServiceLevelAgreementPolicyMutationVariables): Promise<UnarchiveServiceLevelAgreementPolicyMutation["unarchiveServiceLevelAgreementPolicy"]>;
   unassignThread(variables: UnassignThreadMutationVariables): Promise<UnassignThreadMutation["unassignThread"]>;
   unmarkCustomerAsSpam(variables: UnmarkCustomerAsSpamMutationVariables): Promise<UnmarkCustomerAsSpamMutation["unmarkCustomerAsSpam"]>;
   unsubscribeBroadcastRecipient(variables: UnsubscribeBroadcastRecipientMutationVariables): Promise<UnsubscribeBroadcastRecipientMutation["unsubscribeBroadcastRecipient"]>;
@@ -13278,6 +13360,7 @@ export interface PlainSdkMutations {
   updateCustomerCompany(variables: UpdateCustomerCompanyMutationVariables): Promise<UpdateCustomerCompanyMutation["updateCustomerCompany"]>;
   updateCustomerGroup(variables: UpdateCustomerGroupMutationVariables): Promise<UpdateCustomerGroupMutation["updateCustomerGroup"]>;
   updateCustomerSurvey(variables: UpdateCustomerSurveyMutationVariables): Promise<UpdateCustomerSurveyMutation["updateCustomerSurvey"]>;
+  updateDashboard(variables: UpdateDashboardMutationVariables): Promise<UpdateDashboardMutation["updateDashboard"]>;
   updateDiscussionAgentStatus(variables: UpdateDiscussionAgentStatusMutationVariables): Promise<UpdateDiscussionAgentStatusMutation["updateDiscussionAgentStatus"]>;
   updateEscalationPath(variables: UpdateEscalationPathMutationVariables): Promise<UpdateEscalationPathMutation["updateEscalationPath"]>;
   updateGeneratedReply(variables: UpdateGeneratedReplyMutationVariables): Promise<UpdateGeneratedReplyMutation["updateGeneratedReply"]>;
@@ -13326,7 +13409,6 @@ export interface PlainSdkMutations {
   updateUserDefaultSavedThreadsView(variables: UpdateUserDefaultSavedThreadsViewMutationVariables): Promise<UpdateUserDefaultSavedThreadsViewMutation["updateUserDefaultSavedThreadsView"]>;
   updateWebhookTarget(variables: UpdateWebhookTargetMutationVariables): Promise<UpdateWebhookTargetMutation["updateWebhookTarget"]>;
   updateWorkflow(variables: UpdateWorkflowMutationVariables): Promise<UpdateWorkflowMutation["updateWorkflow"]>;
-  updateWorkflowRule(variables: UpdateWorkflowRuleMutationVariables): Promise<UpdateWorkflowRuleMutation["updateWorkflowRule"]>;
   updateWorkflowStep(variables: UpdateWorkflowStepMutationVariables): Promise<UpdateWorkflowStepMutation["updateWorkflowStep"]>;
   updateWorkspace(variables: UpdateWorkspaceMutationVariables): Promise<UpdateWorkspaceMutation["updateWorkspace"]>;
   updateWorkspaceEmailSettings(variables: UpdateWorkspaceEmailSettingsMutationVariables): Promise<UpdateWorkspaceEmailSettingsMutation["updateWorkspaceEmailSettings"]>;
@@ -13854,6 +13936,28 @@ export class PlainSdk {
         pageInfo: conn.pageInfo,
         totalCount: conn.totalCount,
         fetch: (cursor) => query.customers(paginationVariables(variables, cursor) as CustomersQueryVariables),
+      });
+    },
+
+    async dashboard(variables: DashboardQueryVariables): Promise<DashboardModel> {
+      const response = await _client.request<DashboardQuery, DashboardQueryVariables>(
+        DashboardDocument, variables
+      );
+      if (!response.dashboard) {
+        throw new Error("dashboard not found");
+      }
+      return new DashboardModel(_client, response.dashboard);
+    },
+
+    async dashboards(variables: DashboardsQueryVariables): Promise<PlainConnection<DashboardModel>> {
+      const response = await _client.request<DashboardsQuery, DashboardsQueryVariables>(
+        DashboardsDocument, variables
+      );
+      const conn = response.dashboards;
+      return new PlainConnection<DashboardModel>({
+        nodes: conn.edges.map(e => new DashboardModel(_client, e.node)),
+        pageInfo: conn.pageInfo,
+        fetch: (cursor) => query.dashboards(paginationVariables(variables, cursor) as DashboardsQueryVariables),
       });
     },
 
@@ -15096,6 +15200,13 @@ export class PlainSdk {
       });
     },
 
+    async threadMetricCapabilities(): Promise<ThreadMetricCapabilityModel[]> {
+      const response = await _client.request<ThreadMetricCapabilitiesQuery, Record<string, never>>(
+        ThreadMetricCapabilitiesDocument
+      );
+      return (response.threadMetricCapabilities ?? []).map(d => new ThreadMetricCapabilityModel(_client, d));
+    },
+
     async threadSingleValueMetric(variables: ThreadSingleValueMetricQueryVariables): Promise<ThreadSingleValueMetricModel> {
       const response = await _client.request<ThreadSingleValueMetricQuery, ThreadSingleValueMetricQueryVariables>(
         ThreadSingleValueMetricDocument, variables
@@ -15423,28 +15534,6 @@ export class PlainSdk {
         nodes: conn.edges.map(e => new WorkflowExecutionModel(_client, e.node)),
         pageInfo: conn.pageInfo,
         fetch: (cursor) => query.workflowExecutionsForWorkspace(paginationVariables(variables, cursor) as WorkflowExecutionsForWorkspaceQueryVariables),
-      });
-    },
-
-    async workflowRule(variables: WorkflowRuleQueryVariables): Promise<WorkflowRuleModel> {
-      const response = await _client.request<WorkflowRuleQuery, WorkflowRuleQueryVariables>(
-        WorkflowRuleDocument, variables
-      );
-      if (!response.workflowRule) {
-        throw new Error("workflowRule not found");
-      }
-      return new WorkflowRuleModel(_client, response.workflowRule);
-    },
-
-    async workflowRules(variables: WorkflowRulesQueryVariables): Promise<PlainConnection<WorkflowRuleModel>> {
-      const response = await _client.request<WorkflowRulesQuery, WorkflowRulesQueryVariables>(
-        WorkflowRulesDocument, variables
-      );
-      const conn = response.workflowRules;
-      return new PlainConnection<WorkflowRuleModel>({
-        nodes: conn.edges.map(e => new WorkflowRuleModel(_client, e.node)),
-        pageInfo: conn.pageInfo,
-        fetch: (cursor) => query.workflowRules(paginationVariables(variables, cursor) as WorkflowRulesQueryVariables),
       });
     },
 
@@ -15802,6 +15891,13 @@ export class PlainSdk {
       return response.archiveLabelType;
     },
 
+    async archiveServiceLevelAgreementPolicy(variables: ArchiveServiceLevelAgreementPolicyMutationVariables): Promise<ArchiveServiceLevelAgreementPolicyMutation["archiveServiceLevelAgreementPolicy"]> {
+      const response = await _client.request<ArchiveServiceLevelAgreementPolicyMutation, ArchiveServiceLevelAgreementPolicyMutationVariables>(
+        ArchiveServiceLevelAgreementPolicyDocument, variables
+      );
+      return response.archiveServiceLevelAgreementPolicy;
+    },
+
     async assignRolesToUser(variables: AssignRolesToUserMutationVariables): Promise<AssignRolesToUserMutation["assignRolesToUser"]> {
       const response = await _client.request<AssignRolesToUserMutation, AssignRolesToUserMutationVariables>(
         AssignRolesToUserDocument, variables
@@ -15877,6 +15973,20 @@ export class PlainSdk {
         CancelHyperlineSubscriptionDocument
       );
       return response.cancelHyperlineSubscription;
+    },
+
+    async cancelPendingWorkflowExecutions(variables: CancelPendingWorkflowExecutionsMutationVariables): Promise<CancelPendingWorkflowExecutionsMutation["cancelPendingWorkflowExecutions"]> {
+      const response = await _client.request<CancelPendingWorkflowExecutionsMutation, CancelPendingWorkflowExecutionsMutationVariables>(
+        CancelPendingWorkflowExecutionsDocument, variables
+      );
+      return response.cancelPendingWorkflowExecutions;
+    },
+
+    async cancelWorkflowExecution(variables: CancelWorkflowExecutionMutationVariables): Promise<CancelWorkflowExecutionMutation["cancelWorkflowExecution"]> {
+      const response = await _client.request<CancelWorkflowExecutionMutation, CancelWorkflowExecutionMutationVariables>(
+        CancelWorkflowExecutionDocument, variables
+      );
+      return response.cancelWorkflowExecution;
     },
 
     async changeBillingPlan(variables: ChangeBillingPlanMutationVariables): Promise<ChangeBillingPlanMutation["changeBillingPlan"]> {
@@ -16067,6 +16177,13 @@ export class PlainSdk {
         CreateCustomerSurveyDocument, variables
       );
       return response.createCustomerSurvey;
+    },
+
+    async createDashboard(variables: CreateDashboardMutationVariables): Promise<CreateDashboardMutation["createDashboard"]> {
+      const response = await _client.request<CreateDashboardMutation, CreateDashboardMutationVariables>(
+        CreateDashboardDocument, variables
+      );
+      return response.createDashboard;
     },
 
     async createDiscussion(variables: CreateDiscussionMutationVariables): Promise<CreateDiscussionMutation["createDiscussion"]> {
@@ -16392,13 +16509,6 @@ export class PlainSdk {
       return response.createWorkflow;
     },
 
-    async createWorkflowRule(variables: CreateWorkflowRuleMutationVariables): Promise<CreateWorkflowRuleMutation["createWorkflowRule"]> {
-      const response = await _client.request<CreateWorkflowRuleMutation, CreateWorkflowRuleMutationVariables>(
-        CreateWorkflowRuleDocument, variables
-      );
-      return response.createWorkflowRule;
-    },
-
     async createWorkflowShareLink(variables: CreateWorkflowShareLinkMutationVariables): Promise<CreateWorkflowShareLinkMutation["createWorkflowShareLink"]> {
       const response = await _client.request<CreateWorkflowShareLinkMutation, CreateWorkflowShareLinkMutationVariables>(
         CreateWorkflowShareLinkDocument, variables
@@ -16637,6 +16747,13 @@ export class PlainSdk {
         DeleteCustomerSurveyDocument, variables
       );
       return response.deleteCustomerSurvey;
+    },
+
+    async deleteDashboard(variables: DeleteDashboardMutationVariables): Promise<DeleteDashboardMutation["deleteDashboard"]> {
+      const response = await _client.request<DeleteDashboardMutation, DeleteDashboardMutationVariables>(
+        DeleteDashboardDocument, variables
+      );
+      return response.deleteDashboard;
     },
 
     async deleteEmailSuppression(variables: DeleteEmailSuppressionMutationVariables): Promise<DeleteEmailSuppressionMutation["deleteEmailSuppression"]> {
@@ -16936,13 +17053,6 @@ export class PlainSdk {
       return response.deleteWorkflow;
     },
 
-    async deleteWorkflowRule(variables: DeleteWorkflowRuleMutationVariables): Promise<DeleteWorkflowRuleMutation["deleteWorkflowRule"]> {
-      const response = await _client.request<DeleteWorkflowRuleMutation, DeleteWorkflowRuleMutationVariables>(
-        DeleteWorkflowRuleDocument, variables
-      );
-      return response.deleteWorkflowRule;
-    },
-
     async deleteWorkflowStep(variables: DeleteWorkflowStepMutationVariables): Promise<DeleteWorkflowStepMutation["deleteWorkflowStep"]> {
       const response = await _client.request<DeleteWorkflowStepMutation, DeleteWorkflowStepMutationVariables>(
         DeleteWorkflowStepDocument, variables
@@ -17025,6 +17135,13 @@ export class PlainSdk {
         DisableOAuthAppDocument, variables
       );
       return response.disableOAuthApp;
+    },
+
+    async dismissGeneratedReply(variables: DismissGeneratedReplyMutationVariables): Promise<DismissGeneratedReplyMutation["dismissGeneratedReply"]> {
+      const response = await _client.request<DismissGeneratedReplyMutation, DismissGeneratedReplyMutationVariables>(
+        DismissGeneratedReplyDocument, variables
+      );
+      return response.dismissGeneratedReply;
     },
 
     async dismissSidekickQuestion(variables: DismissSidekickQuestionMutationVariables): Promise<DismissSidekickQuestionMutation["dismissSidekickQuestion"]> {
@@ -17259,6 +17376,13 @@ export class PlainSdk {
         PurchaseCreditsDocument, variables
       );
       return response.purchaseCredits;
+    },
+
+    async rearrangeLabelTypes(variables: RearrangeLabelTypesMutationVariables): Promise<RearrangeLabelTypesMutation["rearrangeLabelTypes"]> {
+      const response = await _client.request<RearrangeLabelTypesMutation, RearrangeLabelTypesMutationVariables>(
+        RearrangeLabelTypesDocument, variables
+      );
+      return response.rearrangeLabelTypes;
     },
 
     async refreshConnectedDiscordChannels(variables: RefreshConnectedDiscordChannelsMutationVariables): Promise<RefreshConnectedDiscordChannelsMutation["refreshConnectedDiscordChannels"]> {
@@ -17658,13 +17782,6 @@ export class PlainSdk {
       return response.toggleSlackMessageReaction;
     },
 
-    async toggleWorkflowRulePublished(variables: ToggleWorkflowRulePublishedMutationVariables): Promise<ToggleWorkflowRulePublishedMutation["toggleWorkflowRulePublished"]> {
-      const response = await _client.request<ToggleWorkflowRulePublishedMutation, ToggleWorkflowRulePublishedMutationVariables>(
-        ToggleWorkflowRulePublishedDocument, variables
-      );
-      return response.toggleWorkflowRulePublished;
-    },
-
     async triggerWorkflow(variables: TriggerWorkflowMutationVariables): Promise<TriggerWorkflowMutation["triggerWorkflow"]> {
       const response = await _client.request<TriggerWorkflowMutation, TriggerWorkflowMutationVariables>(
         TriggerWorkflowDocument, variables
@@ -17672,18 +17789,18 @@ export class PlainSdk {
       return response.triggerWorkflow;
     },
 
-    async triggerWorkflowRule(variables: TriggerWorkflowRuleMutationVariables): Promise<TriggerWorkflowRuleMutation["triggerWorkflowRule"]> {
-      const response = await _client.request<TriggerWorkflowRuleMutation, TriggerWorkflowRuleMutationVariables>(
-        TriggerWorkflowRuleDocument, variables
-      );
-      return response.triggerWorkflowRule;
-    },
-
     async unarchiveLabelType(variables: UnarchiveLabelTypeMutationVariables): Promise<UnarchiveLabelTypeMutation["unarchiveLabelType"]> {
       const response = await _client.request<UnarchiveLabelTypeMutation, UnarchiveLabelTypeMutationVariables>(
         UnarchiveLabelTypeDocument, variables
       );
       return response.unarchiveLabelType;
+    },
+
+    async unarchiveServiceLevelAgreementPolicy(variables: UnarchiveServiceLevelAgreementPolicyMutationVariables): Promise<UnarchiveServiceLevelAgreementPolicyMutation["unarchiveServiceLevelAgreementPolicy"]> {
+      const response = await _client.request<UnarchiveServiceLevelAgreementPolicyMutation, UnarchiveServiceLevelAgreementPolicyMutationVariables>(
+        UnarchiveServiceLevelAgreementPolicyDocument, variables
+      );
+      return response.unarchiveServiceLevelAgreementPolicy;
     },
 
     async unassignThread(variables: UnassignThreadMutationVariables): Promise<UnassignThreadMutation["unassignThread"]> {
@@ -17847,6 +17964,13 @@ export class PlainSdk {
         UpdateCustomerSurveyDocument, variables
       );
       return response.updateCustomerSurvey;
+    },
+
+    async updateDashboard(variables: UpdateDashboardMutationVariables): Promise<UpdateDashboardMutation["updateDashboard"]> {
+      const response = await _client.request<UpdateDashboardMutation, UpdateDashboardMutationVariables>(
+        UpdateDashboardDocument, variables
+      );
+      return response.updateDashboard;
     },
 
     async updateDiscussionAgentStatus(variables: UpdateDiscussionAgentStatusMutationVariables): Promise<UpdateDiscussionAgentStatusMutation["updateDiscussionAgentStatus"]> {
@@ -18165,13 +18289,6 @@ export class PlainSdk {
         UpdateWorkflowDocument, variables
       );
       return response.updateWorkflow;
-    },
-
-    async updateWorkflowRule(variables: UpdateWorkflowRuleMutationVariables): Promise<UpdateWorkflowRuleMutation["updateWorkflowRule"]> {
-      const response = await _client.request<UpdateWorkflowRuleMutation, UpdateWorkflowRuleMutationVariables>(
-        UpdateWorkflowRuleDocument, variables
-      );
-      return response.updateWorkflowRule;
     },
 
     async updateWorkflowStep(variables: UpdateWorkflowStepMutationVariables): Promise<UpdateWorkflowStepMutation["updateWorkflowStep"]> {
