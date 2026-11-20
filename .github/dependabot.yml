@@ -28,6 +28,13 @@ updates:
     versioning-strategy: increase
     open-pull-requests-limit: 15
     groups:
+      # The codegen packages depend on each other's majors, so they move
+      # together. Dependabot puts a dependency in the first group that matches,
+      # so this one must stay above the update-type groups.
+      graphql-codegen:
+        applies-to: version-updates
+        patterns:
+          - "@graphql-codegen/*"
       npm-patch:
         applies-to: version-updates
         patterns:
