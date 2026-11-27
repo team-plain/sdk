@@ -71,8 +71,8 @@ importers:
         specifier: ^8.0.2
         version: 8.0.2(graphql@17.1.0)
       '@graphql-inspector/core':
-        specifier: ^8.0.2
-        version: 8.0.2(graphql@17.1.0)
+        specifier: ^8.1.2
+        version: 8.1.2(graphql@17.1.0)
       '@team-plain/graphql-codegen-plugin':
         specifier: workspace:*
         version: link:../graphql-codegen-plugin
@@ -515,8 +515,8 @@ packages:
     resolution: {integrity: sha512-Ypn7B005C1gGxTn8b0cgM7YkEHkH2gmqy78O6Xd/Dx81lGqLk/TXh3IxgiBRlYOoaqgfjqsS12a/vNrVRxAoJQ==}
     engines: {node: '>=20.0.0'}
 
-  '@graphql-inspector/core@8.0.2':
-    resolution: {integrity: sha512-+nQeAItXU22kGPWEN+GEF/pAYv+tQxRFMaiV+JcgFbLUNstxZQWEDMJQcNQU6ObrV0F71OSJc6BetJU+bj+U7Q==}
+  '@graphql-inspector/core@8.1.2':
+    resolution: {integrity: sha512-HmZaM7gyEEVz5xBYuopPFOQCQTJp6axAiByBq0moY2kf7lKjDVODOzoECsdneg24edMwW0U8NUYB2MhGeul8hQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       graphql: ^16.0.0 || ^17.0.0
@@ -3054,7 +3054,7 @@ snapshots:
 
   '@graphql-hive/signal@2.1.0': {}
 
-  '@graphql-inspector/core@8.0.2(graphql@17.1.0)':
+  '@graphql-inspector/core@8.1.2(graphql@17.1.0)':
     dependencies:
       dependency-graph: 1.0.0
       graphql: 17.1.0
